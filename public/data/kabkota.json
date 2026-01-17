@@ -1,0 +1,540 @@
+{
+    "11": [
+        {
+            "id": "1101",
+            "name": "KAB. ACEH SELATAN"
+        },
+        {
+            "id": "1102",
+            "name": "KAB. ACEH TENGGARA"
+        },
+        {
+            "id": "1103",
+            "name": "KAB. ACEH TIMUR"
+        },
+        {
+            "id": "1104",
+            "name": "KAB. ACEH TENGAH"
+        },
+        {
+            "id": "1105",
+            "name": "KAB. ACEH BARAT"
+        },
+        {
+            "id": "1106",
+            "name": "KAB. ACEH BESAR"
+        },
+        {
+            "id": "1107",
+            "name": "KAB. PIDIE"
+        },
+        {
+            "id": "1171",
+            "name": "KOTA BANDA ACEH"
+        },
+        {
+            "id": "1172",
+            "name": "KOTA SABANG"
+        },
+        {
+            "id": "1173",
+            "name": "KOTA LHOKSEUMAWE"
+        },
+        {
+            "id": "1174",
+            "name": "KOTA LANGSA"
+        },
+        {
+            "id": "1175",
+            "name": "KOTA SUBULUSSALAM"
+        }
+    ],
+    "32": [
+        {
+            "id": "3201",
+            "name": "KAB. BOGOR"
+        },
+        {
+            "id": "3202",
+            "name": "KAB. SUKABUMI"
+        },
+        {
+            "id": "3203",
+            "name": "KAB. CIANJUR"
+        },
+        {
+            "id": "3204",
+            "name": "KAB. BANDUNG"
+        },
+        {
+            "id": "3205",
+            "name": "KAB. GARUT"
+        },
+        {
+            "id": "3206",
+            "name": "KAB. TASIKMALAYA"
+        },
+        {
+            "id": "3207",
+            "name": "KAB. CIAMIS"
+        },
+        {
+            "id": "3208",
+            "name": "KAB. KUNINGAN"
+        },
+        {
+            "id": "3209",
+            "name": "KAB. CIREBON"
+        },
+        {
+            "id": "3210",
+            "name": "KAB. MAJALENGKA"
+        },
+        {
+            "id": "3211",
+            "name": "KAB. SUMEDANG"
+        },
+        {
+            "id": "3212",
+            "name": "KAB. INDRAMAYU"
+        },
+        {
+            "id": "3213",
+            "name": "KAB. SUBANG"
+        },
+        {
+            "id": "3214",
+            "name": "KAB. PURWAKARTA"
+        },
+        {
+            "id": "3215",
+            "name": "KAB. KARAWANG"
+        },
+        {
+            "id": "3216",
+            "name": "KAB. BEKASI"
+        },
+        {
+            "id": "3217",
+            "name": "KAB. BANDUNG BARAT"
+        },
+        {
+            "id": "3218",
+            "name": "KAB. PANGANDARAN"
+        },
+        {
+            "id": "3271",
+            "name": "KOTA BOGOR"
+        },
+        {
+            "id": "3272",
+            "name": "KOTA SUKABUMI"
+        },
+        {
+            "id": "3273",
+            "name": "KOTA BANDUNG"
+        },
+        {
+            "id": "3274",
+            "name": "KOTA CIREBON"
+        },
+        {
+            "id": "3275",
+            "name": "KOTA BEKASI"
+        },
+        {
+            "id": "3276",
+            "name": "KOTA DEPOK"
+        },
+        {
+            "id": "3277",
+            "name": "KOTA CIMAHI"
+        },
+        {
+            "id": "3278",
+            "name": "KOTA TASIKMALAYA"
+        },
+        {
+            "id": "3279",
+            "name": "KOTA BANJAR"
+        }
+    ],
+    "31": [
+        {
+            "id": "3101",
+            "name": "KAB. ADM. KEP. SERIBU"
+        },
+        {
+            "id": "3171",
+            "name": "KOTA ADM. JAKARTA PUSAT"
+        },
+        {
+            "id": "3172",
+            "name": "KOTA ADM. JAKARTA UTARA"
+        },
+        {
+            "id": "3173",
+            "name": "KOTA ADM. JAKARTA BARAT"
+        },
+        {
+            "id": "3174",
+            "name": "KOTA ADM. JAKARTA SELATAN"
+        },
+        {
+            "id": "3175",
+            "name": "KOTA ADM. JAKARTA TIMUR"
+        }
+    ],
+    "33": [
+        {
+            "id": "3301",
+            "name": "KAB. CILACAP"
+        },
+        {
+            "id": "3302",
+            "name": "KAB. BANYUMAS"
+        },
+        {
+            "id": "3303",
+            "name": "KAB. PURBALINGGA"
+        },
+        {
+            "id": "3304",
+            "name": "KAB. BANJARNEGARA"
+        },
+        {
+            "id": "3305",
+            "name": "KAB. KEBUMEN"
+        },
+        {
+            "id": "3306",
+            "name": "KAB. PURWOREJO"
+        },
+        {
+            "id": "3307",
+            "name": "KAB. WONOSOBO"
+        },
+        {
+            "id": "3308",
+            "name": "KAB. MAGELANG"
+        },
+        {
+            "id": "3309",
+            "name": "KAB. BOYOLALI"
+        },
+        {
+            "id": "3310",
+            "name": "KAB. KLATEN"
+        },
+        {
+            "id": "3311",
+            "name": "KAB. SUKOHARJO"
+        },
+        {
+            "id": "3312",
+            "name": "KAB. WONOGIRI"
+        },
+        {
+            "id": "3313",
+            "name": "KAB. KARANGANYAR"
+        },
+        {
+            "id": "3314",
+            "name": "KAB. SRAGEN"
+        },
+        {
+            "id": "3315",
+            "name": "KAB. GROBOGAN"
+        },
+        {
+            "id": "3316",
+            "name": "KAB. BLORA"
+        },
+        {
+            "id": "3317",
+            "name": "KAB. REMBANG"
+        },
+        {
+            "id": "3318",
+            "name": "KAB. PATI"
+        },
+        {
+            "id": "3319",
+            "name": "KAB. KUDUS"
+        },
+        {
+            "id": "3320",
+            "name": "KAB. JEPARA"
+        },
+        {
+            "id": "3321",
+            "name": "KAB. DEMAK"
+        },
+        {
+            "id": "3322",
+            "name": "KAB. SEMARANG"
+        },
+        {
+            "id": "3323",
+            "name": "KAB. TEMANGGUNG"
+        },
+        {
+            "id": "3324",
+            "name": "KAB. KENDAL"
+        },
+        {
+            "id": "3325",
+            "name": "KAB. BATANG"
+        },
+        {
+            "id": "3326",
+            "name": "KAB. PEKALONGAN"
+        },
+        {
+            "id": "3327",
+            "name": "KAB. PEMALANG"
+        },
+        {
+            "id": "3328",
+            "name": "KAB. TEGAL"
+        },
+        {
+            "id": "3329",
+            "name": "KAB. BREBES"
+        },
+        {
+            "id": "3371",
+            "name": "KOTA MAGELANG"
+        },
+        {
+            "id": "3372",
+            "name": "KOTA SURAKARTA"
+        },
+        {
+            "id": "3373",
+            "name": "KOTA SALATIGA"
+        },
+        {
+            "id": "3374",
+            "name": "KOTA SEMARANG"
+        },
+        {
+            "id": "3375",
+            "name": "KOTA PEKALONGAN"
+        },
+        {
+            "id": "3376",
+            "name": "KOTA TEGAL"
+        }
+    ],
+    "34": [
+        {
+            "id": "3401",
+            "name": "KAB. KULON PROGO"
+        },
+        {
+            "id": "3402",
+            "name": "KAB. BANTUL"
+        },
+        {
+            "id": "3403",
+            "name": "KAB. GUNUNGKIDUL"
+        },
+        {
+            "id": "3404",
+            "name": "KAB. SLEMAN"
+        },
+        {
+            "id": "3471",
+            "name": "KOTA YOGYAKARTA"
+        }
+    ],
+    "35": [
+        {
+            "id": "3501",
+            "name": "KAB. PACITAN"
+        },
+        {
+            "id": "3502",
+            "name": "KAB. PONOROGO"
+        },
+        {
+            "id": "3503",
+            "name": "KAB. TRENGGALEK"
+        },
+        {
+            "id": "3504",
+            "name": "KAB. TULUNGAGUNG"
+        },
+        {
+            "id": "3505",
+            "name": "KAB. BLITAR"
+        },
+        {
+            "id": "3506",
+            "name": "KAB. KEDIRI"
+        },
+        {
+            "id": "3507",
+            "name": "KAB. MALANG"
+        },
+        {
+            "id": "3508",
+            "name": "KAB. LUMAJANG"
+        },
+        {
+            "id": "3509",
+            "name": "KAB. JEMBER"
+        },
+        {
+            "id": "3510",
+            "name": "KAB. BANYUWANGI"
+        },
+        {
+            "id": "3511",
+            "name": "KAB. BONDOWOSO"
+        },
+        {
+            "id": "3512",
+            "name": "KAB. SITUBONDO"
+        },
+        {
+            "id": "3513",
+            "name": "KAB. PROBOLINGGO"
+        },
+        {
+            "id": "3514",
+            "name": "KAB. PASURUAN"
+        },
+        {
+            "id": "3515",
+            "name": "KAB. SIDOARJO"
+        },
+        {
+            "id": "3516",
+            "name": "KAB. MOJOKERTO"
+        },
+        {
+            "id": "3517",
+            "name": "KAB. JOMBANG"
+        },
+        {
+            "id": "3518",
+            "name": "KAB. NGANJUK"
+        },
+        {
+            "id": "3519",
+            "name": "KAB. MADIUN"
+        },
+        {
+            "id": "3520",
+            "name": "KAB. MAGETAN"
+        },
+        {
+            "id": "3521",
+            "name": "KAB. NGAWI"
+        },
+        {
+            "id": "3522",
+            "name": "KAB. BOJONEGORO"
+        },
+        {
+            "id": "3523",
+            "name": "KAB. TUBAN"
+        },
+        {
+            "id": "3524",
+            "name": "KAB. LAMONGAN"
+        },
+        {
+            "id": "3525",
+            "name": "KAB. GRESIK"
+        },
+        {
+            "id": "3526",
+            "name": "KAB. BANGKALAN"
+        },
+        {
+            "id": "3527",
+            "name": "KAB. SAMPANG"
+        },
+        {
+            "id": "3528",
+            "name": "KAB. PAMEKASAN"
+        },
+        {
+            "id": "3529",
+            "name": "KAB. SUMENEP"
+        },
+        {
+            "id": "3571",
+            "name": "KOTA KEDIRI"
+        },
+        {
+            "id": "3572",
+            "name": "KOTA BLITAR"
+        },
+        {
+            "id": "3573",
+            "name": "KOTA MALANG"
+        },
+        {
+            "id": "3574",
+            "name": "KOTA PROBOLINGGO"
+        },
+        {
+            "id": "3575",
+            "name": "KOTA PASURUAN"
+        },
+        {
+            "id": "3576",
+            "name": "KOTA MOJOKERTO"
+        },
+        {
+            "id": "3577",
+            "name": "KOTA MADIUN"
+        },
+        {
+            "id": "3578",
+            "name": "KOTA SURABAYA"
+        },
+        {
+            "id": "3579",
+            "name": "KOTA BATU"
+        }
+    ],
+    "36": [
+        {
+            "id": "3601",
+            "name": "KAB. PANDEGLANG"
+        },
+        {
+            "id": "3602",
+            "name": "KAB. LEBAK"
+        },
+        {
+            "id": "3603",
+            "name": "KAB. TANGERANG"
+        },
+        {
+            "id": "3604",
+            "name": "KAB. SERANG"
+        },
+        {
+            "id": "3671",
+            "name": "KOTA TANGERANG"
+        },
+        {
+            "id": "3672",
+            "name": "KOTA CILEGON"
+        },
+        {
+            "id": "3673",
+            "name": "KOTA SERANG"
+        },
+        {
+            "id": "3674",
+            "name": "KOTA TANGERANG SELATAN"
+        }
+    ]
+}
