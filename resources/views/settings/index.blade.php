@@ -13,6 +13,12 @@
                 <h1 class="text-2xl font-bold text-gray-800">Pengaturan Jadwal</h1>
                 <p class="text-gray-500">Atur hari dan jam operasional pengajuan mutasi</p>
             </div>
+            <div class="ml-auto">
+                {{-- Link to System Status --}}
+                <a href="{{ route('system.status') }}" class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm">
+                    <i class="bi bi-hdd-network text-indigo-500"></i> Status Sistem
+                </a>
+            </div>
         </div>
     </div>
 

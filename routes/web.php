@@ -188,6 +188,10 @@ Route::middleware(['auth', \App\Http\Middleware\EnsurePasswordChanged::class])->
         Route::get('/pengaturan', [\App\Http\Controllers\SettingController::class, 'index'])->name('settings.index');
         Route::post('/pengaturan', [\App\Http\Controllers\SettingController::class, 'update'])->name('settings.update');
 
+        // System Status
+        Route::get('/system-status', [\App\Http\Controllers\SystemStatusController::class, 'index'])->name('system.status');
+        Route::get('/system-status/refresh', [\App\Http\Controllers\SystemStatusController::class, 'refresh'])->name('system.status.refresh');
+
         // Holiday management
         Route::post('/holidays', [\App\Http\Controllers\HolidayController::class, 'store'])->name('holidays.store');
         Route::put('/holidays/{id}', [\App\Http\Controllers\HolidayController::class, 'update'])->name('holidays.update');
