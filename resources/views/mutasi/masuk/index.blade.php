@@ -378,8 +378,32 @@
         }
     </style>
 
-    <script>     document.addEventListener('DOMContentLoaded', function () {         const searchInput = document.getElementById('searchInput');         const filterForm = document.getElementById('filterForm');         const statusFilter = document.getElementById('statusFilter');         let debounceTimer;
-             // Auto-search when typing 3+ characters         if (searchInput && filterForm) {             searchInput.addEventListener('input', function () {                 clearTimeout(debounceTimer);                 const query = this.value.trim();
-                     debounceTimer = setTimeout(function () {                     if (query.length >= 3 || query.length === 0) {                         filterForm.submit();                     }                 }, 500);             });         }
-             // Auto-submit when status filter changes         if (statusFilter && filterForm) {             statusFilter.addEventListener('change', function () {                 filterForm.submit();             });         }     });
-    </script>@endsection
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const searchInput = document.getElementById('searchInput');
+        const filterForm = document.getElementById('filterForm');
+        const statusFilter = document.getElementById('statusFilter');
+        let debounceTimer;
+
+        /* Auto-search when typing 3+ characters */
+        if (searchInput && filterForm) {
+            searchInput.addEventListener('input', function () {
+                clearTimeout(debounceTimer);
+                const query = this.value.trim();
+                debounceTimer = setTimeout(function () {
+                    if (query.length >= 3 || query.length === 0) {
+                        filterForm.submit();
+                    }
+                }, 500);
+            });
+        }
+
+        /* Auto-submit when status filter changes */
+        if (statusFilter && filterForm) {
+            statusFilter.addEventListener('change', function () {
+                filterForm.submit();
+            });
+        }
+    });
+    </script>
+@endsection
