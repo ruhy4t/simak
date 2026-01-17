@@ -43,8 +43,28 @@
                 <p class="text-sm font-medium text-gray-500 mb-1">Ukuran Database</p>
                 <h3 class="text-3xl font-bold text-gray-800">{{ $dbSize }} <span
                         class="text-lg text-gray-500 font-normal">MB</span></h3>
-                <div class="mt-4 flex items-center gap-2 text-xs text-blue-600 bg-blue-50 w-fit px-2 py-1 rounded-lg">
-                    <i class="bi bi-check-circle-fill"></i> MySQL / MariaDB
+
+                <div class="mt-3 mb-2">
+                    <p class="text-xs text-gray-400">Host:</p>
+                    <p class="text-xs font-mono text-gray-600 truncate" title="{{ $serverInfo['db_host'] }}">
+                        {{ $serverInfo['db_host'] }}</p>
+                </div>
+
+                {{-- DB Limit Estimate --}}
+                @php
+                    $dbLimitMB = $serverInfo['db_limit'] / 1024 / 1024;
+                    // Verify if dbSize is numeric
+                    $sizeVal = is_numeric($dbSize) ? floatval($dbSize) : 0;
+                    $dbPercentage = $dbLimitMB > 0 ? ($sizeVal / $dbLimitMB) * 100 : 0;
+                    $dbRemaining = $dbLimitMB - $sizeVal;
+                @endphp
+
+                <div class="w-full bg-gray-100 rounded-full h-1.5 mb-2 overflow-hidden">
+                    <div class="bg-blue-500 h-1.5 rounded-full" style="width: {{ min($dbPercentage, 100) }}%"></div>
+                </div>
+                <div class="flex justify-between text-[10px] text-gray-400">
+                    <span>Limit Est: ~{{ number_format($dbLimitMB, 0) }} MB</span>
+                    <span>Sisa: ~{{ number_format($dbRemaining, 1) }} MB</span>
                 </div>
             </div>
         </div>
@@ -172,7 +192,7 @@
                         <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
                             <tr>
                                 <th class="px-6 py-3">Komponen</th>
-                                <th class="px-6 py-3">Koneksi</th>
+                                <th class="px-6 py-3">Lokasi (Host)</th>
                                 <th class="px-6 py-3 text-right">Status</th>
                             </tr>
                         </thead>
@@ -180,11 +200,10 @@
                             <tr>
                                 <td class="px-6 py-4">
                                     <div class="font-medium text-gray-800">Dokumen Arsip</div>
-                                    <div class="text-xs text-gray-500">Backblaze B2
-                                        ({{ config('filesystems.disks.b2.bucket') }})</div>
+                                    <div class="text-xs text-gray-500">Backblaze B2</div>
                                 </td>
-                                <td class="px-6 py-4 font-mono text-xs text-gray-500">
-                                    S3 Compatible
+                                <td class="px-6 py-4 font-mono text-xs text-gray-500 tracking-tight">
+                                    {{ config('filesystems.disks.b2.bucket') }}
                                 </td>
                                 <td class="px-6 py-4 text-right">
                                     @if(!$b2Stats['error'])
@@ -199,10 +218,11 @@
                             <tr>
                                 <td class="px-6 py-4">
                                     <div class="font-medium text-gray-800">Database</div>
-                                    <div class="text-xs text-gray-500">Relational Data</div>
+                                    <div class="text-xs text-gray-500">MySQL {{ $serverInfo['db_version'] }}</div>
                                 </td>
-                                <td class="px-6 py-4 font-mono text-xs text-gray-500">
-                                    {{ config('database.connections.mysql.database') }}
+                                <td class="px-6 py-4 font-mono text-xs text-gray-500 tracking-tight"
+                                    title="{{ $serverInfo['db_host'] }}">
+                                    {{ Str::limit($serverInfo['db_host'], 25) }}
                                 </td>
                                 <td class="px-6 py-4 text-right">
                                     <span
@@ -211,6 +231,10 @@
                             </tr>
                         </tbody>
                     </table>
+                </div>
+                <div class="bg-amber-50 px-6 py-3 border-t border-amber-100 text-xs text-amber-700">
+                    <i class="bi bi-info-circle mr-1"></i> Limit database adalah estimasi (Default: 512MB). Kapasitas
+                    sebenarnya bergantung pada layanan hosting database Anda.
                 </div>
             </div>
         </div>

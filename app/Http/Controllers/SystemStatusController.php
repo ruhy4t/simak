@@ -95,6 +95,10 @@ class SystemStatusController extends Controller
             'commit' => env('VERCEL_GIT_COMMIT_SHA', 'Unknown'),
             'region' => env('VERCEL_REGION', 'Unknown'),
             'url' => env('APP_URL'),
+            // Database Details
+            'db_host' => config('database.connections.mysql.host'),
+            'db_version' => DB::select('select version() as version')[0]->version ?? 'Unknown',
+            'db_limit' => env('DB_SIZE_LIMIT', 512 * 1024 * 1024), // Default to 512MB if not set, or make it configurable
         ];
 
         return view('admin.system.status', compact('dbSize', 'b2Stats', 'serverInfo'));
