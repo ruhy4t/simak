@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 {
     "name": "SIMAK",
     "short_name": "SIMAK",
@@ -13,22 +12,4 @@
             "sizes": "64x64",
             "type": "image/x-icon"
         }
-    ]
-=======
-{
-    "name": "SIMAK",
-    "short_name": "SIMAK",
-    "description": "Sistem Informasi Mutasi Kota Bogor",
-    "start_url": "/",
-    "display": "standalone",
-    "background_color": "#0284c7",
-    "theme_color": "#0284c7",
-    "icons": [
-        {
-            "src": "/favicon.ico",
-            "sizes": "64x64",
-            "type": "image/x-icon"
-        }
-    ]
->>>>>>> 9466a07 (Upload project pertama kali)
-}
+    ]}
