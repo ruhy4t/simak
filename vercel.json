@@ -2,13 +2,16 @@
     "version": 2,
     "framework": null,
     "buildCommand": null,
-    "outputDirectory": "public",
     "functions": {
         "api/index.php": {
             "runtime": "vercel-php@0.6.2"
         }
     },
     "routes": [
+        {
+            "src": "/build/assets/(.*)",
+            "dest": "/public/build/assets/$1"
+        },
         {
             "src": "/build/(.*)",
             "dest": "/public/build/$1"
@@ -18,7 +21,15 @@
             "dest": "/public/$1"
         },
         {
-            "src": "/(css|js|images|storage)/(.*)",
+            "src": "/images/(.*)",
+            "dest": "/public/images/$1"
+        },
+        {
+            "src": "/assets/(.*)",
+            "dest": "/public/assets/$1"
+        },
+        {
+            "src": "/(css|js|storage)/(.*)",
             "dest": "/public/$1/$2"
         },
         {
