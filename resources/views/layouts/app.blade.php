@@ -551,6 +551,9 @@
 
     @stack('scripts')
 
+    <!-- Instant.page for faster navigation (Preloading on hover) -->
+    <script src="//instant.page/5.2.0" type="module"
+        integrity="sha384-jnZyxPjiipYXnSU0ygqeac2q7CVYMbh84GO0uHNhxgJDvwChh9uBaQS5ggU/L/Ma"></script>
 </body>
 
 
