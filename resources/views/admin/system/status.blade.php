@@ -32,7 +32,7 @@
         </div>
     @endif
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {{-- Database Card --}}
         <div
             class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 relative overflow-hidden group hover:shadow-md transition-all">
@@ -71,72 +71,149 @@
             </div>
         </div>
 
-        {{-- B2 Size Card --}}
+        {{-- B2 Size Card with Progress --}}
         <div
-            class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 relative overflow-hidden group hover:shadow-md transition-all">
+            class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 relative overflow-hidden group hover:shadow-md transition-all md:col-span-2">
             <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                 <i class="bi bi-cloud-arrow-up text-6xl text-green-600"></i>
             </div>
             <div class="relative z-10">
-                <p class="text-sm font-medium text-gray-500 mb-1">Space Terpakai (B2)</p>
-                <h3 class="text-3xl font-bold text-gray-800">
-                    {{ $b2Stats['formatted_size'] }}
-                </h3>
+                <div class="flex justify-between items-start mb-2">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Storage Cloud Terpakai</p>
+                        <h3 class="text-3xl font-bold text-gray-800">
+                            {{ $b2Stats['formatted_size'] }}
+                        </h3>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs text-gray-400">Sisa Kuota (Free Tier)</p>
+                        <p class="text-lg font-semibold text-gray-700">{{ $b2Stats['formatted_remaining'] ?? '-' }}</p>
+                    </div>
+                </div>
+
+                {{-- Progress Bar --}}
+                @if(isset($b2Stats['percentage']))
+                    <div class="w-full bg-gray-100 rounded-full h-3 mb-2 overflow-hidden">
+                        <div class="bg-gradient-to-r from-green-500 to-green-600 h-3 rounded-full transition-all duration-1000"
+                            style="width: {{ min($b2Stats['percentage'], 100) }}%"></div>
+                    </div>
+                    <div class="flex justify-between text-xs text-gray-500">
+                        <span>{{ number_format($b2Stats['percentage'], 2) }}% Terpakai</span>
+                        <span>Limit: {{ $b2Stats['formatted_limit'] }}</span>
+                    </div>
+                @endif
+
                 @if(isset($b2Stats['size_warning']))
                     <p class="text-xs text-orange-500 mt-1">{{ $b2Stats['size_warning'] }}</p>
                 @endif
-                <div class="mt-4 flex items-center gap-2 text-xs text-green-600 bg-green-50 w-fit px-2 py-1 rounded-lg">
-                    <i class="bi bi-hdd-fill"></i> Cloud Storage
-                </div>
             </div>
         </div>
     </div>
 
-    {{-- Details Section --}}
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-            <h3 class="font-semibold text-gray-800">Detail Penyimpanan</h3>
-        </div>
-        <div class="p-6">
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm text-left">
-                    <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
-                        <tr>
-                            <th class="px-4 py-3 rounded-l-lg">Tipe Storage</th>
-                            <th class="px-4 py-3">Lokasi</th>
-                            <th class="px-4 py-3">Koneksi</th>
-                            <th class="px-4 py-3 rounded-r-lg">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        <tr>
-                            <td class="px-4 py-3 font-medium text-gray-800">Dokumen & Arsip</td>
-                            <td class="px-4 py-3 text-gray-600">Backblaze B2 (Cloud)</td>
-                            <td class="px-4 py-3 font-mono text-xs text-gray-500">
-                                {{ config('filesystems.disks.b2.bucket') ?? 'Not Configured' }}</td>
-                            <td class="px-4 py-3">
-                                @if(!$b2Stats['error'])
-                                    <span
-                                        class="px-2 py-1 text-xs font-semibold text-green-700 bg-green-100 rounded-full">Connected</span>
-                                @else
-                                    <span
-                                        class="px-2 py-1 text-xs font-semibold text-red-700 bg-red-100 rounded-full">Error</span>
-                                @endif
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="px-4 py-3 font-medium text-gray-800">Database Utama</td>
-                            <td class="px-4 py-3 text-gray-600">MySQL / MariaDB</td>
-                            <td class="px-4 py-3 font-mono text-xs text-gray-500">
-                                {{ config('database.connections.mysql.database') }}</td>
-                            <td class="px-4 py-3">
-                                <span
-                                    class="px-2 py-1 text-xs font-semibold text-green-700 bg-green-100 rounded-full">Connected</span>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+    {{-- Details Section Grid --}}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+        {{-- App Environment --}}
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
+                <h3 class="font-semibold text-gray-800 flex items-center gap-2">
+                    <i class="bi bi-server"></i> Lingkungan Aplikasi
+                </h3>
+                <span class="px-2 py-1 text-xs font-bold text-white bg-slate-800 rounded uppercase tracking-wider">
+                    Vercel
+                </span>
+            </div>
+            <div class="p-6">
+                <div class="space-y-4">
+                    <div class="flex justify-between border-b border-dashed border-gray-100 pb-2">
+                        <span class="text-gray-500 text-sm">Framework</span>
+                        <span class="font-medium text-gray-800">Laravel v{{ $serverInfo['laravel_version'] }}</span>
+                    </div>
+                    <div class="flex justify-between border-b border-dashed border-gray-100 pb-2">
+                        <span class="text-gray-500 text-sm">PHP Version</span>
+                        <span class="font-medium text-gray-800">v{{ $serverInfo['php_version'] }}</span>
+                    </div>
+                    <div class="flex justify-between border-b border-dashed border-gray-100 pb-2">
+                        <span class="text-gray-500 text-sm">Environment</span>
+                        <span class="font-medium capitalize text-gray-800">
+                            @if($serverInfo['environment'] === 'production')
+                                <i class="bi bi-shield-check text-green-500"></i> Production
+                            @else
+                                {{ $serverInfo['environment'] }}
+                            @endif
+                        </span>
+                    </div>
+                    <div class="flex justify-between border-b border-dashed border-gray-100 pb-2">
+                        <span class="text-gray-500 text-sm">Web Server</span>
+                        <span class="font-medium text-gray-800 text-right text-xs truncate max-w-[200px]"
+                            title="{{ $serverInfo['server_software'] }}">
+                            {{ Str::limit($serverInfo['server_software'], 30) }}
+                        </span>
+                    </div>
+                    <div class="flex justify-between pt-1">
+                        <span class="text-gray-500 text-sm">Region</span>
+                        <span
+                            class="font-medium text-gray-800">{{ $serverInfo['region'] !== 'Unknown' ? $serverInfo['region'] : '-' }}</span>
+                    </div>
+                </div>
             </div>
         </div>
+
+        {{-- Storage Details --}}
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                <h3 class="font-semibold text-gray-800 flex items-center gap-2">
+                    <i class="bi bi-hdd-stack"></i> Detail Penyimpanan
+                </h3>
+            </div>
+            <div class="p-0">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
+                            <tr>
+                                <th class="px-6 py-3">Komponen</th>
+                                <th class="px-6 py-3">Koneksi</th>
+                                <th class="px-6 py-3 text-right">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            <tr>
+                                <td class="px-6 py-4">
+                                    <div class="font-medium text-gray-800">Dokumen Arsip</div>
+                                    <div class="text-xs text-gray-500">Backblaze B2
+                                        ({{ config('filesystems.disks.b2.bucket') }})</div>
+                                </td>
+                                <td class="px-6 py-4 font-mono text-xs text-gray-500">
+                                    S3 Compatible
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    @if(!$b2Stats['error'])
+                                        <span
+                                            class="px-2 py-1 text-xs font-semibold text-green-700 bg-green-100 rounded-full">Active</span>
+                                    @else
+                                        <span
+                                            class="px-2 py-1 text-xs font-semibold text-red-700 bg-red-100 rounded-full">Error</span>
+                                    @endif
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4">
+                                    <div class="font-medium text-gray-800">Database</div>
+                                    <div class="text-xs text-gray-500">Relational Data</div>
+                                </td>
+                                <td class="px-6 py-4 font-mono text-xs text-gray-500">
+                                    {{ config('database.connections.mysql.database') }}
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <span
+                                        class="px-2 py-1 text-xs font-semibold text-green-700 bg-green-100 rounded-full">Active</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
     </div>
 @endsection

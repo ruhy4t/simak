@@ -67,6 +67,15 @@ class SystemStatusController extends Controller
 
                     $stats['size'] = $totalSize;
                     $stats['formatted_size'] = number_format($totalSize / 1024 / 1024, 2) . ' MB';
+
+                    // B2 Free Tier Limit (10 GB)
+                    $limit = 10 * 1024 * 1024 * 1024;
+                    $stats['limit'] = $limit;
+                    $stats['formatted_limit'] = '10 GB (Free Tier)';
+                    $stats['percentage'] = ($totalSize / $limit) * 100;
+                    $stats['remaining'] = $limit - $totalSize;
+                    $stats['formatted_remaining'] = number_format(($limit - $totalSize) / 1024 / 1024, 2) . ' MB';
+
                 } else {
                     $stats['error'] = 'B2 not configured.';
                 }
@@ -77,7 +86,18 @@ class SystemStatusController extends Controller
             return $stats;
         });
 
-        return view('admin.system.status', compact('dbSize', 'b2Stats'));
+        // 3. Vercel / Server Info
+        $serverInfo = [
+            'php_version' => phpversion(),
+            'laravel_version' => app()->version(),
+            'server_software' => $_SERVER['SERVER_SOFTWARE'] ?? 'Unknown',
+            'environment' => app()->environment(),
+            'commit' => env('VERCEL_GIT_COMMIT_SHA', 'Unknown'),
+            'region' => env('VERCEL_REGION', 'Unknown'),
+            'url' => env('APP_URL'),
+        ];
+
+        return view('admin.system.status', compact('dbSize', 'b2Stats', 'serverInfo'));
     }
 
     public function refresh()
