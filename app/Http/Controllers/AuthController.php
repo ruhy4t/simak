@@ -28,16 +28,17 @@ class AuthController extends Controller
 
         $username = strtolower(trim($request->username));
 
-        // Rate limiting
-        $key = 'login_attempt_' . $username;
-        if (RateLimiter::tooManyAttempts($key, 5)) {
-            $seconds = RateLimiter::availableIn($key);
-            AuditLog::log('LOGIN_RATE_LIMITED', $username, "Locked for {$seconds}s");
+        // Rate limiting - TEMPORARILY DISABLED FOR DEBUGGING
+        // $key = 'login_attempt_' . $username;
+        // if (RateLimiter::tooManyAttempts($key, 5)) {
+        //     $seconds = RateLimiter::availableIn($key);
+        //     AuditLog::log('LOGIN_RATE_LIMITED', $username, "Locked for {$seconds}s");
 
-            return back()->withErrors([
-                'username' => "Terlalu banyak percobaan. Coba lagi dalam {$seconds} detik.",
-            ])->withInput();
-        }
+        //     return back()->withErrors([
+        //         'username' => "Terlalu banyak percobaan. Coba lagi dalam {$seconds} detik.",
+        //     ])->withInput();
+        // }
+        $key = 'login_attempt_' . $username;
 
         // Find user
         $user = User::where('username', $username)->first();
