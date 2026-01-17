@@ -1,0 +1,16 @@
+
+/vendor
+/node_modules
+/public/storage
+/storage/*.key
+.env
+.env.backup
+.env.production
+.git
+.gitignore
+.gitattributes
+composer.lock
+package-lock.json
+phpunit.xml
+README.md
+/tests
