@@ -1,0 +1,34 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Alpine.js cloak */
+[x-cloak] {
+    display: none !important;
+}
+
+/* Page transition animation */
+.page-enter {
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Autosave indicator animation */
+@keyframes pulse-save {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.autosave-saving {
+    animation: pulse-save 1s ease-in-out infinite;
+}

@@ -1,0 +1,17 @@
+/**
+ * SIMAK Application JavaScript Bundle
+ * Includes: Alpine.js, Idle Timeout, Auto-Save
+ */
+
+// Import Alpine.js
+import Alpine from 'alpinejs';
+import collapse from '@alpinejs/collapse';
+
+// Import custom modules
+import './idle-timeout.js';
+import './autosave.js';
+
+// Initialize Alpine
+Alpine.plugin(collapse);
+window.Alpine = Alpine;
+Alpine.start();
