@@ -4,59 +4,112 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class SecureFileController extends Controller
 {
     /**
-     * Serve a file from private storage
+     * Get the storage disk to use based on environment
+     */
+    protected function getDisk(): string
+    {
+        // Use B2 if configured, otherwise fall back to local
+        if (config('filesystems.disks.b2.key') && app()->environment('production')) {
+            return 'b2';
+        }
+        return 'private_docs';
+    }
+
+    /**
+     * Serve a file from storage (B2 in production, local in development)
      * Route: GET /dokumen/lihat/{path}
      */
     public function show(Request $request, $path)
     {
-        if (!Auth::check())
+        if (!Auth::check()) {
             abort(403, 'Akses ditolak.');
-        if (strpos($path, '..') !== false)
+        }
+
+        if (strpos($path, '..') !== false) {
             abort(400, 'Invalid path.');
+        }
 
-        // 1. Try Laravel Storage Path
-        $fullPath = storage_path('app/dokumen_rahasia/' . $path);
+        $disk = $this->getDisk();
 
-        // 2. Fallback to base_path calculation (for shared hosting quirks)
-        // Previous logs showed app is in: /home/vol10_1/byethost31.com/b31_40607902/htdocs
-        if (!file_exists($fullPath)) {
-            $base = base_path(); // This retrieves the absolute path to the project root
-            $altPath = $base . '/storage/app/dokumen_rahasia/' . $path;
+        // Try multiple path variations for backward compatibility
+        $pathsToTry = [
+            $path,
+            ltrim($path, '/'),
+        ];
 
-            if (file_exists($altPath)) {
-                $fullPath = $altPath;
-            } elseif (str_starts_with($path, 'dokumen/')) {
-                // Legacy double-folder check
-                $legacyPath = $base . '/storage/app/dokumen_rahasia/' . substr($path, 8);
-                if (file_exists($legacyPath))
-                    $fullPath = $legacyPath;
+        // Handle legacy 'dokumen/' prefix
+        if (str_starts_with($path, 'dokumen/')) {
+            $pathsToTry[] = substr($path, 8); // Remove 'dokumen/' prefix
+        }
+
+        $foundPath = null;
+
+        foreach ($pathsToTry as $tryPath) {
+            if (Storage::disk($disk)->exists($tryPath)) {
+                $foundPath = $tryPath;
+                break;
             }
         }
 
-        if (!file_exists($fullPath))
-            abort(404, 'File tidak ditemukan.');
+        // If still not found and we're in production, fall back to local for debugging
+        if (!$foundPath && $disk === 'b2') {
+            // Try local storage as fallback (for files not yet migrated)
+            $localPath = storage_path('app/dokumen_rahasia/' . ltrim($path, '/'));
+            if (file_exists($localPath)) {
+                Log::warning("File found in local storage but not in B2: {$path}");
+                return $this->serveLocalFile($localPath, $path);
+            }
+        }
 
-        $extension = strtolower(pathinfo($fullPath, PATHINFO_EXTENSION));
+        if (!$foundPath) {
+            Log::warning("File not found in any storage: {$path}");
+            abort(404, 'File tidak ditemukan.');
+        }
+
+        // Get file content and serve
+        $content = Storage::disk($disk)->get($foundPath);
+        $extension = strtolower(pathinfo($foundPath, PATHINFO_EXTENSION));
+
         $mimeType = match ($extension) {
             'pdf' => 'application/pdf',
             'webp' => 'image/webp',
             'jpg', 'jpeg' => 'image/jpeg',
             'png' => 'image/png',
-            default => File::mimeType($fullPath) ?? 'application/octet-stream',
+            default => 'application/octet-stream',
+        };
+
+        return response($content, 200, [
+            'Content-Type' => $mimeType,
+            'Content-Disposition' => 'inline; filename="' . basename($foundPath) . '"',
+            'Cache-Control' => 'private, max-age=3600',
+        ]);
+    }
+
+    /**
+     * Serve a local file (fallback for development or unmigrated files)
+     */
+    protected function serveLocalFile(string $fullPath, string $originalPath)
+    {
+        $extension = strtolower(pathinfo($fullPath, PATHINFO_EXTENSION));
+
+        $mimeType = match ($extension) {
+            'pdf' => 'application/pdf',
+            'webp' => 'image/webp',
+            'jpg', 'jpeg' => 'image/jpeg',
+            'png' => 'image/png',
+            default => 'application/octet-stream',
         };
 
         return response()->file($fullPath, [
             'Content-Type' => $mimeType,
-            'Content-Disposition' => 'inline; filename="' . basename($path) . '"',
+            'Content-Disposition' => 'inline; filename="' . basename($originalPath) . '"',
             'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
         ]);
     }
-
-    // migrateFiles and organizeFiles methods removed as cleanup is complete.
 }

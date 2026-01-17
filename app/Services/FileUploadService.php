@@ -4,76 +4,34 @@ namespace App\Services;
 
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * FileUploadService - Handles file upload operations for mutations
  * 
- * Extracted from MutasiController and MutasiMasukController.
- * Provides secure file upload with validation and sanitization.
+ * Now supports both local storage and Backblaze B2 cloud storage.
+ * Uses B2 in production (Vercel), local in development.
  */
 class FileUploadService
 {
     /**
-     * Default upload path relative to public/storage
+     * Get the storage disk to use based on environment
      */
-    protected string $uploadPath = 'dokumen';
-
-    /**
-     * Get the full upload path
-     */
-    public function getUploadPath(): string
+    protected function getDisk(): string
     {
-        // Use PRIVATE storage path (not in public/storage)
-        $fullPath = storage_path('app/dokumen_rahasia');
-
-        // Note: The $uploadPath property itself 'dokumen' is now just used for structure,
-        // but the base root is different. We assume 'dokumen_rahasia' is the root for all uploads.
-
-        // Create directory if not exists
-        if (!file_exists($fullPath)) {
-            mkdir($fullPath, 0755, true);
+        // Use B2 if configured, otherwise fall back to local
+        if (config('filesystems.disks.b2.key') && app()->environment('production')) {
+            return 'b2';
         }
-
-        return $fullPath;
+        return 'private_docs';
     }
 
     /**
-     * Get full path for date-based folder and ensure it exists
+     * Check if we're using cloud storage
      */
-    public function getFullDateBasedPath(string $type = 'keluar'): string
+    protected function isCloudStorage(): bool
     {
-        $subDir = $this->getDateBasedPath($type);
-        $subDir = $this->getDateBasedPath($type);
-        // Relative path logic remains same for DB storage, but physical location changes
-        $relativePath = $this->uploadPath . '/' . $subDir;
-
-        $fullPath = storage_path('app/dokumen_rahasia/' . $subDir);
-
-        // Remove 'dokumen/' redundancy if $uploadPath is 'dokumen' but we store in 'dokumen_rahasia' root directly?
-        // Let's keep structure consistent: storage/app/dokumen_rahasia/mutasi_keluar/2025/...
-        // So we don't need 'dokumen' subfolder inside 'dokumen_rahasia' if we don't want to.
-        // But to minimize changes, let's keep it simple.
-
-        // Actually, let's map:
-        // Public: public/storage/dokumen/mutasi_keluar/...
-        // Private: storage/app/dokumen_rahasia/mutasi_keluar/... (drop 'dokumen' subfolder to be cleaner)
-
-        $fullPath = storage_path('app/dokumen_rahasia/' . $subDir);
-
-        if (!file_exists($fullPath)) {
-            mkdir($fullPath, 0755, true);
-        }
-
-        return $fullPath; // Returns absolute path
-    }
-
-    /**
-     * Get relative path for date-based folder
-     */
-    public function getRelativeDateBasedPath(string $type = 'keluar'): string
-    {
-        $subDir = $this->getDateBasedPath($type);
-        return $this->uploadPath . '/' . $subDir;
+        return $this->getDisk() === 'b2';
     }
 
     /**
@@ -86,31 +44,25 @@ class FileUploadService
 
     /**
      * Delete old file from storage to save space
-     * Used during revision/replacement uploads
-     * 
-     * @param string|null $oldPath Relative path to the old file (as stored in DB)
-     * @return bool True if file was deleted or didn't exist, false on error
      */
     public function deleteOldFile(?string $oldPath): bool
     {
         if (empty($oldPath)) {
-            return true; // No file to delete
+            return true;
         }
 
         try {
-            // Build full path - files are stored in dokumen_rahasia
-            $fullPath = storage_path('app/dokumen_rahasia/' . ltrim($oldPath, '/'));
+            $disk = $this->getDisk();
 
-            if (file_exists($fullPath)) {
-                unlink($fullPath);
-                Log::info("Deleted old file for replacement: {$oldPath}");
-                return true;
+            if (Storage::disk($disk)->exists($oldPath)) {
+                Storage::disk($disk)->delete($oldPath);
+                Log::info("Deleted old file: {$oldPath} from {$disk}");
             }
 
-            return true; // File didn't exist, that's fine
+            return true;
         } catch (\Exception $e) {
             Log::warning("Failed to delete old file: {$oldPath}. Error: " . $e->getMessage());
-            return false; // Continue even if delete fails
+            return false;
         }
     }
 
@@ -118,20 +70,10 @@ class FileUploadService
      * Upload a single PDF file with security validation
      * 
      * @param UploadedFile $file The uploaded file
-     * @param string $prefix Prefix for the filename (usually mutation ID)
-     * @param string $suffix Suffix for the filename (usually field name)
-     * @return string Relative path to the uploaded file
-     * @throws \Exception If file is not a valid PDF
-     */
-    /**
-     * Upload a single PDF file with security validation
-     * 
-     * @param UploadedFile $file The uploaded file
      * @param string $prefix Prefix for the filename
      * @param string $suffix Suffix for the filename
-     * @param string|null $subDir Optional subdirectory (e.g. 'mutasi_keluar/2025/12')
+     * @param string|null $subDir Optional subdirectory
      * @return string Relative path to the uploaded file
-     * @throws \Exception If file is not a valid PDF
      */
     public function uploadPdf(UploadedFile $file, string $prefix, string $suffix, ?string $subDir = null): string
     {
@@ -141,7 +83,7 @@ class FileUploadService
             throw new \Exception('Hanya file PDF yang diperbolehkan.');
         }
 
-        // Validate MIME type for extra security
+        // Validate MIME type
         $mimeType = $file->getMimeType();
         if ($mimeType !== 'application/pdf') {
             throw new \Exception('File harus berformat PDF.');
@@ -152,54 +94,26 @@ class FileUploadService
         $safeSuffix = $this->sanitizeFilename($suffix);
         $filename = "{$safePrefix}_{$safeSuffix}.pdf";
 
-        // Determine target path
-        // Determine target path
-        // $relativePath is what we store in DB. It used to be 'dokumen/mutasi_keluar/...'
-        // We will keep the SAME relative path format in DB to minimize breaking changes?
-        // NO. If we serve via route, we can pass whatever path.
-        // Let's standardise: "mutasi_keluar/2025/12/filename.pdf" (without 'dokumen/' prefix if possible)
-        // BUT current DB has 'dokumen/...' prefix likely.
-        // Let's check `uploadPath` value. It is 'dokumen'.
-
-        // Strategy:
-        // Physical: storage/app/dokumen_rahasia/mutasi_keluar/2025/...
-        // DB link: mutasi_keluar/2025/12/filename.pdf 
-        // (We REMOVE 'dokumen/' prefix from DB to make it cleaner and because we route to 'dokumen_rahasia' root).
-
-        // If we change DB format, we break existing links unless we migrate DB too.
-        // Current DB likely has: "dokumen/mutasi_keluar/..."
-
-        // Let's stick to: Store in `storage/app/dokumen_rahasia/dokumen/...` to match exact structure?
-        // Or better: Just store in `storage/app/dokumen_rahasia/...` and if DB string has `dokumen/`, we strip it or handle it in Controller.
-
-        // Decision: 
-        // Physical: storage/app/dokumen_rahasia/mutasi_keluar/...
-        // DB: mutasi_keluar/2025/12/filename.pdf (Cleaner)
-        // Implementation:
-
+        // Determine storage path
         if ($subDir) {
-            $cleanSubDir = trim($subDir, '/'); // e.g. mutasi_keluar/2025/12
-            $fullDestPath = storage_path('app/dokumen_rahasia/' . $cleanSubDir);
+            $cleanSubDir = trim($subDir, '/');
             $storedPath = $cleanSubDir . '/' . $filename;
         } else {
-            $fullDestPath = storage_path('app/dokumen_rahasia');
             $storedPath = $filename;
         }
 
-        // Create directory if not exists
-        if (!file_exists($fullDestPath)) {
-            mkdir($fullDestPath, 0755, true);
-        }
+        $disk = $this->getDisk();
 
-        // Move file
-        $file->move($fullDestPath, $filename);
+        // Upload to storage
+        Storage::disk($disk)->put($storedPath, file_get_contents($file->getRealPath()));
+
+        Log::info("File uploaded to {$disk}: {$storedPath}");
 
         return $storedPath;
     }
 
     /**
      * Generate date-based subdirectory string
-     * e.g. "mutasi_keluar/2024/01"
      */
     public function getDateBasedPath(string $type = 'keluar'): string
     {
@@ -235,9 +149,6 @@ class FileUploadService
 
     /**
      * Upload multiple PDF files for Mutasi Keluar revision
-     * Revisions should go to the same folder as original ideally, 
-     * but strictly speaking simpler to put in current date folder or same logic.
-     * We will use current date logic for simplicity and organization.
      */
     public function uploadMutasiKeluarRevisionFiles($request, string $idMutasi): array
     {
@@ -321,20 +232,37 @@ class FileUploadService
     /**
      * Upload archive file for completed mutation
      */
-    /**
-     * Upload archive file for completed mutation
-     */
     public function uploadArsip(UploadedFile $file, string $idMutasi, string $type = 'keluar'): string
     {
         $prefix = $type === 'masuk' ? 'ARSIP_MASUK' : 'ARSIP';
         $safeId = str_replace('/', '-', $idMutasi);
 
-        // Change: Store in specific arsip folder based on type
         $year = date('Y');
         $month = date('m');
         $folderName = $type === 'masuk' ? 'arsip_mutasi_masuk' : 'arsip_mutasi_keluar';
         $subDir = "{$folderName}/{$year}/{$month}";
 
         return $this->uploadPdf($file, $prefix, $safeId, $subDir);
+    }
+
+    // Legacy methods kept for backward compatibility
+    public function getUploadPath(): string
+    {
+        return storage_path('app/dokumen_rahasia');
+    }
+
+    public function getFullDateBasedPath(string $type = 'keluar'): string
+    {
+        $subDir = $this->getDateBasedPath($type);
+        $fullPath = storage_path('app/dokumen_rahasia/' . $subDir);
+        if (!file_exists($fullPath)) {
+            mkdir($fullPath, 0755, true);
+        }
+        return $fullPath;
+    }
+
+    public function getRelativeDateBasedPath(string $type = 'keluar'): string
+    {
+        return 'dokumen/' . $this->getDateBasedPath($type);
     }
 }
