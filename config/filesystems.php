@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?php
 
 return [
@@ -30,3 +31,37 @@ return [
         public_path('storage') => storage_path('app/public'),
     ],
 ];
+=======
+<?php
+
+return [
+    'default' => env('FILESYSTEM_DISK', 'local'),
+
+    'disks' => [
+        'local' => [
+            'driver' => 'local',
+            'root' => storage_path('app'),
+            'throw' => false,
+        ],
+
+        'public' => [
+            'driver' => 'local',
+            'root' => storage_path('app/public'),
+            'url' => env('APP_URL') . '/storage',
+            'visibility' => 'public',
+            'throw' => false,
+        ],
+
+        'private_docs' => [
+            'driver' => 'local',
+            'root' => storage_path('app/dokumen_rahasia'), // Store outside public
+            'visibility' => 'private',
+            'throw' => false,
+        ],
+    ],
+
+    'links' => [
+        public_path('storage') => storage_path('app/public'),
+    ],
+];
+>>>>>>> 9466a07 (Upload project pertama kali)

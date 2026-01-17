@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?php
 
 use Illuminate\Database\Migrations\Migration;
@@ -20,3 +21,27 @@ return new class extends Migration {
         Schema::dropIfExists('holidays');
     }
 };
+=======
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration {
+    public function up(): void
+    {
+        Schema::create('holidays', function (Blueprint $table) {
+            $table->id();
+            $table->date('date')->unique();
+            $table->string('description');
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('holidays');
+    }
+};
+>>>>>>> 9466a07 (Upload project pertama kali)
