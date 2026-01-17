@@ -24,6 +24,18 @@ return [
             'visibility' => 'private',
             'throw' => false,
         ],
+
+        // Backblaze B2 for Vercel serverless (cloud storage)
+        'b2' => [
+            'driver' => 's3',
+            'key' => env('B2_ACCESS_KEY_ID'),
+            'secret' => env('B2_SECRET_ACCESS_KEY'),
+            'region' => env('B2_REGION', 'us-west-004'),
+            'bucket' => env('B2_BUCKET'),
+            'endpoint' => env('B2_ENDPOINT'),
+            'use_path_style_endpoint' => true,
+            'throw' => true,
+        ],
     ],
 
     'links' => [
