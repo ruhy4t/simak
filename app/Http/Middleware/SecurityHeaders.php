@@ -28,7 +28,7 @@ class SecurityHeaders
             "script-src 'self' https://cdn.jsdelivr.net 'unsafe-eval' 'unsafe-inline'; " . // unsafe-inline REQUIRED for Alpine.js attributes
             "style-src 'self' 'unsafe-inline' https://fonts.bunny.net https://cdn.jsdelivr.net; " . // unsafe-inline needed for dynamic styles
             "font-src 'self' https://fonts.bunny.net https://cdn.jsdelivr.net; " .
-            "img-src 'self' data: https://api.qrserver.com; " . // Allow QR Server (API FALLBACK)
+            "img-src 'self' data: https://api.qrserver.com https://images.unsplash.com; " . // Allow QR Server and Unsplash
             "connect-src 'self' https://emsifa.github.io; " . // Allow API calls to regions
             "frame-ancestors 'self'; " . // Prevent clickjacking
             "form-action 'self'; " .
