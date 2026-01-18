@@ -38,7 +38,10 @@ class PdfImageHelper
             if ($type == 'jpg')
                 $type = 'jpeg';
 
-            return 'data:image/' . $type . ';base64,' . base64_encode($data);
+            // TEST: Disable image output to confirm if PNG/GD is the blocker
+            return '';
+
+            // return 'data:image/' . $type . ';base64,' . base64_encode($data);
         } catch (\Exception $e) {
             // Log error or just return empty to allow PDF to generate without image
             return '';
