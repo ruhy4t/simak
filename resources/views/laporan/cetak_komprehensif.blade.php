@@ -73,8 +73,6 @@
             {{-- Check for Custom Kop Surat --}}
             @if(!empty($user->sekolah->kop_surat_path) && file_exists(storage_path('app/public/' . $user->sekolah->kop_surat_path)))
                 {{-- Full Breadth Custom Image --}}
-            @if(!empty($user->sekolah->kop_surat_path) && file_exists(storage_path('app/public/' . $user->sekolah->kop_surat_path)))
-                {{-- Full Breadth Custom Image --}}
                 <img src="{{ \App\Helpers\PdfImageHelper::encode($user->sekolah->kop_surat_path, true) }}" 
                      style="width: 100%; max-height: 150px; object-fit: contain;">
                 {{-- Hide bottom border for custom kop as the image usually contains it --}}
