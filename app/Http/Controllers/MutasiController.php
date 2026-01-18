@@ -16,7 +16,6 @@ class MutasiController extends Controller
 
     public function __construct(FileUploadService $fileUploadService)
     {
-        Log::info("DEBUG: MutasiController Constructor Called");
         $this->fileUploadService = $fileUploadService;
     }
 
@@ -395,18 +394,7 @@ class MutasiController extends Controller
 
     public function store(Request $request)
     {
-        // PRIMITIVE DEBUG LOGGING: TOP OF FUNCTION
-        $debugFile = storage_path('logs/debug_trace.log');
-        file_put_contents($debugFile, "\n\n[" . date('Y-m-d H:i:s') . "] METHOD STORE ACCESSED\n", FILE_APPEND);
-        file_put_contents($debugFile, "Content-Length: " . $_SERVER['CONTENT_LENGTH'] . "\n", FILE_APPEND);
-
-        // Check if POST is empty (Sign of post_max_size exceeded)
-        if (empty($_POST) && empty($_FILES) && $_SERVER['CONTENT_LENGTH'] > 0) {
-            file_put_contents($debugFile, "ALERT: Empty POST/FILES detected but Content-Length > 0. Likely post_max_size exceeded!\n", FILE_APPEND);
-        }
-
         $user = Auth::user();
-        file_put_contents($debugFile, "User: " . ($user ? $user->username : 'Guest') . "\n", FILE_APPEND);
 
         $rules = [
             'nama_murid' => 'required|string|max:100', // ...
@@ -522,10 +510,6 @@ class MutasiController extends Controller
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
         }
-
-        // PRIMITIVE DEBUG LOGGING TO CATCH CRASH
-        $debugFile = storage_path('logs/debug_trace.log');
-        file_put_contents($debugFile, "\n\n[" . date('Y-m-d H:i:s') . "] STARTING SUBMISSION\n", FILE_APPEND);
 
         try {
             DB::beginTransaction(); // START TRANSACTION

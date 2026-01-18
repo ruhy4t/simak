@@ -24,18 +24,23 @@ class DailyTasksMiddleware
 {
     public function handle(Request $request, Closure $next)
     {
-        $response = $next($request);
+        return $next($request);
+    }
+
+    /**
+     * Terminate runs after the response has been sent to the browser.
+     * This prevents the user from waiting for these tasks to finish.
+     */
+    public function terminate(Request $request, $response): void
+    {
+        $user = Auth::user();
 
         // Only run for Dinas/SuperAdmin
-        $user = Auth::user();
         if (!$user || !in_array($user->role, ['Dinas', 'SuperAdmin'])) {
-            return $response;
+            return;
         }
 
-        // Check if we should run (non-blocking, after response)
         $this->tryRunDailyTasks($user);
-
-        return $response;
     }
 
     /**
@@ -46,54 +51,69 @@ class DailyTasksMiddleware
         try {
             $today = Carbon::now('Asia/Jakarta')->format('Y-m-d');
             $cacheKey = 'daily_tasks_last_run';
+            $lockKey = 'daily_tasks_execution_lock';
 
-            // Check if already ran today
-            $lastRun = Cache::get($cacheKey);
-            if ($lastRun === $today) {
-                return; // Already ran today
-            }
-
-            // Check if 10 minutes since login
-            $loginTime = session('login_time');
-            if (!$loginTime) {
-                // Store login time if not set
-                session(['login_time' => Carbon::now('Asia/Jakarta')]);
+            // 1. Quick check: Already ran today?
+            if (Cache::get($cacheKey) === $today) {
                 return;
             }
 
-            $minutesSinceLogin = Carbon::parse($loginTime)->diffInMinutes(Carbon::now('Asia/Jakarta'));
-            if ($minutesSinceLogin < 10) {
-                return; // Wait 10 minutes after login
+            // 2. Atomic Lock: Prevent concurrent execution (wait 0s, fail immediately if locked)
+            // Using get() to attempt to acquire lock. 
+            // If another request is running this, we just exit.
+            $lock = Cache::lock($lockKey, 120); // Lock for 120 seconds
+
+            if ($lock->get()) {
+                try {
+                    // Double check inside lock
+                    if (Cache::get($cacheKey) === $today) {
+                        return;
+                    }
+
+                    // Check if 10 minutes since login (minimize session dependency if possible, but reading is fine)
+                    $loginTime = session('login_time');
+                    if (!$loginTime) {
+                        session(['login_time' => Carbon::now('Asia/Jakarta')]);
+                        return;
+                    }
+
+                    $minutesSinceLogin = Carbon::parse($loginTime)->diffInMinutes(Carbon::now('Asia/Jakarta'));
+                    if ($minutesSinceLogin < 10) {
+                        return;
+                    }
+
+                    // Check if working day
+                    $dayOfWeek = Carbon::now('Asia/Jakarta')->dayOfWeek;
+                    $allowedDays = Setting::getAllowedDays();
+                    if (!in_array($dayOfWeek, $allowedDays)) {
+                        Cache::put($cacheKey, $today, now()->addHours(24));
+                        return;
+                    }
+
+                    // Check if holiday
+                    if (Holiday::isHoliday($today)) {
+                        Cache::put($cacheKey, $today, now()->addHours(24));
+                        return;
+                    }
+
+                    // Run the tasks
+                    Log::info("Daily tasks triggered by {$user->username}");
+
+                    // Task 1: Send revision reminders
+                    $this->sendRevisionReminders();
+
+                    // Task 2: Auto-cancel old mutations (30+ days)
+                    $this->autoCancelOldMutations();
+
+                    // Mark as ran today
+                    Cache::put($cacheKey, $today, now()->addHours(24));
+
+                    Log::info("Daily tasks completed successfully");
+
+                } finally {
+                    $lock->release();
+                }
             }
-
-            // Check if working day
-            $dayOfWeek = Carbon::now('Asia/Jakarta')->dayOfWeek;
-            $allowedDays = Setting::getAllowedDays();
-            if (!in_array($dayOfWeek, $allowedDays)) {
-                // Not a working day, but mark as "ran" to prevent repeated checks
-                Cache::put($cacheKey, $today, now()->addHours(24));
-                return;
-            }
-
-            // Check if holiday
-            if (Holiday::isHoliday($today)) {
-                Cache::put($cacheKey, $today, now()->addHours(24));
-                return;
-            }
-
-            // Run the tasks
-            Log::info("Daily tasks triggered by {$user->username}");
-
-            // Task 1: Send revision reminders
-            $this->sendRevisionReminders();
-
-            // Task 2: Auto-cancel old mutations (30+ days)
-            $this->autoCancelOldMutations();
-
-            // Mark as ran today
-            Cache::put($cacheKey, $today, now()->addHours(24));
-
-            Log::info("Daily tasks completed successfully");
 
         } catch (\Exception $e) {
             Log::error("Daily tasks error: " . $e->getMessage());
