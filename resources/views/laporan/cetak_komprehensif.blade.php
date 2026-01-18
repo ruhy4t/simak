@@ -60,8 +60,15 @@
         .ttd-container { width: 100%; text-align: right; margin-top: 30px; }
         .ttd-box { display: inline-block; text-align: center; width: 250px; }
     </style>
+    <script>
+        window.onload = function() {
+            setTimeout(function() {
+                window.print();
+            }, 800);
+        }
+    </script>
 </head>
-<body onload="window.print()">
+<body>
     
     <div class="no-print" style="margin-bottom: 20px; text-align: center;">
         <button onclick="window.print()" style="padding: 10px 20px; background: #0284c7; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">
@@ -87,7 +94,8 @@
             @if(!empty($user->sekolah->kop_surat_path))
                 {{-- Use Storage URL for custom image --}}
                 <img src="{{ \App\Services\FileUploadService::getStorageUrl($user->sekolah->kop_surat_path) }}" 
-                     style="width: 100%; max-height: 150px; object-fit: contain;">
+                     style="width: 100%; max-height: 150px; object-fit: contain;"
+                     onerror="this.style.display='none'">
                 {{-- Hide bottom border for custom kop as the image usually contains it --}}
                 <style>.kop-surat { border-bottom: none !important; }</style>
             @else
