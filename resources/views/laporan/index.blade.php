@@ -10,13 +10,13 @@
             <p class="text-gray-500 mt-1">Pilih jenis laporan yang ingin Anda cetak atau lihat.</p>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
             <!-- LEFT COLUMN: Features List -->
-            <div class="lg:col-span-1 space-y-4">
+            <div class="space-y-4">
 
                 <!-- Card Laporan Rekapitulasi -->
                 <a href="{{ route('laporan.rekap') }}"
-                    class="group block bg-white rounded-xl shadow-sm border border-slate-200 p-5 transition hover:shadow-md hover:border-blue-400">
+                    class="group block bg-white rounded-xl shadow-sm border border-slate-200 p-5 transition hover:shadow-md hover:hover:border-blue-400">
                     <div class="flex items-center gap-4">
                         <div
                             class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition">
@@ -31,7 +31,7 @@
 
                 <!-- Card Grafik Tren Mutasi -->
                 <a href="{{ route('laporan.tren') }}"
-                    class="group block bg-white rounded-xl shadow-sm border border-slate-200 p-5 transition hover:shadow-md hover:border-indigo-400">
+                    class="group block bg-white rounded-xl shadow-sm border border-slate-200 p-5 transition hover:shadow-md hover:hover:border-indigo-400">
                     <div class="flex items-center gap-4">
                         <div
                             class="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition">
@@ -46,7 +46,7 @@
 
                 <!-- Card Laporan Detail (Daftar Nominatif) -->
                 <a href="{{ route('laporan.nominatif') }}"
-                    class="group block bg-white rounded-xl shadow-sm border border-slate-200 p-5 transition hover:shadow-md hover:border-orange-400">
+                    class="group block bg-white rounded-xl shadow-sm border border-slate-200 p-5 transition hover:shadow-md hover:hover:border-orange-400">
                     <div class="flex items-center gap-4">
                         <div
                             class="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center text-orange-600 group-hover:bg-orange-600 group-hover:text-white transition">
@@ -62,7 +62,7 @@
             </div>
 
             <!-- RIGHT COLUMN: Cetak Komprehensif -->
-            <div class="lg:col-span-2">
+            <div>
                 <div
                     class="bg-gradient-to-br from-emerald-500 to-teal-700 rounded-2xl shadow-lg p-8 text-white h-full relative overflow-hidden">
                     <!-- Background Pattern -->
