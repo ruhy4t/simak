@@ -275,3 +275,17 @@ Route::get('/debug-db', function () {
         ], 500);
     }
 });
+
+Route::get('/debug-dashboard-error', function () {
+    try {
+        $controller = new \App\Http\Controllers\DashboardController();
+        return $controller->index();
+    } catch (\Throwable $e) {
+        return response()->view('errors.debug', [
+            'message' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'trace' => $e->getTraceAsString()
+        ]);
+    }
+});
