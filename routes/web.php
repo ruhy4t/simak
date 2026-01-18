@@ -244,33 +244,37 @@ Route::get('/test-simple', function () {
 
 Route::get('/debug-db', function () {
     try {
-        // 1. Check if 'users' table has 'is_active' column
-        $hasColumn = \Illuminate\Support\Facades\Schema::hasColumn('users', 'is_active');
+        // 1. Test Select
+        $testQuery = \Illuminate\Support\Facades\DB::table('users')->count();
 
-        // 2. Try the specific query causing potential crash
-        $testQuery = \Illuminate\Support\Facades\DB::table('users')
-            ->selectRaw("COUNT(*) as total, SUM(CASE WHEN status = 'Aktif' THEN 1 ELSE 0 END) as active_status")
-            ->first();
+        // 2. Test Write (Sessions table check)
+        $sessionTableExists = \Illuminate\Support\Facades\Schema::hasTable('sessions');
+        $writeTest = "Skipped";
 
-        // 3. Try the query WITH is_active
-        $crashTest = "Skipped (Column missing)";
-        if ($hasColumn) {
+        if ($sessionTableExists) {
             try {
-                \Illuminate\Support\Facades\DB::table('users')
-                    ->selectRaw("SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active_col")
-                    ->first();
-                $crashTest = "Success";
+                // Try to insert a dummy session (or just check if we can write to a test table if one exists, but checking session table existence is key)
+                // We won't actually insert to avoid garbage, but we'll check if we CAN.
+                // Instead, let's try to write to 'audit_logs' if it exists, or just return the table existence status.
+                $writeTest = "Session table exists";
             } catch (\Exception $e) {
-                $crashTest = "Failed: " . $e->getMessage();
+                $writeTest = "Failed: " . $e->getMessage();
             }
+        } else {
+            $writeTest = "Session table MISSING";
         }
+
+        // 3. Check AuditLog table
+        $auditTableExists = \Illuminate\Support\Facades\Schema::hasTable('audit_logs');
+
 
         return response()->json([
             'status' => 'Debug Info',
-            'has_is_active_column' => $hasColumn,
-            'simple_query_result' => $testQuery,
-            'is_active_query_test' => $crashTest,
-            'database_name' => \Illuminate\Support\Facades\DB::getDatabaseName(),
+            'db_connection' => \Illuminate\Support\Facades\DB::getDatabaseName(),
+            'users_count' => $testQuery,
+            'session_table' => $sessionTableExists ? 'Exists' : 'MISSING',
+            'audit_logs_table' => $auditTableExists ? 'Exists' : 'MISSING',
+            'env_session_driver' => config('session.driver'),
         ]);
     } catch (\Exception $e) {
         return response()->json([
