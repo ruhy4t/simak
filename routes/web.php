@@ -37,7 +37,7 @@ Route::middleware(['auth', \App\Http\Middleware\EnsurePasswordChanged::class])->
 
     // Dashboard (with daily tasks middleware for auto-reminders and auto-cancel)
     Route::get('/dashboard', [DashboardController::class, 'index'])
-        ->middleware('dailytasks')
+        // ->middleware('dailytasks')
         ->name('dashboard');
 
     // Laporan Routes
