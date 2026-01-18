@@ -587,6 +587,25 @@ class LaporanController extends Controller
             // Penandatangan (Optional, take first available or specific logic)
             $penandatangan = null;
 
+            // Browser Print Version
+            return view('laporan.cetak_komprehensif', compact(
+                'user',
+                'year',
+                'month',
+                'start_date',
+                'end_date',
+                'rekapData',
+                'trendData',
+                'distribusiData',
+                'demografiData',
+                'nominatifMasuk',
+                'nominatifKeluar',
+                'penandatangan',
+                'chartImage'
+            ));
+
+            /*
+            // MPDF / DomPDF Version (Disabled per user request)
             $pdf = Pdf::loadView('laporan.cetak_komprehensif', compact(
                 'user',
                 'year',
@@ -604,6 +623,7 @@ class LaporanController extends Controller
             ))->setPaper('a4', 'landscape');
 
             return $pdf->stream('Laporan_Komprehensif_Mutasi.pdf');
+            */
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',

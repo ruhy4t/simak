@@ -15,6 +15,35 @@ use Illuminate\Support\Facades\Storage;
 class FileUploadService
 {
     /**
+     * Get the public URL for a file
+     * Compatible with local and B2 storage
+     */
+    public static function getStorageUrl($path)
+    {
+        if (empty($path))
+            return '';
+
+        // If absolute URL already (e.g. from B2 or external), return as is
+        if (str_starts_with($path, 'http')) {
+            return $path;
+        }
+
+        // Check if using B2 (Production)
+        if (config('filesystems.disks.b2.key') && app()->environment('production')) {
+            return Storage::disk('b2')->url($path);
+        }
+
+        // Local Fallback (Public Disk)
+        // Ensure path doesn't already have 'storage/' prefix to avoid double
+        $cleanPath = ltrim($path, '/');
+        if (str_starts_with($cleanPath, 'storage/')) {
+            return asset($cleanPath);
+        }
+
+        return asset('storage/' . $cleanPath);
+    }
+
+    /**
      * Get the storage disk to use based on environment
      */
     protected function getDisk(): string

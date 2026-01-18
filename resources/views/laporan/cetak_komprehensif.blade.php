@@ -4,8 +4,12 @@
     <meta charset="UTF-8">
     <title>Laporan Komprehensif Mutasi Siswa</title>
     <style>
-        @page { margin: 1cm; size: landscape; }
-        body { font-family: Arial, sans-serif; font-size: 10pt; }
+        @media print {
+            @page { size: A4 landscape; margin: 10mm; }
+            body { margin: 0; -webkit-print-color-adjust: exact; }
+            .no-print { display: none !important; }
+        }
+        body { font-family: Arial, sans-serif; font-size: 10pt; background: #fff; margin: 0 auto; max-width: 297mm; padding: 10mm; }
         
         /* Header Kop Surat (Exactly as requested) */
         .kop-surat {
@@ -57,12 +61,21 @@
         .ttd-box { display: inline-block; text-align: center; width: 250px; }
     </style>
 </head>
-<body>
+<body onload="window.print()">
+    
+    <div class="no-print" style="margin-bottom: 20px; text-align: center;">
+        <button onclick="window.print()" style="padding: 10px 20px; background: #0284c7; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">
+            Cetak Laporan
+        </button>
+        <button onclick="window.close()" style="padding: 10px 20px; background: #64748b; color: white; border: none; border-radius: 5px; cursor: pointer; margin-left: 10px;">
+            Tutup
+        </button>
+    </div>
 
     {{-- HEADER (Page 1 Only) --}}
     <div class="kop-surat">
         @if(in_array($user->role, ['Dinas', 'SuperAdmin']))
-            <img src="{{ \App\Helpers\PdfImageHelper::encode('images/logo_Kota_Bogor.jpg') }}" class="logo-kop">
+            <img src="{{ asset('images/logo_Kota_Bogor.png') }}" class="logo-kop">
             <div class="kop-text">
                 <h1>PEMERINTAH KOTA BOGOR</h1>
                 <h2>DINAS PENDIDIKAN</h2>
@@ -71,9 +84,9 @@
             </div>
         @else
             {{-- Check for Custom Kop Surat --}}
-            @if(!empty($user->sekolah->kop_surat_path) && file_exists(storage_path('app/public/' . $user->sekolah->kop_surat_path)))
-                {{-- Full Breadth Custom Image --}}
-                <img src="{{ \App\Helpers\PdfImageHelper::encode($user->sekolah->kop_surat_path, true) }}" 
+            @if(!empty($user->sekolah->kop_surat_path))
+                {{-- Use Storage URL for custom image --}}
+                <img src="{{ \App\Services\FileUploadService::getStorageUrl($user->sekolah->kop_surat_path) }}" 
                      style="width: 100%; max-height: 150px; object-fit: contain;">
                 {{-- Hide bottom border for custom kop as the image usually contains it --}}
                 <style>.kop-surat { border-bottom: none !important; }</style>
@@ -87,7 +100,7 @@
                     </div>
                 @else
                     <!-- KOP NEGERI: Standar Dinas -->
-                    <img src="{{ \App\Helpers\PdfImageHelper::encode('images/logo_Kota_Bogor.jpg') }}" class="logo-kop">
+                    <img src="{{ asset('images/logo_Kota_Bogor.png') }}" class="logo-kop">
                     <div class="kop-text">
                         <h1>PEMERINTAH KOTA BOGOR</h1>
                         <h2>DINAS PENDIDIKAN</h2>
