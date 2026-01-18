@@ -238,6 +238,10 @@ Route::middleware('auth')->group(function () {
 });
 
 // DEBUG ROUTE (Temporary)
+Route::get('/test-simple', function () {
+    return 'OK - System is running';
+});
+
 Route::get('/debug-db', function () {
     try {
         // 1. Check if 'users' table has 'is_active' column
