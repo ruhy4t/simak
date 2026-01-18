@@ -139,7 +139,7 @@ class DashboardController extends Controller
                     ->where('role', 'Operator')
                     ->selectRaw("
                         COUNT(*) as total,
-                        SUM(CASE WHEN status = 'Aktif' OR is_active = 1 THEN 1 ELSE 0 END) as active
+                        SUM(CASE WHEN status = 'Aktif' THEN 1 ELSE 0 END) as active
                     ")->first();
 
                 $total = (int) $stats->total;
@@ -168,9 +168,9 @@ class DashboardController extends Controller
                     ->whereIn('role', ['Sekolah', 'Operator'])
                     ->selectRaw("
                         SUM(CASE WHEN role = 'Sekolah' THEN 1 ELSE 0 END) as sekolah_total,
-                        SUM(CASE WHEN role = 'Sekolah' AND (status = 'Aktif' OR is_active = 1) THEN 1 ELSE 0 END) as sekolah_active,
+                        SUM(CASE WHEN role = 'Sekolah' AND status = 'Aktif' THEN 1 ELSE 0 END) as sekolah_active,
                         SUM(CASE WHEN role = 'Operator' THEN 1 ELSE 0 END) as operator_total,
-                        SUM(CASE WHEN role = 'Operator' AND (status = 'Aktif' OR is_active = 1) THEN 1 ELSE 0 END) as operator_active
+                        SUM(CASE WHEN role = 'Operator' AND status = 'Aktif' THEN 1 ELSE 0 END) as operator_active
                     ")->first();
 
                 $sekolahTotal = (int) $stats->sekolah_total;
