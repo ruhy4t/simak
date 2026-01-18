@@ -550,59 +550,69 @@ class LaporanController extends Controller
      */
     public function printKomprehensif(Request $request)
     {
-        $user = Auth::user();
-        // Default to current year if no input, or use date range if provided
-        $year = $request->input('year', date('Y'));
-        $month = $request->input('month'); // Optional
+        try {
+            $user = Auth::user();
+            // Default to current year if no input, or use date range if provided
+            $year = $request->input('year', date('Y'));
+            $month = $request->input('month'); // Optional
 
-        if ($month) {
-            $start_date = \Carbon\Carbon::create($year, $month, 1)->startOfMonth()->format('Y-m-d');
-            $end_date = \Carbon\Carbon::create($year, $month, 1)->endOfMonth()->format('Y-m-d');
-        } else {
-            $start_date = \Carbon\Carbon::create($year, 1, 1)->startOfYear()->format('Y-m-d');
-            $end_date = \Carbon\Carbon::create($year, 12, 31)->endOfYear()->format('Y-m-d');
+            if ($month) {
+                $start_date = \Carbon\Carbon::create($year, $month, 1)->startOfMonth()->format('Y-m-d');
+                $end_date = \Carbon\Carbon::create($year, $month, 1)->endOfMonth()->format('Y-m-d');
+            } else {
+                $start_date = \Carbon\Carbon::create($year, 1, 1)->startOfYear()->format('Y-m-d');
+                $end_date = \Carbon\Carbon::create($year, 12, 31)->endOfYear()->format('Y-m-d');
+            }
+
+            // 1. Rekap Data
+            $rekapData = $this->getRekapData($start_date, $end_date, $user);
+
+            // 2. Trend Data (Reuse existing logic)
+            $trendData = $this->getTrendData($year, $month, $user);
+
+            // 3. Distribusi Data (New)
+            $distribusiData = $this->getDistribusiData($start_date, $end_date, $user);
+
+            // 4. Demografi Data (New)
+            $demografiData = $this->getDemografiData($start_date, $end_date, $user);
+
+            // 5. Nominatif Data (Reuse existing logic)
+            $nominatifMasuk = $this->getNominatifData($start_date, $end_date, 'masuk', $user);
+            $nominatifKeluar = $this->getNominatifData($start_date, $end_date, 'keluar', $user);
+
+            // --- Chart Generation ---
+            // Chart generation removed as per request
+            $chartImage = null;
+
+            // Penandatangan (Optional, take first available or specific logic)
+            $penandatangan = null;
+
+            $pdf = Pdf::loadView('laporan.cetak_komprehensif', compact(
+                'user',
+                'year',
+                'month',
+                'start_date',
+                'end_date',
+                'rekapData',
+                'trendData',
+                'distribusiData',
+                'demografiData',
+                'nominatifMasuk',
+                'nominatifKeluar',
+                'penandatangan',
+                'chartImage'
+            ))->setPaper('a4', 'landscape');
+
+            return $pdf->stream('Laporan_Komprehensif_Mutasi.pdf');
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ], 500);
         }
-
-        // 1. Rekap Data
-        $rekapData = $this->getRekapData($start_date, $end_date, $user);
-
-        // 2. Trend Data (Reuse existing logic)
-        $trendData = $this->getTrendData($year, $month, $user);
-
-        // 3. Distribusi Data (New)
-        $distribusiData = $this->getDistribusiData($start_date, $end_date, $user);
-
-        // 4. Demografi Data (New)
-        $demografiData = $this->getDemografiData($start_date, $end_date, $user);
-
-        // 5. Nominatif Data (Reuse existing logic)
-        $nominatifMasuk = $this->getNominatifData($start_date, $end_date, 'masuk', $user);
-        $nominatifKeluar = $this->getNominatifData($start_date, $end_date, 'keluar', $user);
-
-        // --- Chart Generation ---
-        // Chart generation removed as per request
-        $chartImage = null;
-
-        // Penandatangan (Optional, take first available or specific logic)
-        $penandatangan = null;
-
-        $pdf = Pdf::loadView('laporan.cetak_komprehensif', compact(
-            'user',
-            'year',
-            'month',
-            'start_date',
-            'end_date',
-            'rekapData',
-            'trendData',
-            'distribusiData',
-            'demografiData',
-            'nominatifMasuk',
-            'nominatifKeluar',
-            'penandatangan',
-            'chartImage'
-        ))->setPaper('a4', 'landscape');
-
-        return $pdf->stream('Laporan_Komprehensif_Mutasi.pdf');
     }
 
     private function getDistribusiData($start, $end, $user)
