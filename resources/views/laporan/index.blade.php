@@ -10,51 +10,53 @@
             <p class="text-gray-500 mt-1">Pilih jenis laporan yang ingin Anda cetak atau lihat.</p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
             <!-- LEFT COLUMN: Features List -->
-            <div class="space-y-4">
+            {{-- increased space-y and padding to match height --}}
+            <div class="flex flex-col justify-between h-full gap-6">
 
                 <!-- Card Laporan Rekapitulasi -->
+                {{-- Added flex-1 to distribute height --}}
                 <a href="{{ route('laporan.rekap') }}"
-                    class="group block bg-white rounded-xl shadow-sm border border-slate-200 p-5 transition hover:shadow-md hover:hover:border-blue-400">
-                    <div class="flex items-center gap-4">
+                    class="group flex flex-1 items-center bg-white rounded-2xl shadow-sm border border-slate-200 p-8 transition hover:shadow-md hover:border-blue-400">
+                    <div class="flex items-center gap-6">
                         <div
-                            class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition">
-                            <i class="bi bi-bar-chart-line text-2xl"></i>
+                            class="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition">
+                            <i class="bi bi-bar-chart-line text-3xl"></i>
                         </div>
                         <div>
-                            <h3 class="font-bold text-slate-800 group-hover:text-blue-700">Rekapitulasi</h3>
-                            <p class="text-slate-500 text-xs mt-0.5">Ringkasan statistik mutasi.</p>
+                            <h3 class="text-xl font-bold text-slate-800 group-hover:text-blue-700">Rekapitulasi</h3>
+                            <p class="text-slate-500 text-sm mt-1">Ringkasan statistik mutasi masuk & keluar.</p>
                         </div>
                     </div>
                 </a>
 
                 <!-- Card Grafik Tren Mutasi -->
                 <a href="{{ route('laporan.tren') }}"
-                    class="group block bg-white rounded-xl shadow-sm border border-slate-200 p-5 transition hover:shadow-md hover:hover:border-indigo-400">
-                    <div class="flex items-center gap-4">
+                    class="group flex flex-1 items-center bg-white rounded-2xl shadow-sm border border-slate-200 p-8 transition hover:shadow-md hover:border-indigo-400">
+                    <div class="flex items-center gap-6">
                         <div
-                            class="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition">
-                            <i class="bi bi-graph-up text-2xl"></i>
+                            class="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition">
+                            <i class="bi bi-graph-up text-3xl"></i>
                         </div>
                         <div>
-                            <h3 class="font-bold text-slate-800 group-hover:text-indigo-700">Tren Mutasi</h3>
-                            <p class="text-slate-500 text-xs mt-0.5">Visualisasi tren harian/bulanan.</p>
+                            <h3 class="text-xl font-bold text-slate-800 group-hover:text-indigo-700">Tren Mutasi</h3>
+                            <p class="text-slate-500 text-sm mt-1">Visualisasi tren data harian & bulanan.</p>
                         </div>
                     </div>
                 </a>
 
                 <!-- Card Laporan Detail (Daftar Nominatif) -->
                 <a href="{{ route('laporan.nominatif') }}"
-                    class="group block bg-white rounded-xl shadow-sm border border-slate-200 p-5 transition hover:shadow-md hover:hover:border-orange-400">
-                    <div class="flex items-center gap-4">
+                    class="group flex flex-1 items-center bg-white rounded-2xl shadow-sm border border-slate-200 p-8 transition hover:shadow-md hover:border-orange-400">
+                    <div class="flex items-center gap-6">
                         <div
-                            class="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center text-orange-600 group-hover:bg-orange-600 group-hover:text-white transition">
-                            <i class="bi bi-table text-2xl"></i>
+                            class="w-16 h-16 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-600 group-hover:bg-orange-600 group-hover:text-white transition">
+                            <i class="bi bi-table text-3xl"></i>
                         </div>
                         <div>
-                            <h3 class="font-bold text-slate-800 group-hover:text-orange-700">Daftar Nominatif</h3>
-                            <p class="text-slate-500 text-xs mt-0.5">Detail siswa by NISN.</p>
+                            <h3 class="text-xl font-bold text-slate-800 group-hover:text-orange-700">Daftar Nominatif</h3>
+                            <p class="text-slate-500 text-sm mt-1">Detail data siswa by NISN.</p>
                         </div>
                     </div>
                 </a>
@@ -62,38 +64,37 @@
             </div>
 
             <!-- RIGHT COLUMN: Cetak Komprehensif -->
-            <div>
+            <div class="h-full">
                 <div
-                    class="bg-gradient-to-br from-emerald-500 to-teal-700 rounded-2xl shadow-lg p-8 text-white h-full relative overflow-hidden">
+                    class="bg-gradient-to-br from-emerald-600 to-teal-800 rounded-3xl shadow-xl p-8 text-white h-full relative overflow-hidden flex flex-col justify-center">
                     <!-- Background Pattern -->
                     <div class="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
                         <i class="bi bi-printer-fill text-9xl"></i>
                     </div>
 
-                    <div class="relative z-10">
-                        <div class="flex items-center gap-4 mb-6">
-                            <div class="p-3 bg-white/20 rounded-xl backdrop-blur-md shadow-inner">
-                                <i class="bi bi-printer-fill text-3xl text-white"></i>
+                    <div class="relative z-10 space-y-8">
+                        <div class="flex items-start gap-5">
+                            <div class="p-4 bg-white/20 rounded-2xl backdrop-blur-md shadow-inner">
+                                <i class="bi bi-printer-fill text-4xl text-white"></i>
                             </div>
                             <div>
-                                <h2 class="text-2xl font-bold">Cetak Laporan Lengkap</h2>
-                                <p class="text-emerald-100 text-sm">Download arsip lengkap PDF (Rekap, Grafik, Nominatif)
-                                    dalam satu dokumen.</p>
+                                <h2 class="text-3xl font-extrabold text-white tracking-tight">Cetak Laporan Lengkap</h2>
+                                <p class="text-white/90 text-base mt-2 leading-relaxed font-medium">Download arsip lengkap
+                                    PDF (Rekap, Grafik, Nominatif) dalam satu dokumen.</p>
                             </div>
                         </div>
 
-                        <div class="bg-white/10 rounded-2xl p-6 backdrop-blur-md border border-white/20">
+                        <div class="bg-white/10 rounded-2xl p-8 backdrop-blur-md border border-white/30 shadow-lg">
                             <form action="{{ route('laporan.cetak-komprehensif') }}" method="GET" target="_blank"
-                                class="space-y-5">
+                                class="space-y-6">
 
                                 <div>
-                                    <label
-                                        class="block text-xs font-bold uppercase tracking-wider text-emerald-100 mb-2">Pilih
+                                    <label class="block text-sm font-bold uppercase tracking-wider text-white/90 mb-3">Pilih
                                         Periode Laporan</label>
-                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                         <select name="month"
-                                            class="sm:col-span-2 bg-white text-slate-800 font-medium rounded-xl border-0 focus:ring-4 focus:ring-emerald-500/30 py-3">
-                                            <option value="">Setahun Penuh (Januari - Desember)</option>
+                                            class="sm:col-span-2 bg-white text-slate-900 font-bold text-lg rounded-xl border-0 focus:ring-4 focus:ring-emerald-400 py-3.5 px-4 cursor-pointer hover:bg-slate-50 transition">
+                                            <option value="">Setahun Penuh</option>
                                             @for($m = 1; $m <= 12; $m++)
                                                 <option value="{{ $m }}" {{ date('n') == $m ? 'selected' : '' }}>
                                                     {{ \Carbon\Carbon::createFromDate(null, $m)->translatedFormat('F') }}
@@ -101,7 +102,7 @@
                                             @endfor
                                         </select>
                                         <select name="year"
-                                            class="bg-white text-slate-800 font-medium rounded-xl border-0 focus:ring-4 focus:ring-emerald-500/30 py-3">
+                                            class="bg-white text-slate-900 font-bold text-lg rounded-xl border-0 focus:ring-4 focus:ring-emerald-400 py-3.5 px-4 cursor-pointer hover:bg-slate-50 transition">
                                             @for($y = date('Y'); $y >= 2020; $y--)
                                                 <option value="{{ $y }}">{{ $y }}</option>
                                             @endfor
@@ -110,8 +111,9 @@
                                 </div>
 
                                 <button type="submit"
-                                    class="w-full py-3.5 bg-white text-emerald-700 font-bold text-lg rounded-xl shadow-lg shadow-black/10 hover:bg-emerald-50 hover:scale-[1.01] active:scale-[0.98] transition-all flex items-center justify-center gap-2 group">
-                                    <i class="bi bi-printer group-hover:rotate-12 transition-transform duration-300"></i>
+                                    class="w-full py-4 bg-white text-emerald-800 font-extrabold text-xl rounded-xl shadow-xl hover:bg-emerald-50 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3 group">
+                                    <i
+                                        class="bi bi-printer group-hover:rotate-12 transition-transform duration-300 text-2xl"></i>
                                     <span>Cetak Laporan Sekarang</span>
                                 </button>
                             </form>
