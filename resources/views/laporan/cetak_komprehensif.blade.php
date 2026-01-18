@@ -62,7 +62,7 @@
     {{-- HEADER (Page 1 Only) --}}
     <div class="kop-surat">
         @if(in_array($user->role, ['Dinas', 'SuperAdmin']))
-            <img src="{{ \App\Helpers\PdfImageHelper::encode('images/logo_Kota_Bogor.png') }}" class="logo-kop">
+            <img src="{{ \App\Helpers\PdfImageHelper::encode('images/logo_Kota_Bogor.jpg') }}" class="logo-kop">
             <div class="kop-text">
                 <h1>PEMERINTAH KOTA BOGOR</h1>
                 <h2>DINAS PENDIDIKAN</h2>
@@ -87,7 +87,7 @@
                     </div>
                 @else
                     <!-- KOP NEGERI: Standar Dinas -->
-                    <img src="{{ \App\Helpers\PdfImageHelper::encode('images/logo_Kota_Bogor.png') }}" class="logo-kop">
+                    <img src="{{ \App\Helpers\PdfImageHelper::encode('images/logo_Kota_Bogor.jpg') }}" class="logo-kop">
                     <div class="kop-text">
                         <h1>PEMERINTAH KOTA BOGOR</h1>
                         <h2>DINAS PENDIDIKAN</h2>
