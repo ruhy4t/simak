@@ -41,10 +41,17 @@ Route::middleware(['auth', \App\Http\Middleware\EnsurePasswordChanged::class])->
         ->name('dashboard');
 
     // Laporan Routes
+    // Laporan Routes
     Route::prefix('laporan')->name('laporan.')->group(function () {
         Route::get('/', [LaporanController::class, 'index'])->name('index');
         Route::get('/rekap', [LaporanController::class, 'rekap'])->name('rekap');
         Route::get('/rekap/print', [LaporanController::class, 'printRekap'])->name('rekap.print');
+        Route::get('/rekap/excel', [LaporanController::class, 'exportRekapExcel'])->name('rekap.excel');
+        Route::get('/tren', [LaporanController::class, 'tren'])->name('tren');
+        Route::get('/komprehensif/print', [LaporanController::class, 'printKomprehensif'])->name('cetak-komprehensif');
+        Route::get('/nominatif', [LaporanController::class, 'nominatif'])->name('nominatif');
+        Route::get('/nominatif/print', [LaporanController::class, 'printNominatif'])->name('nominatif.print');
+        Route::get('/nominatif/excel', [LaporanController::class, 'exportNominatifExcel'])->name('nominatif.excel');
     });
 
     // --- Rute Sementara untuk Cek Server & Maintenance (Tanpa SSH) ---
@@ -79,6 +86,12 @@ Route::middleware(['auth', \App\Http\Middleware\EnsurePasswordChanged::class])->
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::put('/profile/password', [ProfileController::class, 'changePassword'])->name('profile.password');
+
+    // School Profile (For Sekolah/Operator)
+    Route::prefix('sekolah')->name('sekolah.')->group(function () {
+        Route::get('/profil', [SatuanPendidikanController::class, 'editProfile'])->name('profile');
+        Route::put('/profil', [SatuanPendidikanController::class, 'updateProfile'])->name('profile.update');
+    });
 
     // Mutasi Keluar
     Route::prefix('mutasi-keluar')->name('mutasi.keluar.')->group(function () {
@@ -162,18 +175,7 @@ Route::middleware(['auth', \App\Http\Middleware\EnsurePasswordChanged::class])->
         Route::post('penandatangan/{id}/toggle', [App\Http\Controllers\PenandatanganController::class, 'toggleStatus'])->name('penandatangan.toggle');
         Route::put('/penandatangan/{id}', [PenandatanganController::class, 'update'])->name('penandatangan.update');
 
-        // Laporan (Reports)
-        Route::prefix('laporan')->name('laporan.')->group(function () {
-            Route::get('/', [LaporanController::class, 'index'])->name('index');
-            Route::get('/rekap', [LaporanController::class, 'rekap'])->name('rekap');
-            Route::get('/rekap/print', [LaporanController::class, 'printRekap'])->name('rekap.print');
-            Route::get('/rekap/excel', [LaporanController::class, 'exportRekapExcel'])->name('rekap.excel');
-            Route::get('/tren', [LaporanController::class, 'tren'])->name('tren');
-            Route::get('/komprehensif/print', [LaporanController::class, 'printKomprehensif'])->name('cetak-komprehensif');
-            Route::get('/nominatif', [LaporanController::class, 'nominatif'])->name('nominatif');
-            Route::get('/nominatif/print', [LaporanController::class, 'printNominatif'])->name('nominatif.print');
-            Route::get('/nominatif/excel', [LaporanController::class, 'exportNominatifExcel'])->name('nominatif.excel');
-        });
+
 
         // Manajemen Wilayah (Regional Data)
         Route::get('/admin/wilayah', [\App\Http\Controllers\RegionController::class, 'index'])->name('admin.regions.index');

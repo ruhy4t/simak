@@ -71,7 +71,7 @@
 <body>
     <div class="header">
         <h1>DAFTAR NOMINATIF MUTASI {{ strtoupper($type) }} SISWA</h1>
-        @if($user->role !== 'Sekolah')
+        @if(!in_array($user->role, ['Sekolah', 'Operator']))
             <h2>DINAS PENDIDIKAN KOTA</h2>
         @else
             <h2>{{ $user->sekolah->nama ?? 'SEKOLAH' }}</h2>
@@ -83,7 +83,8 @@
             <tr>
                 <td width="150"><strong>Periode Laporan</strong></td>
                 <td>: {{ \Carbon\Carbon::parse($start_date)->translatedFormat('j F Y') }} -
-                    {{ \Carbon\Carbon::parse($end_date)->translatedFormat('j F Y') }}</td>
+                    {{ \Carbon\Carbon::parse($end_date)->translatedFormat('j F Y') }}
+                </td>
             </tr>
             <tr>
                 <td><strong>Jenis Mutasi</strong></td>
@@ -132,4 +133,5 @@
         <p>Dicetak oleh: {{ $user->nama_pengguna ?? $user->username }}</p>
     </div>
 </body>
+
 </html>

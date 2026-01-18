@@ -26,6 +26,12 @@ class SatuanPendidikan extends Model
         'provinsi',
         'alamat_lengkap',
         'is_local',
+        'kop_surat_path',
+        'kepala_sekolah_nama',
+        'kepala_sekolah_nip',
+        'jumlah_siswa_awal_7',
+        'jumlah_siswa_awal_8',
+        'jumlah_siswa_awal_9',
     ];
 
     protected $casts = [

@@ -245,7 +245,7 @@
                     </div>
 
                     <!-- Admin Menus -->
-                    @if(in_array(Auth::user()->role, ['Dinas', 'SuperAdmin', 'Sekolah']))
+                    @if(in_array(Auth::user()->role, ['Dinas', 'SuperAdmin', 'Sekolah', 'Operator']))
                         <div class="pt-6 pb-2 px-4 text-[10px] uppercase tracking-wider text-slate-500 font-bold">
                             Administrasi
                         </div>
@@ -257,6 +257,15 @@
                             <i
                                 class="bi bi-people-fill text-lg {{ request()->routeIs('users.manage') ? 'text-white' : 'text-slate-500 group-hover:text-white' }}"></i>
                             <span class="text-sm">Kelola Pengguna</span>
+                        </a>
+                    @endif
+
+                    @if(in_array(Auth::user()->role, ['Sekolah', 'Operator']))
+                        <a href="{{ route('sekolah.profile') }}"
+                            class="flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-200 group {{ request()->routeIs('sekolah.profile') ? 'nav-item-active font-medium' : 'nav-item-inactive' }}">
+                            <i
+                                class="bi bi-building-gear text-lg {{ request()->routeIs('sekolah.profile') ? 'text-white' : 'text-slate-500 group-hover:text-white' }}"></i>
+                            <span class="text-sm">Profil Sekolah</span>
                         </a>
                     @endif
 
@@ -477,7 +486,7 @@
                             </div>
                         </div>
 
-                        @if(in_array(Auth::user()->role, ['Dinas', 'SuperAdmin', 'Sekolah']))
+                        @if(in_array(Auth::user()->role, ['Dinas', 'SuperAdmin', 'Sekolah', 'Operator']))
                             <div class="pt-6 pb-2 px-4 text-[10px] uppercase tracking-wider text-slate-500 font-bold">
                                 Administrasi
                             </div>
@@ -487,6 +496,13 @@
                             <a href="{{ route('users.manage') }}"
                                 class="flex items-center gap-3 px-4 py-3 rounded-xl {{ request()->routeIs('users.manage') ? 'nav-item-active' : 'nav-item-inactive' }}">
                                 <i class="bi bi-people-fill"></i> <span>Kelola Pengguna</span>
+                            </a>
+                        @endif
+
+                        @if(in_array(Auth::user()->role, ['Sekolah', 'Operator']))
+                            <a href="{{ route('sekolah.profile') }}"
+                                class="flex items-center gap-3 px-4 py-3 rounded-xl {{ request()->routeIs('sekolah.profile') ? 'nav-item-active' : 'nav-item-inactive' }}">
+                                <i class="bi bi-building-gear"></i> <span>Profil Sekolah</span>
                             </a>
                         @endif
 

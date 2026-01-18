@@ -6,6 +6,8 @@ use App\Models\SatuanPendidikan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 
 class SatuanPendidikanController extends Controller
 {
@@ -522,6 +524,87 @@ class SatuanPendidikanController extends Controller
                 ->with('success', "Satuan Pendidikan {$request->nama} berhasil diperbarui");
         } catch (\Exception $e) {
             return back()->with('error', 'Gagal memperbarui data: ' . $e->getMessage())->withInput();
+        }
+    }
+    /**
+     * Edit School Profile (For Sekolah/Operator Role)
+     */
+    public function editProfile()
+    {
+        $user = Auth::user();
+
+        // Ensure only Sekolah/Operator can access
+        if (!in_array($user->role, ['Sekolah', 'Operator'])) {
+            abort(403, 'Unauthorized. Only Sekolah/Operator can edit profile.');
+        }
+
+        if (!$user->sekolah) {
+            abort(404, 'Data sekolah tidak ditemukan untuk akun ini.');
+        }
+
+        return view('satpen.profile', [
+            'satpen' => $user->sekolah
+        ]);
+    }
+
+    /**
+     * Update School Profile (Kop Surat & Principal Info)
+     */
+    public function updateProfile(Request $request)
+    {
+        $user = Auth::user();
+
+        if (!in_array($user->role, ['Sekolah', 'Operator'])) {
+            abort(403);
+        }
+
+        $satpen = $user->sekolah;
+
+        if (!$satpen) {
+            abort(404);
+        }
+
+        $request->validate([
+            'kop_surat' => 'nullable|image|mimes:png,jpg,jpeg|max:2048', // Max 2MB
+            'kepala_sekolah_nama' => 'nullable|string|max:150',
+            'kepala_sekolah_nip' => 'nullable|string|max:50',
+            'jumlah_siswa_awal_7' => 'nullable|integer|min:0',
+            'jumlah_siswa_awal_8' => 'nullable|integer|min:0',
+            'jumlah_siswa_awal_9' => 'nullable|integer|min:0',
+        ]);
+
+        try {
+            $updateData = [
+                'kepala_sekolah_nama' => $request->kepala_sekolah_nama,
+                'kepala_sekolah_nip' => $request->kepala_sekolah_nip,
+                'jumlah_siswa_awal_7' => $request->jumlah_siswa_awal_7 ?? 0,
+                'jumlah_siswa_awal_8' => $request->jumlah_siswa_awal_8 ?? 0,
+                'jumlah_siswa_awal_9' => $request->jumlah_siswa_awal_9 ?? 0,
+                'updated_at' => now(),
+            ];
+
+            // Handle File Upload
+            if ($request->hasFile('kop_surat')) {
+                // Delete old file if exists
+                if ($satpen->kop_surat_path && Storage::disk('public')->exists($satpen->kop_surat_path)) {
+                    Storage::disk('public')->delete($satpen->kop_surat_path);
+                }
+
+                // Upload new file
+                // Store in public/uploads/kop_surat
+                $path = $request->file('kop_surat')->store('uploads/kop_surat', 'public');
+                $updateData['kop_surat_path'] = $path;
+            }
+
+            // Update Database using Eloquent or DB
+            // Using DB directly to be consistent with other methods in this controller
+            \DB::table('satuan_pendidikan')->where('id', $satpen->id)->update($updateData);
+
+            return back()->with('success', 'Profil sekolah berhasil diperbarui.');
+
+        } catch (\Exception $e) {
+            \Log::error('Update Profile Failed: ' . $e->getMessage());
+            return back()->with('error', 'Gagal memperbarui profil: ' . $e->getMessage());
         }
     }
 }

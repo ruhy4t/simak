@@ -67,7 +67,7 @@
                         <!-- First Header Row - Grouped -->
                         <tr class="border-b">
                             <th rowspan="2" class="px-4 py-2 w-12 text-center border-r">No</th>
-                            @if(Auth::user()->role === 'Sekolah')
+                            @if(in_array(Auth::user()->role, ['Sekolah', 'Operator']))
                                 <th rowspan="2" class="px-4 py-2 border-r">Periode</th>
                             @else
                                 <th rowspan="2" class="px-4 py-2 border-r">Nama Sekolah</th>
@@ -97,7 +97,7 @@
                         @forelse($data as $index => $item)
                             <tr class="hover:bg-gray-50">
                                 <td class="px-4 py-3 text-center text-gray-500 border-r">{{ $index + 1 }}</td>
-                                @if(Auth::user()->role === 'Sekolah')
+                                @if(in_array(Auth::user()->role, ['Sekolah', 'Operator']))
                                     <td class="px-4 py-3 font-medium text-gray-900 border-r">{{ $item['periode'] }}</td>
                                 @else
                                     <td class="px-4 py-3 font-medium text-gray-900 border-r text-xs">{{ $item['nama_sekolah'] }}
@@ -149,4 +149,4 @@
                 </table>
             </div>
         </div>
-    </div>@endsection
+</div>@endsection

@@ -55,82 +55,56 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <!-- Card Laporan Rekapitulasi -->
             <a href="{{ route('laporan.rekap') }}"
-                class="group relative bg-white rounded-xl shadow-sm border p-6 overflow-hidden transition hover:shadow-md hover:border-blue-300">
-                <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition">
-                    <i class="bi bi-bar-chart-fill text-9xl text-blue-600"></i>
-                </div>
-
-                <div class="relative z-10 flex flex-col h-full">
+                class="group relative bg-white rounded-lg shadow-sm border border-slate-200 p-4 transition hover:shadow-md hover:border-blue-400">
+                <div class="flex items-start gap-4">
                     <div
-                        class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4 text-blue-600 group-hover:scale-110 transition">
-                        <i class="bi bi-bar-chart-line text-2xl"></i>
+                        class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition">
+                        <i class="bi bi-bar-chart-line text-xl"></i>
                     </div>
-
-                    <h3 class="text-lg font-bold text-gray-900 mb-2">Laporan Rekapitulasi</h3>
-                    <p class="text-gray-500 text-sm mb-6 flex-1">
-                        Ringkasan statistik jumlah mutasi masuk dan keluar.
-                        @if(Auth::user()->role === 'Dinas' || Auth::user()->role === 'SuperAdmin')
-                            Dilengkapi dengan data per sekolah.
-                        @else
-                            Dilengkapi dengan data per bulan.
-                        @endif
-                    </p>
-
-                    <div class="flex items-center text-blue-600 font-medium text-sm group-hover:translate-x-1 transition">
-                        Buka Laporan <i class="bi bi-arrow-right ml-2"></i>
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-sm mb-1 group-hover:text-blue-700">Rekapitulasi</h3>
+                        <p class="text-slate-500 text-xs leading-relaxed">
+                            Ringkasan statistik mutasi masuk & keluar.
+                        </p>
                     </div>
                 </div>
             </a>
 
             <!-- Card Grafik Tren Mutasi -->
             <a href="{{ route('laporan.tren') }}"
-                class="group relative bg-white rounded-xl shadow-sm border p-6 overflow-hidden transition hover:shadow-md hover:border-indigo-300">
-                <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition">
-                    <i class="bi bi-graph-up-arrow text-9xl text-indigo-600"></i>
-                </div>
-
-                <div class="relative z-10 flex flex-col h-full">
+                class="group relative bg-white rounded-lg shadow-sm border border-slate-200 p-4 transition hover:shadow-md hover:border-indigo-400">
+                <div class="flex items-start gap-4">
                     <div
-                        class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mb-4 text-indigo-600 group-hover:scale-110 transition">
-                        <i class="bi bi-pie-chart text-2xl"></i>
+                        class="w-10 h-10 bg-indigo-50 rounded-lg flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition">
+                        <i class="bi bi-graph-up text-xl"></i>
                     </div>
-
-                    <h3 class="text-lg font-bold text-gray-900 mb-2">Grafik Tren Mutasi</h3>
-                    <p class="text-gray-500 text-sm mb-6 flex-1">
-                        Visualisasi tren perpindahan masuk dan keluar (Dalam Kota, Luar Kota, Luar Negeri).
-                    </p>
-
-                    <div class="flex items-center text-indigo-600 font-medium text-sm group-hover:translate-x-1 transition">
-                        Lihat Grafik <i class="bi bi-arrow-right ml-2"></i>
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-sm mb-1 group-hover:text-indigo-700">Tren Mutasi</h3>
+                        <p class="text-slate-500 text-xs leading-relaxed">
+                            Visualisasi tren harian/bulanan.
+                        </p>
                     </div>
                 </div>
             </a>
 
             <!-- Card Laporan Detail (Daftar Nominatif) -->
             <a href="{{ route('laporan.nominatif') }}"
-                class="group relative bg-white rounded-xl shadow-sm border p-6 overflow-hidden transition hover:shadow-md hover:border-orange-300">
-                <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition">
-                    <i class="bi bi-card-list text-9xl text-orange-600"></i>
-                </div>
-
-                <div class="relative z-10 flex flex-col h-full">
+                class="group relative bg-white rounded-lg shadow-sm border border-slate-200 p-4 transition hover:shadow-md hover:border-orange-400">
+                <div class="flex items-start gap-4">
                     <div
-                        class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4 text-orange-600 group-hover:scale-110 transition">
-                        <i class="bi bi-table text-2xl"></i>
+                        class="w-10 h-10 bg-orange-50 rounded-lg flex items-center justify-center text-orange-600 group-hover:bg-orange-600 group-hover:text-white transition">
+                        <i class="bi bi-table text-xl"></i>
                     </div>
-
-                    <h3 class="text-lg font-bold text-gray-900 mb-2">Laporan Detail (Daftar Nominatif)</h3>
-                    <p class="text-gray-500 text-sm mb-6 flex-1">
-                        Daftar lengkap siswa yang melakukan mutasi dengan detail NISN, Nama, dan Sekolah Tujuan/Asal.
-                    </p>
-
-                    <div class="flex items-center text-orange-600 font-medium text-sm group-hover:translate-x-1 transition">
-                        Buka Laporan <i class="bi bi-arrow-right ml-2"></i>
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-sm mb-1 group-hover:text-orange-700">Daftar Nominatif</h3>
+                        <p class="text-slate-500 text-xs leading-relaxed">
+                            Detail siswa mutasi (NISN, Nama, Asal/Tujuan).
+                        </p>
                     </div>
                 </div>
             </a>
         </div>
-    </div>@endsection
+</div>@endsection

@@ -90,6 +90,11 @@ class User extends Authenticatable
         return $this->hasMany(MutasiKeluar::class, 'pengusul', 'username');
     }
 
+    public function sekolah()
+    {
+        return $this->belongsTo(SatuanPendidikan::class, 'npsn', 'npsn');
+    }
+
     // ========== HELPERS ==========
 
     public function isLocked(): bool

@@ -68,7 +68,7 @@
 <body>
     <div class="header">
         <h1>LAPORAN REKAPITULASI MUTASI SISWA JENJANG SMP</h1>
-        @if($user->role !== 'Sekolah')
+        @if(!in_array($user->role, ['Sekolah', 'Operator']))
             <h2>DINAS PENDIDIKAN KOTA</h2>
         @else
             <h2>{{ $user->sekolah->nama ?? 'SEKOLAH' }}</h2>
@@ -101,14 +101,14 @@
         <thead>
             <tr>
                 <th rowspan="2" width="30">No</th>
-                @if($user->role === 'Sekolah')
+                @if(in_array($user->role, ['Sekolah', 'Operator']))
                     <th rowspan="2">Periode Bulan</th>
                 @else
                     <th rowspan="2">Nama Sekolah</th>
                 @endif
                 <th colspan="4" class="bg-blue">Mutasi Masuk</th>
                 <th colspan="4" class="bg-orange">Mutasi Keluar</th>
-                @if($user->role !== 'Sekolah')
+                @if(!in_array($user->role, ['Sekolah', 'Operator']))
                     <th rowspan="2" width="40">Jml</th>
                 @endif
             </tr>
@@ -144,7 +144,7 @@
                 @endphp
                 <tr>
                     <td class="text-center">{{ $index + 1 }}</td>
-                    @if($user->role === 'Sekolah')
+                    @if(in_array($user->role, ['Sekolah', 'Operator']))
                         <td>{{ $item['periode'] }}</td>
                     @else
                         <td>{{ $item['nama_sekolah'] }}</td>
@@ -162,7 +162,7 @@
                     <td class="text-center">{{ $item['keluar_ix'] ?: '-' }}</td>
                     <td class="text-center bg-orange"><strong>{{ $item['keluar'] }}</strong></td>
 
-                    @if($user->role !== 'Sekolah')
+                    @if(!in_array($user->role, ['Sekolah', 'Operator']))
                         <td class="text-center">
                             {{ $item['netto'] > 0 ? '+' . $item['netto'] : ($item['netto'] == 0 ? '-' : $item['netto']) }}
                         </td>
@@ -170,7 +170,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="{{ $user->role === 'Sekolah' ? 10 : 11 }}" class="text-center" style="padding: 20px;">
+                    <td colspan="{{ in_array($user->role, ['Sekolah', 'Operator']) ? 10 : 11 }}" class="text-center" style="padding: 20px;">
                         Data tidak ditemukan pada periode ini.
                     </td>
                 </tr>
@@ -190,7 +190,7 @@
                 <td class="text-center">{{ $totalKeluarIX }}</td>
                 <td class="text-center bg-orange">{{ $totalKeluarAll }}</td>
                 
-                @if($user->role !== 'Sekolah')
+                @if(!in_array($user->role, ['Sekolah', 'Operator']))
                     <td class="text-center">{{ $totalMasukAll - $totalKeluarAll }}</td>
                 @endif
             </tr>

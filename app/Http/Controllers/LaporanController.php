@@ -10,6 +10,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class LaporanController extends Controller
 {
@@ -176,24 +177,50 @@ class LaporanController extends Controller
                 $keluarIX = $keluar ? (int) $keluar->keluar_ix : 0;
                 $keluarTotal = $keluarVII + $keluarVIII + $keluarIX;
 
-                if ($masukTotal > 0 || $keluarTotal > 0) {
+                // Data Awal (From DB Profile)
+                $awalVII = (int) $school->jumlah_siswa_awal_7;
+                $awalVIII = (int) $school->jumlah_siswa_awal_8;
+                $awalIX = (int) $school->jumlah_siswa_awal_9;
+                $awalTotal = $awalVII + $awalVIII + $awalIX;
+
+                // Data Akhir (Awal + Masuk - Keluar)
+                $akhirVII = $awalVII + $masukVII - $keluarVII;
+                $akhirVIII = $awalVIII + $masukVIII - $keluarVIII;
+                $akhirIX = $awalIX + $masukIX - $keluarIX;
+                $akhirTotal = $awalTotal + $masukTotal - $keluarTotal;
+
+                if ($masukTotal > 0 || $keluarTotal > 0 || $awalTotal > 0) {
                     $data[] = [
                         'nama_sekolah' => $school->nama,
+                        // Awal
+                        'awal_vii' => $awalVII,
+                        'awal_viii' => $awalVIII,
+                        'awal_ix' => $awalIX,
+                        'awal' => $awalTotal,
+                        // Masuk
                         'masuk' => $masukTotal,
                         'masuk_vii' => $masukVII,
                         'masuk_viii' => $masukVIII,
                         'masuk_ix' => $masukIX,
+                        // Keluar
                         'keluar' => $keluarTotal,
                         'keluar_vii' => $keluarVII,
                         'keluar_viii' => $keluarVIII,
                         'keluar_ix' => $keluarIX,
+                        // Akhir
+                        'akhir_vii' => $akhirVII,
+                        'akhir_viii' => $akhirVIII,
+                        'akhir_ix' => $akhirIX,
+                        'akhir' => $akhirTotal,
+                        // Netto
                         'netto' => $masukTotal - $keluarTotal
                     ];
                 }
             }
-        } elseif ($role === 'Sekolah') {
+        } elseif (in_array($role, ['Sekolah', 'Operator'])) {
             // For Sekolah: Group by Month with Kelas breakdown
             $npsn = $user->sekolah->npsn ?? $user->npsn;
+            $school = $user->sekolah; // Get school profile data
             $period = \Carbon\CarbonPeriod::create($start_date, '1 month', $end_date);
 
             foreach ($period as $dt) {
@@ -217,6 +244,7 @@ class LaporanController extends Controller
                 $masukVII = (clone $masukQuery)->whereIn('mutasi_masuk_siswa.kelas', ['7', 'VII'])->count();
                 $masukVIII = (clone $masukQuery)->whereIn('mutasi_masuk_siswa.kelas', ['8', 'VIII'])->count();
                 $masukIX = (clone $masukQuery)->whereIn('mutasi_masuk_siswa.kelas', ['9', 'IX'])->count();
+                $masukTotal = $masukVII + $masukVIII + $masukIX;
 
                 // Mutasi Keluar per kelas
                 $keluarQuery = MutasiKeluar::where('npsn_sekolah_asal', $npsn)
@@ -226,17 +254,44 @@ class LaporanController extends Controller
                 $keluarVII = (clone $keluarQuery)->whereIn('kelas', ['7', 'VII'])->count();
                 $keluarVIII = (clone $keluarQuery)->whereIn('kelas', ['8', 'VIII'])->count();
                 $keluarIX = (clone $keluarQuery)->whereIn('kelas', ['9', 'IX'])->count();
+                $keluarTotal = $keluarVII + $keluarVIII + $keluarIX;
+
+                // Data Awal (From DB Profile - Static)
+                $awalVII = (int) ($school->jumlah_siswa_awal_7 ?? 0);
+                $awalVIII = (int) ($school->jumlah_siswa_awal_8 ?? 0);
+                $awalIX = (int) ($school->jumlah_siswa_awal_9 ?? 0);
+                $awalTotal = $awalVII + $awalVIII + $awalIX;
+
+                // Data Akhir (Awal + Masuk - Keluar) - simplified per period row
+                $akhirVII = $awalVII + $masukVII - $keluarVII;
+                $akhirVIII = $awalVIII + $masukVIII - $keluarVIII;
+                $akhirIX = $awalIX + $masukIX - $keluarIX;
+                $akhirTotal = $awalTotal + $masukTotal - $keluarTotal;
 
                 $data[] = [
                     'periode' => $dt->translatedFormat('F Y'),
-                    'masuk' => $masukVII + $masukVIII + $masukIX,
+                    // Awal
+                    'awal_vii' => $awalVII,
+                    'awal_viii' => $awalVIII,
+                    'awal_ix' => $awalIX,
+                    'awal' => $awalTotal,
+                    // Masuk
+                    'masuk' => $masukTotal,
                     'masuk_vii' => $masukVII,
                     'masuk_viii' => $masukVIII,
                     'masuk_ix' => $masukIX,
-                    'keluar' => $keluarVII + $keluarVIII + $keluarIX,
+                    // Keluar
+                    'keluar' => $keluarTotal,
                     'keluar_vii' => $keluarVII,
                     'keluar_viii' => $keluarVIII,
                     'keluar_ix' => $keluarIX,
+                    // Akhir
+                    'akhir_vii' => $akhirVII,
+                    'akhir_viii' => $akhirVIII,
+                    'akhir_ix' => $akhirIX,
+                    'akhir' => $akhirTotal,
+                    // Netto
+                    'netto' => $masukTotal - $keluarTotal
                 ];
             }
         }
@@ -292,7 +347,7 @@ class LaporanController extends Controller
             $masukQuery->whereMonth('mutasi_masuk.tanggal_pengajuan', $month);
         }
 
-        if ($role === 'Sekolah') {
+        if (in_array($role, ['Sekolah', 'Operator'])) {
             $npsn = $user->sekolah->npsn ?? $user->npsn;
             $masukQuery->where('mutasi_masuk.npsn_sekolah_tujuan', $npsn);
         }
@@ -311,7 +366,7 @@ class LaporanController extends Controller
             $keluarQuery->whereMonth('tanggal_pengajuan', $month);
         }
 
-        if ($role === 'Sekolah') {
+        if (in_array($role, ['Sekolah', 'Operator'])) {
             $npsn = $user->sekolah->npsn ?? $user->npsn;
             $keluarQuery->where('npsn_sekolah_asal', $npsn);
         }
@@ -452,7 +507,7 @@ class LaporanController extends Controller
                 )
                 ->whereBetween('mutasi_masuk.tanggal_pengajuan', [$start, $end]);
 
-            if ($role === 'Sekolah') {
+            if (in_array($role, ['Sekolah', 'Operator'])) {
                 $query->where('mutasi_masuk.npsn_sekolah_tujuan', $user->sekolah->npsn ?? $user->npsn);
             }
 
@@ -477,7 +532,7 @@ class LaporanController extends Controller
             )
                 ->whereBetween('tanggal_pengajuan', [$start, $end]);
 
-            if ($role === 'Sekolah') {
+            if (in_array($role, ['Sekolah', 'Operator'])) {
                 $query->where('npsn_sekolah_asal', $user->sekolah->npsn ?? $user->npsn);
             }
 
@@ -524,8 +579,55 @@ class LaporanController extends Controller
         $nominatifMasuk = $this->getNominatifData($start_date, $end_date, 'masuk', $user);
         $nominatifKeluar = $this->getNominatifData($start_date, $end_date, 'keluar', $user);
 
+        // --- Chart Generation ---
+        $chartImage = null;
+        try {
+            $totalMasuk = array_sum($trendData['masuk']['dalam']) + array_sum($trendData['masuk']['luar_kota']) + array_sum($trendData['masuk']['luar_negeri']);
+            $totalKeluar = array_sum($trendData['keluar']['dalam']) + array_sum($trendData['keluar']['luar_kota']) + array_sum($trendData['keluar']['luar_negeri']);
+
+            // Avoid empty charts
+            if ($totalMasuk == 0 && $totalKeluar == 0) {
+                $totalMasuk = 1; // Dummy data to show something (or leave null to show error msg)
+            }
+
+            $chartConfig = [
+                'type' => 'doughnut',
+                'data' => [
+                    'labels' => ['Masuk', 'Keluar'],
+                    'datasets' => [
+                        [
+                            'data' => [$totalMasuk, $totalKeluar],
+                            'backgroundColor' => ['#3b82f6', '#f97316']
+                        ]
+                    ]
+                ],
+                'options' => [
+                    'plugins' => [
+                        'legend' => ['position' => 'bottom'],
+                        'datalabels' => [
+                            'display' => true,
+                            'color' => '#fff',
+                            'font' => ['weight' => 'bold', 'size' => 14]
+                        ]
+                    ]
+                ]
+            ];
+
+            $chartUrl = "https://quickchart.io/chart?c=" . urlencode(json_encode($chartConfig)) . "&w=300&h=300";
+
+            // Fetch image with timeout
+            $ctx = stream_context_create(['http' => ['timeout' => 5]]);
+            $imageContent = @file_get_contents($chartUrl, false, $ctx);
+
+            if ($imageContent !== false) {
+                $chartImage = 'data:image/png;base64,' . base64_encode($imageContent);
+            }
+        } catch (\Exception $e) {
+            // Check logs if needed: Log::error($e->getMessage());
+        }
+
         // Penandatangan (Optional, take first available or specific logic)
-        $penandatangan = \App\Models\Penandatangan::where('status', 1)->first();
+        $penandatangan = null;
 
         $pdf = Pdf::loadView('laporan.cetak_komprehensif', compact(
             'user',
@@ -539,7 +641,8 @@ class LaporanController extends Controller
             'demografiData',
             'nominatifMasuk',
             'nominatifKeluar',
-            'penandatangan'
+            'penandatangan',
+            'chartImage'
         ))->setPaper('a4', 'landscape');
 
         return $pdf->stream('Laporan_Komprehensif_Mutasi.pdf');
@@ -560,7 +663,7 @@ class LaporanController extends Controller
             ->orderByDesc('total')
             ->limit($limit);
 
-        if ($role === 'Sekolah') {
+        if (in_array($role, ['Sekolah', 'Operator'])) {
             $npsn = $user->sekolah->npsn ?? $user->npsn;
             $topAsalQuery->where('mutasi_masuk.npsn_sekolah_tujuan', $npsn);
         }
@@ -574,7 +677,7 @@ class LaporanController extends Controller
             ->orderByDesc('total')
             ->limit($limit);
 
-        if ($role === 'Sekolah') {
+        if (in_array($role, ['Sekolah', 'Operator'])) {
             $npsn = $user->sekolah->npsn ?? $user->npsn;
             $topTujuanQuery->where('npsn_sekolah_asal', $npsn);
         }
@@ -604,7 +707,7 @@ class LaporanController extends Controller
             ->whereBetween('mutasi_masuk.tanggal_pengajuan', [$start, $end])
             ->where('mutasi_masuk.status', 'Selesai');
 
-        if ($role === 'Sekolah') {
+        if (in_array($role, ['Sekolah', 'Operator'])) {
             $npsn = $user->sekolah->npsn ?? $user->npsn;
             $masukQuery->where('mutasi_masuk.npsn_sekolah_tujuan', $npsn);
         }
@@ -622,7 +725,7 @@ class LaporanController extends Controller
             ->whereBetween('tanggal_pengajuan', [$start, $end])
             ->where('status', 'Selesai');
 
-        if ($role === 'Sekolah') {
+        if (in_array($role, ['Sekolah', 'Operator'])) {
             $npsn = $user->sekolah->npsn ?? $user->npsn;
             $keluarQuery->where('npsn_sekolah_asal', $npsn);
         }

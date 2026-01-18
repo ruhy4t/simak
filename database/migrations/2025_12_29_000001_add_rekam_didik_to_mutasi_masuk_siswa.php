@@ -8,7 +8,7 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('mutasi_masuk_siswa', function (Blueprint $table) {
-            $table->string('file_rekam_didik')->nullable()->after('file_surat_rekomendasi');
+            $table->string('file_rekam_didik')->nullable()->after('file_rekomendasi');
         });
     }
 

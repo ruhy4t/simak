@@ -10,10 +10,11 @@
         /* Header Kop Surat (Exactly as requested) */
         .kop-surat {
             border-bottom: 3px solid #000;
-            padding-bottom: 5px;
+            padding-bottom: 10px;
             margin-bottom: 20px;
             text-align: center;
             position: relative;
+            min-height: 85px; /* Ensure height covers logo */
         }
         .logo-kop {
             width: 70px;
@@ -30,7 +31,8 @@
         .report-subtitle { text-align: center; font-size: 10pt; margin-bottom: 20px; }
 
         /* Tables */
-        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; page-break-inside: auto; }
+        tr { page-break-inside: avoid; page-break-after: auto; } /* Keep rows intact, but allow table split */
         th, td { border: 1px solid #000; padding: 6px; font-size: 9pt; }
         th { background-color: #f0f0f0; font-weight: bold; text-align: center; }
         .center { text-align: center; }
@@ -38,12 +40,16 @@
         .bold { font-weight: bold; }
         
         /* Section Spacing */
-        .section { page-break-inside: avoid; margin-bottom: 20px; }
+        .section { margin-bottom: 20px; page-break-inside: auto; }
+        h3 { page-break-after: avoid; }
         .page-break { page-break-after: always; }
         
         /* Two Column Layout for Distribution */
         .row { width: 100%; }
         .col-50 { width: 49%; display: inline-block; vertical-align: top; }
+        .col-60 { width: 59%; display: inline-block; vertical-align: top; }
+        .col-40 { width: 39%; display: inline-block; vertical-align: top; }
+        .col-100 { width: 100%; display: block; }
         .gap { width: 1%; display: inline-block; }
 
         /* TTD */
@@ -55,13 +61,42 @@
 
     {{-- HEADER (Page 1 Only) --}}
     <div class="kop-surat">
-        <img src="{{ public_path('images/logo_Kota_Bogor.png') }}" class="logo-kop">
-        <div class="kop-text">
-            <h1>PEMERINTAH KOTA BOGOR</h1>
-            <h2>DINAS PENDIDIKAN</h2>
-            <p>Jl. Padjajaran No. 125, Bantarjati, Bogor Utara, Kota Bogor, Jawa Barat 16153</p>
-            <p>Telp. 0251-8341101 Faksimile 0251-8341101 www.disdik.kotabogor.go.id</p>
-        </div>
+        @if(in_array($user->role, ['Dinas', 'SuperAdmin']))
+            <img src="{{ public_path('images/logo_Kota_Bogor.png') }}" class="logo-kop">
+            <div class="kop-text">
+                <h1>PEMERINTAH KOTA BOGOR</h1>
+                <h2>DINAS PENDIDIKAN</h2>
+                <p>Jl. Padjajaran No. 125, Bantarjati, Bogor Utara, Kota Bogor, Jawa Barat 16153</p>
+                <p>Telp. 0251-8341101 Faksimile 0251-8341101 www.disdik.kotabogor.go.id</p>
+            </div>
+        @else
+            {{-- Check for Custom Kop Surat --}}
+            @if(!empty($user->sekolah->kop_surat_path) && file_exists(storage_path('app/public/' . $user->sekolah->kop_surat_path)))
+                {{-- Full Breadth Custom Image --}}
+                <img src="{{ storage_path('app/public/' . $user->sekolah->kop_surat_path) }}" 
+                     style="width: 100%; max-height: 150px; object-fit: contain;">
+                {{-- Hide bottom border for custom kop as the image usually contains it --}}
+                <style>.kop-surat { border-bottom: none !important; }</style>
+            @else
+                {{-- Fallback to generated header --}}
+                @if(($user->sekolah->status_sp ?? '') === 'Swasta')
+                    <!-- KOP SWASTA: Tanpa Logo Pemkot, Hanya Nama Sekolah -->
+                    <div class="kop-text" style="padding-top: 10px;">
+                        <h1 style="font-size: 16pt; margin-bottom: 5px;">{{ $user->sekolah->nama ?? 'SEKOLAH' }}</h1>
+                        <p>{{ $user->sekolah->alamat_lengkap ?? ($user->sekolah->alamat_jalan ?? 'Alamat Sekolah') }}</p>
+                    </div>
+                @else
+                    <!-- KOP NEGERI: Standar Dinas -->
+                    <img src="{{ public_path('images/logo_Kota_Bogor.png') }}" class="logo-kop">
+                    <div class="kop-text">
+                        <h1>PEMERINTAH KOTA BOGOR</h1>
+                        <h2>DINAS PENDIDIKAN</h2>
+                        <h2 style="font-size: 14pt; margin-top: 5px;">{{ $user->sekolah->nama ?? 'SEKOLAH' }}</h2>
+                        <p>{{ $user->sekolah->alamat_lengkap ?? ($user->sekolah->alamat_jalan ?? 'Alamat Sekolah') }}</p>
+                    </div>
+                @endif
+            @endif
+        @endif
     </div>
 
     <div class="report-title">LAPORAN REKAPITULASI MUTASI SISWA</div>
@@ -70,55 +105,82 @@
     </div>
 
     {{-- 1. REKAPITULASI --}}
-    <div class="section">
+    <div class="section" style="margin-bottom: 30px;">
         <h3>A. Rekapitulasi Data</h3>
-        <table>
+        <table style="font-size: 8pt; width: 100%;">
             <thead>
                 <tr>
-                    <th rowspan="2" width="30">No</th>
-                    <th rowspan="2">Unit / Sekolah / Periode</th>
+                    <th rowspan="2" width="20">No</th>
+                    <th rowspan="2">{{ in_array($user->role, ['Dinas', 'SuperAdmin']) ? 'Nama Sekolah' : 'Bulan' }}</th>
+                    <th colspan="4" style="background-color: #cbd5e1;">Data Siswa Awal</th>
                     <th colspan="4" style="background-color: #e0f2fe;">Mutasi Masuk</th>
                     <th colspan="4" style="background-color: #fff7ed;">Mutasi Keluar</th>
-                    <th rowspan="2">Netto</th>
+                    <th colspan="4" style="background-color: #dcfce7;">Data Siswa Akhir</th>
                 </tr>
                 <tr>
+                    {{-- Awal --}}
+                    <th style="background-color: #cbd5e1;">7</th> <th style="background-color: #cbd5e1;">8</th> <th style="background-color: #cbd5e1;">9</th> <th style="background-color: #94a3b8;">Total</th>
+                    {{-- Masuk --}}
                     <th style="background-color: #e0f2fe;">7</th> <th style="background-color: #e0f2fe;">8</th> <th style="background-color: #e0f2fe;">9</th> <th style="background-color: #bae6fd;">Total</th>
+                    {{-- Keluar --}}
                     <th style="background-color: #fff7ed;">7</th> <th style="background-color: #fff7ed;">8</th> <th style="background-color: #fff7ed;">9</th> <th style="background-color: #fed7aa;">Total</th>
+                    {{-- Akhir --}}
+                    <th style="background-color: #dcfce7;">7</th> <th style="background-color: #dcfce7;">8</th> <th style="background-color: #dcfce7;">9</th> <th style="background-color: #86efac;">Total</th>
                 </tr>
             </thead>
             <tbody>
-                @php $tMasuk=0; $tKeluar=0; @endphp
+                @php 
+                    $tMasuk=0; $tKeluar=0; $tAwal=0; $tAkhir=0; 
+                @endphp
                 @forelse($rekapData as $index => $row)
                     @php 
                         $nm = $row['masuk'] ?? 0;
                         $nk = $row['keluar'] ?? 0;
+                        $na = $row['awal'] ?? 0;
+                        $nak = $row['akhir'] ?? 0;
+                        
                         $tMasuk += $nm;
                         $tKeluar += $nk;
+                        $tAwal += $na;
+                        $tAkhir += $nak;
                     @endphp
                     <tr>
                         <td class="center">{{ $index + 1 }}</td>
                         <td>{{ $row['nama_sekolah'] ?? $row['periode'] ?? '-' }}</td>
                         
+                        {{-- Awal --}}
+                        <td class="center bg-slate-50">{{ $row['awal_vii'] ?? 0 }}</td>
+                        <td class="center bg-slate-50">{{ $row['awal_viii'] ?? 0 }}</td>
+                        <td class="center bg-slate-50">{{ $row['awal_ix'] ?? 0 }}</td>
+                        <td class="center bold bg-slate-200">{{ $row['awal'] ?? 0 }}</td>
+
+                        {{-- Masuk --}}
                         <td class="center bg-blue-50">{{ $row['masuk_vii'] }}</td>
                         <td class="center bg-blue-50">{{ $row['masuk_viii'] }}</td>
                         <td class="center bg-blue-50">{{ $row['masuk_ix'] }}</td>
                         <td class="center bold bg-blue-100">{{ $row['masuk'] }}</td>
                         
+                        {{-- Keluar --}}
                         <td class="center bg-orange-50">{{ $row['keluar_vii'] }}</td>
                         <td class="center bg-orange-50">{{ $row['keluar_viii'] }}</td>
                         <td class="center bg-orange-50">{{ $row['keluar_ix'] }}</td>
                         <td class="center bold bg-orange-100">{{ $row['keluar'] }}</td>
-                        
-                        <td class="center bold">{{ $row['netto'] ?? ($nm - $nk) }}</td>
+
+                        {{-- Akhir --}}
+                        <td class="center bg-green-50">{{ $row['akhir_vii'] ?? 0 }}</td>
+                        <td class="center bg-green-50">{{ $row['akhir_viii'] ?? 0 }}</td>
+                        <td class="center bg-green-50">{{ $row['akhir_ix'] ?? 0 }}</td>
+                        <td class="center bold bg-green-100">{{ $row['akhir'] ?? 0 }}</td>
                     </tr>
                 @empty
-                    <tr><td colspan="11" class="center">Tidak ada data rekapitulasi.</td></tr>
+                    <tr><td colspan="18" class="center">Tidak ada data rekapitulasi.</td></tr>
                 @endforelse
                 <tr style="background-color: #f3f4f6; font-weight: bold;">
                     <td colspan="2" class="center">TOTAL</td>
-                    <td></td><td></td><td></td><td class="center">{{ $tMasuk }}</td>
-                    <td></td><td></td><td></td><td class="center">{{ $tKeluar }}</td>
-                    <td class="center">{{ $tMasuk - $tKeluar }}</td>
+                    <td colspan="3"></td><td class="center">{{ $tAwal }}</td>
+                    <td colspan="3"></td><td class="center">{{ $tMasuk }}</td>
+                    <td colspan="3"></td><td class="center">{{ $tKeluar }}</td>
+                    <td colspan="3"></td><td class="center">{{ $tAkhir }}</td>
                 </tr>
             </tbody>
         </table>
@@ -126,8 +188,8 @@
 
     {{-- 2. TREN MUTASI --}}
     <div class="section">
-        <h3>B. Tren Mutasi (Statistik {{ $month ? 'Harian' : 'Bulanan' }})</h3>
-        <table>
+        <h3>B. Tren Mutasi</h3>
+        <table style="font-size: 8pt; width: 100%;">
             <thead>
                 <tr>
                     <th rowspan="2">Periode</th>
@@ -146,28 +208,35 @@
                 </tr>
             </thead>
             <tbody>
+                @php $hasTrendData = false; @endphp
                 @foreach($trendData['labels'] as $idx => $label)
                     @php
-                        // Masuk
                         $md = $trendData['masuk']['dalam'][$idx];
                         $mlk = $trendData['masuk']['luar_kota'][$idx];
                         $mln = $trendData['masuk']['luar_negeri'][$idx];
                         $tm = $md + $mlk + $mln;
                         
-                        // Keluar
                         $kd = $trendData['keluar']['dalam'][$idx];
                         $klk = $trendData['keluar']['luar_kota'][$idx];
                         $kln = $trendData['keluar']['luar_negeri'][$idx];
                         $tk = $kd + $klk + $kln;
                     @endphp
-                    <tr>
-                        <td>{{ $month ? $label . ' ' . \Carbon\Carbon::createFromDate(null, $month)->translatedFormat('F') : $label }}</td>
-                        <td class="center">{{ $md }}</td><td class="center">{{ $mlk }}</td><td class="center">{{ $mln }}</td>
-                        <td class="center bold bg-blue-50">{{ $tm }}</td>
-                        <td class="center">{{ $kd }}</td><td class="center">{{ $klk }}</td><td class="center">{{ $kln }}</td>
-                        <td class="center bold bg-orange-50">{{ $tk }}</td>
-                    </tr>
+                    
+                    @if($tm > 0 || $tk > 0)
+                        @php $hasTrendData = true; @endphp
+                        <tr>
+                            <td>{{ $month ? $label . ' ' . \Carbon\Carbon::createFromDate(null, $month)->translatedFormat('F') : $label }}</td>
+                            <td class="center">{{ $md }}</td><td class="center">{{ $mlk }}</td><td class="center">{{ $mln }}</td>
+                            <td class="center bold bg-blue-50">{{ $tm }}</td>
+                            <td class="center">{{ $kd }}</td><td class="center">{{ $klk }}</td><td class="center">{{ $kln }}</td>
+                            <td class="center bold bg-orange-50">{{ $tk }}</td>
+                        </tr>
+                    @endif
                 @endforeach
+                
+                @if(!$hasTrendData)
+                    <tr><td colspan="9" class="center">Tidak ada aktivitas mutasi pada periode ini.</td></tr>
+                @endif
             </tbody>
         </table>
     </div>
@@ -255,6 +324,12 @@
                 </tr>
             </tbody>
         </table>
+        
+        <div style="font-size: 8pt; color: #555; background-color: #f9f9f9; padding: 5px; border: 1px solid #ddd; margin-top: 5px;">
+            <strong>Keterangan:</strong><br>
+            <span style="display: inline-block; width: 80px;">- Ratio L:P</span> : Perbandingan persentase siswa Laki-laki dan Perempuan (Contoh: 71:29 artinya 71% Laki-laki, 29% Perempuan).<br>
+            <span style="display: inline-block; width: 80px;">- Ratio Kelas</span> : Distribusi jumlah siswa per jenjang kelas beserta persentasenya.
+        </div>
     </div>
     
     <div class="page-break"></div>
@@ -321,18 +396,23 @@
     </div>
 
     {{-- SIGNATURE --}}
-    @if($penandatangan)
     <div class="ttd-container">
         <div class="ttd-box">
-            <p>Bogor, {{ now()->translatedFormat('d F Y') }}</p>
-            <p>Mengetahui,</p>
-            <p style="margin-bottom: 60px;"><strong>{{ $penandatangan->jabatan }}</strong></p>
-            <p style="text-decoration: underline; font-weight: bold;">{{ $penandatangan->nama }}</p>
-            <p>{{ $penandatangan->pangkat_golongan }}</p>
-            <p>NIP. {{ $penandatangan->nip }}</p>
+            <p>Kota Bogor, {{ now()->translatedFormat('d F Y') }}</p>
+            
+            @if(!in_array($user->role, ['Dinas', 'SuperAdmin']) && !empty($user->sekolah->kepala_sekolah_nama))
+                <p>Kepala Sekolah,</p>
+                <p style="margin-bottom: 60px;"></p> {{-- Space for signature --}}
+                <p style="text-decoration: underline; font-weight: bold;">{{ $user->sekolah->kepala_sekolah_nama }}</p>
+                @if(!empty($user->sekolah->kepala_sekolah_nip))
+                    <p>NIP. {{ $user->sekolah->kepala_sekolah_nip }}</p>
+                @endif
+            @else
+                {{-- Fallback if no Principal data --}}
+                <p>Waktu Cetak: {{ now()->translatedFormat('H:i') }} WIB</p>
+            @endif
         </div>
     </div>
-    @endif
 
 </body>
 </html>
