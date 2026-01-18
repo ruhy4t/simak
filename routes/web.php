@@ -236,3 +236,42 @@ Route::middleware('auth')->group(function () {
     Route::get('/mutasi', fn() => redirect()->route('mutasi.keluar.index'));
     Route::post('/session/alive', fn() => response()->noContent())->name('session.alive');
 });
+
+// DEBUG ROUTE (Temporary)
+Route::get('/debug-db', function () {
+    try {
+        // 1. Check if 'users' table has 'is_active' column
+        $hasColumn = \Illuminate\Support\Facades\Schema::hasColumn('users', 'is_active');
+
+        // 2. Try the specific query causing potential crash
+        $testQuery = \Illuminate\Support\Facades\DB::table('users')
+            ->selectRaw("COUNT(*) as total, SUM(CASE WHEN status = 'Aktif' THEN 1 ELSE 0 END) as active_status")
+            ->first();
+
+        // 3. Try the query WITH is_active
+        $crashTest = "Skipped (Column missing)";
+        if ($hasColumn) {
+            try {
+                \Illuminate\Support\Facades\DB::table('users')
+                    ->selectRaw("SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active_col")
+                    ->first();
+                $crashTest = "Success";
+            } catch (\Exception $e) {
+                $crashTest = "Failed: " . $e->getMessage();
+            }
+        }
+
+        return response()->json([
+            'status' => 'Debug Info',
+            'has_is_active_column' => $hasColumn,
+            'simple_query_result' => $testQuery,
+            'is_active_query_test' => $crashTest,
+            'database_name' => \Illuminate\Support\Facades\DB::getDatabaseName(),
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ], 500);
+    }
+});
