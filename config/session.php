@@ -3,7 +3,7 @@
 use Illuminate\Support\Str;
 
 return [
-    'driver' => env('SESSION_DRIVER', 'database'), // Changed to database for better security
+    'driver' => env('SESSION_DRIVER', 'cookie'), // Changed to cookie for Vercel debugging
     'lifetime' => env('SESSION_LIFETIME', 60),
     'expire_on_close' => false,
     'encrypt' => env('SESSION_ENCRYPT', true), // ENABLED for production security
