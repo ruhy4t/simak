@@ -113,6 +113,40 @@ class FileUploadService
     }
 
     /**
+     * Upload an Image file (JPG, PNG, WebP)
+     */
+    public function uploadImage(UploadedFile $file, string $prefix, string $suffix, ?string $subDir = null): string
+    {
+        $ext = strtolower($file->getClientOriginalExtension());
+        $allowed = ['jpg', 'jpeg', 'png', 'webp'];
+
+        if (!in_array($ext, $allowed)) {
+            throw new \Exception('Format gambar tidak didukung (Gunakan JPG, PNG, atau WebP).');
+        }
+
+        // Build safe filename
+        $safePrefix = $this->sanitizeFilename($prefix);
+        $safeSuffix = $this->sanitizeFilename($suffix);
+        $filename = "{$safePrefix}_{$safeSuffix}.{$ext}";
+
+        // Determine storage path
+        if ($subDir) {
+            $cleanSubDir = trim($subDir, '/');
+            $storedPath = $cleanSubDir . '/' . $filename;
+        } else {
+            $storedPath = $filename;
+        }
+
+        $disk = $this->getDisk();
+
+        // Upload
+        Storage::disk($disk)->put($storedPath, file_get_contents($file->getRealPath()));
+        Log::info("Image uploaded to {$disk}: {$storedPath}");
+
+        return $storedPath;
+    }
+
+    /**
      * Generate date-based subdirectory string
      */
     public function getDateBasedPath(string $type = 'keluar'): string

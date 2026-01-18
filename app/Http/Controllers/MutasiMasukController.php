@@ -523,14 +523,27 @@ class MutasiMasukController extends Controller
                     $fullDatePath = $this->fileUploadService->getFullDateBasedPath('masuk');
 
                     if (in_array($mimeType, ['image/jpeg', 'image/png'])) {
-                        // Convert to WebP
-                        $filename = $this->sanitizeFilename($idMutasi) . "_siswa{$idx}_{$field}.webp";
-                        $destPath = $fullDatePath . '/' . $filename;
+                        // ATTEMPT Convert to WebP (Only if GD is available)
+                        $useWebP = extension_loaded('gd');
+                        $conversionSuccess = false;
 
-                        if ($this->imageService->convertToWebP($file, $destPath)) {
+                        if ($useWebP) {
+                            $filename = $this->sanitizeFilename($idMutasi) . "_siswa{$idx}_{$field}.webp";
+                            $destPath = $fullDatePath . '/' . $filename;
+                            $conversionSuccess = $this->imageService->convertToWebP($file, $destPath);
+                        }
+
+                        if ($conversionSuccess) {
                             $filePaths[$field] = $uploadPathKey . '/' . $filename;
                         } else {
-                            throw new \Exception("Gagal mengkonversi gambar Rekam Didik siswa #" . ($idx + 1) . " ke WebP.");
+                            // FALLBACK: Upload original file if GD missing or Conversion Failed
+                            // Use the new uploadImage method in service
+                            $filePaths[$field] = $this->fileUploadService->uploadImage(
+                                $file,
+                                $idMutasi,
+                                "siswa{$idx}_{$field}",
+                                $uploadPathKey
+                            );
                         }
                     } elseif ($mimeType === 'application/pdf') {
                         // Use service for PDF
