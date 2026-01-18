@@ -41,9 +41,9 @@ class ImageConversionService
                 imagesavealpha($image, true);
             }
 
-            // Start with quality 85 and reduce until < 100KB
+            // Start with quality 85 and reduce until < 75KB
             $quality = 85;
-            $maxSize = 100 * 1024; // 100KB
+            $maxSize = 75 * 1024; // 75KB
 
             do {
                 // Save to temp file first to check size
@@ -100,7 +100,7 @@ class ImageConversionService
             }
 
             imagedestroy($image);
-            Log::error("ImageConversion: Could not reduce size below 100KB");
+            Log::error("ImageConversion: Could not reduce size below 75KB");
             return false;
 
         } catch (\Exception $e) {

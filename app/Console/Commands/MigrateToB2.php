@@ -13,7 +13,7 @@ class MigrateToB2 extends Command
 
     public function handle()
     {
-        $backupPath = storage_path('app/dokumen_backup');
+        $backupPath = storage_path('app/dokumen_rahasia');
 
         if (!File::exists($backupPath)) {
             $this->error("Backup folder not found: {$backupPath}");
@@ -26,20 +26,21 @@ class MigrateToB2 extends Command
             $this->info("DRY RUN MODE - No files will be uploaded\n");
         }
 
-        // Get all PDF files recursively
+        // Get all files recursively
         $files = File::allFiles($backupPath);
-        $pdfFiles = array_filter($files, fn($file) => strtolower($file->getExtension()) === 'pdf');
+        $allowedExtensions = ['pdf', 'webp', 'jpg', 'jpeg', 'png'];
+        $filesToMigrate = array_filter($files, fn($file) => in_array(strtolower($file->getExtension()), $allowedExtensions));
 
-        $this->info("Found " . count($pdfFiles) . " PDF files to migrate\n");
+        $this->info("Found " . count($filesToMigrate) . " files (PDF/Images) to migrate\n");
 
         $uploaded = 0;
         $failed = 0;
         $skipped = 0;
 
-        $progressBar = $this->output->createProgressBar(count($pdfFiles));
+        $progressBar = $this->output->createProgressBar(count($filesToMigrate));
         $progressBar->start();
 
-        foreach ($pdfFiles as $file) {
+        foreach ($filesToMigrate as $file) {
             // Get relative path from backup folder
             $relativePath = str_replace($backupPath . DIRECTORY_SEPARATOR, '', $file->getPathname());
             $relativePath = str_replace('\\', '/', $relativePath); // Normalize for B2
@@ -48,6 +49,8 @@ class MigrateToB2 extends Command
             if (str_starts_with($relativePath, 'dokumen/')) {
                 $relativePath = substr($relativePath, 8);
             }
+
+            $uploadedPaths[] = $relativePath;
 
             try {
                 if (!$dryRun) {
@@ -64,6 +67,36 @@ class MigrateToB2 extends Command
             }
 
             $progressBar->advance();
+        }
+
+        $progressBar->finish();
+        $this->newLine(2);
+
+        // CLEANUP ORPHANS
+        if (!$dryRun && $uploaded > 0) {
+            $this->info("Scanning B2 for orphaned files to remove...");
+            $b2Files = Storage::disk('b2')->allFiles();
+            $deleted = 0;
+
+            $bar = $this->output->createProgressBar(count($b2Files));
+            $bar->start();
+
+            foreach ($b2Files as $b2File) {
+                if (!in_array($b2File, $uploadedPaths)) {
+                    // Try to avoid deleting if it matches but with/without leading slash? 
+                    // Flysystem returns relative paths nicely.
+                    try {
+                        Storage::disk('b2')->delete($b2File);
+                        $deleted++;
+                    } catch (\Exception $e) {
+                        $this->error("Failed to delete: {$b2File}");
+                    }
+                }
+                $bar->advance();
+            }
+            $bar->finish();
+            $this->newLine();
+            $this->info("Deleted {$deleted} orphaned files.");
         }
 
         $progressBar->finish();

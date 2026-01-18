@@ -395,12 +395,12 @@ class MutasiMasukController extends Controller
                 $hasNisn = !empty($request->input("siswa.{$i}.nisn"));
                 if ($hasNisn) {
                     if ($luarNegeri) {
-                        $rules["siswa.{$i}.file_rekam_didik"] = 'nullable|file|mimes:pdf,jpeg,jpg,png|max:1024';
+                        $rules["siswa.{$i}.file_rekam_didik"] = 'nullable|file|mimes:jpeg,jpg,png|max:1024';
                     } else {
-                        $rules["siswa.{$i}.file_rekam_didik"] = 'required|file|mimes:pdf,jpeg,jpg,png|max:1024';
+                        $rules["siswa.{$i}.file_rekam_didik"] = 'required|file|mimes:jpeg,jpg,png|max:1024';
                     }
                 } else {
-                    $rules["siswa.{$i}.file_rekam_didik"] = 'nullable|file|mimes:pdf,jpeg,jpg,png|max:1024';
+                    $rules["siswa.{$i}.file_rekam_didik"] = 'nullable|file|mimes:jpeg,jpg,png|max:1024';
                 }
             }
 
@@ -452,7 +452,7 @@ class MutasiMasukController extends Controller
             $messages["siswa.{$i}.file_surat_penyaluran.mimes"] = "Surat Penyaluran Siswa #{$siswaNum} harus berformat PDF.";
             $messages["siswa.{$i}.file_surat_penyaluran.max"] = "Surat Penyaluran Siswa #{$siswaNum} maksimal 1MB.";
             $messages["siswa.{$i}.file_rekam_didik.required"] = "Rekam Didik Siswa #{$siswaNum} wajib diunggah (karena siswa memiliki NISN). Koordinasi dengan bagian Dapodik Dinas Pendidikan Kota Bogor untuk screenshot Rekam Didik.";
-            $messages["siswa.{$i}.file_rekam_didik.mimes"] = "Rekam Didik Siswa #{$siswaNum} harus berformat PDF, JPEG, atau PNG.";
+            $messages["siswa.{$i}.file_rekam_didik.mimes"] = "Rekam Didik Siswa #{$siswaNum} harus berformat JPEG atau PNG.";
             $messages["siswa.{$i}.file_rekam_didik.max"] = "Rekam Didik Siswa #{$siswaNum} maksimal 1MB.";
         }
 
