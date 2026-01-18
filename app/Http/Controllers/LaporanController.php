@@ -580,51 +580,8 @@ class LaporanController extends Controller
         $nominatifKeluar = $this->getNominatifData($start_date, $end_date, 'keluar', $user);
 
         // --- Chart Generation ---
+        // Chart generation removed as per request
         $chartImage = null;
-        try {
-            $totalMasuk = array_sum($trendData['masuk']['dalam']) + array_sum($trendData['masuk']['luar_kota']) + array_sum($trendData['masuk']['luar_negeri']);
-            $totalKeluar = array_sum($trendData['keluar']['dalam']) + array_sum($trendData['keluar']['luar_kota']) + array_sum($trendData['keluar']['luar_negeri']);
-
-            // Avoid empty charts
-            if ($totalMasuk == 0 && $totalKeluar == 0) {
-                $totalMasuk = 1; // Dummy data to show something (or leave null to show error msg)
-            }
-
-            $chartConfig = [
-                'type' => 'doughnut',
-                'data' => [
-                    'labels' => ['Masuk', 'Keluar'],
-                    'datasets' => [
-                        [
-                            'data' => [$totalMasuk, $totalKeluar],
-                            'backgroundColor' => ['#3b82f6', '#f97316']
-                        ]
-                    ]
-                ],
-                'options' => [
-                    'plugins' => [
-                        'legend' => ['position' => 'bottom'],
-                        'datalabels' => [
-                            'display' => true,
-                            'color' => '#fff',
-                            'font' => ['weight' => 'bold', 'size' => 14]
-                        ]
-                    ]
-                ]
-            ];
-
-            $chartUrl = "https://quickchart.io/chart?c=" . urlencode(json_encode($chartConfig)) . "&w=300&h=300";
-
-            // Fetch image with timeout
-            $ctx = stream_context_create(['http' => ['timeout' => 5]]);
-            $imageContent = @file_get_contents($chartUrl, false, $ctx);
-
-            if ($imageContent !== false) {
-                $chartImage = 'data:image/png;base64,' . base64_encode($imageContent);
-            }
-        } catch (\Exception $e) {
-            // Check logs if needed: Log::error($e->getMessage());
-        }
 
         // Penandatangan (Optional, take first available or specific logic)
         $penandatangan = null;
