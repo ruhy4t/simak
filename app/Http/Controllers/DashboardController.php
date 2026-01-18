@@ -50,110 +50,97 @@ class DashboardController extends Controller
 
     private function getStatsMutasiKeluar($user): array
     {
-        // Cache key based on user role and ID (if operator/sekolah) or just role (if dinas)
-        $cacheKey = 'dashboard_stats_keluar_' . $user->role . '_' . $user->id . '_fix_v1';
+        try {
+            $query = DB::table('mutasi_keluar')->whereNull('deleted_at'); // Filter Deleted
 
-        return \Illuminate\Support\Facades\Cache::remember($cacheKey, 600, function () use ($user) {
-            try {
-                $query = DB::table('mutasi_keluar')->whereNull('deleted_at'); // Filter Deleted
-
-                if ($user->role === 'Operator') {
-                    $query->where('pengusul', $user->username)
-                        ->where('npsn_sekolah_asal', $user->npsn);
-                } elseif ($user->role === 'Sekolah') {
-                    $query->where('npsn_sekolah_asal', $user->npsn);
-                }
-
-                // Optimization: Single Query Aggregation
-                $stats = $query->selectRaw("
-                    COUNT(*) as total,
-                    SUM(CASE WHEN status = 'Menunggu Verifikasi Dinas' THEN 1 ELSE 0 END) as menunggu,
-                    SUM(CASE WHEN status = 'Disetujui Dinas' THEN 1 ELSE 0 END) as disetujui,
-                    SUM(CASE WHEN status = 'Perlu Perbaikan' THEN 1 ELSE 0 END) as perbaikan,
-                    SUM(CASE WHEN status = 'Proses TTD' THEN 1 ELSE 0 END) as proses_ttd,
-                    SUM(CASE WHEN status = 'Selesai' THEN 1 ELSE 0 END) as selesai
-                ")->first();
-
-                return [
-                    'total' => (int) $stats->total,
-                    'menunggu' => (int) $stats->menunggu,
-                    'perbaikan' => (int) $stats->perbaikan,
-                    'proses_ttd' => (int) $stats->proses_ttd,
-                    'disetujui' => (int) $stats->disetujui,
-                    'selesai' => (int) $stats->selesai,
-                ];
-            } catch (\Exception $e) {
-                return $this->emptyStats();
+            if ($user->role === 'Operator') {
+                $query->where('pengusul', $user->username)
+                    ->where('npsn_sekolah_asal', $user->npsn);
+            } elseif ($user->role === 'Sekolah') {
+                $query->where('npsn_sekolah_asal', $user->npsn);
             }
-        });
+
+            // Optimization: Single Query Aggregation
+            $stats = $query->selectRaw("
+                COUNT(*) as total,
+                SUM(CASE WHEN status = 'Menunggu Verifikasi Dinas' THEN 1 ELSE 0 END) as menunggu,
+                SUM(CASE WHEN status = 'Disetujui Dinas' THEN 1 ELSE 0 END) as disetujui,
+                SUM(CASE WHEN status = 'Perlu Perbaikan' THEN 1 ELSE 0 END) as perbaikan,
+                SUM(CASE WHEN status = 'Proses TTD' THEN 1 ELSE 0 END) as proses_ttd,
+                SUM(CASE WHEN status = 'Selesai' THEN 1 ELSE 0 END) as selesai
+            ")->first();
+
+            return [
+                'total' => (int) $stats->total,
+                'menunggu' => (int) $stats->menunggu,
+                'perbaikan' => (int) $stats->perbaikan,
+                'proses_ttd' => (int) $stats->proses_ttd,
+                'disetujui' => (int) $stats->disetujui,
+                'selesai' => (int) $stats->selesai,
+            ];
+        } catch (\Exception $e) {
+            return $this->emptyStats();
+        }
     }
 
     private function getStatsMutasiMasuk($user): array
     {
-        $cacheKey = 'dashboard_stats_masuk_' . $user->role . '_' . $user->id . '_fix_v1';
+        try {
+            $query = DB::table('mutasi_masuk')->whereNull('deleted_at'); // Filter Deleted
 
-        return \Illuminate\Support\Facades\Cache::remember($cacheKey, 600, function () use ($user) {
-            try {
-                $query = DB::table('mutasi_masuk')->whereNull('deleted_at'); // Filter Deleted
-
-                if ($user->role === 'Operator') {
-                    $query->where('pengusul', $user->username);
-                } elseif ($user->role === 'Sekolah') {
-                    $query->where('npsn_sekolah_tujuan', $user->npsn);
-                }
-
-                // Optimization: Single Query Aggregation
-                $stats = $query->selectRaw("
-                    COUNT(*) as total,
-                    SUM(jumlah_siswa) as total_siswa,
-                    SUM(CASE WHEN status = 'Menunggu Verifikasi Dinas' THEN 1 ELSE 0 END) as menunggu,
-                    SUM(CASE WHEN status = 'Disetujui Dinas' THEN 1 ELSE 0 END) as disetujui,
-                    SUM(CASE WHEN status = 'Proses TTD' THEN 1 ELSE 0 END) as proses_ttd,
-                    SUM(CASE WHEN status = 'Selesai' THEN 1 ELSE 0 END) as selesai,
-                    SUM(CASE WHEN status = 'Perlu Perbaikan' THEN 1 ELSE 0 END) as perbaikan
-                ")->first();
-
-                return [
-                    'total' => (int) $stats->total,
-                    'total_siswa' => (int) ($stats->total_siswa ?? 0),
-                    'menunggu' => (int) $stats->menunggu,
-                    'disetujui' => (int) $stats->disetujui,
-                    'proses_ttd' => (int) $stats->proses_ttd,
-                    'selesai' => (int) $stats->selesai,
-                    'perbaikan' => (int) $stats->perbaikan,
-                ];
-            } catch (\Exception $e) {
-                return $this->emptyStatsMasuk();
+            if ($user->role === 'Operator') {
+                $query->where('pengusul', $user->username);
+            } elseif ($user->role === 'Sekolah') {
+                $query->where('npsn_sekolah_tujuan', $user->npsn);
             }
-        });
+
+            // Optimization: Single Query Aggregation
+            $stats = $query->selectRaw("
+                COUNT(*) as total,
+                SUM(jumlah_siswa) as total_siswa,
+                SUM(CASE WHEN status = 'Menunggu Verifikasi Dinas' THEN 1 ELSE 0 END) as menunggu,
+                SUM(CASE WHEN status = 'Disetujui Dinas' THEN 1 ELSE 0 END) as disetujui,
+                SUM(CASE WHEN status = 'Proses TTD' THEN 1 ELSE 0 END) as proses_ttd,
+                SUM(CASE WHEN status = 'Selesai' THEN 1 ELSE 0 END) as selesai,
+                SUM(CASE WHEN status = 'Perlu Perbaikan' THEN 1 ELSE 0 END) as perbaikan
+            ")->first();
+
+            return [
+                'total' => (int) $stats->total,
+                'total_siswa' => (int) ($stats->total_siswa ?? 0),
+                'menunggu' => (int) $stats->menunggu,
+                'disetujui' => (int) $stats->disetujui,
+                'proses_ttd' => (int) $stats->proses_ttd,
+                'selesai' => (int) $stats->selesai,
+                'perbaikan' => (int) $stats->perbaikan,
+            ];
+        } catch (\Exception $e) {
+            return $this->emptyStatsMasuk();
+        }
     }
 
     private function getStatsUsers($user): array
     {
-        $cacheKey = 'dashboard_stats_users_' . $user->npsn . '_fix_v1';
+        try {
+            $stats = DB::table('users')
+                ->where('npsn', $user->npsn)
+                ->where('role', 'Operator')
+                ->selectRaw("
+                    COUNT(*) as total,
+                    SUM(CASE WHEN status = 'Aktif' OR is_active = 1 THEN 1 ELSE 0 END) as active
+                ")->first();
 
-        return \Illuminate\Support\Facades\Cache::remember($cacheKey, 600, function () use ($user) {
-            try {
-                $stats = DB::table('users')
-                    ->where('npsn', $user->npsn)
-                    ->where('role', 'Operator')
-                    ->selectRaw("
-                        COUNT(*) as total,
-                        SUM(CASE WHEN status = 'Aktif' OR is_active = 1 THEN 1 ELSE 0 END) as active
-                    ")->first();
+            $total = (int) $stats->total;
+            $active = (int) $stats->active;
 
-                $total = (int) $stats->total;
-                $active = (int) $stats->active;
-
-                return [
-                    'total' => $total,
-                    'active' => $active,
-                    'inactive' => $total - $active,
-                ];
-            } catch (\Exception $e) {
-                return ['total' => 0, 'active' => 0, 'inactive' => 0];
-            }
-        });
+            return [
+                'total' => $total,
+                'active' => $active,
+                'inactive' => $total - $active,
+            ];
+        } catch (\Exception $e) {
+            return ['total' => 0, 'active' => 0, 'inactive' => 0];
+        }
     }
 
     /**
@@ -161,44 +148,41 @@ class DashboardController extends Controller
      */
     private function getStatsDinasUsers(): array
     {
-        // Cache globally for Dinas since it counts everything
-        return \Illuminate\Support\Facades\Cache::remember('dashboard_stats_dinas_users_fix_v1', 600, function () {
-            try {
-                $stats = DB::table('users')
-                    ->whereIn('role', ['Sekolah', 'Operator'])
-                    ->selectRaw("
-                        SUM(CASE WHEN role = 'Sekolah' THEN 1 ELSE 0 END) as sekolah_total,
-                        SUM(CASE WHEN role = 'Sekolah' AND (status = 'Aktif' OR is_active = 1) THEN 1 ELSE 0 END) as sekolah_active,
-                        SUM(CASE WHEN role = 'Operator' THEN 1 ELSE 0 END) as operator_total,
-                        SUM(CASE WHEN role = 'Operator' AND (status = 'Aktif' OR is_active = 1) THEN 1 ELSE 0 END) as operator_active
-                    ")->first();
+        try {
+            $stats = DB::table('users')
+                ->whereIn('role', ['Sekolah', 'Operator'])
+                ->selectRaw("
+                    SUM(CASE WHEN role = 'Sekolah' THEN 1 ELSE 0 END) as sekolah_total,
+                    SUM(CASE WHEN role = 'Sekolah' AND (status = 'Aktif' OR is_active = 1) THEN 1 ELSE 0 END) as sekolah_active,
+                    SUM(CASE WHEN role = 'Operator' THEN 1 ELSE 0 END) as operator_total,
+                    SUM(CASE WHEN role = 'Operator' AND (status = 'Aktif' OR is_active = 1) THEN 1 ELSE 0 END) as operator_active
+                ")->first();
 
-                $sekolahTotal = (int) $stats->sekolah_total;
-                $sekolahActive = (int) $stats->sekolah_active;
-                $operatorTotal = (int) $stats->operator_total;
-                $operatorActive = (int) $stats->operator_active;
+            $sekolahTotal = (int) $stats->sekolah_total;
+            $sekolahActive = (int) $stats->sekolah_active;
+            $operatorTotal = (int) $stats->operator_total;
+            $operatorActive = (int) $stats->operator_active;
 
-                return [
-                    'sekolah_total' => $sekolahTotal,
-                    'sekolah_active' => $sekolahActive,
-                    'sekolah_inactive' => $sekolahTotal - $sekolahActive,
-                    'operator_total' => $operatorTotal,
-                    'operator_active' => $operatorActive,
-                    'operator_inactive' => $operatorTotal - $operatorActive,
-                    'total' => $sekolahTotal + $operatorTotal,
-                ];
-            } catch (\Exception $e) {
-                return [
-                    'sekolah_total' => 0,
-                    'sekolah_active' => 0,
-                    'sekolah_inactive' => 0,
-                    'operator_total' => 0,
-                    'operator_active' => 0,
-                    'operator_inactive' => 0,
-                    'total' => 0,
-                ];
-            }
-        });
+            return [
+                'sekolah_total' => $sekolahTotal,
+                'sekolah_active' => $sekolahActive,
+                'sekolah_inactive' => $sekolahTotal - $sekolahActive,
+                'operator_total' => $operatorTotal,
+                'operator_active' => $operatorActive,
+                'operator_inactive' => $operatorTotal - $operatorActive,
+                'total' => $sekolahTotal + $operatorTotal,
+            ];
+        } catch (\Exception $e) {
+            return [
+                'sekolah_total' => 0,
+                'sekolah_active' => 0,
+                'sekolah_inactive' => 0,
+                'operator_total' => 0,
+                'operator_active' => 0,
+                'operator_inactive' => 0,
+                'total' => 0,
+            ];
+        }
     }
 
     private function emptyStats(): array
@@ -231,39 +215,35 @@ class DashboardController extends Controller
      */
     private function getSchoolStatsKeluar($user, $month = null, $year = null): array
     {
-        $cacheKey = 'dashboard_school_keluar_' . $user->id . '_' . ($month ?? 'all') . '_' . ($year ?? 'all') . '_fix_v1';
+        try {
+            $query = DB::table('mutasi_keluar')
+                ->select('nama_sekolah_asal as nama_sekolah', DB::raw('COUNT(*) as jumlah'))
+                ->whereNull('deleted_at') // Exclude Soft Deleted
+                ->where('status', '!=', 'Dibatalkan') // Exclude Cancelled
+                ->groupBy('nama_sekolah_asal')
+                ->orderByDesc('jumlah')
+                ->limit(10);
 
-        return \Illuminate\Support\Facades\Cache::remember($cacheKey, 600, function () use ($user, $month, $year) {
-            try {
-                $query = DB::table('mutasi_keluar')
-                    ->select('nama_sekolah_asal as nama_sekolah', DB::raw('COUNT(*) as jumlah'))
-                    ->whereNull('deleted_at') // Exclude Soft Deleted
-                    ->where('status', '!=', 'Dibatalkan') // Exclude Cancelled
-                    ->groupBy('nama_sekolah_asal')
-                    ->orderByDesc('jumlah')
-                    ->limit(10);
-
-                // Filter by role
-                if ($user->role === 'Operator') {
-                    $query->where('pengusul', $user->username)
-                        ->where('npsn_sekolah_asal', $user->npsn);
-                } elseif ($user->role === 'Sekolah') {
-                    $query->where('npsn_sekolah_asal', $user->npsn);
-                }
-
-                // Filter by month/year
-                if ($month) {
-                    $query->whereMonth('tanggal_pengajuan', $month);
-                }
-                if ($year) {
-                    $query->whereYear('tanggal_pengajuan', $year);
-                }
-
-                return $query->get()->toArray();
-            } catch (\Exception $e) {
-                return [];
+            // Filter by role
+            if ($user->role === 'Operator') {
+                $query->where('pengusul', $user->username)
+                    ->where('npsn_sekolah_asal', $user->npsn);
+            } elseif ($user->role === 'Sekolah') {
+                $query->where('npsn_sekolah_asal', $user->npsn);
             }
-        });
+
+            // Filter by month/year
+            if ($month) {
+                $query->whereMonth('tanggal_pengajuan', $month);
+            }
+            if ($year) {
+                $query->whereYear('tanggal_pengajuan', $year);
+            }
+
+            return $query->get()->toArray();
+        } catch (\Exception $e) {
+            return [];
+        }
     }
 
     /**
@@ -271,38 +251,34 @@ class DashboardController extends Controller
      */
     private function getSchoolStatsMasuk($user, $month = null, $year = null): array
     {
-        $cacheKey = 'dashboard_school_masuk_' . $user->id . '_' . ($month ?? 'all') . '_' . ($year ?? 'all');
+        try {
+            $query = DB::table('mutasi_masuk')
+                ->select('nama_sekolah_tujuan as nama_sekolah', DB::raw('SUM(jumlah_siswa) as jumlah'))
+                ->whereNull('deleted_at') // Exclude Soft Deleted
+                ->where('status', '!=', 'Dibatalkan') // Exclude Cancelled
+                ->groupBy('nama_sekolah_tujuan')
+                ->orderByDesc('jumlah')
+                ->limit(10);
 
-        return \Illuminate\Support\Facades\Cache::remember($cacheKey, 600, function () use ($user, $month, $year) {
-            try {
-                $query = DB::table('mutasi_masuk')
-                    ->select('nama_sekolah_tujuan as nama_sekolah', DB::raw('SUM(jumlah_siswa) as jumlah'))
-                    ->whereNull('deleted_at') // Exclude Soft Deleted
-                    ->where('status', '!=', 'Dibatalkan') // Exclude Cancelled
-                    ->groupBy('nama_sekolah_tujuan')
-                    ->orderByDesc('jumlah')
-                    ->limit(10);
-
-                // Filter by role
-                if ($user->role === 'Operator') {
-                    $query->where('pengusul', $user->username);
-                } elseif ($user->role === 'Sekolah') {
-                    $query->where('npsn_sekolah_tujuan', $user->npsn);
-                }
-
-                // Filter by month/year
-                if ($month) {
-                    $query->whereMonth('tanggal_pengajuan', $month);
-                }
-                if ($year) {
-                    $query->whereYear('tanggal_pengajuan', $year);
-                }
-
-                return $query->get()->toArray();
-            } catch (\Exception $e) {
-                return [];
+            // Filter by role
+            if ($user->role === 'Operator') {
+                $query->where('pengusul', $user->username);
+            } elseif ($user->role === 'Sekolah') {
+                $query->where('npsn_sekolah_tujuan', $user->npsn);
             }
-        });
+
+            // Filter by month/year
+            if ($month) {
+                $query->whereMonth('tanggal_pengajuan', $month);
+            }
+            if ($year) {
+                $query->whereYear('tanggal_pengajuan', $year);
+            }
+
+            return $query->get()->toArray();
+        } catch (\Exception $e) {
+            return [];
+        }
     }
 
     /**
@@ -310,39 +286,37 @@ class DashboardController extends Controller
      */
     private function getAvailableYears(): array
     {
-        return \Illuminate\Support\Facades\Cache::remember('dashboard.available_years', 3600, function () {
-            try {
-                $years = [];
+        try {
+            $years = [];
 
-                // From mutasi_keluar (no schema check - tables always exist in production)
-                $keluarYears = DB::table('mutasi_keluar')
-                    ->selectRaw('DISTINCT YEAR(tanggal_pengajuan) as year')
-                    ->whereNotNull('tanggal_pengajuan')
-                    ->pluck('year')
-                    ->toArray();
-                $years = array_merge($years, $keluarYears);
+            // From mutasi_keluar (no schema check - tables always exist in production)
+            $keluarYears = DB::table('mutasi_keluar')
+                ->selectRaw('DISTINCT YEAR(tanggal_pengajuan) as year')
+                ->whereNotNull('tanggal_pengajuan')
+                ->pluck('year')
+                ->toArray();
+            $years = array_merge($years, $keluarYears);
 
-                // From mutasi_masuk
-                $masukYears = DB::table('mutasi_masuk')
-                    ->selectRaw('DISTINCT YEAR(tanggal_pengajuan) as year')
-                    ->whereNotNull('tanggal_pengajuan')
-                    ->pluck('year')
-                    ->toArray();
-                $years = array_merge($years, $masukYears);
+            // From mutasi_masuk
+            $masukYears = DB::table('mutasi_masuk')
+                ->selectRaw('DISTINCT YEAR(tanggal_pengajuan) as year')
+                ->whereNotNull('tanggal_pengajuan')
+                ->pluck('year')
+                ->toArray();
+            $years = array_merge($years, $masukYears);
 
-                // Unique and sort descending
-                $years = array_unique(array_filter($years));
-                rsort($years);
+            // Unique and sort descending
+            $years = array_unique(array_filter($years));
+            rsort($years);
 
-                // Add current year if not exists
-                if (!in_array(date('Y'), $years)) {
-                    array_unshift($years, (int) date('Y'));
-                }
-
-                return $years;
-            } catch (\Exception $e) {
-                return [(int) date('Y')];
+            // Add current year if not exists
+            if (!in_array(date('Y'), $years)) {
+                array_unshift($years, (int) date('Y'));
             }
-        });
+
+            return $years;
+        } catch (\Exception $e) {
+            return [(int) date('Y')];
+        }
     }
 }
