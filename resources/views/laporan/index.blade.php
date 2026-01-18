@@ -10,101 +10,116 @@
             <p class="text-gray-500 mt-1">Pilih jenis laporan yang ingin Anda cetak atau lihat.</p>
         </div>
 
-        <!-- NEW: Comprehensive Print Section -->
-        <div
-            class="bg-gradient-to-r from-emerald-500 to-teal-600 rounded-xl shadow-lg p-6 text-white flex flex-col md:flex-row items-center justify-between gap-6">
-            <div class="flex-1">
-                <div class="flex items-center gap-4 mb-2">
-                    <div class="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
-                        <i class="bi bi-printer-fill text-2xl text-white"></i>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- LEFT COLUMN: Features List -->
+            <div class="lg:col-span-1 space-y-4">
+
+                <!-- Card Laporan Rekapitulasi -->
+                <a href="{{ route('laporan.rekap') }}"
+                    class="group block bg-white rounded-xl shadow-sm border border-slate-200 p-5 transition hover:shadow-md hover:border-blue-400">
+                    <div class="flex items-center gap-4">
+                        <div
+                            class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition">
+                            <i class="bi bi-bar-chart-line text-2xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-slate-800 group-hover:text-blue-700">Rekapitulasi</h3>
+                            <p class="text-slate-500 text-xs mt-0.5">Ringkasan statistik mutasi.</p>
+                        </div>
                     </div>
-                    <h2 class="text-xl font-bold">Cetak Laporan Lengkap (Komprehensif)</h2>
-                </div>
-                <p class="text-emerald-50 text-sm md:w-3/4 leading-relaxed">
-                    Unduh satu dokumen PDF lengkap yang berisi Rekapitulasi, Grafik Tren, Distribusi Wilayah, Demografi
-                    Siswa, hingga Daftar Nominatif secara detail. Sesuai standar untuk arsip Dinas/Sekolah.
-                </p>
+                </a>
+
+                <!-- Card Grafik Tren Mutasi -->
+                <a href="{{ route('laporan.tren') }}"
+                    class="group block bg-white rounded-xl shadow-sm border border-slate-200 p-5 transition hover:shadow-md hover:border-indigo-400">
+                    <div class="flex items-center gap-4">
+                        <div
+                            class="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition">
+                            <i class="bi bi-graph-up text-2xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-slate-800 group-hover:text-indigo-700">Tren Mutasi</h3>
+                            <p class="text-slate-500 text-xs mt-0.5">Visualisasi tren harian/bulanan.</p>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- Card Laporan Detail (Daftar Nominatif) -->
+                <a href="{{ route('laporan.nominatif') }}"
+                    class="group block bg-white rounded-xl shadow-sm border border-slate-200 p-5 transition hover:shadow-md hover:border-orange-400">
+                    <div class="flex items-center gap-4">
+                        <div
+                            class="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center text-orange-600 group-hover:bg-orange-600 group-hover:text-white transition">
+                            <i class="bi bi-table text-2xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-slate-800 group-hover:text-orange-700">Daftar Nominatif</h3>
+                            <p class="text-slate-500 text-xs mt-0.5">Detail siswa by NISN.</p>
+                        </div>
+                    </div>
+                </a>
+
             </div>
 
-            <div class="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/20 w-full md:w-auto min-w-[300px]">
-                <form action="{{ route('laporan.cetak-komprehensif') }}" method="GET" target="_blank"
-                    class="flex flex-col gap-3">
-                    <label class="text-xs font-bold uppercase tracking-wider text-emerald-100">Pilih Periode Laporan</label>
-                    <div class="flex gap-2">
-                        <select name="month"
-                            class="bg-white text-gray-800 text-sm rounded-lg flex-1 border-0 focus:ring-2 focus:ring-emerald-300">
-                            <option value="">Setahun Penuh</option>
-                            @for($m = 1; $m <= 12; $m++)
-                                <option value="{{ $m }}" {{ date('n') == $m ? 'selected' : '' }}>
-                                    {{ \Carbon\Carbon::createFromDate(null, $m)->translatedFormat('F') }}
-                                </option>
-                            @endfor
-                        </select>
-                        <select name="year"
-                            class="bg-white text-gray-800 text-sm rounded-lg w-24 border-0 focus:ring-2 focus:ring-emerald-300">
-                            @for($y = date('Y'); $y >= 2020; $y--)
-                                <option value="{{ $y }}">{{ $y }}</option>
-                            @endfor
-                        </select>
+            <!-- RIGHT COLUMN: Cetak Komprehensif -->
+            <div class="lg:col-span-2">
+                <div
+                    class="bg-gradient-to-br from-emerald-500 to-teal-700 rounded-2xl shadow-lg p-8 text-white h-full relative overflow-hidden">
+                    <!-- Background Pattern -->
+                    <div class="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
+                        <i class="bi bi-printer-fill text-9xl"></i>
                     </div>
-                    <button type="submit"
-                        class="w-full py-2.5 bg-white text-emerald-700 font-bold rounded-lg shadow hover:bg-emerald-50 transition flex items-center justify-center gap-2">
-                        <i class="bi bi-file-earmark-pdf-fill"></i> Cetak PDF Sekarang
-                    </button>
-                </form>
+
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-6">
+                            <div class="p-3 bg-white/20 rounded-xl backdrop-blur-md shadow-inner">
+                                <i class="bi bi-printer-fill text-3xl text-white"></i>
+                            </div>
+                            <div>
+                                <h2 class="text-2xl font-bold">Cetak Laporan Lengkap</h2>
+                                <p class="text-emerald-100 text-sm">Download arsip lengkap PDF (Rekap, Grafik, Nominatif)
+                                    dalam satu dokumen.</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-white/10 rounded-2xl p-6 backdrop-blur-md border border-white/20">
+                            <form action="{{ route('laporan.cetak-komprehensif') }}" method="GET" target="_blank"
+                                class="space-y-5">
+
+                                <div>
+                                    <label
+                                        class="block text-xs font-bold uppercase tracking-wider text-emerald-100 mb-2">Pilih
+                                        Periode Laporan</label>
+                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                        <select name="month"
+                                            class="sm:col-span-2 bg-white text-slate-800 font-medium rounded-xl border-0 focus:ring-4 focus:ring-emerald-500/30 py-3">
+                                            <option value="">Setahun Penuh (Januari - Desember)</option>
+                                            @for($m = 1; $m <= 12; $m++)
+                                                <option value="{{ $m }}" {{ date('n') == $m ? 'selected' : '' }}>
+                                                    {{ \Carbon\Carbon::createFromDate(null, $m)->translatedFormat('F') }}
+                                                </option>
+                                            @endfor
+                                        </select>
+                                        <select name="year"
+                                            class="bg-white text-slate-800 font-medium rounded-xl border-0 focus:ring-4 focus:ring-emerald-500/30 py-3">
+                                            @for($y = date('Y'); $y >= 2020; $y--)
+                                                <option value="{{ $y }}">{{ $y }}</option>
+                                            @endfor
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <button type="submit"
+                                    class="w-full py-3.5 bg-white text-emerald-700 font-bold text-lg rounded-xl shadow-lg shadow-black/10 hover:bg-emerald-50 hover:scale-[1.01] active:scale-[0.98] transition-all flex items-center justify-center gap-2 group">
+                                    <i class="bi bi-printer group-hover:rotate-12 transition-transform duration-300"></i>
+                                    <span>Cetak Laporan Sekarang</span>
+                                </button>
+                            </form>
+                        </div>
+
+                    </div>
+                </div>
             </div>
         </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <!-- Card Laporan Rekapitulasi -->
-            <a href="{{ route('laporan.rekap') }}"
-                class="group relative bg-white rounded-lg shadow-sm border border-slate-200 p-4 transition hover:shadow-md hover:border-blue-400">
-                <div class="flex items-start gap-4">
-                    <div
-                        class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition">
-                        <i class="bi bi-bar-chart-line text-xl"></i>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-slate-800 text-sm mb-1 group-hover:text-blue-700">Rekapitulasi</h3>
-                        <p class="text-slate-500 text-xs leading-relaxed">
-                            Ringkasan statistik mutasi masuk & keluar.
-                        </p>
-                    </div>
-                </div>
-            </a>
-
-            <!-- Card Grafik Tren Mutasi -->
-            <a href="{{ route('laporan.tren') }}"
-                class="group relative bg-white rounded-lg shadow-sm border border-slate-200 p-4 transition hover:shadow-md hover:border-indigo-400">
-                <div class="flex items-start gap-4">
-                    <div
-                        class="w-10 h-10 bg-indigo-50 rounded-lg flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition">
-                        <i class="bi bi-graph-up text-xl"></i>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-slate-800 text-sm mb-1 group-hover:text-indigo-700">Tren Mutasi</h3>
-                        <p class="text-slate-500 text-xs leading-relaxed">
-                            Visualisasi tren harian/bulanan.
-                        </p>
-                    </div>
-                </div>
-            </a>
-
-            <!-- Card Laporan Detail (Daftar Nominatif) -->
-            <a href="{{ route('laporan.nominatif') }}"
-                class="group relative bg-white rounded-lg shadow-sm border border-slate-200 p-4 transition hover:shadow-md hover:border-orange-400">
-                <div class="flex items-start gap-4">
-                    <div
-                        class="w-10 h-10 bg-orange-50 rounded-lg flex items-center justify-center text-orange-600 group-hover:bg-orange-600 group-hover:text-white transition">
-                        <i class="bi bi-table text-xl"></i>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-slate-800 text-sm mb-1 group-hover:text-orange-700">Daftar Nominatif</h3>
-                        <p class="text-slate-500 text-xs leading-relaxed">
-                            Detail siswa mutasi (NISN, Nama, Asal/Tujuan).
-                        </p>
-                    </div>
-                </div>
-            </a>
-        </div>
-</div>@endsection
+    </div>
+@endsection
