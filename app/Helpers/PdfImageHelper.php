@@ -38,10 +38,15 @@ class PdfImageHelper
             if ($type == 'jpg')
                 $type = 'jpeg';
 
-            // TEST: Disable image output to confirm if PNG/GD is the blocker
-            return '';
+            // CRITICAL: Dompdf on Vercel (without GD) crashes on PNGs even if Base64 encoded.
+            // We must ONLY return JPEG images.
+            if (strtolower($type) !== 'jpeg') {
+                // Return empty to safe-fail instead of 500 Error
+                return '';
+            }
 
-            // return 'data:image/' . $type . ';base64,' . base64_encode($data);
+            // Return safe JPEG Base64
+            return 'data:image/' . $type . ';base64,' . base64_encode($data);
         } catch (\Exception $e) {
             // Log error or just return empty to allow PDF to generate without image
             return '';

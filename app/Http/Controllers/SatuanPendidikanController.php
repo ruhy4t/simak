@@ -565,7 +565,7 @@ class SatuanPendidikanController extends Controller
         }
 
         $request->validate([
-            'kop_surat' => 'nullable|image|mimes:png,jpg,jpeg|max:2048', // Max 2MB
+            'kop_surat' => 'nullable|image|mimes:jpg,jpeg|max:2048', // Max 2MB, JPG Only due to Vercel/Dompdf GD limit
             'kepala_sekolah_nama' => 'nullable|string|max:150',
             'kepala_sekolah_nip' => 'nullable|string|max:50',
             'jumlah_siswa_awal_7' => 'nullable|integer|min:0',
