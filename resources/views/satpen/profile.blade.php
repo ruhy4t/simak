@@ -3,15 +3,16 @@
 @section('content')
     <div class="max-w-full mx-auto space-y-8" x-data="{ academicYear: '2025/2026' }">
 
-        <!-- Header Section -->
-        <div class="flex items-center justify-between bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+        <!-- Header Page -->
+        <div class="flex items-center justify-between border-b-2 border-slate-200 pb-6 mb-8">
             <div>
-                <h1 class="text-2xl font-bold text-slate-900">Profil Sekolah</h1>
-                <p class="text-slate-500 text-sm mt-1">Kelola data resmi, kepala sekolah, dan konfigurasi laporan.</p>
+                <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Profil Sekolah</h1>
+                <p class="text-slate-500 text-lg mt-1">Kelola data identitas, siswa, dan kepala sekolah.</p>
             </div>
-            <div class="hidden md:block">
-                <span class="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-bold border border-slate-200">
-                    NPSN: {{ $satpen->npsn }}
+            <div>
+                <span
+                    class="inline-flex items-center px-4 py-2 rounded-lg bg-blue-50 text-blue-700 font-bold border border-blue-100">
+                    <i class="bi bi-upc-scan mr-2"></i> NPSN: {{ $satpen->npsn }}
                 </span>
             </div>
         </div>
@@ -21,112 +22,100 @@
             @csrf
             @method('PUT')
 
-            <!-- LEFT COLUMN (Identitas & Data Siswa) -->
+            <!-- LEFT COLUMN (Span 7) -->
             <div class="lg:col-span-7 space-y-8">
 
                 <!-- 1. Identitas Sekolah (Read Only) -->
                 <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div class="px-6 py-4 bg-orange-50 border-b border-orange-100 flex items-center gap-3">
-                        <div class="bg-orange-100 p-2 rounded-lg text-orange-600">
-                            <i class="bi bi-building-check-fill text-lg"></i>
+                    <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center gap-3">
+                        <div class="bg-white p-2 rounded border border-slate-200 text-slate-500">
+                            <i class="bi bi-building"></i>
                         </div>
-                        <h2 class="font-bold text-orange-800 text-base uppercase tracking-wide">Identitas Sekolah</h2>
+                        <h2 class="font-bold text-slate-800 text-lg uppercase">Identitas Sekolah</h2>
                     </div>
 
-                    <div class="p-6 space-y-5">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div class="p-6 space-y-6">
+                        <!-- Nama & NPSN -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Nama Sekolah</label>
-                                <div
-                                    class="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 font-bold">
-                                    {{ $satpen->nama }}
-                                </div>
+                                <label class="block text-sm font-bold text-slate-500 uppercase mb-2">Nama Sekolah</label>
+                                <input type="text" value="{{ $satpen->nama }}" disabled
+                                    class="w-full bg-slate-100 border-2 border-slate-200 rounded-lg px-4 py-3 text-slate-600 font-bold cursor-not-allowed">
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-slate-500 uppercase mb-2">NPSN</label>
-                                <div
-                                    class="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 font-bold font-mono">
-                                    {{ $satpen->npsn }}
-                                </div>
+                                <label class="block text-sm font-bold text-slate-500 uppercase mb-2">NPSN</label>
+                                <input type="text" value="{{ $satpen->npsn }}" disabled
+                                    class="w-full bg-slate-100 border-2 border-slate-200 rounded-lg px-4 py-3 text-slate-600 font-bold font-mono cursor-not-allowed">
                             </div>
                         </div>
 
+                        <!-- Alamat -->
                         <div>
-                            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Alamat Lengkap</label>
-                            <div
-                                class="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-700 text-sm leading-relaxed">
-                                {{ $satpen->alamat_lengkap ?? 'Alamat belum diisi lengkap.' }}
-                            </div>
+                            <label class="block text-sm font-bold text-slate-500 uppercase mb-2">Alamat Lengkap</label>
+                            <textarea disabled
+                                class="w-full bg-slate-100 border-2 border-slate-200 rounded-lg px-4 py-3 text-slate-600 font-medium cursor-not-allowed leading-relaxed"
+                                rows="2">{{ $satpen->alamat_lengkap ?? '-' }}</textarea>
+                            <p class="mt-2 text-xs text-slate-400 flex items-center gap-1">
+                                <i class="bi bi-lock-fill"></i> Data disinkronisasi otomatis dari Dapodik.
+                            </p>
                         </div>
                     </div>
                 </div>
 
-                <!-- 2. Data Siswa Awal -->
-                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div class="px-6 py-4 bg-blue-50 border-b border-blue-100 flex items-center gap-3">
-                        <div class="bg-blue-100 p-2 rounded-lg text-blue-600">
-                            <i class="bi bi-people-fill text-lg"></i>
+                <!-- 2. Data Siswa Awal (Blue Theme) -->
+                <div class="bg-white rounded-xl shadow-md border-t-4 border-blue-500 overflow-hidden">
+                    <div class="px-6 py-4 bg-white border-b border-slate-100 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <i class="bi bi-people-fill text-blue-600 text-xl"></i>
+                            <h2 class="font-extrabold text-slate-800 text-lg uppercase tracking-wide">Data Siswa Awal</h2>
                         </div>
-                        <h2 class="font-bold text-blue-800 text-base uppercase tracking-wide">Data Siswa Awal</h2>
                     </div>
 
                     <div class="p-6 space-y-6">
-
-                        <!-- Tahun Pelajaran Selector -->
-                        <div class="bg-blue-50/50 rounded-xl p-5 border border-blue-100">
-                            <label class="block text-sm font-bold text-blue-900 mb-2">Tahun Pelajaran (Saat Ini)</label>
-                            <div class="relative">
-                                <select x-model="academicYear"
-                                    class="w-full bg-white border-2 border-blue-200 rounded-xl px-4 py-2.5 text-blue-900 font-bold text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all cursor-pointer">
-                                    <option value="2025/2026">2025/2026 (Aktif)</option>
-                                    <option value="2026/2027">2026/2027 (Mendatang)</option>
-                                </select>
-                            </div>
+                        <!-- Year Selector -->
+                        <div class="bg-blue-50 border border-blue-100 rounded-lg p-5">
+                            <label class="block text-sm font-bold text-blue-900 mb-2">Tahun Pelajaran</label>
+                            <select x-model="academicYear"
+                                class="w-full border-2 border-blue-300 bg-white text-blue-900 font-bold rounded-lg px-4 py-3 focus:outline-none focus:ring-4 focus:ring-blue-500/20 cursor-pointer text-lg">
+                                <option value="2025/2026">2025/2026 (Aktif)</option>
+                                <option value="2026/2027">2026/2027 (Mendatang)</option>
+                            </select>
+                            <p class="text-xs text-blue-600 mt-2 font-medium">
+                                * Pilih tahun ajaran sebelum mengisi jumlah siswa.
+                            </p>
                         </div>
 
-                        <!-- Inputs Grid -->
-                        <div class="grid grid-cols-3 gap-5">
+                        <!-- Inputs -->
+                        <div class="grid grid-cols-3 gap-6">
                             <!-- Kelas 7 -->
                             <div>
-                                <label class="block text-xs font-bold text-slate-600 mb-2 text-center uppercase">Kelas
+                                <label class="block text-sm font-bold text-slate-700 mb-2 text-center uppercase">Kelas
                                     7</label>
                                 <input type="number" name="jumlah_siswa_awal_7" min="0" required
                                     value="{{ old('jumlah_siswa_awal_7', $satpen->jumlah_siswa_awal_7 ?? 0) }}"
-                                    class="w-full bg-white border-2 border-slate-200 rounded-xl px-2 py-3 text-slate-800 text-xl font-bold text-center focus:ring-4 focus:ring-blue-500/20 focus:border-blue-600 transition-all">
+                                    class="w-full border-2 border-slate-300 bg-white focus:border-blue-500 focus:bg-blue-50 rounded-xl px-2 py-4 text-center text-2xl font-black text-slate-800 transition-all shadow-sm">
                             </div>
 
                             <!-- Kelas 8 -->
                             <div class="relative">
-                                <label class="block text-xs font-bold text-slate-600 mb-2 text-center uppercase">Kelas
+                                <label class="block text-sm font-bold text-slate-700 mb-2 text-center uppercase">Kelas
                                     8</label>
                                 <input type="number" name="jumlah_siswa_awal_8" min="0" required
                                     :readonly="academicYear === '2026/2027'"
-                                    :class="academicYear === '2026/2027' ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-white text-slate-800'"
+                                    :class="academicYear === '2026/2027' ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed' : 'bg-white border-slate-300 text-slate-800 focus:border-blue-500 focus:bg-blue-50'"
                                     value="{{ old('jumlah_siswa_awal_8', $satpen->jumlah_siswa_awal_8 ?? 0) }}"
-                                    class="w-full border-2 border-slate-200 rounded-xl px-2 py-3 text-xl font-bold text-center focus:ring-4 focus:ring-blue-500/20 focus:border-blue-600 transition-all">
-                                <template x-if="academicYear === '2026/2027'">
-                                    <div class="absolute -bottom-5 left-0 w-full text-center">
-                                        <span
-                                            class="text-[10px] bg-slate-200 text-slate-600 px-2 py-0.5 rounded font-bold">OTOMATIS</span>
-                                    </div>
-                                </template>
+                                    class="w-full border-2 rounded-xl px-2 py-4 text-center text-2xl font-black transition-all shadow-sm">
                             </div>
 
                             <!-- Kelas 9 -->
                             <div class="relative">
-                                <label class="block text-xs font-bold text-slate-600 mb-2 text-center uppercase">Kelas
+                                <label class="block text-sm font-bold text-slate-700 mb-2 text-center uppercase">Kelas
                                     9</label>
                                 <input type="number" name="jumlah_siswa_awal_9" min="0" required
                                     :readonly="academicYear === '2026/2027'"
-                                    :class="academicYear === '2026/2027' ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-white text-slate-800'"
+                                    :class="academicYear === '2026/2027' ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed' : 'bg-white border-slate-300 text-slate-800 focus:border-blue-500 focus:bg-blue-50'"
                                     value="{{ old('jumlah_siswa_awal_9', $satpen->jumlah_siswa_awal_9 ?? 0) }}"
-                                    class="w-full border-2 border-slate-200 rounded-xl px-2 py-3 text-xl font-bold text-center focus:ring-4 focus:ring-blue-500/20 focus:border-blue-600 transition-all">
-                                <template x-if="academicYear === '2026/2027'">
-                                    <div class="absolute -bottom-5 left-0 w-full text-center">
-                                        <span
-                                            class="text-[10px] bg-slate-200 text-slate-600 px-2 py-0.5 rounded font-bold">OTOMATIS</span>
-                                    </div>
-                                </template>
+                                    class="w-full border-2 rounded-xl px-2 py-4 text-center text-2xl font-black transition-all shadow-sm">
                             </div>
                         </div>
                     </div>
@@ -134,103 +123,96 @@
 
                 <!-- Submit Button -->
                 <button type="submit"
-                    class="w-full py-4 bg-blue-600 text-white text-lg font-bold rounded-xl shadow-lg hover:bg-blue-700 hover:shadow-xl transition-all flex items-center justify-center gap-3">
-                    <i class="bi bi-save2-fill"></i>
-                    SIMPAN PERUBAHAN
+                    class="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg rounded-xl shadow-lg transform active:scale-95 transition-all flex items-center justify-center gap-2">
+                    <i class="bi bi-check-circle-fill"></i> SIMPAN PERUBAHAN PROFIL
                 </button>
             </div>
 
-            <!-- RIGHT COLUMN (Informasi & Settings) -->
+            <!-- RIGHT COLUMN (Span 5) -->
             <div class="lg:col-span-5 space-y-8">
 
-                <!-- 1. Data Kepala Sekolah (High Visibility) -->
-                <div
-                    class="bg-white rounded-xl shadow-lg border-2 border-indigo-100 overflow-hidden ring-4 ring-indigo-50/50">
-                    <div class="px-6 py-4 bg-indigo-600 border-b border-indigo-700 flex items-center gap-3 text-white">
-                        <div class="bg-white/20 p-2 rounded-lg">
-                            <i class="bi bi-person-badge-fill text-lg"></i>
-                        </div>
-                        <h2 class="font-bold text-base uppercase tracking-wide">Data Kepala Sekolah</h2>
+                <!-- 1. Informasi & Bantuan -->
+                <div class="bg-blue-50 rounded-xl border border-blue-100 p-6">
+                    <h3 class="font-bold text-blue-900 text-lg mb-4 flex items-center gap-2">
+                        <i class="bi bi-info-circle-fill text-blue-600"></i> INFORMASI PENTING
+                    </h3>
+                    <ul class="space-y-3">
+                        <li class="flex items-start gap-3">
+                            <span
+                                class="bg-blue-200 text-blue-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold shrink-0">1</span>
+                            <p class="text-sm text-blue-800 leading-relaxed"><strong>Data Siswa Awal</strong> digunakan
+                                sebagai saldo awal laporan mutasi bulanan. Wajib diisi di awal tahun.</p>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <span
+                                class="bg-blue-200 text-blue-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold shrink-0">2</span>
+                            <p class="text-sm text-blue-800 leading-relaxed"><strong>Data Kepala Sekolah</strong> wajib
+                                diisi lengkap (Nama & Gelar) agar tanda tangan di laporan resmi valid.</p>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- 2. Kepala Sekolah (Indigo Theme) -->
+                <div class="bg-white rounded-xl shadow-md border-t-4 border-indigo-600 overflow-hidden">
+                    <div class="px-6 py-4 bg-white border-b border-slate-100 flex items-center gap-3">
+                        <i class="bi bi-person-badge-fill text-indigo-600 text-xl"></i>
+                        <h2 class="font-extrabold text-slate-800 text-lg uppercase tracking-wide">Data Kepala Sekolah</h2>
                     </div>
 
                     <div class="p-6 space-y-6">
-                        <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-3 flex gap-3 items-start">
-                            <i class="bi bi-info-circle-fill text-indigo-600 mt-0.5"></i>
-                            <p class="text-xs text-indigo-800 leading-relaxed font-medium">
-                                Wajib diisi dengan <strong>Nama Lengkap & Gelar</strong> untuk tanda tangan laporan.
-                            </p>
-                        </div>
-
+                        <!-- Nama Lengkap -->
                         <div>
-                            <label class="block text-xs font-bold text-indigo-900 uppercase tracking-wide mb-2">Nama Lengkap
-                                & Gelar <span class="text-red-500">*</span></label>
+                            <label class="block text-sm font-bold text-indigo-900 uppercase mb-2">
+                                Nama Lengkap & Gelar <span class="text-red-600 text-lg">*</span>
+                            </label>
                             <input type="text" name="kepala_sekolah_nama" required
                                 value="{{ old('kepala_sekolah_nama', $satpen->kepala_sekolah_nama) }}"
-                                placeholder="Contoh: Dr. H. Budi Santoso, M.Pd."
-                                class="w-full bg-white border-2 border-indigo-100 rounded-xl px-4 py-3 text-indigo-900 font-bold text-sm focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder-indigo-300">
+                                placeholder="Tulis nama lengkap beserta gelar..."
+                                class="w-full border-2 border-indigo-200 bg-indigo-50/30 focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/20 rounded-xl px-4 py-3 text-slate-900 font-bold placeholder-indigo-300 transition-all">
+                            <p class="text-xs text-slate-500 mt-2">Contoh: <strong>Dr. H. Budi Santoso, M.Pd.</strong></p>
                         </div>
 
+                        <!-- NIP -->
                         <div>
-                            <label class="block text-xs font-bold text-indigo-900 uppercase tracking-wide mb-2">NIP (Nomor
-                                Induk Pegawai)</label>
+                            <label class="block text-sm font-bold text-indigo-900 uppercase mb-2">
+                                NIP (Nomor Induk Pegawai)
+                            </label>
                             <input type="text" name="kepala_sekolah_nip"
                                 value="{{ old('kepala_sekolah_nip', $satpen->kepala_sekolah_nip) }}"
-                                placeholder="Isi (-) jika Non-ASN"
-                                class="w-full bg-white border-2 border-indigo-100 rounded-xl px-4 py-3 text-indigo-900 font-medium text-sm focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder-indigo-300 font-mono">
+                                placeholder="Nomor NIP..."
+                                class="w-full border-2 border-indigo-200 bg-indigo-50/30 focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/20 rounded-xl px-4 py-3 text-slate-900 font-mono font-bold placeholder-indigo-300 transition-all">
+                            <p class="text-xs text-slate-500 mt-2">Isi (-) jika Non-ASN.</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- 2. Kop Surat -->
-                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div class="px-6 py-4 bg-rose-50 border-b border-rose-100 flex items-center gap-3">
-                        <div class="bg-rose-100 p-2 rounded-lg text-rose-600">
-                            <i class="bi bi-images text-lg"></i>
-                        </div>
-                        <h2 class="font-bold text-rose-800 text-base uppercase tracking-wide">Kop Surat Sekolah</h2>
+                <!-- 3. Kop Surat (Rose Theme) -->
+                <div class="bg-white rounded-xl shadow-md border-t-4 border-rose-500 overflow-hidden">
+                    <div class="px-6 py-4 bg-white border-b border-slate-100 flex items-center gap-3">
+                        <i class="bi bi-envelope-paper-fill text-rose-600 text-xl"></i>
+                        <h2 class="font-extrabold text-slate-800 text-lg uppercase tracking-wide">Kop Surat Sekolah</h2>
                     </div>
 
-                    <div class="p-6 space-y-5">
-                        <div
-                            class="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:bg-slate-50 transition-colors group cursor-pointer relative">
-                            <input type="file" name="kop_surat" accept="image/*"
-                                class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
-                            <i
-                                class="bi bi-cloud-arrow-up text-3xl text-slate-400 group-hover:text-rose-500 mb-2 transition-colors"></i>
-                            <p class="text-sm font-bold text-slate-600 group-hover:text-rose-600">Klik untuk Ganti File</p>
-                            <p class="text-xs text-slate-400">JPG/PNG, Max 2MB</p>
+                    <div class="p-6 space-y-6">
+                        <div class="relative group">
+                            <label class="block text-sm font-bold text-rose-900 uppercase mb-2">Upload File Baru</label>
+                            <input type="file" name="kop_surat" accept="image/*" class="block w-full text-sm text-slate-500
+                                    file:mr-4 file:py-3 file:px-6
+                                    file:rounded-xl file:border-0
+                                    file:text-sm file:font-bold
+                                    file:bg-rose-50 file:text-rose-700
+                                    hover:file:bg-rose-100
+                                    cursor-pointer border-2 border-dashed border-rose-200 rounded-xl p-2 h-20 leading-10">
                         </div>
 
                         @if($satpen->kop_surat_path)
-                            <div class="bg-slate-100 rounded-lg p-2 border border-slate-200">
-                                <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider text-center mb-2">
-                                    Preview Saat Ini</p>
+                            <div class="pt-4 border-t border-slate-100">
+                                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 text-center">Preview
+                                    Terpasang</p>
                                 <img src="{{ Storage::url($satpen->kop_surat_path) }}" alt="Preview"
-                                    class="w-full h-auto rounded bg-white shadow-sm">
+                                    class="w-full h-auto rounded-lg shadow-sm border border-slate-200">
                             </div>
                         @endif
-                    </div>
-                </div>
-
-                <!-- 3. Bantuan -->
-                <div class="bg-teal-50 rounded-xl border border-teal-100 p-5">
-                    <h3 class="font-bold text-teal-800 text-sm mb-3 flex items-center gap-2">
-                        <i class="bi bi-question-circle-fill"></i> Pusat Bantuan
-                    </h3>
-                    <div class="space-y-3">
-                        <div class="flex gap-3 text-xs text-teal-700">
-                            <i class="bi bi-person-check-fill text-lg"></i>
-                            <div>
-                                <strong>Data Kepala Sekolah:</strong> Pastikan nama terisi lengkap dengan gelar untuk
-                                validitas laporan resmi.
-                            </div>
-                        </div>
-                        <div class="flex gap-3 text-xs text-teal-700">
-                            <i class="bi bi-file-earmark-pdf-fill text-lg"></i>
-                            <div>
-                                <strong>Kop Surat:</strong> Gunakan gambar Landscape High-Res agar tidak pecah saat dicetak.
-                            </div>
-                        </div>
                     </div>
                 </div>
 
