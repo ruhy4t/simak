@@ -51,7 +51,7 @@ class DashboardController extends Controller
     private function getStatsMutasiKeluar($user): array
     {
         // Cache key based on user role and ID (if operator/sekolah) or just role (if dinas)
-        $cacheKey = 'dashboard_stats_keluar_' . $user->role . '_' . $user->id;
+        $cacheKey = 'dashboard_stats_keluar_' . $user->role . '_' . $user->id . '_fix_v1';
 
         return \Illuminate\Support\Facades\Cache::remember($cacheKey, 600, function () use ($user) {
             try {
@@ -90,7 +90,7 @@ class DashboardController extends Controller
 
     private function getStatsMutasiMasuk($user): array
     {
-        $cacheKey = 'dashboard_stats_masuk_' . $user->role . '_' . $user->id;
+        $cacheKey = 'dashboard_stats_masuk_' . $user->role . '_' . $user->id . '_fix_v1';
 
         return \Illuminate\Support\Facades\Cache::remember($cacheKey, 600, function () use ($user) {
             try {
@@ -130,7 +130,7 @@ class DashboardController extends Controller
 
     private function getStatsUsers($user): array
     {
-        $cacheKey = 'dashboard_stats_users_' . $user->npsn;
+        $cacheKey = 'dashboard_stats_users_' . $user->npsn . '_fix_v1';
 
         return \Illuminate\Support\Facades\Cache::remember($cacheKey, 600, function () use ($user) {
             try {
@@ -162,7 +162,7 @@ class DashboardController extends Controller
     private function getStatsDinasUsers(): array
     {
         // Cache globally for Dinas since it counts everything
-        return \Illuminate\Support\Facades\Cache::remember('dashboard_stats_dinas_users', 600, function () {
+        return \Illuminate\Support\Facades\Cache::remember('dashboard_stats_dinas_users_fix_v1', 600, function () {
             try {
                 $stats = DB::table('users')
                     ->whereIn('role', ['Sekolah', 'Operator'])
@@ -231,7 +231,7 @@ class DashboardController extends Controller
      */
     private function getSchoolStatsKeluar($user, $month = null, $year = null): array
     {
-        $cacheKey = 'dashboard_school_keluar_' . $user->id . '_' . ($month ?? 'all') . '_' . ($year ?? 'all');
+        $cacheKey = 'dashboard_school_keluar_' . $user->id . '_' . ($month ?? 'all') . '_' . ($year ?? 'all') . '_fix_v1';
 
         return \Illuminate\Support\Facades\Cache::remember($cacheKey, 600, function () use ($user, $month, $year) {
             try {
