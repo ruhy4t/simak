@@ -465,11 +465,37 @@
         }
     };
 
-    // File Validation
-    window.validateFile = function (input, maxMB) {
+    // File Validation & Compression
+    window.validateFile = async function (input, maxMB) {
         if (input.files && input.files[0]) {
-            const fileSize = input.files[0].size;
+            let file = input.files[0];
+
+            // Check if image and compress if needed
+            if (file.type.match(/image.*/) && window.ImageCompressor) {
+                // Show loading state (optional UI enhancement, simplistic here)
+                const originalText = input.nextElementSibling ? input.nextElementSibling.textContent : '';
+                if (input.nextElementSibling) input.nextElementSibling.textContent = 'Mengompres...';
+
+                try {
+                    const compressedFile = await window.ImageCompressor.compress(file);
+
+                    // Replace file in input (need DataTransfer for FileList)
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(compressedFile);
+                    input.files = dataTransfer.files;
+                    file = compressedFile; // update reference
+
+                    console.log(`File compressed: ${file.size} bytes`);
+                } catch (e) {
+                    console.error('Compression failed:', e);
+                } finally {
+                    if (input.nextElementSibling) input.nextElementSibling.textContent = originalText;
+                }
+            }
+
+            const fileSize = file.size;
             const maxSize = maxMB * 1024 * 1024;
+
             if (fileSize > maxSize) {
                 alert(`⚠️ Ukuran file terlalu besar!\n\nMaksimal: ${maxMB} MB\nUkuran file Anda: ${(fileSize / (1024 * 1024)).toFixed(2)} MB`);
                 input.value = '';
