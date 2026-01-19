@@ -149,15 +149,6 @@ class MutasiMasukController extends Controller
         $namaSekolahTujuan = $user->nama_sekolah ?? '';
         $npsnSekolahTujuan = $user->npsn ?? '';
 
-        // Debug log to trace empty fields issue
-        Log::info('MutasiMasuk create() - User data', [
-            'user_id' => $user->id ?? 'null',
-            'username' => $user->username ?? 'null',
-            'role' => $user->role ?? 'null',
-            'npsn' => $user->npsn ?? 'null',
-            'nama_sekolah' => $user->nama_sekolah ?? 'null',
-        ]);
-
         if (!empty($user->npsn)) {
             try {
                 $satpen = DB::table('satuan_pendidikan')
@@ -176,13 +167,6 @@ class MutasiMasukController extends Controller
                         $satpen->provinsi ?? '',
                     ]));
                 }
-
-                Log::info('MutasiMasuk create() - Satpen lookup', [
-                    'satpen_found' => $satpen ? 'yes' : 'no',
-                    'namaSekolahTujuan' => $namaSekolahTujuan,
-                    'npsnSekolahTujuan' => $npsnSekolahTujuan,
-                    'alamatSekolahTujuan' => $alamatSekolahTujuan,
-                ]);
             } catch (\Exception $e) {
                 Log::error('Error fetching satuan_pendidikan: ' . $e->getMessage());
             }
