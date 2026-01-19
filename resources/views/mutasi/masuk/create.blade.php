@@ -139,33 +139,12 @@
                         <!-- FIX: Use direct variables instead of old() to prevent session pollution from clearing readonly fields -->
                         <div>
                             <label class="block text-sm font-semibold text-slate-700 mb-2">NPSN *</label>
-                            
-                            {{-- DEBUG VERIFICATION: Plain text render --}}
-                            <div class="text-xs text-blue-600 mb-1 font-mono">
-                                Data Database: {{ $npsnSekolahTujuan ?? 'KOSONG' }}
-                            </div>
-
-                            <input type="text" name="npsn_sekolah_tujuan" id="readonly_npsn"
+                            <input type="text" name="npsn_sekolah_tujuan"
                                 value="{{ $npsnSekolahTujuan }}" readonly
                                 class="w-full px-4 py-2.5 bg-slate-100 border-0 rounded-xl text-slate-500 cursor-not-allowed font-mono">
-                                
-                            <script>
-                                // LOG INPUT VALUE ON LOAD
-                                document.addEventListener('DOMContentLoaded', function() {
-                                    const input = document.getElementById('readonly_npsn');
-                                    console.log('Readonly NPSN Value:', input ? input.value : 'INPUT NOT FOUND');
-                                    if(input && !input.value) {
-                                        console.warn('Readonly NPSN is empty! Attempting to force value from JS...');
-                                        input.value = '{{ $npsnSekolahTujuan }}';
-                                    }
-                                });
-                            </script>
                         </div>
                         <div>
                             <label class="block text-sm font-semibold text-slate-700 mb-2">Nama Sekolah *</label>
-                             <div class="text-xs text-blue-600 mb-1 font-mono">
-                                Data Database: {{ $namaSekolahTujuan ?? 'KOSONG' }}
-                            </div>
                             <input type="text" name="nama_sekolah_tujuan"
                                 value="{{ $namaSekolahTujuan }}" readonly
                                 class="w-full px-4 py-2.5 bg-slate-100 border-0 rounded-xl text-slate-500 cursor-not-allowed">
