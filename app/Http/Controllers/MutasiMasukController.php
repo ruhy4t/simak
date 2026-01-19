@@ -459,7 +459,7 @@ class MutasiMasukController extends Controller
         $validator = Validator::make($request->all(), $rules, $messages);
 
         if ($validator->fails()) {
-            return back()->withErrors($validator)->withInput();
+            return back()->withErrors($validator);
         }
 
         try {
@@ -611,7 +611,7 @@ class MutasiMasukController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error("Mutasi Masuk Error: " . $e->getMessage());
-            return back()->with('error', 'Gagal menyimpan data: ' . $e->getMessage())->withInput();
+            return back()->with('error', 'Gagal menyimpan data: ' . $e->getMessage());
         }
     }
 
