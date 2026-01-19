@@ -229,6 +229,19 @@
     </div>
 
     <script>
+        // Hide loading modal if there are validation errors (page reloaded with errors)
+        document.addEventListener('DOMContentLoaded', function () {
+            @if($errors->any())
+                const modal = document.getElementById('loadingModal');
+                if (modal) {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                }
+                // Reset submitting flag so user can try again
+                window.isSubmitting = false;
+            @endif
+            });
+
         let isSubmitting = false;
         function showSubmittingModal() {
             if (isSubmitting) return;
@@ -280,4 +293,4 @@
             wilayahData: null // Loaded in JS file for optimization
         };
     </script>
-    <script src="{{ asset('js/mutasi-masuk.js') }}?v={{ time() }}"></script>@endpush
+<script src="{{ asset('js/mutasi-masuk.js') }}?v={{ time() }}"></script>@endpush
