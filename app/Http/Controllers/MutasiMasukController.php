@@ -519,8 +519,7 @@ class MutasiMasukController extends Controller
                     $file = $request->file($fileKey);
                     $mimeType = $file->getMimeType();
 
-                    // Get full date-based path for storage
-                    $fullDatePath = $this->fileUploadService->getFullDateBasedPath('masuk');
+                    // Path resolution moved to inside if block using temp dir
 
                     if (in_array($mimeType, ['image/jpeg', 'image/png'])) {
                         // ATTEMPT Convert to WebP (Only if GD is available)
@@ -1185,17 +1184,41 @@ class MutasiMasukController extends Controller
 
                     $file = $request->file($rdKey);
                     $mimeType = $file->getMimeType();
-                    $fullDatePath = $this->fileUploadService->getFullDateBasedPath('masuk');
-
                     if (in_array($mimeType, ['image/jpeg', 'image/png', 'image/webp'])) {
-                        // Convert to WebP
-                        $filename = $this->sanitizeFilename($id) . "_siswa_{$siswaId}_rekam_rev.webp";
-                        $destPath = $fullDatePath . '/' . $filename;
+                        // Use /tmp for Vercel/Production safety
+                        $tempDir = sys_get_temp_dir();
+                        $tempFilename = $this->sanitizeFilename($id) . "_siswa_{$siswaId}_rekam_rev.webp";
+                        $tempPath = $tempDir . '/' . $tempFilename;
+                        $conversionSuccess = false;
 
-                        // We need ImageConversionService injected or instantiated?
-                        // Controller has $this->imageService
-                        if ($this->imageService->convertToWebP($file, $destPath)) {
-                            $siswaUpdate['file_rekam_didik'] = $uploadPathKey . '/' . $filename;
+                        if ($this->imageService->convertToWebP($file, $tempPath)) {
+                            $conversionSuccess = true;
+                        }
+
+                        if ($conversionSuccess && file_exists($tempPath)) {
+                            // Manual upload
+                            $filename = $tempFilename;
+                            $destinationPath = $uploadPathKey . '/' . $filename;
+                            $disk = $this->fileUploadService->isCloudStorage() ? 'b2' : 'private_docs';
+
+                            try {
+                                \Illuminate\Support\Facades\Storage::disk($disk)->put($destinationPath, file_get_contents($tempPath));
+                                $siswaUpdate['file_rekam_didik'] = $destinationPath;
+                                @unlink($tempPath);
+                            } catch (\Exception $e) {
+                                Log::error("Failed to upload converted WebP (Rev): " . $e->getMessage());
+                                $conversionSuccess = false;
+                            }
+                        }
+
+                        if (!$conversionSuccess) {
+                            // Fallback: Upload Original
+                            $siswaUpdate['file_rekam_didik'] = $this->fileUploadService->uploadImage(
+                                $file,
+                                $id,
+                                "siswa_{$siswaId}_rekam_rev",
+                                $uploadPathKey
+                            );
                         }
                     } elseif ($mimeType === 'application/pdf') {
                         $subDir = $this->fileUploadService->getDateBasedPath('masuk');
