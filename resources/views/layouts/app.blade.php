@@ -590,15 +590,12 @@
     {{-- Custom Confirm Modal - Global --}}
     @include('components.confirm-modal')
 
+    {{-- Manual Image Compression helper (Moved up for priority) --}}
+    <script src="{{ asset('js/manual-compression.js') }}?v={{ time() }}"></script>
+
     @stack('scripts')
 
     <!-- Instant.page for faster navigation (Preloading on hover) -->
-    <script src="//instant.page/5.2.0" type="module"
-        integrity="sha384-jnZyxPjiipYXnSU0ygqeac2q7CVYMbh84GO0uHNhxgJDvwChh9uBaQS5ggU/L/Ma"></script>
-
-    {{-- Manual Image Compression helper --}}
-    <script src="{{ asset('js/manual-compression.js') }}"></script>
-</body>
 
 
 
