@@ -24,20 +24,32 @@
                 <input type="hidden" name="is_dinas_entry" value="1">
             @endif
 
-            {{-- General Session Errors (Exception Handling) --}}
-            @if (session('error'))
-                <div class="bg-rose-50 border border-rose-100 rounded-2xl p-4 animate-shake mb-6">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center flex-shrink-0">
-                            <i class="bi bi-x-circle-fill text-rose-500 text-xl"></i>
+            {{-- FAILSAFE ERROR DISPLAY: High Contrast & Raw Output --}}
+            {{-- This helps users blocked by security.js to still see errors --}}
+            @if ($errors->any() || session('error'))
+                <div style="background-color: #fee2e2; border: 2px solid #ef4444; color: #b91c1c; padding: 20px; border-radius: 12px; margin-bottom: 24px; font-weight: bold;">
+                    <h3 style="font-size: 1.25rem; margin-bottom: 10px; display: flex; align-items: center; gap: 10px;">
+                        ⚠️ TERJADI KESALAHAN (WAJIB DIBACA)
+                    </h3>
+                    
+                    @if(session('error'))
+                        <div style="margin-bottom: 15px; background: white; padding: 10px; border-radius: 6px; border-left: 4px solid #ef4444;">
+                            <span style="display: block; font-size: 0.8em; text-transform: uppercase;">System Error:</span>
+                            {{ session('error') }}
                         </div>
-                        <div class="flex-1">
-                            <h3 class="text-sm font-bold text-rose-800">Gagal Memproses Permohonan!</h3>
-                            <p class="text-sm text-rose-700 mt-1">{{ session('error') }}</p>
-                        </div>
-                    </div>
+                    @endif
+
+                    @if($errors->any())
+                        <ul style="list-style-type: disc; padding-left: 20px;">
+                            @foreach ($errors->all() as $error)
+                                <li style="margin-bottom: 4px;">{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    @endif
                 </div>
             @endif
+
+            {{-- Validation Errors Display (Standard) --}}
 
             {{-- Session Success --}}
             @if (session('success'))
