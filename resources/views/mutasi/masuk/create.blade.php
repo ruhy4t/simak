@@ -24,6 +24,36 @@
                 <input type="hidden" name="is_dinas_entry" value="1">
             @endif
 
+            {{-- General Session Errors (Exception Handling) --}}
+            @if (session('error'))
+                <div class="bg-rose-50 border border-rose-100 rounded-2xl p-4 animate-shake mb-6">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center flex-shrink-0">
+                            <i class="bi bi-x-circle-fill text-rose-500 text-xl"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="text-sm font-bold text-rose-800">Gagal Memproses Permohonan!</h3>
+                            <p class="text-sm text-rose-700 mt-1">{{ session('error') }}</p>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
+            {{-- Session Success --}}
+            @if (session('success'))
+                <div class="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 mb-6">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                            <i class="bi bi-check-circle-fill text-emerald-500 text-xl"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="text-sm font-bold text-emerald-800">Berhasil!</h3>
+                            <p class="text-sm text-emerald-700 mt-1">{{ session('success') }}</p>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
             {{-- Validation Errors Display --}}
             @if ($errors->any())
                 <div class="bg-rose-50 border border-rose-100 rounded-2xl p-4 animate-shake">
