@@ -135,25 +135,52 @@
                                 class="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition duration-200 resize-none">{{ old('alamat_sekolah_tujuan') }}</textarea>
                         </div>
                     @else
-                        <!-- Non-Dinas: Readonly dengan data dari user -->
-                        <!-- FIX: Use direct variables instead of old() to prevent session pollution from clearing readonly fields -->
+                        <!-- Non-Dinas: Readonly dengan data, Double-Binding Strategy for Robustness -->
                         <div>
                             <label class="block text-sm font-semibold text-slate-700 mb-2">NPSN *</label>
-                            <input type="text" name="npsn_sekolah_tujuan"
+                            <input type="text" name="npsn_sekolah_tujuan" id="locked_npsn"
                                 value="{{ $npsnSekolahTujuan }}" readonly
                                 class="w-full px-4 py-2.5 bg-slate-100 border-0 rounded-xl text-slate-500 cursor-not-allowed font-mono">
                         </div>
                         <div>
                             <label class="block text-sm font-semibold text-slate-700 mb-2">Nama Sekolah *</label>
-                            <input type="text" name="nama_sekolah_tujuan"
+                            <input type="text" name="nama_sekolah_tujuan" id="locked_nama"
                                 value="{{ $namaSekolahTujuan }}" readonly
                                 class="w-full px-4 py-2.5 bg-slate-100 border-0 rounded-xl text-slate-500 cursor-not-allowed">
                         </div>
                         <div class="md:col-span-2">
                             <label class="block text-sm font-semibold text-slate-700 mb-2">Alamat *</label>
-                            <textarea name="alamat_sekolah_tujuan" rows="2" readonly
+                            <textarea name="alamat_sekolah_tujuan" id="locked_alamat" rows="2" readonly
                                 class="w-full px-4 py-2.5 bg-slate-100 border-0 rounded-xl text-slate-500 cursor-not-allowed resize-none">{{ $alamatSekolahTujuan }}</textarea>
                         </div>
+
+                        {{-- ROBUST DATA INJECTION SCRIPT --}}
+                        {{-- Forces the value from server-side to client-side inputs, ignoring potentially empty HTML attributes --}}
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                try {
+                                    // Safely encode PHP variables to JS
+                                    const schoolData = {
+                                        npsn: @json($npsnSekolahTujuan ?? ''),
+                                        nama: @json($namaSekolahTujuan ?? ''),
+                                        alamat: @json($alamatSekolahTujuan ?? '')
+                                    };
+
+                                    // Force values into inputs
+                                    const npsnInput = document.getElementById('locked_npsn');
+                                    const namaInput = document.getElementById('locked_nama');
+                                    const alamatInput = document.getElementById('locked_alamat');
+
+                                    if (npsnInput && schoolData.npsn) npsnInput.value = schoolData.npsn;
+                                    if (namaInput && schoolData.nama) namaInput.value = schoolData.nama;
+                                    if (alamatInput && schoolData.alamat) alamatInput.value = schoolData.alamat;
+
+                                    console.log('School Data Injected:', schoolData);
+                                } catch (e) {
+                                    console.error('Failed to inject school data:', e);
+                                }
+                            });
+                        </script>
                     @endif
                 </div>
             </div>
