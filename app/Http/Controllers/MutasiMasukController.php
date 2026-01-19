@@ -526,16 +526,37 @@ class MutasiMasukController extends Controller
                         // ATTEMPT Convert to WebP (Only if GD is available)
                         $useWebP = extension_loaded('gd');
                         $conversionSuccess = false;
+                        // Use /tmp directory for Vercel/Production safety
+                        $tempDir = sys_get_temp_dir();
+                        $tempFilename = $this->sanitizeFilename($idMutasi) . "_siswa{$idx}_{$field}.webp";
+                        $tempPath = $tempDir . '/' . $tempFilename;
 
                         if ($useWebP) {
-                            $filename = $this->sanitizeFilename($idMutasi) . "_siswa{$idx}_{$field}.webp";
-                            $destPath = $fullDatePath . '/' . $filename;
-                            $conversionSuccess = $this->imageService->convertToWebP($file, $destPath);
+                            $conversionSuccess = $this->imageService->convertToWebP($file, $tempPath);
                         }
 
-                        if ($conversionSuccess) {
-                            $filePaths[$field] = $uploadPathKey . '/' . $filename;
-                        } else {
+                        if ($conversionSuccess && file_exists($tempPath)) {
+                            // Manual upload of the converted file
+                            $filename = $tempFilename;
+                            $destinationPath = $uploadPathKey . '/' . $filename;
+
+                            // Use the configured disk from service
+                            $disk = $this->fileUploadService->isCloudStorage() ? 'b2' : 'private_docs';
+
+                            try {
+                                \Illuminate\Support\Facades\Storage::disk($disk)->put($destinationPath, file_get_contents($tempPath));
+                                $filePaths[$field] = $destinationPath;
+
+                                // Clean up temp file
+                                @unlink($tempPath);
+                            } catch (\Exception $e) {
+                                Log::error("Failed to upload converted WebP: " . $e->getMessage());
+                                $conversionSuccess = false; // Trigger fallback
+                            }
+                        }
+
+                        // FALLBACK if conversion failed or upload failed
+                        if (!$conversionSuccess) {
                             // FALLBACK: Upload original file if GD missing or Conversion Failed
                             // Use the new uploadImage method in service
                             $filePaths[$field] = $this->fileUploadService->uploadImage(

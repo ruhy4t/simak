@@ -46,7 +46,7 @@ class FileUploadService
     /**
      * Get the storage disk to use based on environment
      */
-    protected function getDisk(): string
+    public function getDisk(): string
     {
         // Use B2 if configured, otherwise fall back to local
         if (config('filesystems.disks.b2.key') && app()->environment('production')) {
@@ -58,7 +58,7 @@ class FileUploadService
     /**
      * Check if we're using cloud storage
      */
-    protected function isCloudStorage(): bool
+    public function isCloudStorage(): bool
     {
         return $this->getDisk() === 'b2';
     }
