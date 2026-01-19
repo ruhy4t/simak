@@ -98,6 +98,10 @@
 
             <!-- Sekolah Tujuan -->
             <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 sm:p-8">
+                {{-- DEBUG: Temporary to diagnose empty fields - REMOVE AFTER FIX --}}
+                <div class="bg-yellow-100 text-yellow-800 p-2 rounded mb-4 text-xs">
+                    DEBUG: NPSN={{ $npsnSekolahTujuan ?? 'NULL' }} | Nama={{ $namaSekolahTujuan ?? 'NULL' }} | Role={{ auth()->user()->role ?? 'NULL' }} | UserNpsn={{ auth()->user()->npsn ?? 'NULL' }}
+                </div>
                 <h2 class="text-lg font-bold text-slate-900 mb-6 flex items-center gap-3">
                     <div class="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center">
                         <i class="bi bi-geo-alt text-emerald-600"></i>
