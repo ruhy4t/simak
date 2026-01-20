@@ -420,6 +420,36 @@
                         </div>
                     @endif
 
+                    {{-- CUSTOM NOTIFICATION: WORKING HOURS --}}
+                    @if(session('working_hours'))
+                        <div x-data="{ show: true }" x-show="show" style="display: none;"
+                            class="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 sm:px-0">
+                            <div class="fixed inset-0 transition-opacity bg-slate-900/60 backdrop-blur-sm"
+                                @click="show = false"></div>
+                            <div
+                                class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:w-full sm:max-w-md border border-slate-100 ring-1 ring-black/5 animate-bounce-short">
+                                <div class="bg-gradient-to-r from-indigo-50 to-white px-6 py-6 flex items-start gap-4">
+                                    <div
+                                        class="flex-shrink-0 w-12 h-12 rounded-full bg-indigo-100/50 flex items-center justify-center shadow-sm">
+                                        <i class="bi bi-shop-window text-indigo-600 text-2xl"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-lg font-bold text-gray-900">Layanan Tutup Sementara</h3>
+                                        <p class="mt-2 text-sm text-gray-600 leading-relaxed">
+                                            {!! nl2br(e(session('working_hours'))) !!}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="bg-gray-50/50 px-6 py-4 flex justify-end">
+                                    <button type="button" @click="show = false"
+                                        class="inline-flex justify-center rounded-xl bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/20 hover:bg-indigo-500 hover:-translate-y-0.5 transition-all duration-200">
+                                        OK, Saya Mengerti
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
                     @if(session('error'))
                         <div x-data="{ show: true }" x-show="show" style="display: none;"
                             class="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 sm:px-0">

@@ -46,19 +46,19 @@ class CheckWorkingDay
             6 => 'Sabtu'
         ];
 
-        // Check if current day is allowed
         if (!in_array($dayOfWeek, $allowedDays)) {
             $allowedDayNames = array_map(fn($d) => $dayNames[$d], $allowedDays);
-            $message = 'Pengajuan mutasi hanya dapat dilakukan pada hari: ' . implode(', ', $allowedDayNames) . '.';
 
-            // Add hour info if enabled
+            // Friendly formatted message
+            $msg = "Mohon maaf, layanan ini sedang tutup sementara.\n\nLayanan hanya tersedia pada hari:\n📅 " . implode(', ', $allowedDayNames);
+
             if (Setting::isHourRestrictionEnabled()) {
                 $startTime = Setting::get('working_hours_start', '08:00');
                 $endTime = Setting::get('working_hours_end', '16:00');
-                $message .= " (Jam {$startTime} - {$endTime})";
+                $msg .= "\n⏰ Pukul {$startTime} - {$endTime} WIB";
             }
 
-            return back()->with('error', $message)->withInput();
+            return back()->with('working_hours', $msg)->withInput();
         }
 
         // Check working hours if enabled
@@ -69,7 +69,7 @@ class CheckWorkingDay
 
             if ($currentTime < $startTime || $currentTime > $endTime) {
                 return back()
-                    ->with('error', "Pengajuan mutasi hanya dapat dilakukan pada jam {$startTime} - {$endTime}.")
+                    ->with('working_hours', "Mohon maaf, layanan ini sedang tutup sementara.\n\nSilakan akses kembali pada hari kerja:\n🕗 Senin - Jumat\n⏰ Pukul {$startTime} - {$endTime} WIB.")
                     ->withInput();
             }
         }
