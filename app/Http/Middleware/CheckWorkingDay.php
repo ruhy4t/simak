@@ -68,8 +68,14 @@ class CheckWorkingDay
             $currentTime = $now->format('H:i');
 
             if ($currentTime < $startTime || $currentTime > $endTime) {
+                // Ensure allowedDayNames is available for this scope too
+                if (!isset($allowedDayNames)) {
+                    $allowedDayNames = array_map(fn($d) => $dayNames[$d], $allowedDays);
+                }
+                $daysString = implode(', ', $allowedDayNames);
+
                 return back()
-                    ->with('working_hours', "Mohon maaf, layanan ini sedang tutup sementara.\n\nSilakan akses kembali pada hari kerja:\n🕗 Senin - Jumat\n⏰ Pukul {$startTime} - {$endTime} WIB.")
+                    ->with('working_hours', "Mohon maaf, layanan ini sedang tutup sementara.\n\nSilakan akses kembali pada hari kerja:\n🕗 {$daysString}\n⏰ Pukul {$startTime} - {$endTime} WIB.")
                     ->withInput();
             }
         }
