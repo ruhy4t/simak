@@ -808,9 +808,10 @@
                 $tglTtd = isset($mutasi->tanggal_surat_izin) ? \Carbon\Carbon::parse($mutasi->tanggal_surat_izin)->format('d/m/Y') : now()->format('d/m/Y');
 
                 $url = route('dokumen.check', ['type' => 'surat-keterangan', 'id' => $mutasi->id_mutasi]);
-                // Restore logic: Use $tglTtd (defined above) instead of undefined $tglSurat
-                $qrData = "Validasi:{$mutasi->id_mutasi}|{$mutasi->nisn}|{$tglTtd}";
-                $disdikLogo = null; // DISABLED: Logo removed per user request
+
+                // SAFE MODE: Use basic concatenation to avoid formatting errors
+                $qrData = "Validasi:" . ($mutasi->id_mutasi ?? '-') . "|" . ($mutasi->nisn ?? '-') . "|" . ($tglTtd ?? '-');
+                $disdikLogo = null; // DISABLED
 
             @endphp
             {!! \App\Helpers\QrCodeHelper::generateWithLogo($qrData, 100, $disdikLogo) !!}
