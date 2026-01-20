@@ -796,18 +796,29 @@
 
         {{-- QR CODE FIXED (kiri bawah) --}}
 
-        {{-- QR CODE RESTORED (SAFE MODE) --}}
+        {{-- QR CODE RESTORED (ORIGINAL FORMAT + SAFE MODE) --}}
         <div class="qr-fixed">
             @php
-                // Safe Date Formatting
-                $tglTtdQr = isset($mutasi->tanggal_surat_izin)
+                // 1. Prepare Variables Safely
+                $idMutasi = $mutasi->id_mutasi ?? '-';
+
+                $tglUsulan = isset($mutasi->tanggal_pengajuan)
+                    ? \Carbon\Carbon::parse($mutasi->tanggal_pengajuan)->format('d/m/Y')
+                    : '-';
+
+                // Mapped property from PdfService is 'nama_siswa', fallback to 'nama_murid' just in case
+                $namaSiswa = $mutasi->nama_siswa ?? $mutasi->nama_murid ?? '-';
+
+                $tglTtd = isset($mutasi->tanggal_surat_izin)
                     ? \Carbon\Carbon::parse($mutasi->tanggal_surat_izin)->format('d/m/Y')
                     : now()->format('d/m/Y');
 
-                // Safe Data Concatenation
-                $qrContent = "Validasi:" . ($mutasi->id_mutasi ?? '-') . "|" . ($mutasi->nisn ?? '-') . "|" . $tglTtdQr;
+                $namaPejabat = optional($penandatangan)->nama ?? '-';
 
-                // No Logo to prevent asset() loopback errors
+                // 2. Construct Data (Original Format: ID|TglUsulan|NamaSiswa|TTD:Tgl|Pejabat)
+                $qrContent = "{$idMutasi}|{$tglUsulan}|{$namaSiswa}|TTD:{$tglTtd}|{$namaPejabat}";
+
+                // 3. Logo Configuration (Null = No Logo, Safer for printing)
                 $qrLogo = null; 
             @endphp
 
