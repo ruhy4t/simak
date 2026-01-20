@@ -210,6 +210,12 @@ class DinasUserController extends Controller
             $targetUser->status = $newStatusString;
             $targetUser->is_active = $newIsActive ? 1 : 0;
 
+            // UNBLOCK FEATURE: If Activating, also clear any login locks
+            if ($newIsActive) {
+                $targetUser->locked_until = null;
+                $targetUser->failed_login_attempts = 0;
+            }
+
             $targetUser->updated_at = now();
             $targetUser->save();
 

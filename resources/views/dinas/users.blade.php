@@ -141,6 +141,12 @@
                                     @else
                                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Non-Aktif</span>
                                     @endif
+
+                                    @if($u->isLocked())
+                                        <span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-red-50 text-red-600 border border-red-200" title="Terkunci: Salah password berkali-kali">
+                                            <i class="bi bi-shield-lock-fill mr-1"></i> Locked
+                                        </span>
+                                    @endif
                                 </td>
                                 <td class="px-4 py-3 text-center">
                                     <div class="flex items-center justify-center gap-1">
@@ -150,8 +156,9 @@
                                         </a>
                                         <form action="{{ route('dinas.users.toggle', $u->id) }}" method="POST" class="inline">
                                             @csrf
-                                            <button type="submit" class="p-1.5 text-gray-500 hover:text-gray-700 rounded hover:bg-gray-100" title="{{ $u->is_active ? 'Nonaktifkan' : 'Aktifkan' }}">
-                                                <i class="bi {{ $u->is_active ? 'bi-toggle-on text-green-600' : 'bi-toggle-off' }}"></i>
+                                            <button type="submit" class="p-1.5 text-gray-500 hover:text-gray-700 rounded hover:bg-gray-100" 
+                                                title="{{ $u->isLocked() ? 'Buka Blokir & Aktifkan' : ($u->is_active ? 'Nonaktifkan' : 'Aktifkan') }}">
+                                                <i class="bi {{ $u->isLocked() ? 'bi-lock-fill text-red-500' : ($u->is_active ? 'bi-toggle-on text-green-600' : 'bi-toggle-off text-gray-400') }} text-lg"></i>
                                             </button>
                                         </form>
                                         <form action="{{ route('dinas.users.reset', $u->id) }}" method="POST" class="inline" onsubmit="return confirm('Reset password untuk {{ $u->nama_pengguna }}?')">
