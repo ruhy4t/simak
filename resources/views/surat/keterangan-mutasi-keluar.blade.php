@@ -528,7 +528,7 @@
 
             <h3>SURAT KETERANGAN</h3>
 
-            <p class="nomor">Nomor : {{ $mutasi->nomor_surat_izin ?? '______' }}</p>
+            <p class="nomor">Nomor : {!! html_entity_decode($mutasi->nomor_surat_izin ?? '______') !!}</p>
 
         </div>
 
@@ -540,7 +540,7 @@
 
             <p class="opening-paragraph">
 
-                Berdasarkan Surat Keterangan Pindah dari Kepala {{ $mutasi->sekolah_asal ?? '-' }}
+                Berdasarkan Surat Keterangan Pindah dari Kepala {!! html_entity_decode($mutasi->sekolah_asal ?? '-') !!}
 
                 Nomor : {{ $mutasi->nomor_surat_keluar ?? '-' }}
 
@@ -566,7 +566,7 @@
 
                     <td>:</td>
 
-                    <td><strong>{{ $mutasi->nama_siswa ?? '-' }}</strong></td>
+                    <td><strong>{!! html_entity_decode($mutasi->nama_siswa ?? '-') !!}</strong></td>
 
                 </tr>
 
@@ -576,7 +576,7 @@
 
                     <td>:</td>
 
-                    <td>{{ $mutasi->tempat_lahir ?? '-' }},
+                    <td>{!! html_entity_decode($mutasi->tempat_lahir ?? '-') !!},
 
                         {{ isset($mutasi->tanggal_lahir) ? \Carbon\Carbon::parse($mutasi->tanggal_lahir)->translatedFormat('j F Y') : '-'}}
 
@@ -622,7 +622,7 @@
 
                     <td>:</td>
 
-                    <td>{{ $mutasi->sekolah_asal ?? '-' }}</td>
+                    <td>{!! html_entity_decode($mutasi->sekolah_asal ?? '-') !!}</td>
 
                 </tr>
 
@@ -632,7 +632,7 @@
 
                     <td>:</td>
 
-                    <td>{{ $mutasi->alamat_sekolah_asal ?? '-' }}</td>
+                    <td>{!! html_entity_decode($mutasi->alamat_sekolah_asal ?? '-') !!}</td>
 
                 </tr>
 
@@ -666,7 +666,7 @@
 
                     <td>:</td>
 
-                    <td>{{ $mutasi->sekolah_tujuan ?? '-' }}</td>
+                    <td>{!! html_entity_decode($mutasi->sekolah_tujuan ?? '-') !!}</td>
 
                 </tr>
 
@@ -696,7 +696,7 @@
 
                     <td>:</td>
 
-                    <td>{{ $mutasi->alasan_pindah ?? '-' }}</td>
+                    <td>{!! html_entity_decode($mutasi->alasan_pindah ?? '-') !!}</td>
 
                 </tr>
 
@@ -766,7 +766,9 @@
 
                         <td></td>
 
-                        <td class="col-jabatan nama">{{ optional($penandatangan)->nama ?? 'Nama Pejabat' }}</td>
+                        <td class="col-jabatan nama">
+                            {!! html_entity_decode(optional($penandatangan)->nama ?? 'Nama Pejabat') !!}
+                        </td>
 
                     </tr>
 
@@ -774,7 +776,8 @@
 
                         <td></td>
 
-                        <td class="col-jabatan">{{ optional($penandatangan)->pangkat_golongan ?? 'Pangkat' }}</td>
+                        <td class="col-jabatan">
+                            {!! html_entity_decode(optional($penandatangan)->pangkat_golongan ?? 'Pangkat') !!}</td>
 
                     </tr>
 
@@ -782,7 +785,8 @@
 
                         <td></td>
 
-                        <td class="col-jabatan">NIP. {{ optional($penandatangan)->nip ?? '-' }}</td>
+                        <td class="col-jabatan">NIP. {!! html_entity_decode(optional($penandatangan)->nip ?? '-') !!}
+                        </td>
 
                     </tr>
 

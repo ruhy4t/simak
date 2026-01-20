@@ -111,11 +111,11 @@
                 <tr>
                     <td class="text-center">{{ $index + 1 }}</td>
                     <td class="text-center">{{ \Carbon\Carbon::parse($item->tanggal)->format('d/m/Y') }}</td>
-                    <td>{{ $item->nama_siswa }}</td>
+                    <td>{!! html_entity_decode($item->nama_siswa) !!}</td>
                     <td class="text-center">{{ $item->nisn }}</td>
                     <td class="text-center">{{ $item->kelas }}</td>
-                    <td>{{ $item->asal }}</td>
-                    <td>{{ $item->tujuan }}</td>
+                    <td>{!! html_entity_decode($item->asal) !!}</td>
+                    <td>{!! html_entity_decode($item->tujuan) !!}</td>
                     <td class="text-center">{{ $item->status }}</td>
                 </tr>
             @empty

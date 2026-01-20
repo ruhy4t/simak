@@ -147,7 +147,7 @@
                     @if(in_array($user->role, ['Sekolah', 'Operator']))
                         <td>{{ $item['periode'] }}</td>
                     @else
-                        <td>{{ $item['nama_sekolah'] }}</td>
+                        <td>{!! html_entity_decode($item['nama_sekolah']) !!}</td>
                     @endif
                     
                     <!-- Masuk -->
