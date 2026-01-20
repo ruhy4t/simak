@@ -33,36 +33,54 @@ class QrCodeHelper
             $qrBase64 = $qrcode->render($data); // Returns "data:image/png;base64,..."
 
             // 2. Prepare Logo (if exists)
+            // 2. Prepare Logo (if exists)
             $logoHtml = '';
-            if ($logoPath && file_exists($logoPath)) {
-                $logoBinary = @file_get_contents($logoPath);
-                if ($logoBinary !== false) {
-                    $logoData = base64_encode($logoBinary);
-                    $ext = pathinfo($logoPath, PATHINFO_EXTENSION);
-                    $mime = ($ext === 'png') ? 'image/png' : 'image/jpeg';
 
-                    // Box size calculation (approx 20% of QR size)
-                    $logoSize = intval($size * 0.22);
-                    $centerPos = intval(($size - $logoSize) / 2);
+            // Resolve Logo Source
+            $logoSrc = null;
 
-                    $logoHtml = '
-                    <div style="
-                        position: absolute;
-                        top: ' . $centerPos . 'px;
-                        left: ' . $centerPos . 'px;
-                        width: ' . $logoSize . 'px;
-                        height: ' . $logoSize . 'px;
-                        background: #fff;
-                        padding: 2px;
-                        border-radius: 4px;
-                        z-index: 20;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                    ">
-                        <img src="data:' . $mime . ';base64,' . $logoData . '" style="width:100%; height:100%; object-fit:contain;">
-                    </div>';
+            if ($logoPath) {
+                if (file_exists($logoPath)) {
+                    // Scenario A: Local File Exists (Dev / VPS)
+                    $logoBinary = @file_get_contents($logoPath);
+                    if ($logoBinary !== false) {
+                        $logoData = base64_encode($logoBinary);
+                        $ext = pathinfo($logoPath, PATHINFO_EXTENSION);
+                        $mime = ($ext === 'png') ? 'image/png' : 'image/jpeg';
+                        $logoSrc = "data:$mime;base64,$logoData";
+                    }
+                } else {
+                    // Scenario B: Local File Missing (Vercel / Serverless)
+                    // The path provided was likely public_path(), but the file isn't locally there.
+                    // Fallback to the Public URL (CDN).
+                    $filename = basename($logoPath);
+                    // Generate full URL
+                    $logoSrc = asset('images/' . $filename);
                 }
+            }
+
+            if ($logoSrc) {
+                // Box size calculation (approx 22% of QR size)
+                $logoSize = intval($size * 0.22);
+                $centerPos = intval(($size - $logoSize) / 2);
+
+                $logoHtml = '
+                <div style="
+                    position: absolute;
+                    top: ' . $centerPos . 'px;
+                    left: ' . $centerPos . 'px;
+                    width: ' . $logoSize . 'px;
+                    height: ' . $logoSize . 'px;
+                    background: #fff;
+                    padding: 2px;
+                    border-radius: 4px;
+                    z-index: 20;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                ">
+                    <img src="' . $logoSrc . '" style="width:100%; height:100%; object-fit:contain;">
+                </div>';
             }
 
             // 3. Return HTML Wrapper
