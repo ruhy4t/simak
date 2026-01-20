@@ -164,6 +164,7 @@ Route::middleware(['auth', \App\Http\Middleware\EnsurePasswordChanged::class])->
         Route::get('/dinas/pengguna/{id}/edit', [DinasUserController::class, 'edit'])->name('dinas.users.edit');
         Route::put('/dinas/pengguna/{id}', [DinasUserController::class, 'update'])->name('dinas.users.update');
         Route::post('/dinas/pengguna/{id}/toggle', [DinasUserController::class, 'toggleStatus'])->name('dinas.users.toggle');
+        Route::post('/dinas/pengguna/{id}/unlock', [DinasUserController::class, 'unlock'])->name('dinas.users.unlock');
         Route::post('/dinas/pengguna/{id}/reset', [DinasUserController::class, 'resetPassword'])->name('dinas.users.reset');
 
         // Penandatangan

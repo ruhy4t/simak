@@ -149,22 +149,37 @@
                                     @endif
                                 </td>
                                 <td class="px-4 py-3 text-center">
-                                    <div class="flex items-center justify-center gap-1">
+                                    <div class="flex items-center justify-center gap-2">
+                                        {{-- 1. Edit --}}
                                         <a href="{{ route('dinas.users.edit', $u->id) }}" 
-                                            class="p-1.5 text-gray-500 hover:text-primary-600 rounded hover:bg-primary-50" title="Edit">
-                                            <i class="bi bi-pencil"></i>
+                                            class="p-1.5 text-blue-600 hover:text-blue-800 rounded hover:bg-blue-50 transition" title="Edit Data">
+                                            <i class="bi bi-pencil-square text-lg"></i>
                                         </a>
+
+                                        {{-- 2. Toggle Status (Active/Inactive) --}}
                                         <form action="{{ route('dinas.users.toggle', $u->id) }}" method="POST" class="inline">
                                             @csrf
-                                            <button type="submit" class="p-1.5 text-gray-500 hover:text-gray-700 rounded hover:bg-gray-100" 
-                                                title="{{ $u->isLocked() ? 'Buka Blokir & Aktifkan' : ($u->is_active ? 'Nonaktifkan' : 'Aktifkan') }}">
-                                                <i class="bi {{ $u->isLocked() ? 'bi-lock-fill text-red-500' : ($u->is_active ? 'bi-toggle-on text-green-600' : 'bi-toggle-off text-gray-400') }} text-lg"></i>
+                                            <button type="submit" class="p-1.5 rounded hover:bg-gray-100 transition" 
+                                                title="{{ $u->is_active ? 'Nonaktifkan Akun' : 'Aktifkan Akun' }}">
+                                                <i class="bi {{ $u->is_active ? 'bi-toggle-on text-green-600' : 'bi-toggle-off text-gray-400' }} text-2xl align-middle"></i>
                                             </button>
                                         </form>
-                                        <form action="{{ route('dinas.users.reset', $u->id) }}" method="POST" class="inline" onsubmit="return confirm('Reset password untuk {{ $u->nama_pengguna }}?')">
+
+                                        {{-- 3. Unlock (Only if Locked) --}}
+                                        @if($u->isLocked())
+                                            <form action="{{ route('dinas.users.unlock', $u->id) }}" method="POST" class="inline" onsubmit="return confirm('Buka blokir akun {{ $u->nama_pengguna }}? User akan bisa login lagi.')">
+                                                @csrf
+                                                <button type="submit" class="p-1.5 text-orange-500 hover:text-orange-700 rounded hover:bg-orange-50 transition" title="Buka Blokir (Unlock)">
+                                                    <i class="bi bi-unlock-fill text-lg"></i>
+                                                </button>
+                                            </form>
+                                        @endif
+
+                                        {{-- 4. Reset Password --}}
+                                        <form action="{{ route('dinas.users.reset', $u->id) }}" method="POST" class="inline" onsubmit="return confirm('Reset password untuk {{ $u->nama_pengguna }}? Password baru akan digenerate.')">
                                             @csrf
-                                            <button type="submit" class="p-1.5 text-gray-500 hover:text-yellow-600 rounded hover:bg-yellow-50" title="Reset Password">
-                                                <i class="bi bi-key"></i>
+                                            <button type="submit" class="p-1.5 text-yellow-600 hover:text-yellow-800 rounded hover:bg-yellow-50 transition" title="Reset Password">
+                                                <i class="bi bi-key-fill text-lg"></i>
                                             </button>
                                         </form>
                                     </div>

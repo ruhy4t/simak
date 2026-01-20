@@ -210,12 +210,6 @@ class DinasUserController extends Controller
             $targetUser->status = $newStatusString;
             $targetUser->is_active = $newIsActive ? 1 : 0;
 
-            // UNBLOCK FEATURE: If Activating, also clear any login locks
-            if ($newIsActive) {
-                $targetUser->locked_until = null;
-                $targetUser->failed_login_attempts = 0;
-            }
-
             $targetUser->updated_at = now();
             $targetUser->save();
 
@@ -229,6 +223,36 @@ class DinasUserController extends Controller
         } catch (\Throwable $e) {
             die("STOP! TERJADI ERROR DINAS:<br><br>" . $e->getMessage() . "<br><br>File: " . $e->getFile() . " Baris: " . $e->getLine());
         }
+    }
+
+    public function unlock($id)
+    {
+        $user = Auth::user();
+        if (!in_array($user->role, ['Dinas', 'SuperAdmin'])) {
+            abort(403);
+        }
+
+        // SuperAdmin bisa unlock Dinas/Sekolah/Operator, Dinas hanya Sekolah/Operator
+        $managedRoles = $user->role === 'SuperAdmin'
+            ? ['Dinas', 'Sekolah', 'Operator']
+            : ['Sekolah', 'Operator'];
+
+        $targetUser = \App\Models\User::where('id', intval($id))
+            ->whereIn('role', $managedRoles)
+            ->first();
+
+        if (!$targetUser) {
+            return back()->with('error', 'User tidak ditemukan.');
+        }
+
+        // Unlock only
+        $targetUser->locked_until = null;
+        $targetUser->failed_login_attempts = 0;
+        $targetUser->save();
+
+        Log::info("User {$targetUser->username} unlocked by {$user->username}");
+
+        return back()->with('success', "🔓 Akun berhasil dibuka kuncinya! User sekarang bisa login kembali.");
     }
 
     public function resetPassword($id)
