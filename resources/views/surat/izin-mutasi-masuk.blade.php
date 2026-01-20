@@ -253,7 +253,7 @@
 
         // QR String
         $qrData = "ID:{$idMutasi} | Siswa:{$decodedNamaSiswa} | Tgl:{$tglTtd} | TTD:{$decodedNamaPejabat}";
-        $disdikLogo = public_path('images/logo_disdik_kota_bogor.png');
+        $disdikLogo = public_path('images/logo_disdik_kota_bogor.jpg');
         
         // Generate QR Once (Increased size for readability)
         $qrCodeHtml = \App\Helpers\QrCodeHelper::generateWithLogo($qrData, 95, $disdikLogo);

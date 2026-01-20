@@ -803,19 +803,15 @@
                 $idMutasi = $mutasi->id_mutasi ?? '-';
 
                 $tglUsulan = isset($mutasi->tanggal_pengajuan) ? \Carbon\Carbon::parse($mutasi->tanggal_pengajuan)->format('d/m/Y') : '-';
-
                 $namaSiswa = $mutasi->nama_siswa ?? '-';
 
                 $tglTtd = isset($mutasi->tanggal_surat_izin) ? \Carbon\Carbon::parse($mutasi->tanggal_surat_izin)->format('d/m/Y') : now()->format('d/m/Y');
 
-                $namaPejabat = $penandatangan->nama ?? '-';
-
-                $qrData = "{$idMutasi}|{$tglUsulan}|{$namaSiswa}|TTD:{$tglTtd}|{$namaPejabat}";
-
-                $disdikLogo = public_path('images/logo_disdik_kota_bogor.png');
+                $url = route('dokumen.check', ['type' => 'surat-keterangan', 'id' => $mutasi->id_mutasi]);
+                $qrData = "Validasi:{$mutasi->id_mutasi}|{$mutasi->nisn}|{$tglSurat}";
+                $disdikLogo = public_path('images/logo_disdik_kota_bogor.jpg');
 
             @endphp
-
             {!! \App\Helpers\QrCodeHelper::generateWithLogo($qrData, 100, $disdikLogo) !!}
 
         </div>
