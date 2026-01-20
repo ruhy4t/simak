@@ -808,8 +808,9 @@
                 $tglTtd = isset($mutasi->tanggal_surat_izin) ? \Carbon\Carbon::parse($mutasi->tanggal_surat_izin)->format('d/m/Y') : now()->format('d/m/Y');
 
                 $url = route('dokumen.check', ['type' => 'surat-keterangan', 'id' => $mutasi->id_mutasi]);
-                $qrData = "Validasi:{$mutasi->id_mutasi}|{$mutasi->nisn}|{$tglSurat}";
-                $disdikLogo = public_path('images/logo_disdik_kota_bogor.jpg');
+                // Restore logic: Use $tglTtd (defined above) instead of undefined $tglSurat
+                $qrData = "Validasi:{$mutasi->id_mutasi}|{$mutasi->nisn}|{$tglTtd}";
+                $disdikLogo = null; // DISABLED: Logo removed per user request
 
             @endphp
             {!! \App\Helpers\QrCodeHelper::generateWithLogo($qrData, 100, $disdikLogo) !!}
