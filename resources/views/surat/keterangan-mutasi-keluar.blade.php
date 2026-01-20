@@ -766,7 +766,7 @@
 
                         <td></td>
 
-                        <td class="col-jabatan nama">{{ $penandatangan->nama ?? 'Nama Pejabat' }}</td>
+                        <td class="col-jabatan nama">{{ $penandatangan?->nama ?? 'Nama Pejabat' }}</td>
 
                     </tr>
 
@@ -774,7 +774,7 @@
 
                         <td></td>
 
-                        <td class="col-jabatan">{{ $penandatangan->pangkat_golongan ?? 'Pangkat' }}</td>
+                        <td class="col-jabatan">{{ $penandatangan?->pangkat_golongan ?? 'Pangkat' }}</td>
 
                     </tr>
 
@@ -782,7 +782,7 @@
 
                         <td></td>
 
-                        <td class="col-jabatan">NIP. {{ $penandatangan->nip ?? '-' }}</td>
+                        <td class="col-jabatan">NIP. {{ $penandatangan?->nip ?? '-' }}</td>
 
                     </tr>
 
