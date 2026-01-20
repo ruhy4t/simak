@@ -796,7 +796,24 @@
 
         {{-- QR CODE FIXED (kiri bawah) --}}
 
-        {{-- QR CODE DISABLED TEMPORARILY TO FIX 500 ERROR --}}
+        {{-- QR CODE RESTORED (SAFE MODE) --}}
+        <div class="qr-fixed">
+            @php
+                // Safe Date Formatting
+                $tglTtdQr = isset($mutasi->tanggal_surat_izin)
+                    ? \Carbon\Carbon::parse($mutasi->tanggal_surat_izin)->format('d/m/Y')
+                    : now()->format('d/m/Y');
+
+                // Safe Data Concatenation
+                $qrContent = "Validasi:" . ($mutasi->id_mutasi ?? '-') . "|" . ($mutasi->nisn ?? '-') . "|" . $tglTtdQr;
+
+                // No Logo to prevent asset() loopback errors
+                $qrLogo = null; 
+            @endphp
+
+            {{-- Generate QR --}}
+            {!! \App\Helpers\QrCodeHelper::generateWithLogo($qrContent, 100, $qrLogo) !!}
+        </div>
 
 
 
