@@ -766,7 +766,7 @@
 
                         <td></td>
 
-                        <td class="col-jabatan nama">{{ $penandatangan?->nama ?? 'Nama Pejabat' }}</td>
+                        <td class="col-jabatan nama">{{ optional($penandatangan)->nama ?? 'Nama Pejabat' }}</td>
 
                     </tr>
 
@@ -774,7 +774,7 @@
 
                         <td></td>
 
-                        <td class="col-jabatan">{{ $penandatangan?->pangkat_golongan ?? 'Pangkat' }}</td>
+                        <td class="col-jabatan">{{ optional($penandatangan)->pangkat_golongan ?? 'Pangkat' }}</td>
 
                     </tr>
 
@@ -782,7 +782,7 @@
 
                         <td></td>
 
-                        <td class="col-jabatan">NIP. {{ $penandatangan?->nip ?? '-' }}</td>
+                        <td class="col-jabatan">NIP. {{ optional($penandatangan)->nip ?? '-' }}</td>
 
                     </tr>
 
@@ -796,27 +796,7 @@
 
         {{-- QR CODE FIXED (kiri bawah) --}}
 
-        <div class="qr-fixed">
-
-            @php
-
-                $idMutasi = $mutasi->id_mutasi ?? '-';
-
-                $tglUsulan = isset($mutasi->tanggal_pengajuan) ? \Carbon\Carbon::parse($mutasi->tanggal_pengajuan)->format('d/m/Y') : '-';
-                $namaSiswa = $mutasi->nama_siswa ?? '-';
-
-                $tglTtd = isset($mutasi->tanggal_surat_izin) ? \Carbon\Carbon::parse($mutasi->tanggal_surat_izin)->format('d/m/Y') : now()->format('d/m/Y');
-
-                $url = route('dokumen.check', ['type' => 'surat-keterangan', 'id' => $mutasi->id_mutasi]);
-
-                // SAFE MODE: Use basic concatenation to avoid formatting errors
-                $qrData = "Validasi:" . ($mutasi->id_mutasi ?? '-') . "|" . ($mutasi->nisn ?? '-') . "|" . ($tglTtd ?? '-');
-                $disdikLogo = null; // DISABLED
-
-            @endphp
-            {!! \App\Helpers\QrCodeHelper::generateWithLogo($qrData, 100, $disdikLogo) !!}
-
-        </div>
+        {{-- QR CODE DISABLED TEMPORARILY TO FIX 500 ERROR --}}
 
 
 
