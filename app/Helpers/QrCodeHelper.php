@@ -40,8 +40,15 @@ class QrCodeHelper
             $logoSrc = null;
 
             if ($logoPath) {
-                if (file_exists($logoPath)) {
-                    // Scenario A: Local File Exists (Dev / VPS)
+                // Scenario 0: Check if it's the Disdik Logo and we have embedded config (NUCLEAR FALLBACK)
+                // This guarantees the logo works even if file system/URL fails.
+                $isDisdikLogo = strpos($logoPath, 'disdik') !== false;
+                $embeddedLogo = config('logo_b64');
+
+                if ($isDisdikLogo && $embeddedLogo) {
+                    $logoSrc = "data:image/jpeg;base64," . $embeddedLogo;
+                } elseif (file_exists($logoPath)) {
+                    // Scenario A: Local File Exists
                     $logoBinary = @file_get_contents($logoPath);
                     if ($logoBinary !== false) {
                         $logoData = base64_encode($logoBinary);
@@ -50,11 +57,8 @@ class QrCodeHelper
                         $logoSrc = "data:$mime;base64,$logoData";
                     }
                 } else {
-                    // Scenario B: Local File Missing (Vercel / Serverless)
-                    // The path provided was likely public_path(), but the file isn't locally there.
-                    // Fallback to the Public URL (CDN).
+                    // Scenario B: URL or Missing File -> Asset URL
                     $filename = basename($logoPath);
-                    // Generate full URL
                     $logoSrc = asset('images/' . $filename);
                 }
             }
