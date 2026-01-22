@@ -1544,14 +1544,13 @@ class MutasiMasukController extends Controller
                 DB::table('mutasi_masuk_siswa')->insert($studentData);
             }
 
-            // Update jumlah_siswa count in header
-            $actualCount = DB::table('mutasi_masuk_siswa')->where('id_mutasi', $id)->count();
+            // Only update timestamp, NOT jumlah_siswa (preserve user's intended count)
             DB::table('mutasi_masuk')->where('id_mutasi', $id)->update([
-                'jumlah_siswa' => $actualCount,
                 'updated_at' => now()
             ]);
 
-            Log::info("Student saved to draft {$id}: index {$studentIndex}");
+            $actualCount = DB::table('mutasi_masuk_siswa')->where('id_mutasi', $id)->count();
+            Log::info("Student saved to draft {$id}: index {$studentIndex}, total saved: {$actualCount}");
 
             return response()->json([
                 'success' => true,

@@ -1110,10 +1110,15 @@
 
         // Initialize Form
         if (jumlahInput) {
-            // Restore jumlah from OLD_JUMLAH or CONFIG.students
-            const studentCount = (CONFIG.students && CONFIG.students.length > 0)
-                ? CONFIG.students.length
-                : OLD_JUMLAH;
+            // Use draft.jumlah_siswa (user's intended slots) NOT students.length (actual saved count)
+            let studentCount;
+            if (CONFIG.draft && CONFIG.draft.jumlah_siswa) {
+                studentCount = parseInt(CONFIG.draft.jumlah_siswa);
+                console.log(`Using draft jumlah_siswa: ${studentCount}`);
+            } else {
+                studentCount = OLD_JUMLAH;
+            }
+
             jumlahInput.value = studentCount;
             renderSiswaForms(parseInt(studentCount) || 1);
 
@@ -1123,9 +1128,24 @@
             }
 
             jumlahInput.addEventListener('change', function () {
-                const count = Math.min(Math.max(parseInt(this.value) || 1, 1), 20);
-                this.value = count;
-                renderSiswaForms(count);
+                const newCount = Math.min(Math.max(parseInt(this.value) || 1, 1), 20);
+                this.value = newCount;
+
+                // If draft mode and reducing count, warn user
+                if (draftId && newCount < totalSiswa) {
+                    if (!confirm(`Mengurangi jumlah siswa dari ${totalSiswa} ke ${newCount}. Data siswa #${newCount + 1} dst akan tersimpan di database tapi tidak ditampilkan. Lanjutkan?`)) {
+                        this.value = totalSiswa;
+                        return;
+                    }
+                }
+
+                // Re-render forms but preserve existing students data for previously populated forms
+                renderSiswaForms(newCount);
+
+                // Re-populate from draft students if available
+                if (CONFIG.students && CONFIG.students.length > 0) {
+                    setTimeout(() => populateDraftStudents(), 300);
+                }
             });
         }
 
