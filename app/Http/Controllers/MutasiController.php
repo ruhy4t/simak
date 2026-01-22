@@ -87,7 +87,6 @@ class MutasiController extends Controller
 
     public function create()
     {
-        dd('DEBUG: Reached MutasiController::create');
         $user = Auth::user();
 
         // Initialize with user data
@@ -131,7 +130,8 @@ class MutasiController extends Controller
             }
         }
 
-        $draft = null; // Ensure $draft is defined for view\r\n        return view('mutasi.keluar.create', compact('user', 'alamatSekolahAsal', 'namaSekolahAsal', 'npsnSekolahAsal', 'draft'));
+        $draft = null;
+        return view('mutasi.keluar.create', compact('user', 'alamatSekolahAsal', 'namaSekolahAsal', 'npsnSekolahAsal', 'draft'));
     }
 
     /**
