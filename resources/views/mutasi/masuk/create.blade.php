@@ -202,23 +202,29 @@
                                 class="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition duration-200 resize-none">{{ old('alamat_sekolah_tujuan') }}</textarea>
                         </div>
                     @else
-                        <!-- Non-Dinas: Readonly dengan data, Double-Binding Strategy for Robustness -->
+                        {{-- Non-Dinas: Readonly dengan data dari draft atau user --}}
+                        @php
+                            // Prioritaskan data draft, fallback ke controller variables
+                            $npsnVal = old('npsn_sekolah_tujuan', $draft->npsn_sekolah_tujuan ?? $npsnSekolahTujuan ?? '');
+                            $namaVal = old('nama_sekolah_tujuan', $draft->nama_sekolah_tujuan ?? $namaSekolahTujuan ?? '');
+                            $alamatVal = old('alamat_sekolah_tujuan', $draft->alamat_sekolah_tujuan ?? $alamatSekolahTujuan ?? '');
+                        @endphp
                         <div>
                             <label class="block text-sm font-semibold text-slate-700 mb-2">NPSN *</label>
-                            <input type="text" name="npsn_sekolah_tujuan" id="locked_npsn" value="{{ $npsnSekolahTujuan }}"
+                            <input type="text" name="npsn_sekolah_tujuan" id="locked_npsn" value="{{ $npsnVal }}"
                                 readonly
                                 class="w-full px-4 py-2.5 bg-slate-100 border-0 rounded-xl text-slate-500 cursor-not-allowed font-mono">
                         </div>
                         <div>
                             <label class="block text-sm font-semibold text-slate-700 mb-2">Nama Sekolah *</label>
-                            <input type="text" name="nama_sekolah_tujuan" id="locked_nama" value="{{ $namaSekolahTujuan }}"
+                            <input type="text" name="nama_sekolah_tujuan" id="locked_nama" value="{{ $namaVal }}"
                                 readonly
                                 class="w-full px-4 py-2.5 bg-slate-100 border-0 rounded-xl text-slate-500 cursor-not-allowed">
                         </div>
                         <div class="md:col-span-2">
                             <label class="block text-sm font-semibold text-slate-700 mb-2">Alamat *</label>
                             <textarea name="alamat_sekolah_tujuan" id="locked_alamat" rows="2" readonly
-                                class="w-full px-4 py-2.5 bg-slate-100 border-0 rounded-xl text-slate-500 cursor-not-allowed resize-none">{{ $alamatSekolahTujuan }}</textarea>
+                                class="w-full px-4 py-2.5 bg-slate-100 border-0 rounded-xl text-slate-500 cursor-not-allowed resize-none">{{ $alamatVal }}</textarea>
                         </div>
 
                         {{-- ROBUST DATA INJECTION SCRIPT --}}
