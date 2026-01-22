@@ -962,4 +962,94 @@ class MutasiController extends Controller
     }
 
     // Region methods removed - use SatuanPendidikanController instead
+
+    /**
+     * Save Draft - Save form data without full validation
+     */
+    public function saveDraft(Request $request)
+    {
+        $user = Auth::user();
+
+        // Basic validation for draft (minimal)
+        $validated = $request->validate([
+            'nama_murid' => 'nullable|string|max:255',
+            'nisn' => 'nullable|string|max:20',
+            'nis' => 'nullable|string|max:20',
+        ]);
+
+        // Generate ID
+        $id = 'MK-' . date('ymd') . '-' . strtoupper(substr(uniqid(), -5));
+
+        try {
+            DB::table('mutasi_keluar')->insert([
+                'id_mutasi' => $id,
+                'nama_murid' => $request->input('nama_murid'),
+                'nisn' => $request->input('nisn'),
+                'nis' => $request->input('nis'),
+                'kelas' => $request->input('kelas'),
+                'jenis_kelamin' => $request->input('jenis_kelamin'),
+                'tempat_lahir' => $request->input('tempat_lahir'),
+                'tanggal_lahir' => $request->input('tanggal_lahir'),
+                'npsn_sekolah_asal' => $request->input('npsn_sekolah_asal') ?? $user->npsn,
+                'nama_sekolah_asal' => $request->input('nama_sekolah_asal') ?? $user->nama_sekolah,
+                'alamat_sekolah_asal' => $request->input('alamat_sekolah_asal'),
+                'npsn_sekolah_tujuan' => $request->input('npsn_sekolah_tujuan'),
+                'nama_sekolah_tujuan' => $request->input('nama_sekolah_tujuan'),
+                'alamat_sekolah_tujuan' => $request->input('alamat_sekolah_tujuan'),
+                'provinsi_tujuan' => $request->input('provinsi_tujuan'),
+                'kabupaten_kota_tujuan' => $request->input('kabupaten_kota_tujuan'),
+                'alasan_pindah' => $request->input('alasan_pindah'),
+                'nomor_surat_sekolah' => $request->input('nomor_surat_sekolah'),
+                'tanggal_surat_sekolah' => $request->input('tanggal_surat_sekolah'),
+                'tujuan_luar_negeri' => $request->input('tujuan_luar_negeri') ? 1 : 0,
+                'pengusul' => $user->username,
+                'status' => 'Draft',
+                'tanggal_pengajuan' => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            Log::info("Draft mutasi keluar created: {$id} by {$user->username}");
+
+            return redirect()->route('mutasi.keluar.index')
+                ->with('success', '📝 Draft berhasil disimpan! Anda dapat melanjutkan pengisian nanti.');
+        } catch (\Exception $e) {
+            Log::error("Failed to save draft mutasi keluar: " . $e->getMessage());
+            return back()->with('error', 'Gagal menyimpan draft: ' . $e->getMessage())->withInput();
+        }
+    }
+
+    /**
+     * Resume Draft - Load draft for continued editing
+     */
+    public function resumeDraft(string $id)
+    {
+        $user = Auth::user();
+
+        $draft = DB::table('mutasi_keluar')
+            ->where('id_mutasi', $id)
+            ->where('status', 'Draft')
+            ->first();
+
+        if (!$draft) {
+            return redirect()->route('mutasi.keluar.index')
+                ->with('error', 'Draft tidak ditemukan atau sudah disubmit.');
+        }
+
+        // Authorization
+        $isOwner = ($user->role === 'Operator' && $draft->pengusul === $user->username)
+            || ($user->role === 'Sekolah' && $draft->npsn_sekolah_asal === $user->npsn)
+            || in_array($user->role, ['Dinas', 'SuperAdmin']);
+
+        if (!$isOwner) {
+            abort(403, 'Anda tidak berhak mengakses draft ini.');
+        }
+
+        // Pass draft data to create view
+        $alamatSekolahAsal = $draft->alamat_sekolah_asal ?? '';
+        $namaSekolahAsal = $draft->nama_sekolah_asal ?? '';
+        $npsnSekolahAsal = $draft->npsn_sekolah_asal ?? '';
+
+        return view('mutasi.keluar.create', compact('user', 'draft', 'alamatSekolahAsal', 'namaSekolahAsal', 'npsnSekolahAsal'));
+    }
 }

@@ -1286,4 +1286,50 @@
     window.createDraftIfNeeded = createDraftIfNeeded;
     window.saveCurrentStudent = saveCurrentStudent;
 
+    /**
+     * Save all current data as Draft and redirect to index
+     * Called by "Simpan Draft" button
+     */
+    window.saveDraftAndRedirect = async function () {
+        const btn = document.getElementById('btnSaveDraft');
+        if (btn) {
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="bi bi-hourglass-split animate-spin mr-2"></i> Menyimpan...';
+            btn.disabled = true;
+        }
+
+        try {
+            // Create draft if not exists
+            await createDraftIfNeeded();
+
+            if (!draftId) {
+                alert('Gagal membuat draft. Pastikan data header sudah diisi (Jumlah Siswa, NPSN, Nama Sekolah, Alamat).');
+                if (btn) {
+                    btn.innerHTML = '<i class="bi bi-save mr-2"></i><span>Simpan Draft</span>';
+                    btn.disabled = false;
+                }
+                return;
+            }
+
+            // Save current student
+            if (totalSiswa > 0) {
+                await saveCurrentStudent(currentSiswa);
+            }
+
+            showSaveIndicator('📝 Draft tersimpan! Mengalihkan...', 'success');
+
+            // Redirect to index with success message
+            setTimeout(() => {
+                window.location.href = CONFIG.routes?.index || '/mutasi-masuk';
+            }, 1000);
+        } catch (error) {
+            console.error('Draft save failed:', error);
+            showSaveIndicator('❌ Gagal menyimpan draft', 'error');
+            if (btn) {
+                btn.innerHTML = '<i class="bi bi-save mr-2"></i><span>Simpan Draft</span>';
+                btn.disabled = false;
+            }
+        }
+    };
+
 })();

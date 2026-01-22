@@ -275,6 +275,11 @@
                         class="px-6 py-2.5 border border-slate-300 text-slate-600 hover:bg-slate-50 hover:text-slate-800 rounded-xl transition font-medium">
                         Batal
                     </a>
+                    <button type="button" id="btnSaveDraft" onclick="saveDraftAndRedirect()"
+                        class="px-6 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl transition font-medium flex items-center shadow-lg shadow-amber-500/20">
+                        <i class="bi bi-save mr-2"></i>
+                        <span>Simpan Draft</span>
+                    </button>
                     <button type="button" id="btnSubmitMasuk" onclick="showSubmittingModal()"
                         class="px-6 py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl transition font-medium flex items-center shadow-lg shadow-slate-900/20">
                         <i class="bi bi-send-fill mr-2"></i>
@@ -314,7 +319,7 @@
                 // Reset submitting flag so user can try again
                 window.isSubmitting = false;
             @endif
-                });
+                    });
 
         let isSubmitting = false;
         function showSubmittingModal() {

@@ -345,6 +345,11 @@
                     class="px-6 py-2.5 border border-slate-300 text-slate-600 hover:bg-slate-50 hover:text-slate-800 rounded-xl transition font-medium">
                     Batal
                 </a>
+                <button type="button" id="btnSaveDraft" onclick="saveDraftKeluar()"
+                    class="px-6 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl transition font-medium flex items-center shadow-lg shadow-amber-500/20">
+                    <i class="bi bi-save mr-2"></i>
+                    <span>Simpan Draft</span>
+                </button>
                 <button type="button" id="btnSubmitKeluar"
                     onclick="showSubmittingModal()"
                     class="px-6 py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl transition font-medium flex items-center shadow-lg shadow-slate-900/20">
@@ -432,7 +437,59 @@
                 apiNpsn: '{{ route('mutasi.keluar.api.npsn', ['npsn' => ':npsn']) }}',
                 apiSatpen: '{{ route('satpen.api.find', ['npsn' => ':npsn']) }}',
                 apiProvinces: '{{ route('mutasi.keluar.api.provinces') }}',
-                apiRegencies: '{{ route('mutasi.keluar.api.regencies', ['provinceId' => ':provinceId']) }}'
-            }
+                apiRegencies: '{{ route('mutasi.keluar.api.regencies', ['provinceId' => ':provinceId']) }}',
+                saveDraft: '{{ route('mutasi.keluar.draft.save') }}'
+            },
+            draftId: @json(isset($draft) ? $draft->id_mutasi : null)
         };
-    </script>@endpush
+
+        // Populate draft values if resuming
+        @if(isset($draft))
+        document.addEventListener('DOMContentLoaded', function() {
+            const draft = @json($draft);
+            
+            // Populate form fields from draft
+            const fields = ['nama_murid', 'nisn', 'nis', 'kelas', 'tempat_lahir', 'tanggal_lahir', 
+                            'jenis_kelamin', 'npsn_sekolah_tujuan', 'nama_sekolah_tujuan', 
+                            'alamat_sekolah_tujuan', 'alasan_pindah', 'nomor_surat_sekolah', 
+                            'tanggal_surat_sekolah'];
+            
+            fields.forEach(field => {
+                const input = document.querySelector(`[name="${field}"]`);
+                if (input && draft[field]) {
+                    input.value = draft[field];
+                }
+            });
+            
+            // Handle province/city selects
+            if (draft.provinsi_tujuan) {
+                document.getElementById('provinsi_tujuan').value = draft.provinsi_tujuan;
+            }
+            if (draft.kabupaten_kota_tujuan) {
+                document.getElementById('kabupaten_kota_tujuan').value = draft.kabupaten_kota_tujuan;
+            }
+        });
+        @endif
+
+        /**
+         * Save current form as Draft
+         */
+        function saveDraftKeluar() {
+            const form = document.getElementById('formMutasiKeluar');
+            if (!form) return;
+
+            // Change form action to draft route
+            const originalAction = form.action;
+            form.action = '{{ route('mutasi.keluar.draft.save') }}';
+            
+            // Show saving indicator
+            const btn = document.getElementById('btnSaveDraft');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="bi bi-hourglass-split animate-spin mr-2"></i> Menyimpan...';
+            btn.disabled = true;
+            
+            // Submit form
+            form.submit();
+        }
+    </script>
+@endpush

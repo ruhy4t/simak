@@ -32,6 +32,8 @@
                     <select name="status" id="statusFilter"
                         class="w-full pl-11 pr-8 py-2.5 bg-slate-50 border-0 rounded-xl focus:ring-2 focus:ring-sky-100 focus:bg-white transition text-sm text-slate-700 cursor-pointer appearance-none">
                         <option value="">Semua Status</option>
+                        <option value="Draft" {{ request('status') == 'Draft' ? 'selected' : '' }}>📝 Draft (Belum Selesai)
+                        </option>
                         <option value="Menunggu Verifikasi Dinas" {{ request('status') == 'Menunggu Verifikasi Dinas' ? 'selected' : '' }}>Menunggu Verifikasi</option>
                         <option value="Perlu Perbaikan" {{ request('status') == 'Perlu Perbaikan' ? 'selected' : '' }}>Perlu
                             Perbaikan</option>
@@ -122,6 +124,7 @@
                                     <td class="px-6 py-4">
                                         @php
                                             $statusMap = [
+                                                'Draft' => ['bg' => 'bg-gray-100', 'text' => 'text-gray-700', 'ring' => 'ring-gray-500/20', 'icon' => 'bi-pencil-square'],
                                                 'Menunggu Verifikasi Dinas' => ['bg' => 'bg-amber-100', 'text' => 'text-amber-800', 'ring' => 'ring-amber-600/20', 'icon' => 'bi-hourglass-split'],
                                                 'Proses' => ['bg' => 'bg-blue-100', 'text' => 'text-blue-800', 'ring' => 'ring-blue-600/20', 'icon' => 'bi-arrow-repeat'],
                                                 'Proses TTD' => ['bg' => 'bg-indigo-100', 'text' => 'text-indigo-800', 'ring' => 'ring-indigo-600/20', 'icon' => 'bi-pen'],
@@ -141,26 +144,36 @@
                                     </td>
                                     <td class="px-6 py-4 text-center">
                                         <div class="flex items-center justify-center gap-2">
-                                            <a href="{{ route('mutasi.keluar.show', $mutasi->id_mutasi) }}"
-                                                class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-blue-600 text-white hover:bg-blue-700 shadow-md shadow-blue-500/20 transition-all hover:-translate-y-0.5"
-                                                title="Lihat Detail">
-                                                <i class="bi bi-eye"></i>
-                                            </a>
+                                            {{-- Resume Draft Button --}}
+                                            @if($mutasi->status === 'Draft')
+                                                <a href="{{ route('mutasi.keluar.draft.resume', $mutasi->id_mutasi) }}"
+                                                    class="inline-flex items-center justify-center px-3 py-1.5 rounded-lg bg-amber-500 text-white hover:bg-amber-600 shadow-md shadow-amber-500/20 transition-all hover:-translate-y-0.5 text-sm font-medium gap-1"
+                                                    title="Lanjutkan Pengisian">
+                                                    <i class="bi bi-pencil-square"></i>
+                                                    Lanjutkan
+                                                </a>
+                                            @else
+                                                <a href="{{ route('mutasi.keluar.show', $mutasi->id_mutasi) }}"
+                                                    class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-blue-600 text-white hover:bg-blue-700 shadow-md shadow-blue-500/20 transition-all hover:-translate-y-0.5"
+                                                    title="Lihat Detail">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
 
-                                            @if($mutasi->status === 'Selesai')
-                                                @if($mutasi->file_arsip_scan)
-                                                    <a href="{{ route('dokumen.view', ['path' => $mutasi->file_arsip_scan]) }}"
-                                                        target="_blank"
-                                                        class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-green-600 text-white hover:bg-green-700 shadow-md shadow-green-500/20 transition-all hover:-translate-y-0.5"
-                                                        title="Lihat Arsip Digital">
-                                                        <i class="bi bi-file-earmark-check"></i>
-                                                    </a>
-                                                @else
-                                                    <a href="{{ route('mutasi.keluar.print-letter', $mutasi->id_mutasi) }}" target="_blank"
-                                                        class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 shadow-md shadow-emerald-500/20 transition-all hover:-translate-y-0.5"
-                                                        title="Cetak Surat">
-                                                        <i class="bi bi-printer"></i>
-                                                    </a>
+                                                @if($mutasi->status === 'Selesai')
+                                                    @if($mutasi->file_arsip_scan)
+                                                        <a href="{{ route('dokumen.view', ['path' => $mutasi->file_arsip_scan]) }}"
+                                                            target="_blank"
+                                                            class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-green-600 text-white hover:bg-green-700 shadow-md shadow-green-500/20 transition-all hover:-translate-y-0.5"
+                                                            title="Lihat Arsip Digital">
+                                                            <i class="bi bi-file-earmark-check"></i>
+                                                        </a>
+                                                    @else
+                                                        <a href="{{ route('mutasi.keluar.print-letter', $mutasi->id_mutasi) }}" target="_blank"
+                                                            class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 shadow-md shadow-emerald-500/20 transition-all hover:-translate-y-0.5"
+                                                            title="Cetak Surat">
+                                                            <i class="bi bi-printer"></i>
+                                                        </a>
+                                                    @endif
                                                 @endif
                                             @endif
                                         </div>
@@ -240,4 +253,4 @@
                 });
             }
         });
-    </script>@endsection
+</script>@endsection
