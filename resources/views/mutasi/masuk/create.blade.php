@@ -27,13 +27,15 @@
             {{-- FAILSAFE ERROR DISPLAY: High Contrast & Raw Output --}}
             {{-- This helps users blocked by security.js to still see errors --}}
             @if ($errors->any() || session('error'))
-                <div style="background-color: #fee2e2; border: 2px solid #ef4444; color: #b91c1c; padding: 20px; border-radius: 12px; margin-bottom: 24px; font-weight: bold;">
+                <div
+                    style="background-color: #fee2e2; border: 2px solid #ef4444; color: #b91c1c; padding: 20px; border-radius: 12px; margin-bottom: 24px; font-weight: bold;">
                     <h3 style="font-size: 1.25rem; margin-bottom: 10px; display: flex; align-items: center; gap: 10px;">
                         ⚠️ TERJADI KESALAHAN (WAJIB DIBACA)
                     </h3>
-                    
+
                     @if(session('error'))
-                        <div style="margin-bottom: 15px; background: white; padding: 10px; border-radius: 6px; border-left: 4px solid #ef4444;">
+                        <div
+                            style="margin-bottom: 15px; background: white; padding: 10px; border-radius: 6px; border-left: 4px solid #ef4444;">
                             <span style="display: block; font-size: 0.8em; text-transform: uppercase;">System Error:</span>
                             {{ session('error') }}
                         </div>
@@ -160,8 +162,7 @@
                                 <input type="text" name="npsn_sekolah_tujuan" id="npsn_tujuan_input"
                                     value="{{ old('npsn_sekolah_tujuan') }}"
                                     class="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition duration-200"
-                                    placeholder="Cari NPSN..."
-                                    oninput="window.lookupNpsnTujuan(this.value)">
+                                    placeholder="Cari NPSN..." oninput="window.lookupNpsnTujuan(this.value)">
                                 <span id="npsn_tujuan_status" class="absolute right-3 top-1/2 -translate-y-1/2"></span>
                             </div>
                         </div>
@@ -180,14 +181,14 @@
                         <!-- Non-Dinas: Readonly dengan data, Double-Binding Strategy for Robustness -->
                         <div>
                             <label class="block text-sm font-semibold text-slate-700 mb-2">NPSN *</label>
-                            <input type="text" name="npsn_sekolah_tujuan" id="locked_npsn"
-                                value="{{ $npsnSekolahTujuan }}" readonly
+                            <input type="text" name="npsn_sekolah_tujuan" id="locked_npsn" value="{{ $npsnSekolahTujuan }}"
+                                readonly
                                 class="w-full px-4 py-2.5 bg-slate-100 border-0 rounded-xl text-slate-500 cursor-not-allowed font-mono">
                         </div>
                         <div>
                             <label class="block text-sm font-semibold text-slate-700 mb-2">Nama Sekolah *</label>
-                            <input type="text" name="nama_sekolah_tujuan" id="locked_nama"
-                                value="{{ $namaSekolahTujuan }}" readonly
+                            <input type="text" name="nama_sekolah_tujuan" id="locked_nama" value="{{ $namaSekolahTujuan }}"
+                                readonly
                                 class="w-full px-4 py-2.5 bg-slate-100 border-0 rounded-xl text-slate-500 cursor-not-allowed">
                         </div>
                         <div class="md:col-span-2">
@@ -197,9 +198,10 @@
                         </div>
 
                         {{-- ROBUST DATA INJECTION SCRIPT --}}
-                        {{-- Forces the value from server-side to client-side inputs, ignoring potentially empty HTML attributes --}}
+                        {{-- Forces the value from server-side to client-side inputs, ignoring potentially empty HTML attributes
+                        --}}
                         <script>
-                            document.addEventListener('DOMContentLoaded', function() {
+                            document.addEventListener('DOMContentLoaded', function () {
                                 try {
                                     // Safely encode PHP variables to JS
                                     const schoolData = {
@@ -312,7 +314,7 @@
                 // Reset submitting flag so user can try again
                 window.isSubmitting = false;
             @endif
-            });
+                });
 
         let isSubmitting = false;
         function showSubmittingModal() {
@@ -354,13 +356,15 @@
     <script>
         window.MUTASI_CONFIG = {
             oldValues: @json(old('siswa', [])),
-            oldJumlah: {{ old('jumlah_siswa', 1) }},
+            oldJumlah: {{ old('jumlah_siswa', isset($draft) ? $draft->jumlah_siswa : 1) }},
             isDinasEntry: {{ in_array(auth()->user()->role, ['Dinas', 'SuperAdmin']) ? 'true' : 'false' }},
+            draftId: @json(isset($draft) ? $draft->id_mutasi : null),
             routes: {
                 index: '{{ route('mutasi.masuk.index') }}',
                 apiNpsn: '{{ url('/mutasi-masuk/api/npsn') }}',
                 apiProvinces: '{{ route('wilayah.provinces') }}',
-                apiRegencies: '{{ route('wilayah.regencies', ['provinceId' => ':provinceId']) }}'
+                apiRegencies: '{{ route('wilayah.regencies', ['provinceId' => ':provinceId']) }}',
+                createDraft: '{{ route('mutasi.masuk.draft.create') }}'
             },
             wilayahData: null // Loaded in JS file for optimization
         };

@@ -1317,4 +1317,338 @@ class MutasiMasukController extends Controller
     }
 
 
+    // ======================================================================
+    // DRAFT API METHODS (Auto-Save Feature)
+    // ======================================================================
+
+    /**
+     * Create a new draft (header only).
+     * Called when user starts filling the form.
+     */
+    public function createDraft(Request $request)
+    {
+        $user = Auth::user();
+
+        // Minimal validation for draft creation
+        $validator = Validator::make($request->all(), [
+            'jumlah_siswa' => 'required|integer|min:1|max:20',
+            'npsn_sekolah_tujuan' => 'required|string|size:8',
+            'nama_sekolah_tujuan' => 'required|string|max:150',
+            'alamat_sekolah_tujuan' => 'required|string|max:500',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            // Generate unique ID
+            $count = DB::table('mutasi_masuk')->count() + 1;
+            $idMutasi = 'MM' . date('Ymd') . str_pad($count, 4, '0', STR_PAD_LEFT);
+            while (DB::table('mutasi_masuk')->where('id_mutasi', $idMutasi)->exists()) {
+                $count++;
+                $idMutasi = 'MM' . date('Ymd') . str_pad($count, 4, '0', STR_PAD_LEFT);
+            }
+
+            // Upload surat permohonan if provided
+            $fileSuratPermohonan = null;
+            if ($request->hasFile('file_surat_permohonan')) {
+                $fileSuratPermohonan = $this->fileUploadService->uploadSuratPermohonan($request, $idMutasi);
+            }
+
+            // Insert header as Draft
+            DB::table('mutasi_masuk')->insert([
+                'id_mutasi' => $idMutasi,
+                'tanggal_pengajuan' => now(),
+                'jumlah_siswa' => (int) $request->jumlah_siswa,
+                'nomor_surat' => $this->sanitize($request->nomor_surat ?? ''),
+                'tanggal_surat' => $request->tanggal_surat,
+                'file_surat_permohonan' => $fileSuratPermohonan,
+                'npsn_sekolah_tujuan' => $this->sanitizeNpsn($request->npsn_sekolah_tujuan),
+                'nama_sekolah_tujuan' => $this->sanitize($request->nama_sekolah_tujuan),
+                'alamat_sekolah_tujuan' => $this->sanitize($request->alamat_sekolah_tujuan),
+                'status' => 'Draft',
+                'pengusul' => $user->username,
+                'is_dinas_entry' => $request->has('is_dinas_entry') ? 1 : 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            Log::info("Draft created: {$idMutasi} by {$user->username}");
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Draft berhasil dibuat',
+                'id_mutasi' => $idMutasi
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error("Create Draft Error: " . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal membuat draft: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Add or update a single student to an existing draft.
+     * Called via AJAX when user switches tabs.
+     */
+    public function addStudentToDraft(Request $request, string $id)
+    {
+        $user = Auth::user();
+
+        // Verify draft exists and belongs to user
+        $draft = DB::table('mutasi_masuk')->where('id_mutasi', $id)->first();
+        if (!$draft) {
+            return response()->json(['success' => false, 'message' => 'Draft tidak ditemukan'], 404);
+        }
+        if ($draft->status !== 'Draft') {
+            return response()->json(['success' => false, 'message' => 'Hanya draft yang bisa diubah'], 400);
+        }
+        if ($draft->pengusul !== $user->username && !in_array($user->role, ['Dinas', 'SuperAdmin'])) {
+            return response()->json(['success' => false, 'message' => 'Akses ditolak'], 403);
+        }
+
+        $studentIndex = (int) $request->input('student_index', 0);
+
+        try {
+            // Build file paths array
+            $filePaths = [];
+            $uploadPathKey = $this->fileUploadService->getDateBasedPath('masuk');
+            $isDinasEntry = (bool) $draft->is_dinas_entry;
+
+            // Upload files if provided (not Dinas entry)
+            if (!$isDinasEntry) {
+                $fileFields = [
+                    'file_surat_pindah',
+                    'file_surat_dapodik',
+                    'file_rekomendasi',
+                    'file_ijazah_sd',
+                    'file_rapor',
+                    'file_surat_penyaluran'
+                ];
+
+                foreach ($fileFields as $field) {
+                    if ($request->hasFile($field)) {
+                        $file = $request->file($field);
+                        $filePaths[$field] = $this->fileUploadService->uploadPdf(
+                            $file,
+                            $id,
+                            "siswa{$studentIndex}_{$field}",
+                            $uploadPathKey
+                        );
+                    }
+                }
+
+                // Handle Rekam Didik (Image/PDF)
+                if ($request->hasFile('file_rekam_didik')) {
+                    $file = $request->file('file_rekam_didik');
+                    $mimeType = $file->getMimeType();
+
+                    if (in_array($mimeType, ['image/jpeg', 'image/png'])) {
+                        // Try WebP conversion
+                        $tempDir = sys_get_temp_dir();
+                        $tempFilename = $this->sanitizeFilename($id) . "_siswa{$studentIndex}_file_rekam_didik.webp";
+                        $tempPath = $tempDir . '/' . $tempFilename;
+                        $conversionSuccess = false;
+
+                        if (extension_loaded('gd')) {
+                            $conversionSuccess = $this->imageService->convertToWebP($file, $tempPath);
+                        }
+
+                        if ($conversionSuccess && file_exists($tempPath)) {
+                            $destinationPath = $uploadPathKey . '/' . $tempFilename;
+                            $disk = $this->fileUploadService->isCloudStorage() ? 'b2' : 'private_docs';
+                            \Illuminate\Support\Facades\Storage::disk($disk)->put($destinationPath, file_get_contents($tempPath));
+                            $filePaths['file_rekam_didik'] = $destinationPath;
+                            @unlink($tempPath);
+                        } else {
+                            $filePaths['file_rekam_didik'] = $this->fileUploadService->uploadImage(
+                                $file,
+                                $id,
+                                "siswa{$studentIndex}_file_rekam_didik",
+                                $uploadPathKey
+                            );
+                        }
+                    } elseif ($mimeType === 'application/pdf') {
+                        $filePaths['file_rekam_didik'] = $this->fileUploadService->uploadPdf(
+                            $file,
+                            $id,
+                            "siswa{$studentIndex}_file_rekam_didik",
+                            $uploadPathKey
+                        );
+                    }
+                }
+            }
+
+            // Check if student record already exists (update) or create new
+            $existingStudent = DB::table('mutasi_masuk_siswa')
+                ->where('id_mutasi', $id)
+                ->whereRaw(
+                    "nama_murid = ? OR id = (SELECT id FROM mutasi_masuk_siswa WHERE id_mutasi = ? ORDER BY id LIMIT 1 OFFSET ?)",
+                    [$this->sanitize($request->nama_murid), $id, $studentIndex]
+                )
+                ->first();
+
+            $studentData = [
+                'id_mutasi' => $id,
+                'nama_murid' => $this->sanitize($request->nama_murid),
+                'nisn' => $this->sanitizeNisn($request->nisn),
+                'nis' => $this->sanitize($request->nis ?? null),
+                'tempat_lahir' => $this->sanitize($request->tempat_lahir),
+                'tanggal_lahir' => $request->tanggal_lahir,
+                'jenis_kelamin' => $request->jenis_kelamin,
+                'kelas' => $request->kelas,
+                'tanggal_diterima' => $request->tanggal_diterima,
+                'npsn_sekolah_asal' => $this->sanitizeNpsn($request->npsn_sekolah_asal ?? null),
+                'nama_sekolah_asal' => $this->sanitize($request->nama_sekolah_asal),
+                'alamat_sekolah_asal' => $this->sanitize($request->alamat_sekolah_asal),
+                'provinsi_asal' => $this->sanitize($request->provinsi_asal),
+                'kabupaten_kota_asal' => $this->sanitize($request->kabupaten_kota_asal),
+                'npsn_ditemukan' => ($request->npsn_ditemukan ?? '0') === '1',
+                'asal_luar_negeri' => ($request->asal_luar_negeri ?? '0') === '1',
+                'updated_at' => now(),
+            ];
+
+            // Merge file paths
+            foreach ($filePaths as $key => $path) {
+                $studentData[$key] = $path;
+            }
+
+            if ($existingStudent) {
+                // Update existing
+                DB::table('mutasi_masuk_siswa')->where('id', $existingStudent->id)->update($studentData);
+            } else {
+                // Insert new
+                $studentData['created_at'] = now();
+                DB::table('mutasi_masuk_siswa')->insert($studentData);
+            }
+
+            // Update jumlah_siswa count in header
+            $actualCount = DB::table('mutasi_masuk_siswa')->where('id_mutasi', $id)->count();
+            DB::table('mutasi_masuk')->where('id_mutasi', $id)->update([
+                'jumlah_siswa' => $actualCount,
+                'updated_at' => now()
+            ]);
+
+            Log::info("Student saved to draft {$id}: index {$studentIndex}");
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Siswa #' . ($studentIndex + 1) . ' berhasil disimpan',
+                'student_count' => $actualCount
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error("Add Student to Draft Error: " . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menyimpan siswa: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Finalize a draft - submit it for verification.
+     */
+    public function finalizeDraft(Request $request, string $id)
+    {
+        $user = Auth::user();
+
+        $draft = DB::table('mutasi_masuk')->where('id_mutasi', $id)->first();
+        if (!$draft) {
+            return response()->json(['success' => false, 'message' => 'Draft tidak ditemukan'], 404);
+        }
+        if ($draft->status !== 'Draft') {
+            return response()->json(['success' => false, 'message' => 'Usulan sudah disubmit sebelumnya'], 400);
+        }
+        if ($draft->pengusul !== $user->username && !in_array($user->role, ['Dinas', 'SuperAdmin'])) {
+            return response()->json(['success' => false, 'message' => 'Akses ditolak'], 403);
+        }
+
+        // Verify at least one student exists
+        $studentCount = DB::table('mutasi_masuk_siswa')->where('id_mutasi', $id)->count();
+        if ($studentCount < 1) {
+            return response()->json(['success' => false, 'message' => 'Minimal 1 siswa harus diisi'], 400);
+        }
+
+        try {
+            // Update status
+            $newStatus = in_array($user->role, ['Dinas', 'SuperAdmin'])
+                ? 'Disetujui Dinas'
+                : 'Menunggu Verifikasi Dinas';
+
+            DB::table('mutasi_masuk')->where('id_mutasi', $id)->update([
+                'status' => $newStatus,
+                'jumlah_siswa' => $studentCount,
+                'updated_at' => now()
+            ]);
+
+            // Notify Dinas (if not Dinas submitter)
+            if (!in_array($user->role, ['Dinas', 'SuperAdmin'])) {
+                try {
+                    $updatedDraft = DB::table('mutasi_masuk')->where('id_mutasi', $id)->first();
+                    \App\Helpers\NotificationHelper::notifyDinasNewSubmission($updatedDraft, 'masuk');
+                } catch (\Exception $e) {
+                    Log::error("Telegram notification failed: " . $e->getMessage());
+                }
+            }
+
+            Log::info("Draft finalized: {$id} by {$user->username}");
+
+            return response()->json([
+                'success' => true,
+                'message' => "Mutasi Masuk {$id} berhasil dikirim ({$studentCount} siswa)",
+                'redirect' => route('mutasi.masuk.index')
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error("Finalize Draft Error: " . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengirim: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Resume editing a draft - load data back to form.
+     */
+    public function resumeDraft(string $id)
+    {
+        $user = Auth::user();
+
+        $draft = DB::table('mutasi_masuk')->where('id_mutasi', $id)->first();
+        if (!$draft) {
+            return redirect()->route('mutasi.masuk.index')->with('error', 'Draft tidak ditemukan');
+        }
+        if ($draft->status !== 'Draft') {
+            return redirect()->route('mutasi.masuk.show', $id);
+        }
+        if ($draft->pengusul !== $user->username && !in_array($user->role, ['Dinas', 'SuperAdmin'])) {
+            return redirect()->route('mutasi.masuk.index')->with('error', 'Akses ditolak');
+        }
+
+        // Load students
+        $students = DB::table('mutasi_masuk_siswa')->where('id_mutasi', $id)->orderBy('id')->get();
+
+        // Get school info
+        $namaSekolahTujuan = $draft->nama_sekolah_tujuan;
+        $npsnSekolahTujuan = $draft->npsn_sekolah_tujuan;
+        $alamatSekolahTujuan = $draft->alamat_sekolah_tujuan;
+
+        return view('mutasi.masuk.create', compact(
+            'draft',
+            'students',
+            'namaSekolahTujuan',
+            'npsnSekolahTujuan',
+            'alamatSekolahTujuan'
+        ));
+    }
 }

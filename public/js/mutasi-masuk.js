@@ -20,6 +20,18 @@
     let totalSiswa = 1;
     let currentSiswa = 0;
 
+    // Draft API State
+    let draftId = CONFIG.draftId || null;
+    let isSaving = false;
+    let savedStudents = new Set();
+
+    // API Endpoints
+    const API = {
+        createDraft: CONFIG.routes?.createDraft || '/mutasi-masuk/draft',
+        addStudent: (id) => `/mutasi-masuk/draft/${id}/siswa`,
+        finalize: (id) => `/mutasi-masuk/draft/${id}/finalize`
+    };
+
     // --- Template Generator ---
     function generateSiswaForm(index) {
         return `
@@ -789,6 +801,11 @@
         }
 
         function showSiswa(index) {
+            // AUTO-SAVE: Save current student before switching
+            if (draftId && currentSiswa !== index && !isSaving) {
+                saveCurrentStudent(currentSiswa).catch(e => console.error('Auto-save failed:', e));
+            }
+
             document.querySelectorAll('.siswa-card').forEach((card, i) => {
                 card.classList.toggle('hidden', i !== index);
             });
@@ -885,7 +902,14 @@
 
         // Prevent double submit
         if (form) {
-            form.addEventListener('submit', function () {
+            form.addEventListener('submit', function (e) {
+                // If draft mode and more than 1 student, use AJAX finalize
+                if (draftId && totalSiswa > 1) {
+                    e.preventDefault();
+                    finalizeDraftSubmit();
+                    return;
+                }
+
                 const btn = document.getElementById('btnSubmit');
                 if (btn) {
                     btn.disabled = true;
@@ -895,5 +919,255 @@
         }
 
     });
+
+    // ======================================================================
+    // AUTO-SAVE DRAFT FUNCTIONS
+    // ======================================================================
+
+    /**
+     * Create a draft if jumlah_siswa > 1 and header fields are filled
+     */
+    async function createDraftIfNeeded() {
+        if (draftId) return draftId; // Already created
+
+        const jumlah = parseInt(document.getElementById('jumlah_siswa')?.value) || 1;
+        if (jumlah <= 1) return null; // No draft needed for single student
+
+        const npsn = document.querySelector('[name="npsn_sekolah_tujuan"]')?.value;
+        const nama = document.querySelector('[name="nama_sekolah_tujuan"]')?.value;
+        const alamat = document.querySelector('[name="alamat_sekolah_tujuan"]')?.value;
+
+        if (!npsn || !nama || !alamat) {
+            console.log('Header fields incomplete, skipping draft creation');
+            return null;
+        }
+
+        isSaving = true;
+        showSaveIndicator('Membuat draft...');
+
+        try {
+            const formData = new FormData();
+            formData.append('jumlah_siswa', jumlah);
+            formData.append('npsn_sekolah_tujuan', npsn);
+            formData.append('nama_sekolah_tujuan', nama);
+            formData.append('alamat_sekolah_tujuan', alamat);
+
+            const nomor = document.querySelector('[name="nomor_surat"]')?.value;
+            const tanggal = document.querySelector('[name="tanggal_surat"]')?.value;
+            if (nomor) formData.append('nomor_surat', nomor);
+            if (tanggal) formData.append('tanggal_surat', tanggal);
+
+            // Upload surat permohonan if exists
+            const fileInput = document.querySelector('[name="file_surat_permohonan"]');
+            if (fileInput?.files[0]) {
+                formData.append('file_surat_permohonan', fileInput.files[0]);
+            }
+
+            const response = await fetch(API.createDraft, {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (result.success && result.id_mutasi) {
+                draftId = result.id_mutasi;
+                // Store in hidden input for form
+                let hiddenInput = document.getElementById('draft_id');
+                if (!hiddenInput) {
+                    hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.id = 'draft_id';
+                    hiddenInput.name = 'draft_id';
+                    form.appendChild(hiddenInput);
+                }
+                hiddenInput.value = draftId;
+                showSaveIndicator('Draft dibuat: ' + draftId, 'success');
+                console.log('Draft created:', draftId);
+                return draftId;
+            } else {
+                throw new Error(result.message || 'Failed to create draft');
+            }
+        } catch (e) {
+            console.error('Create draft error:', e);
+            showSaveIndicator('Gagal membuat draft', 'error');
+            return null;
+        } finally {
+            isSaving = false;
+        }
+    }
+
+    /**
+     * Save current student data to draft via AJAX
+     */
+    async function saveCurrentStudent(index) {
+        if (!draftId) {
+            draftId = await createDraftIfNeeded();
+            if (!draftId) return false;
+        }
+
+        const card = document.querySelector(`.siswa-card[data-index="${index}"]`);
+        if (!card) return false;
+
+        // Check if required fields are filled
+        const namaInput = card.querySelector('[name*="[nama_murid]"]');
+        if (!namaInput?.value?.trim()) {
+            console.log(`Student ${index} has no name, skipping save`);
+            return false;
+        }
+
+        isSaving = true;
+        showSaveIndicator('Menyimpan Siswa #' + (index + 1) + '...');
+
+        try {
+            const formData = new FormData();
+            formData.append('student_index', index);
+
+            // Collect all fields from this student card
+            const inputs = card.querySelectorAll('input, select, textarea');
+            inputs.forEach(input => {
+                const name = input.name;
+                if (!name) return;
+
+                // Extract field name from siswa[0][field_name]
+                const match = name.match(/siswa\[\d+\]\[(.+)\]/);
+                if (match) {
+                    const fieldName = match[1];
+                    if (input.type === 'file') {
+                        if (input.files[0]) {
+                            formData.append(fieldName, input.files[0]);
+                        }
+                    } else if (input.type === 'checkbox') {
+                        formData.append(fieldName, input.checked ? '1' : '0');
+                    } else {
+                        formData.append(fieldName, input.value);
+                    }
+                }
+            });
+
+            const response = await fetch(API.addStudent(draftId), {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                savedStudents.add(index);
+                markTabAsSaved(index);
+                showSaveIndicator('Siswa #' + (index + 1) + ' tersimpan ✓', 'success');
+                return true;
+            } else {
+                throw new Error(result.message || 'Failed to save student');
+            }
+        } catch (e) {
+            console.error('Save student error:', e);
+            showSaveIndicator('Gagal menyimpan siswa', 'error');
+            return false;
+        } finally {
+            isSaving = false;
+        }
+    }
+
+    /**
+     * Finalize draft and submit for verification
+     */
+    async function finalizeDraftSubmit() {
+        if (!draftId) {
+            // Fallback to normal form submit
+            form.submit();
+            return;
+        }
+
+        // First, save current student
+        await saveCurrentStudent(currentSiswa);
+
+        const modal = document.getElementById('loadingModal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        try {
+            const response = await fetch(API.finalize(draftId), {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': CSRF_TOKEN,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({})
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                if (result.redirect) {
+                    window.location.href = result.redirect;
+                } else {
+                    window.location.href = CONFIG.routes?.index || '/mutasi-masuk';
+                }
+            } else {
+                throw new Error(result.message || 'Gagal mengirim');
+            }
+        } catch (e) {
+            console.error('Finalize error:', e);
+            alert('Gagal mengirim pengajuan: ' + e.message);
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+    }
+
+    /**
+     * UI: Show save indicator
+     */
+    function showSaveIndicator(message, type = 'info') {
+        let indicator = document.getElementById('autoSaveIndicator');
+        if (!indicator) {
+            indicator = document.createElement('div');
+            indicator.id = 'autoSaveIndicator';
+            indicator.className = 'fixed bottom-4 right-4 px-4 py-2 rounded-lg shadow-lg text-sm font-medium z-50 transition-all duration-300';
+            document.body.appendChild(indicator);
+        }
+
+        indicator.className = 'fixed bottom-4 right-4 px-4 py-2 rounded-lg shadow-lg text-sm font-medium z-50 transition-all duration-300';
+        if (type === 'success') {
+            indicator.classList.add('bg-green-100', 'text-green-800', 'border', 'border-green-200');
+        } else if (type === 'error') {
+            indicator.classList.add('bg-red-100', 'text-red-800', 'border', 'border-red-200');
+        } else {
+            indicator.classList.add('bg-blue-100', 'text-blue-800', 'border', 'border-blue-200');
+        }
+
+        indicator.textContent = message;
+        indicator.style.opacity = '1';
+
+        clearTimeout(indicator._hideTimeout);
+        indicator._hideTimeout = setTimeout(() => {
+            indicator.style.opacity = '0';
+        }, 3000);
+    }
+
+    /**
+     * UI: Mark tab as saved
+     */
+    function markTabAsSaved(index) {
+        const tabs = document.querySelectorAll('.siswa-tab');
+        if (tabs[index]) {
+            if (!tabs[index].querySelector('.save-check')) {
+                const check = document.createElement('span');
+                check.className = 'save-check absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border border-white';
+                tabs[index].style.position = 'relative';
+                tabs[index].appendChild(check);
+            }
+        }
+    }
+
+    // Expose for external calls
+    window.createDraftIfNeeded = createDraftIfNeeded;
+    window.saveCurrentStudent = saveCurrentStudent;
 
 })();

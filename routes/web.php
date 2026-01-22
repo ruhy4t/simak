@@ -126,6 +126,12 @@ Route::middleware(['auth', \App\Http\Middleware\EnsurePasswordChanged::class])->
         // Revision Routes (with workday restriction on submit)
         Route::get('/{id}/revision', [MutasiMasukController::class, 'revisionEdit'])->name('revision');
         Route::put('/{id}/revision', [MutasiMasukController::class, 'revisionResubmit'])->middleware('workday')->name('revision.submit');
+
+        // Draft API Routes (Auto-Save Feature)
+        Route::post('/draft', [MutasiMasukController::class, 'createDraft'])->middleware('workday')->name('draft.create');
+        Route::post('/draft/{id}/siswa', [MutasiMasukController::class, 'addStudentToDraft'])->name('draft.addStudent');
+        Route::post('/draft/{id}/finalize', [MutasiMasukController::class, 'finalizeDraft'])->name('draft.finalize');
+        Route::get('/draft/{id}/resume', [MutasiMasukController::class, 'resumeDraft'])->name('draft.resume');
     });
 
     // User Management (Sekolah Only)
