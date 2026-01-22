@@ -1137,6 +1137,11 @@
                 if (CONFIG.students && CONFIG.students.length > 0) {
                     setTimeout(() => populateDraftStudents(), 300);
                 }
+
+                // Sync Header if Draft exists
+                if (draftId) {
+                    updateDraftHeader(draftId, { jumlah_siswa: newCount });
+                }
             });
         }
 
@@ -1242,6 +1247,28 @@
     }
 
     /**
+     * Update Draft Header Only
+     */
+    async function updateDraftHeader(id, data) {
+        try {
+            const response = await fetch(`/mutasi-masuk/draft/${id}/update-header`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': CSRF_TOKEN,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+            const result = await response.json();
+            if (!result.success) {
+                console.warn('Failed to update draft header:', result.message);
+            }
+        } catch (e) {
+            console.error('Update header error:', e);
+        }
+    }
+
+    /**
      * Save current student data to draft via AJAX
      */
     async function saveCurrentStudent(index) {
@@ -1307,7 +1334,9 @@
             }
         } catch (e) {
             console.error('Save student error:', e);
-            showSaveIndicator('Gagal menyimpan siswa', 'error');
+            const errorMsg = e.message === 'Failed to save student' ? 'Gagal menyimpan siswa' : e.message;
+            showSaveIndicator(errorMsg, 'error');
+            alert(`Gagal menyimpan data siswa #${index + 1}:\n${errorMsg}`);
             return false;
         } finally {
             isSaving = false;

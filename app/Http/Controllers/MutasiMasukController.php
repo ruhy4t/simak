@@ -1403,6 +1403,51 @@ class MutasiMasukController extends Controller
     }
 
     /**
+     * Update draft header (e.g. jumlah_siswa) via AJAX
+     */
+    public function updateDraftHeader(Request $request, string $id)
+    {
+        $user = Auth::user();
+        $draft = DB::table('mutasi_masuk')->where('id_mutasi', $id)->first();
+
+        if (!$draft || $draft->status !== 'Draft') {
+            return response()->json(['success' => false, 'message' => 'Draft tidak valid'], 404);
+        }
+
+        if ($draft->pengusul !== $user->username && !in_array($user->role, ['Dinas', 'SuperAdmin'])) {
+            return response()->json(['success' => false, 'message' => 'Akses ditolak'], 403);
+        }
+
+        try {
+            $updateData = [];
+            if ($request->has('jumlah_siswa')) {
+                $updateData['jumlah_siswa'] = (int) $request->jumlah_siswa;
+            }
+            // Add other header fields if needed
+            if ($request->has('nomor_surat'))
+                $updateData['nomor_surat'] = $this->sanitize($request->nomor_surat);
+            if ($request->has('tanggal_surat'))
+                $updateData['tanggal_surat'] = $request->tanggal_surat;
+            if ($request->has('npsn_sekolah_tujuan'))
+                $updateData['npsn_sekolah_tujuan'] = $this->sanitizeNpsn($request->npsn_sekolah_tujuan);
+            if ($request->has('nama_sekolah_tujuan'))
+                $updateData['nama_sekolah_tujuan'] = $this->sanitize($request->nama_sekolah_tujuan);
+            if ($request->has('alamat_sekolah_tujuan'))
+                $updateData['alamat_sekolah_tujuan'] = $this->sanitize($request->alamat_sekolah_tujuan);
+
+            if (!empty($updateData)) {
+                $updateData['updated_at'] = now();
+                DB::table('mutasi_masuk')->where('id_mutasi', $id)->update($updateData);
+            }
+
+            return response()->json(['success' => true]);
+
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
      * Add or update a single student to an existing draft.
      * Called via AJAX when user switches tabs.
      */

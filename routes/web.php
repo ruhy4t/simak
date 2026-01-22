@@ -131,6 +131,7 @@ Route::middleware(['auth', \App\Http\Middleware\EnsurePasswordChanged::class])->
 
         // Draft API Routes (Auto-Save Feature)
         Route::post('/draft', [MutasiMasukController::class, 'createDraft'])->middleware('workday')->name('draft.create');
+        Route::post('/draft/{id}/update-header', [MutasiMasukController::class, 'updateDraftHeader'])->name('draft.update-header');
         Route::post('/draft/{id}/siswa', [MutasiMasukController::class, 'addStudentToDraft'])->name('draft.addStudent');
         Route::post('/draft/{id}/finalize', [MutasiMasukController::class, 'finalizeDraft'])->name('draft.finalize');
         Route::get('/draft/{id}/resume', [MutasiMasukController::class, 'resumeDraft'])->name('draft.resume');
