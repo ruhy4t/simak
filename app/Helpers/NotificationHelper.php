@@ -170,6 +170,61 @@ class NotificationHelper
     }
 
     /**
+     * Notify Dinas about cancelled submission
+     */
+    public static function notifyDinasCancelledSubmission(object $mutasi, string $type = 'keluar', string $reason = ''): void
+    {
+        Log::info("notifyDinasCancelledSubmission called for {$mutasi->id_mutasi}");
+
+        $dinasUsers = DB::table('users')
+            ->whereIn('role', ['Dinas', 'SuperAdmin'])
+            ->whereNotNull('telegram_chat_id')
+            ->where('telegram_chat_id', '!=', '')
+            ->where('is_active', 1)
+            ->get();
+
+        if ($dinasUsers->isEmpty()) {
+            return;
+        }
+
+        $message = self::buildCancelledSubmissionMessage($mutasi, $type, $reason);
+
+        foreach ($dinasUsers as $user) {
+            self::sendTelegram($user->telegram_chat_id, $message);
+        }
+    }
+
+    /**
+     * Build message for cancelled submission
+     */
+    public static function buildCancelledSubmissionMessage(object $mutasi, string $type = 'keluar', string $reason = ''): string
+    {
+        $jenis = $type === 'masuk' ? 'Mutasi Masuk' : 'Mutasi Keluar';
+        $id = $mutasi->id_mutasi ?? '-';
+        $pengusul = $mutasi->pengusul ?? '-';
+        $namaSiswa = $mutasi->nama_murid ?? $mutasi->nama_siswa ?? '-';
+        $sekolah = $type === 'masuk'
+            ? ($mutasi->nama_sekolah_tujuan ?? '-')
+            : ($mutasi->nama_sekolah_asal ?? '-');
+
+        $message = "🚫 <b>USULAN DIBATALKAN</b>\n\n"
+            . "📋 Jenis: {$jenis}\n"
+            . "🆔 ID: {$id}\n"
+            . "👤 Siswa: {$namaSiswa}\n"
+            . "🏫 Sekolah: {$sekolah}\n"
+            . "📝 Pengusul: {$pengusul}\n\n"
+            . "❌ Status: <b>Dibatalkan/Dihapus</b>";
+
+        if (!empty($reason)) {
+            $message .= "\n\n📝 Alasan: {$reason}";
+        }
+
+        $message .= "\n\n---\nSIMAK - Sistem Informasi Mutasi";
+
+        return $message;
+    }
+
+    /**
      * Build message for status change (to Pengusul)
      */
     public static function buildStatusChangeMessage(object $mutasi, string $status, string $type = 'keluar'): string

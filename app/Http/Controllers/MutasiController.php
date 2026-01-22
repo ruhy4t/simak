@@ -186,6 +186,13 @@ class MutasiController extends Controller
             // 5. Permanent Delete Database Record
             DB::table('mutasi_keluar')->where('id_mutasi', $id)->delete();
 
+            // 6. Notify Dinas about cancellation
+            try {
+                \App\Helpers\NotificationHelper::notifyDinasCancelledSubmission($mutasi, 'keluar', 'Dibatalkan oleh pengusul');
+            } catch (\Exception $e) {
+                Log::error("Telegram notification failed on cancel: " . $e->getMessage());
+            }
+
             return redirect()->route('mutasi.keluar.index')
                 ->with('success', 'Usulan berhasil dihapus permanen.');
         });

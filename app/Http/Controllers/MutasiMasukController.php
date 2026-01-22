@@ -273,6 +273,13 @@ class MutasiMasukController extends Controller
             // 7. Delete Header Record
             DB::table('mutasi_masuk')->where('id_mutasi', $id)->delete();
 
+            // 8. Notify Dinas about cancellation
+            try {
+                \App\Helpers\NotificationHelper::notifyDinasCancelledSubmission($mutasi, 'masuk', 'Dibatalkan oleh pengusul');
+            } catch (\Exception $e) {
+                Log::error("Telegram notification failed on cancel: " . $e->getMessage());
+            }
+
             return redirect()->route('mutasi.masuk.index')
                 ->with('success', 'Usulan mutasi masuk dan data siswa berhasil dihapus permanen.');
         });
