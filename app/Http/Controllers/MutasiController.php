@@ -130,7 +130,7 @@ class MutasiController extends Controller
             }
         }
 
-        return view('mutasi.keluar.create', compact('user', 'alamatSekolahAsal', 'namaSekolahAsal', 'npsnSekolahAsal'));
+        $draft = null; // Ensure $draft is defined for view\r\n        return view('mutasi.keluar.create', compact('user', 'alamatSekolahAsal', 'namaSekolahAsal', 'npsnSekolahAsal', 'draft'));
     }
 
     /**
