@@ -41,7 +41,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Nama Siswa *</label>
-                        <input type="text" name="nama_murid" value="{{ old('nama_murid', $draft->nama_murid ?? '') }}" required
+                        <input type="text" name="nama_murid" value="{{ old('nama_murid', optional($draft)->nama_murid ?? '') }}" required
                             class="w-full px-4 py-2.5 bg-slate-50 border-0 rounded-xl focus:ring-2 focus:ring-sky-100 focus:bg-white transition text-slate-800 placeholder:text-slate-400 @error('nama_murid') ring-2 ring-rose-100 @enderror"
                             placeholder="Nama lengkap siswa">
                         @error('nama_murid')<p class="text-rose-500 text-xs mt-1 font-medium">{{ $message }}</p>@enderror
@@ -52,7 +52,7 @@
                         <label class="block text-sm font-medium text-slate-700 mb-1">
                             NISN <span class="text-rose-500">*</span>
                         </label>
-                        <input type="text" name="nisn" value="{{ old('nisn', $draft->nisn ?? '') }}" required
+                        <input type="text" name="nisn" value="{{ old('nisn', optional($draft)->nisn ?? '') }}" required
                             class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition"
                             placeholder="Nomor Induk Siswa Nasional" minlength="10" maxlength="10">
                     </div>
@@ -60,7 +60,7 @@
                         <label class="block text-sm font-medium text-slate-700 mb-1">
                             NIS/NIPD <span class="text-rose-500">*</span>
                         </label>
-                        <input type="text" name="nis" value="{{ old('nis', $draft->nis ?? '') }}" required
+                        <input type="text" name="nis" value="{{ old('nis', optional($draft)->nis ?? '') }}" required
                             class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition"
                             placeholder="Nomor Induk Siswa / Peserta Didik">
                     </div>
@@ -70,7 +70,7 @@
                         <select name="kelas" required
                             class="w-full px-4 py-2.5 bg-slate-50 border-0 rounded-xl focus:ring-2 focus:ring-sky-100 focus:bg-white transition text-slate-800 cursor-pointer appearance-none @error('kelas') ring-2 ring-rose-100 @enderror">
                             <option value="">Pilih Kelas</option>
-                            @php $selectedKelas = old('kelas', $draft->kelas ?? ''); @endphp
+                            @php $selectedKelas = old('kelas', optional($draft)->kelas ?? ''); @endphp
                             <option value="VII" {{ $selectedKelas == 'VII' ? 'selected' : '' }}>VII (Tujuh)</option>
                             <option value="VIII" {{ $selectedKelas == 'VIII' ? 'selected' : '' }}>VIII (Delapan)</option>
                             <option value="IX" {{ $selectedKelas == 'IX' ? 'selected' : '' }}>IX (Sembilan)</option>
@@ -79,14 +79,14 @@
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Tempat Lahir *</label>
-                        <input type="text" name="tempat_lahir" value="{{ old('tempat_lahir', $draft->tempat_lahir ?? '') }}" required
+                        <input type="text" name="tempat_lahir" value="{{ old('tempat_lahir', optional($draft)->tempat_lahir ?? '') }}" required
                             class="w-full px-4 py-2.5 bg-slate-50 border-0 rounded-xl focus:ring-2 focus:ring-sky-100 focus:bg-white transition text-slate-800 placeholder:text-slate-400 @error('tempat_lahir') ring-2 ring-rose-100 @enderror"
                             placeholder="Kota/Kabupaten">
                         @error('tempat_lahir')<p class="text-rose-500 text-xs mt-1 font-medium">{{ $message }}</p>@enderror
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Tanggal Lahir *</label>
-                        <input type="date" name="tanggal_lahir" value="{{ old('tanggal_lahir', $draft->tanggal_lahir ?? '') }}" required
+                        <input type="date" name="tanggal_lahir" value="{{ old('tanggal_lahir', optional($draft)->tanggal_lahir ?? '') }}" required
                             class="w-full px-4 py-2.5 bg-slate-50 border-0 rounded-xl focus:ring-2 focus:ring-sky-100 focus:bg-white transition text-slate-800 cursor-pointer @error('tanggal_lahir') ring-2 ring-rose-100 @enderror">
                         @error('tanggal_lahir')<p class="text-rose-500 text-xs mt-1 font-medium">{{ $message }}</p>@enderror
                     </div>
@@ -94,7 +94,7 @@
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Jenis Kelamin *</label>
                         <select name="jenis_kelamin" required
                             class="w-full px-4 py-2.5 bg-slate-50 border-0 rounded-xl focus:ring-2 focus:ring-sky-100 focus:bg-white transition text-slate-800 cursor-pointer appearance-none @error('jenis_kelamin') ring-2 ring-rose-100 @enderror">
-                            @php $selectedJK = old('jenis_kelamin', $draft->jenis_kelamin ?? ''); @endphp
+                            @php $selectedJK = old('jenis_kelamin', optional($draft)->jenis_kelamin ?? ''); @endphp
                             <option value="">Pilih</option>
                             <option value="L" {{ $selectedJK == 'L' ? 'selected' : '' }}>Laki-laki</option>
                             <option value="P" {{ $selectedJK == 'P' ? 'selected' : '' }}>Perempuan</option>
@@ -147,7 +147,7 @@
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Nomor Surat Mutasi *</label>
                         <p class="text-xs text-rose-500 italic mb-2">Silahkan isi dengan Nomor Surat Keterangan Pindah dari
                             Sekolah</p>
-                        <input type="text" name="nomor_surat_sekolah" value="{{ old('nomor_surat_sekolah', $draft->nomor_surat_sekolah ?? '') }}" required
+                        <input type="text" name="nomor_surat_sekolah" value="{{ old('nomor_surat_sekolah', optional($draft)->nomor_surat_sekolah ?? '') }}" required
                             class="w-full px-4 py-2.5 bg-slate-50 border-0 rounded-xl focus:ring-2 focus:ring-sky-100 focus:bg-white transition text-slate-800 placeholder:text-slate-400 @error('nomor_surat_sekolah') ring-2 ring-rose-100 @enderror"
                             placeholder="contoh: 421/XXX/SMP/2024">
                         @error('nomor_surat_sekolah')<p class="text-rose-500 text-xs mt-1 font-medium">{{ $message }}</p>@enderror
@@ -156,7 +156,7 @@
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Tanggal Surat Mutasi *</label>
                         <p class="text-xs text-rose-500 italic mb-2">Silahkan isi dengan Tanggal Surat Keterangan Pindah dari
                             Sekolah</p>
-                        <input type="date" name="tanggal_surat_sekolah" value="{{ old('tanggal_surat_sekolah', $draft->tanggal_surat_sekolah ?? '') }}" required
+                        <input type="date" name="tanggal_surat_sekolah" value="{{ old('tanggal_surat_sekolah', optional($draft)->tanggal_surat_sekolah ?? '') }}" required
                             class="w-full px-4 py-2.5 bg-slate-50 border-0 rounded-xl focus:ring-2 focus:ring-sky-100 focus:bg-white transition text-slate-800 cursor-pointer @error('tanggal_surat_sekolah') ring-2 ring-rose-100 @enderror">
                         @error('tanggal_surat_sekolah')<p class="text-rose-500 text-xs mt-1 font-medium">{{ $message }}</p>@enderror
                     </div>
@@ -177,7 +177,7 @@
                                 id="npsn_required_label">*</span></label>
                         <div class="relative">
                             <input type="text" name="npsn_sekolah_tujuan" id="npsn_sekolah_tujuan"
-                                value="{{ old('npsn_sekolah_tujuan', $draft->npsn_sekolah_tujuan ?? '') }}" maxlength="8"
+                                value="{{ old('npsn_sekolah_tujuan', optional($draft)->npsn_sekolah_tujuan ?? '') }}" maxlength="8"
                                 class="w-full px-4 py-2.5 bg-slate-50 border-0 rounded-xl focus:ring-2 focus:ring-sky-100 focus:bg-white transition text-slate-800 placeholder:text-slate-400 font-mono @error('npsn_sekolah_tujuan') ring-2 ring-rose-100 @enderror"
                                 placeholder="8 karakter (contoh: 12345678 atau P1234567)">
                             <span id="npsn_loading" class="hidden absolute right-3 top-2.5 text-slate-400">
@@ -190,7 +190,7 @@
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Nama Sekolah Tujuan *</label>
                         <input type="text" name="nama_sekolah_tujuan" id="nama_sekolah_tujuan"
-                            value="{{ old('nama_sekolah_tujuan', $draft->nama_sekolah_tujuan ?? '') }}" required
+                            value="{{ old('nama_sekolah_tujuan', optional($draft)->nama_sekolah_tujuan ?? '') }}" required
                             class="w-full px-4 py-2.5 bg-slate-50 border-0 rounded-xl focus:ring-2 focus:ring-sky-100 focus:bg-white transition text-slate-800 placeholder:text-slate-400 @error('nama_sekolah_tujuan') ring-2 ring-rose-100 @enderror"
                             placeholder="Nama sekolah tujuan">
                         @error('nama_sekolah_tujuan')<p class="text-rose-500 text-xs mt-1 font-medium">{{ $message }}</p>@enderror
@@ -202,7 +202,7 @@
                             <option value="">Pilih Provinsi</option>
                         </select>
                         <input type="hidden" id="provinsi_tujuan" name="provinsi_tujuan"
-                            value="{{ old('provinsi_tujuan', $draft->provinsi_tujuan ?? '') }}">
+                            value="{{ old('provinsi_tujuan', optional($draft)->provinsi_tujuan ?? '') }}">
                         @error('provinsi_tujuan')<p class="text-rose-500 text-xs mt-1 font-medium">{{ $message }}</p>@enderror
                     </div>
                     <div>
@@ -212,14 +212,14 @@
                             <option value="">Pilih Kabupaten/Kota</option>
                         </select>
                         <input type="hidden" id="kabupaten_kota_tujuan" name="kabupaten_kota_tujuan"
-                            value="{{ old('kabupaten_kota_tujuan', $draft->kabupaten_kota_tujuan ?? '') }}">
+                            value="{{ old('kabupaten_kota_tujuan', optional($draft)->kabupaten_kota_tujuan ?? '') }}">
                         @error('kabupaten_kota_tujuan')<p class="text-rose-500 text-xs mt-1 font-medium">{{ $message }}</p>@enderror
                     </div>
                     <div class="md:col-span-2">
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Alamat Sekolah Tujuan *</label>
                         <textarea name="alamat_sekolah_tujuan" id="alamat_sekolah_tujuan" rows="2" required
                             class="w-full px-4 py-2.5 bg-slate-50 border-0 rounded-xl focus:ring-2 focus:ring-sky-100 focus:bg-white transition text-slate-800 placeholder:text-slate-400 resize-none @error('alamat_sekolah_tujuan') ring-2 ring-rose-100 @enderror"
-                            placeholder="Alamat lengkap sekolah tujuan">{{ old('alamat_sekolah_tujuan', $draft->alamat_sekolah_tujuan ?? '') }}</textarea>
+                            placeholder="Alamat lengkap sekolah tujuan">{{ old('alamat_sekolah_tujuan', optional($draft)->alamat_sekolah_tujuan ?? '') }}</textarea>
                         @error('alamat_sekolah_tujuan')<p class="text-rose-500 text-xs mt-1 font-medium">{{ $message }}</p>@enderror
                     </div>
                     <div class="md:col-span-2">
@@ -253,7 +253,7 @@
                     <label class="block text-sm font-semibold text-slate-700 mb-2">Alasan Pindah Sekolah *</label>
                     <textarea name="alasan_pindah" required rows="3"
                         class="w-full px-4 py-2.5 bg-slate-50 border-0 rounded-xl focus:ring-2 focus:ring-sky-100 focus:bg-white transition text-slate-800 placeholder:text-slate-400 resize-none @error('alasan_pindah') ring-2 ring-rose-100 @enderror"
-                        placeholder="Contoh: Permohonan / Permintaan Orang Tua.">{{ old('alasan_pindah', $draft->alasan_pindah ?? '') }}</textarea>
+                        placeholder="Contoh: Permohonan / Permintaan Orang Tua.">{{ old('alasan_pindah', optional($draft)->alasan_pindah ?? '') }}</textarea>
                     @error('alasan_pindah')<p class="text-rose-500 text-xs mt-1 font-medium">{{ $message }}</p>@enderror
                 </div>
             </div>
