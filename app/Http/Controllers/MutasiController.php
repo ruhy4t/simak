@@ -965,6 +965,7 @@ class MutasiController extends Controller
 
     /**
      * Save Draft - Save form data without full validation
+     * Supports both new draft creation and updating existing draft
      */
     public function saveDraft(Request $request)
     {
@@ -975,39 +976,65 @@ class MutasiController extends Controller
             'nama_murid' => 'nullable|string|max:255',
             'nisn' => 'nullable|string|max:20',
             'nis' => 'nullable|string|max:20',
+            'draft_id' => 'nullable|string|max:50', // For updating existing draft
         ]);
 
-        // Generate ID
-        $id = 'MK-' . date('ymd') . '-' . strtoupper(substr(uniqid(), -5));
+        // Check if updating existing draft
+        $existingDraftId = $request->input('draft_id');
+
+        $draftData = [
+            'nama_murid' => $request->input('nama_murid'),
+            'nisn' => $request->input('nisn'),
+            'nis' => $request->input('nis'),
+            'kelas' => $request->input('kelas'),
+            'jenis_kelamin' => $request->input('jenis_kelamin'),
+            'tempat_lahir' => $request->input('tempat_lahir'),
+            'tanggal_lahir' => $request->input('tanggal_lahir') ?: null,
+            'npsn_sekolah_asal' => $request->input('npsn_sekolah_asal') ?? $user->npsn,
+            'nama_sekolah_asal' => $request->input('nama_sekolah_asal') ?? $user->nama_sekolah,
+            'alamat_sekolah_asal' => $request->input('alamat_sekolah_asal'),
+            'npsn_sekolah_tujuan' => $request->input('npsn_sekolah_tujuan'),
+            'nama_sekolah_tujuan' => $request->input('nama_sekolah_tujuan'),
+            'alamat_sekolah_tujuan' => $request->input('alamat_sekolah_tujuan'),
+            'provinsi_tujuan' => $request->input('provinsi_tujuan'),
+            'kabupaten_kota_tujuan' => $request->input('kabupaten_kota_tujuan'),
+            'alasan_pindah' => $request->input('alasan_pindah'),
+            'nomor_surat_sekolah' => $request->input('nomor_surat_sekolah'),
+            'tanggal_surat_sekolah' => $request->input('tanggal_surat_sekolah') ?: null,
+            'tujuan_luar_negeri' => $request->input('tujuan_luar_negeri') ? 1 : 0,
+            'updated_at' => now(),
+        ];
 
         try {
-            DB::table('mutasi_keluar')->insert([
-                'id_mutasi' => $id,
-                'nama_murid' => $request->input('nama_murid'),
-                'nisn' => $request->input('nisn'),
-                'nis' => $request->input('nis'),
-                'kelas' => $request->input('kelas'),
-                'jenis_kelamin' => $request->input('jenis_kelamin'),
-                'tempat_lahir' => $request->input('tempat_lahir'),
-                'tanggal_lahir' => $request->input('tanggal_lahir'),
-                'npsn_sekolah_asal' => $request->input('npsn_sekolah_asal') ?? $user->npsn,
-                'nama_sekolah_asal' => $request->input('nama_sekolah_asal') ?? $user->nama_sekolah,
-                'alamat_sekolah_asal' => $request->input('alamat_sekolah_asal'),
-                'npsn_sekolah_tujuan' => $request->input('npsn_sekolah_tujuan'),
-                'nama_sekolah_tujuan' => $request->input('nama_sekolah_tujuan'),
-                'alamat_sekolah_tujuan' => $request->input('alamat_sekolah_tujuan'),
-                'provinsi_tujuan' => $request->input('provinsi_tujuan'),
-                'kabupaten_kota_tujuan' => $request->input('kabupaten_kota_tujuan'),
-                'alasan_pindah' => $request->input('alasan_pindah'),
-                'nomor_surat_sekolah' => $request->input('nomor_surat_sekolah'),
-                'tanggal_surat_sekolah' => $request->input('tanggal_surat_sekolah'),
-                'tujuan_luar_negeri' => $request->input('tujuan_luar_negeri') ? 1 : 0,
-                'pengusul' => $user->username,
-                'status' => 'Draft',
-                'tanggal_pengajuan' => now(),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            if ($existingDraftId) {
+                // UPDATE existing draft
+                $exists = DB::table('mutasi_keluar')
+                    ->where('id_mutasi', $existingDraftId)
+                    ->where('status', 'Draft')
+                    ->exists();
+
+                if ($exists) {
+                    DB::table('mutasi_keluar')
+                        ->where('id_mutasi', $existingDraftId)
+                        ->update($draftData);
+
+                    Log::info("Draft mutasi keluar updated: {$existingDraftId} by {$user->username}");
+
+                    return redirect()->route('mutasi.keluar.index')
+                        ->with('success', '📝 Draft berhasil diperbarui!');
+                }
+            }
+
+            // INSERT new draft
+            $id = 'MK-' . date('ymd') . '-' . strtoupper(substr(uniqid(), -5));
+
+            $draftData['id_mutasi'] = $id;
+            $draftData['pengusul'] = $user->username;
+            $draftData['status'] = 'Draft';
+            $draftData['tanggal_pengajuan'] = now();
+            $draftData['created_at'] = now();
+
+            DB::table('mutasi_keluar')->insert($draftData);
 
             Log::info("Draft mutasi keluar created: {$id} by {$user->username}");
 
@@ -1018,6 +1045,7 @@ class MutasiController extends Controller
             return back()->with('error', 'Gagal menyimpan draft: ' . $e->getMessage())->withInput();
         }
     }
+
 
     /**
      * Resume Draft - Load draft for continued editing

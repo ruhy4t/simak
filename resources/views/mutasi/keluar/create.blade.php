@@ -18,6 +18,9 @@
         <!-- Form -->
         <form id="formMutasiKeluar" action="{{ route('mutasi.keluar.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
             @csrf
+            @if(isset($draft) && $draft)
+                <input type="hidden" name="draft_id" value="{{ $draft->id_mutasi }}">
+            @endif
 
             <!-- Data Siswa -->
             <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 sm:p-8">
