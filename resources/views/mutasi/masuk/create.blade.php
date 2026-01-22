@@ -24,19 +24,6 @@
             </div>
         </div>
 
-        @if(isset($draft) && $draft)
-        <!-- DEBUG: Draft Data -->
-        <div class="bg-amber-50 border border-amber-200 rounded-xl p-4">
-            <h3 class="font-bold text-amber-800 mb-2"><i class="bi bi-bug"></i> DEBUG: Draft dari Database</h3>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
-                <div><strong>ID:</strong> {{ $draft->id_mutasi }}</div>
-                <div><strong>Jumlah Siswa:</strong> {{ $draft->jumlah_siswa ?? 'N/A' }}</div>
-                <div><strong>Nomor Surat:</strong> {{ $draft->nomor_surat ?? 'KOSONG' }}</div>
-                <div><strong>Sekolah Tujuan:</strong> {{ $draft->nama_sekolah_tujuan ?? 'KOSONG' }}</div>
-            </div>
-        </div>
-        @endif
-
         <!-- Form -->
         <form action="{{ route('mutasi.masuk.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6"
             id="formMutasiMasuk">

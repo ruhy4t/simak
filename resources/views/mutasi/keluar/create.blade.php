@@ -23,19 +23,6 @@
             </div>
         </div>
 
-        @if(isset($draft) && $draft)
-        <!-- DEBUG: Draft Data (hapus setelah testing) -->
-        <div class="bg-amber-50 border border-amber-200 rounded-xl p-4">
-            <h3 class="font-bold text-amber-800 mb-2"><i class="bi bi-bug"></i> DEBUG: Draft Data dari Database</h3>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
-                <div><strong>Nama:</strong> {{ $draft->nama_murid ?? 'KOSONG' }}</div>
-                <div><strong>NISN:</strong> {{ $draft->nisn ?? 'KOSONG' }}</div>
-                <div><strong>NIS:</strong> {{ $draft->nis ?? 'KOSONG' }}</div>
-                <div><strong>Kelas:</strong> {{ $draft->kelas ?? 'KOSONG' }}</div>
-            </div>
-        </div>
-        @endif
-
         <!-- Form -->
         <form id="formMutasiKeluar" action="{{ route('mutasi.keluar.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
             @csrf

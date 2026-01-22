@@ -1084,6 +1084,25 @@
                         window.toggleLuarNegeri(idx);
                     }
                 }
+
+                // Handle Dinas/SuperAdmin confirmation checkboxes
+                const checkboxFields = [
+                    'has_surat_pindah',
+                    'has_surat_dapodik',
+                    'has_rekomendasi',
+                    'has_ijazah_sd',
+                    'has_rapor',
+                    'has_surat_penyaluran'
+                ];
+                checkboxFields.forEach(field => {
+                    if (student[field] == 1 || student[field] === '1' || student[field] === true) {
+                        const cb = document.querySelector(`[name="siswa[${idx}][${field}]"]`);
+                        if (cb) {
+                            cb.checked = true;
+                            console.log(`  ✓ Checked ${field}`);
+                        }
+                    }
+                });
             });
 
             console.log('Draft students population complete!');
