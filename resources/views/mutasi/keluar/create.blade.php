@@ -486,8 +486,49 @@
                     if (input) {
                         input.value = value;
                         console.log(`✓ Set ${fieldName} = "${value}"`);
-                    } else {
-                        console.warn(`✗ Input not found: ${fieldName}`);
+                    }
+                }
+            });
+
+            // Handle Luar Negeri Checkbox
+            if (draft.tujuan_luar_negeri == 1 || draft.tujuan_luar_negeri === '1') {
+                const lnCheckbox = document.getElementById('tujuan_luar_negeri');
+                if (lnCheckbox) {
+                    lnCheckbox.checked = true;
+                    // Trigger the toggle function to update UI (hide NPSN requirement, etc.)
+                    // Use setTimeout to ensure function is defined/available
+                    setTimeout(() => {
+                        if (typeof toggleTujuanLuarNegeri === 'function') {
+                            toggleTujuanLuarNegeri();
+                        } else {
+                            // Fallback if function not yet loaded (though it should be)
+                            const npsnInput = document.getElementById('npsn_sekolah_tujuan');
+                             if (npsnInput) {
+                                npsnInput.removeAttribute('required');
+                                npsnInput.placeholder = 'Kosongkan jika tidak ada';
+                             }
+                             const hiddenFlag = document.getElementById('tujuan_luar_negeri_hidden');
+                             if (hiddenFlag) hiddenFlag.value = '1';
+                        }
+                    }, 100);
+                    console.log('✓ Set tujuan_luar_negeri = true');
+                }
+            }
+
+            // Handle Dinas Checkboxes (if applicable)
+            const dinasCheckboxes = {
+                'has_suket_keluar': draft.ceklis_surat_sekolah,
+                'has_suket_dapo': draft.ceklis_berkas_dapodik,
+                'has_suket_diterima': draft.ceklis_sekolah_tujuan,
+                'has_rapor': draft.ceklis_rapor
+            };
+
+            Object.entries(dinasCheckboxes).forEach(([inputName, value]) => {
+                if (value == 1 || value === '1' || value === true) {
+                    const cb = document.querySelector(`[name="${inputName}"]`);
+                    if (cb) {
+                        cb.checked = true;
+                        console.log(`✓ Checked ${inputName}`);
                     }
                 }
             });

@@ -1002,6 +1002,14 @@ class MutasiController extends Controller
             'nomor_surat_sekolah' => $request->input('nomor_surat_sekolah'),
             'tanggal_surat_sekolah' => $request->input('tanggal_surat_sekolah') ?: null,
             'tujuan_luar_negeri' => $request->input('tujuan_luar_negeri') ? 1 : 0,
+
+            // Dinas Mode Fields
+            'is_dinas_entry' => $request->has('is_dinas_entry') ? 1 : 0,
+            'ceklis_surat_sekolah' => $request->has('has_suket_keluar') ? 1 : 0,
+            'ceklis_berkas_dapodik' => $request->has('has_suket_dapo') ? 1 : 0,
+            'ceklis_sekolah_tujuan' => $request->has('has_suket_diterima') ? 1 : 0,
+            'ceklis_rapor' => $request->has('has_rapor') ? 1 : 0,
+
             'updated_at' => now(),
         ];
 

@@ -1006,14 +1006,10 @@
         function populateDraftStudents() {
             const students = CONFIG.students || [];
             if (!students.length) {
-                console.log('No draft students to populate');
                 return;
             }
 
-            console.log(`Populating ${students.length} students from draft...`);
-
             students.forEach((student, idx) => {
-                console.log(`Populating student ${idx}:`, student);
 
                 // Text fields
                 const textFields = [
@@ -1025,7 +1021,6 @@
                     const el = document.querySelector(`[name="siswa[${idx}][${field}]"]`);
                     if (el && student[field]) {
                         el.value = student[field];
-                        console.log(`  ✓ Set ${field} = "${student[field]}"`);
                     }
                 });
 
@@ -1034,7 +1029,6 @@
                     const el = document.querySelector(`[name="siswa[${idx}][${field}]"]`);
                     if (el && student[field]) {
                         el.value = student[field];
-                        console.log(`  ✓ Set ${field} = "${student[field]}"`);
                     }
                 });
 
@@ -1099,13 +1093,10 @@
                         const cb = document.querySelector(`[name="siswa[${idx}][${field}]"]`);
                         if (cb) {
                             cb.checked = true;
-                            console.log(`  ✓ Checked ${field}`);
                         }
                     }
                 });
             });
-
-            console.log('Draft students population complete!');
         }
 
         // Initialize Form
