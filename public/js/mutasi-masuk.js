@@ -801,8 +801,17 @@
         }
 
         function showSiswa(index) {
-            // AUTO-SAVE: Save current student before switching
-            if (draftId && currentSiswa !== index && !isSaving) {
+            // VALIDATION: Check if current student data is complete before switching forward
+            if (index > currentSiswa && totalSiswa > 1) {
+                const validationResult = validateCurrentStudent(currentSiswa);
+                if (!validationResult.valid) {
+                    showValidationError(validationResult.errors, currentSiswa);
+                    return; // Block switch
+                }
+            }
+
+            // AUTO-SAVE: Save current student before switching (for all roles including Dinas/SuperAdmin)
+            if (draftId && currentSiswa !== index && !isSaving && totalSiswa > 1) {
                 saveCurrentStudent(currentSiswa).catch(e => console.error('Auto-save failed:', e));
             }
 
@@ -820,6 +829,113 @@
             });
             currentSiswa = index;
             updateNavButtons();
+        }
+
+        /**
+         * Validate current student's required fields
+         * Returns { valid: boolean, errors: string[] }
+         */
+        function validateCurrentStudent(index) {
+            const card = document.querySelector(`.siswa-card[data-index="${index}"]`);
+            if (!card) return { valid: true, errors: [] };
+
+            const errors = [];
+
+            // Basic student info - always required for all roles
+            const basicFields = [
+                { name: 'nama_murid', label: 'Nama Siswa' },
+                { name: 'nisn', label: 'NISN' },
+                { name: 'tempat_lahir', label: 'Tempat Lahir' },
+                { name: 'tanggal_lahir', label: 'Tanggal Lahir' },
+                { name: 'jenis_kelamin', label: 'Jenis Kelamin' },
+                { name: 'kelas', label: 'Kelas' },
+                { name: 'tanggal_diterima', label: 'Tanggal Diterima' }
+            ];
+
+            basicFields.forEach(field => {
+                const input = card.querySelector(`[name*="[${field.name}]"]`);
+                if (input && !input.value.trim()) {
+                    errors.push(field.label);
+                }
+            });
+
+            // School origin - always required
+            const schoolFields = [
+                { name: 'nama_sekolah_asal', label: 'Nama Sekolah Asal' },
+                { name: 'provinsi_asal', label: 'Provinsi Asal' },
+                { name: 'kabupaten_kota_asal', label: 'Kab/Kota Asal' },
+                { name: 'alamat_sekolah_asal', label: 'Alamat Sekolah Asal' }
+            ];
+
+            schoolFields.forEach(field => {
+                // Check hidden inputs for province/city
+                let input = card.querySelector(`[name*="[${field.name}]"]`);
+                if (!input) {
+                    input = document.getElementById(`${field.name.replace('_asal', '')}_asal_${index}`);
+                }
+                if (input && !input.value.trim()) {
+                    errors.push(field.label);
+                }
+            });
+
+            // File uploads - required for non-Dinas roles (Sekolah, Operator)
+            if (!isDinasEntry) {
+                const isLuarNegeri = card.querySelector(`[name*="[asal_luar_negeri]"]`)?.checked;
+
+                const fileFields = [
+                    { name: 'file_surat_pindah', label: 'Surat Pindah', required: !isLuarNegeri },
+                    { name: 'file_surat_dapodik', label: 'Surat Dapodik', required: !isLuarNegeri },
+                    { name: 'file_rekomendasi', label: 'Rekomendasi Dinas/Kemenag', required: !isLuarNegeri },
+                    { name: 'file_ijazah_sd', label: 'Ijazah SD', required: true },
+                    { name: 'file_rapor', label: 'Rapor', required: true },
+                    { name: 'file_surat_penyaluran', label: 'Surat Penyaluran', required: isLuarNegeri },
+                    { name: 'file_rekam_didik', label: 'Rekam Didik', required: !isLuarNegeri }
+                ];
+
+                fileFields.forEach(field => {
+                    if (field.required) {
+                        const input = card.querySelector(`[name*="[${field.name}]"]`);
+                        if (input && !input.files?.length) {
+                            errors.push(field.label);
+                        }
+                    }
+                });
+            } else {
+                // Dinas Entry - check checkboxes
+                const requiredCheckboxes = [
+                    { name: 'has_surat_pindah', label: 'Konfirmasi Surat Pindah' },
+                    { name: 'has_surat_dapodik', label: 'Konfirmasi Surat Dapodik' },
+                    { name: 'has_ijazah_sd', label: 'Konfirmasi Ijazah SD' },
+                    { name: 'has_rapor', label: 'Konfirmasi Rapor' }
+                ];
+
+                requiredCheckboxes.forEach(field => {
+                    const input = card.querySelector(`[name*="[${field.name}]"]`);
+                    if (input && !input.checked) {
+                        errors.push(field.label);
+                    }
+                });
+            }
+
+            return {
+                valid: errors.length === 0,
+                errors: errors
+            };
+        }
+
+        /**
+         * Show validation error modal
+         */
+        function showValidationError(errors, studentIndex) {
+            const errorList = errors.map(e => `• ${e}`).join('\n');
+            const message = `Data Siswa #${studentIndex + 1} belum lengkap!\n\nField yang harus diisi:\n${errorList}\n\nSilakan lengkapi data sebelum melanjutkan ke siswa berikutnya.`;
+
+            // Show using existing notification system or alert
+            if (typeof showSaveIndicator === 'function') {
+                showSaveIndicator(`❌ Data Siswa #${studentIndex + 1} belum lengkap!`, 'error');
+            }
+
+            alert(message);
         }
 
         function updateNavButtons() {
