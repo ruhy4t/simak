@@ -1520,6 +1520,13 @@ class MutasiMasukController extends Controller
                 'kabupaten_kota_asal' => $this->sanitize($request->kabupaten_kota_asal),
                 'npsn_ditemukan' => ($request->npsn_ditemukan ?? '0') === '1',
                 'asal_luar_negeri' => ($request->asal_luar_negeri ?? '0') === '1',
+                // Dinas confirmation checkboxes
+                'has_surat_pindah' => $request->has('has_surat_pindah') ? 1 : 0,
+                'has_surat_dapodik' => $request->has('has_surat_dapodik') ? 1 : 0,
+                'has_rekomendasi' => $request->has('has_rekomendasi') ? 1 : 0,
+                'has_ijazah_sd' => $request->has('has_ijazah_sd') ? 1 : 0,
+                'has_rapor' => $request->has('has_rapor') ? 1 : 0,
+                'has_surat_penyaluran' => $request->has('has_surat_penyaluran') ? 1 : 0,
                 'updated_at' => now(),
             ];
 
