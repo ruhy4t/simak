@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Buat Mutasi Masuk')
+@section('title', isset($draft) && $draft ? 'Lanjutkan Draft - ' . $draft->id_mutasi : 'Buat Mutasi Masuk')
 
 @section('content')
     <div class="space-y-8 animate-fade-in-up">
@@ -11,15 +11,39 @@
                 <i class="bi bi-arrow-left text-xl"></i>
             </a>
             <div>
-                <h1 class="text-2xl font-bold text-slate-900">Buat Mutasi Masuk</h1>
-                <p class="text-slate-500 mt-1">Input data siswa pindahan masuk ke sekolah Anda</p>
+                @if(isset($draft) && $draft)
+                    <h1 class="text-2xl font-bold text-slate-900">
+                        <i class="bi bi-pencil-square text-amber-500 mr-2"></i>
+                        Lanjutkan Draft
+                    </h1>
+                    <p class="text-slate-500 mt-1">Melanjutkan draft: <strong class="font-mono">{{ $draft->id_mutasi }}</strong></p>
+                @else
+                    <h1 class="text-2xl font-bold text-slate-900">Buat Mutasi Masuk</h1>
+                    <p class="text-slate-500 mt-1">Input data siswa pindahan masuk ke sekolah Anda</p>
+                @endif
             </div>
         </div>
+
+        @if(isset($draft) && $draft)
+        <!-- DEBUG: Draft Data -->
+        <div class="bg-amber-50 border border-amber-200 rounded-xl p-4">
+            <h3 class="font-bold text-amber-800 mb-2"><i class="bi bi-bug"></i> DEBUG: Draft dari Database</h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                <div><strong>ID:</strong> {{ $draft->id_mutasi }}</div>
+                <div><strong>Jumlah Siswa:</strong> {{ $draft->jumlah_siswa ?? 'N/A' }}</div>
+                <div><strong>Nomor Surat:</strong> {{ $draft->nomor_surat ?? 'KOSONG' }}</div>
+                <div><strong>Sekolah Tujuan:</strong> {{ $draft->nama_sekolah_tujuan ?? 'KOSONG' }}</div>
+            </div>
+        </div>
+        @endif
 
         <!-- Form -->
         <form action="{{ route('mutasi.masuk.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6"
             id="formMutasiMasuk">
             @csrf
+            @if(isset($draft) && $draft)
+                <input type="hidden" name="draft_id" value="{{ $draft->id_mutasi }}">
+            @endif
             @if(in_array(auth()->user()->role, ['Dinas', 'SuperAdmin']))
                 <input type="hidden" name="is_dinas_entry" value="1">
             @endif
@@ -99,20 +123,20 @@
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Jumlah Siswa *</label>
                         <input type="number" name="jumlah_siswa" id="jumlah_siswa" min="1" max="20"
-                            value="{{ old('jumlah_siswa', 1) }}" required
+                            value="{{ old('jumlah_siswa', $draft->jumlah_siswa ?? 1) }}" required
                             class="w-full px-4 py-2.5 bg-slate-50 border-0 rounded-xl focus:ring-2 focus:ring-sky-100 focus:bg-white transition text-slate-800 placeholder:text-slate-400">
                         <p class="text-xs text-slate-500 mt-2"><i class="bi bi-info-circle mr-1"></i>Form siswa akan muncul
                             sesuai jumlah</p>
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Nomor Surat *</label>
-                        <input type="text" name="nomor_surat" value="{{ old('nomor_surat') }}" required
+                        <input type="text" name="nomor_surat" value="{{ old('nomor_surat', $draft->nomor_surat ?? '') }}" required
                             class="w-full px-4 py-2.5 bg-slate-50 border-0 rounded-xl focus:ring-2 focus:ring-sky-100 focus:bg-white transition text-slate-800 placeholder:text-slate-400"
                             placeholder="Nomor surat permohonan">
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Tanggal Surat *</label>
-                        <input type="date" name="tanggal_surat" value="{{ old('tanggal_surat') }}" required
+                        <input type="date" name="tanggal_surat" value="{{ old('tanggal_surat', $draft->tanggal_surat ?? '') }}" required
                             class="w-full px-4 py-2.5 bg-slate-50 border-0 rounded-xl focus:ring-2 focus:ring-sky-100 focus:bg-white transition text-slate-800 cursor-pointer">
                     </div>
                     <div class="md:col-span-3">
