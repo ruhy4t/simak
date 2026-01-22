@@ -18,7 +18,7 @@
 
         <!-- Form -->
         <form action="{{ route('mutasi.masuk.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6"
-            id="formMutasiMasuk" data-autosave="mutasi-masuk">
+            id="formMutasiMasuk">
             @csrf
             @if(in_array(auth()->user()->role, ['Dinas', 'SuperAdmin']))
                 <input type="hidden" name="is_dinas_entry" value="1">
@@ -319,7 +319,7 @@
                 // Reset submitting flag so user can try again
                 window.isSubmitting = false;
             @endif
-                    });
+                        });
 
         let isSubmitting = false;
         function showSubmittingModal() {
