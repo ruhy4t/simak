@@ -180,11 +180,16 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     @if(in_array(auth()->user()->role, ['Dinas', 'SuperAdmin']))
                         <!-- Dinas/SuperAdmin: Bisa input manual / lookup -->
+                        @php
+                            $npsnDinasVal = old('npsn_sekolah_tujuan', $draft->npsn_sekolah_tujuan ?? '');
+                            $namaDinasVal = old('nama_sekolah_tujuan', $draft->nama_sekolah_tujuan ?? '');
+                            $alamatDinasVal = old('alamat_sekolah_tujuan', $draft->alamat_sekolah_tujuan ?? '');
+                        @endphp
                         <div>
                             <label class="block text-sm font-semibold text-slate-700 mb-2">NPSN Tujuan</label>
                             <div class="relative">
                                 <input type="text" name="npsn_sekolah_tujuan" id="npsn_tujuan_input"
-                                    value="{{ old('npsn_sekolah_tujuan') }}"
+                                    value="{{ $npsnDinasVal }}"
                                     class="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition duration-200"
                                     placeholder="Cari NPSN..." oninput="window.lookupNpsnTujuan(this.value)">
                                 <span id="npsn_tujuan_status" class="absolute right-3 top-1/2 -translate-y-1/2"></span>
@@ -193,13 +198,13 @@
                         <div>
                             <label class="block text-sm font-semibold text-slate-700 mb-2">Nama Sekolah Tujuan *</label>
                             <input type="text" name="nama_sekolah_tujuan" id="nama_tujuan_input"
-                                value="{{ old('nama_sekolah_tujuan') }}" required
+                                value="{{ $namaDinasVal }}" required
                                 class="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition duration-200">
                         </div>
                         <div class="md:col-span-2">
                             <label class="block text-sm font-semibold text-slate-700 mb-2">Alamat Sekolah Tujuan *</label>
                             <textarea name="alamat_sekolah_tujuan" id="alamat_tujuan_input" rows="2" required
-                                class="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition duration-200 resize-none">{{ old('alamat_sekolah_tujuan') }}</textarea>
+                                class="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition duration-200 resize-none">{{ $alamatDinasVal }}</textarea>
                         </div>
                     @else
                         {{-- Non-Dinas: Readonly dengan data dari draft atau user --}}
