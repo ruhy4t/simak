@@ -87,6 +87,7 @@ class MutasiController extends Controller
 
     public function create()
     {
+        dd('DEBUG: Reached MutasiController::create');
         $user = Auth::user();
 
         // Initialize with user data

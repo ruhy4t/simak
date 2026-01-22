@@ -96,7 +96,7 @@ Route::middleware(['auth', \App\Http\Middleware\EnsurePasswordChanged::class])->
     // Mutasi Keluar
     Route::prefix('mutasi-keluar')->name('mutasi.keluar.')->group(function () {
         Route::get('/', [MutasiController::class, 'index'])->name('index');
-        Route::get('/create', [MutasiController::class, 'create'])->middleware('workday')->name('create');
+        Route::get('/create', [MutasiController::class, 'create'])->name('create'); //->middleware('workday')->name('create');
         Route::post('/', [MutasiController::class, 'store'])->middleware('workday')->name('store');
         Route::get('/api/npsn/{npsn}', [MutasiController::class, 'lookupNpsn'])->name('api.npsn');
         Route::get('/api/provinces', [SatuanPendidikanController::class, 'getProvinces'])->name('api.provinces');
