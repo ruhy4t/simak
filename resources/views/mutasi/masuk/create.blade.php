@@ -402,7 +402,10 @@
         @if(isset($draft) && $draft)
         console.log('=== DRAFT RESUME MODE ===');
         console.log('Draft ID:', window.MUTASI_CONFIG.draftId);
-        console.log('Students count:', window.MUTASI_CONFIG.students.length);
+        console.log('⭐ Draft jumlah_siswa:', window.MUTASI_CONFIG.draft?.jumlah_siswa);
+        console.log('⭐ oldJumlah:', window.MUTASI_CONFIG.oldJumlah);
+        console.log('Students count (from DB):', window.MUTASI_CONFIG.students.length);
+        console.log('Full draft object:', window.MUTASI_CONFIG.draft);
         console.log('Students data:', window.MUTASI_CONFIG.students);
         @endif
     </script>
