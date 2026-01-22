@@ -1000,11 +1000,108 @@
             });
         }
 
+        /**
+         * Populate form fields from CONFIG.students (when resuming draft)
+         */
+        function populateDraftStudents() {
+            const students = CONFIG.students || [];
+            if (!students.length) {
+                console.log('No draft students to populate');
+                return;
+            }
+
+            console.log(`Populating ${students.length} students from draft...`);
+
+            students.forEach((student, idx) => {
+                console.log(`Populating student ${idx}:`, student);
+
+                // Text fields
+                const textFields = [
+                    'nama_murid', 'nisn', 'nis', 'tempat_lahir', 'tanggal_lahir',
+                    'tanggal_diterima', 'npsn_sekolah_asal', 'nama_sekolah_asal',
+                    'alamat_sekolah_asal'
+                ];
+                textFields.forEach(field => {
+                    const el = document.querySelector(`[name="siswa[${idx}][${field}]"]`);
+                    if (el && student[field]) {
+                        el.value = student[field];
+                        console.log(`  ✓ Set ${field} = "${student[field]}"`);
+                    }
+                });
+
+                // Select fields
+                ['jenis_kelamin', 'kelas'].forEach(field => {
+                    const el = document.querySelector(`[name="siswa[${idx}][${field}]"]`);
+                    if (el && student[field]) {
+                        el.value = student[field];
+                        console.log(`  ✓ Set ${field} = "${student[field]}"`);
+                    }
+                });
+
+                // Province - delayed loading needed
+                if (student.provinsi_asal) {
+                    setTimeout(() => {
+                        const provSelect = document.getElementById(`provinsi_asal_select_${idx}`);
+                        const provHidden = document.getElementById(`provinsi_asal_${idx}`);
+                        if (provSelect) {
+                            // Set value when options are loaded
+                            const checkInterval = setInterval(() => {
+                                if (provSelect.options.length > 1) {
+                                    clearInterval(checkInterval);
+                                    provSelect.value = student.provinsi_asal;
+                                    if (provHidden) provHidden.value = student.provinsi_asal;
+                                    provSelect.dispatchEvent(new Event('change'));
+
+                                    // Then set kabupaten after a delay
+                                    if (student.kabupaten_kota_asal) {
+                                        setTimeout(() => {
+                                            const kabSelect = document.getElementById(`kabkota_asal_select_${idx}`);
+                                            const kabHidden = document.getElementById(`kabkota_asal_${idx}`);
+                                            if (kabSelect) {
+                                                const kabInterval = setInterval(() => {
+                                                    if (kabSelect.options.length > 1) {
+                                                        clearInterval(kabInterval);
+                                                        kabSelect.value = student.kabupaten_kota_asal;
+                                                        if (kabHidden) kabHidden.value = student.kabupaten_kota_asal;
+                                                    }
+                                                }, 100);
+                                                setTimeout(() => clearInterval(kabInterval), 5000);
+                                            }
+                                        }, 500);
+                                    }
+                                }
+                            }, 100);
+                            setTimeout(() => clearInterval(checkInterval), 5000);
+                        }
+                    }, 200);
+                }
+
+                // Handle luar negeri checkbox
+                if (student.asal_luar_negeri == 1 || student.asal_luar_negeri === '1') {
+                    const cb = document.getElementById(`luar_negeri_${idx}`);
+                    if (cb) {
+                        cb.checked = true;
+                        window.toggleLuarNegeri(idx);
+                    }
+                }
+            });
+
+            console.log('Draft students population complete!');
+        }
+
         // Initialize Form
         if (jumlahInput) {
-            // Restore jumlah from OLD_JUMLAH
-            jumlahInput.value = OLD_JUMLAH;
-            renderSiswaForms(parseInt(OLD_JUMLAH) || 1);
+            // Restore jumlah from OLD_JUMLAH or CONFIG.students
+            const studentCount = (CONFIG.students && CONFIG.students.length > 0)
+                ? CONFIG.students.length
+                : OLD_JUMLAH;
+            jumlahInput.value = studentCount;
+            renderSiswaForms(parseInt(studentCount) || 1);
+
+            // Populate from draft students if available
+            if (CONFIG.students && CONFIG.students.length > 0) {
+                setTimeout(() => populateDraftStudents(), 500);
+            }
 
             jumlahInput.addEventListener('change', function () {
                 const count = Math.min(Math.max(parseInt(this.value) || 1, 1), 20);

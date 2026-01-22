@@ -399,6 +399,8 @@
             oldJumlah: {{ old('jumlah_siswa', isset($draft) ? $draft->jumlah_siswa : 1) }},
             isDinasEntry: {{ in_array(auth()->user()->role, ['Dinas', 'SuperAdmin']) ? 'true' : 'false' }},
             draftId: @json(isset($draft) ? $draft->id_mutasi : null),
+            draft: @json(isset($draft) ? $draft : null),
+            students: @json(isset($students) ? $students : []),
             routes: {
                 index: '{{ route('mutasi.masuk.index') }}',
                 apiNpsn: '{{ url('/mutasi-masuk/api/npsn') }}',
@@ -406,7 +408,15 @@
                 apiRegencies: '{{ route('wilayah.regencies', ['provinceId' => ':provinceId']) }}',
                 createDraft: '{{ route('mutasi.masuk.draft.create') }}'
             },
-            wilayahData: null // Loaded in JS file for optimization
+            wilayahData: null
         };
+        
+        // Log for debugging
+        @if(isset($draft) && $draft)
+        console.log('=== DRAFT RESUME MODE ===');
+        console.log('Draft ID:', window.MUTASI_CONFIG.draftId);
+        console.log('Students count:', window.MUTASI_CONFIG.students.length);
+        console.log('Students data:', window.MUTASI_CONFIG.students);
+        @endif
     </script>
 <script src="{{ asset('js/mutasi-masuk.js') }}?v={{ time() }}"></script>@endpush
