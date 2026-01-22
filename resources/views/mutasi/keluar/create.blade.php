@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Buat Mutasi Keluar')
+@section('title', isset($draft) && $draft ? 'Lanjutkan Draft - ' . $draft->id_mutasi : 'Buat Mutasi Keluar')
 
 @section('content')
     <div class="space-y-8 animate-fade-in-up">
@@ -10,10 +10,31 @@
                 <i class="bi bi-arrow-left text-xl"></i>
             </a>
             <div>
-                <h1 class="text-2xl font-bold text-slate-900">Buat Mutasi Keluar</h1>
-                <p class="text-slate-500 mt-1">Ajukan permohonan mutasi siswa keluar</p>
+                @if(isset($draft) && $draft)
+                    <h1 class="text-2xl font-bold text-slate-900">
+                        <i class="bi bi-pencil-square text-amber-500 mr-2"></i>
+                        Lanjutkan Draft
+                    </h1>
+                    <p class="text-slate-500 mt-1">Melanjutkan draft: <strong class="font-mono">{{ $draft->id_mutasi }}</strong></p>
+                @else
+                    <h1 class="text-2xl font-bold text-slate-900">Buat Mutasi Keluar</h1>
+                    <p class="text-slate-500 mt-1">Ajukan permohonan mutasi siswa keluar</p>
+                @endif
             </div>
         </div>
+
+        @if(isset($draft) && $draft)
+        <!-- DEBUG: Draft Data (hapus setelah testing) -->
+        <div class="bg-amber-50 border border-amber-200 rounded-xl p-4">
+            <h3 class="font-bold text-amber-800 mb-2"><i class="bi bi-bug"></i> DEBUG: Draft Data dari Database</h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                <div><strong>Nama:</strong> {{ $draft->nama_murid ?? 'KOSONG' }}</div>
+                <div><strong>NISN:</strong> {{ $draft->nisn ?? 'KOSONG' }}</div>
+                <div><strong>NIS:</strong> {{ $draft->nis ?? 'KOSONG' }}</div>
+                <div><strong>Kelas:</strong> {{ $draft->kelas ?? 'KOSONG' }}</div>
+            </div>
+        </div>
+        @endif
 
         <!-- Form -->
         <form id="formMutasiKeluar" action="{{ route('mutasi.keluar.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
