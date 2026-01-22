@@ -449,31 +449,61 @@
         };
 
         // Populate draft values if resuming
-        @if(isset($draft))
+        @if(isset($draft) && $draft)
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('=== DRAFT RESUME MODE ===');
             const draft = @json($draft);
+            console.log('Draft data from DB:', draft);
             
-            // Populate form fields from draft
-            const fields = ['nama_murid', 'nisn', 'nis', 'kelas', 'tempat_lahir', 'tanggal_lahir', 
-                            'jenis_kelamin', 'npsn_sekolah_tujuan', 'nama_sekolah_tujuan', 
-                            'alamat_sekolah_tujuan', 'alasan_pindah', 'nomor_surat_sekolah', 
-                            'tanggal_surat_sekolah'];
+            // Force populate ALL form fields from draft
+            const fieldMappings = {
+                'nama_murid': draft.nama_murid,
+                'nisn': draft.nisn,
+                'nis': draft.nis,
+                'kelas': draft.kelas,
+                'tempat_lahir': draft.tempat_lahir,
+                'tanggal_lahir': draft.tanggal_lahir,
+                'jenis_kelamin': draft.jenis_kelamin,
+                'npsn_sekolah_tujuan': draft.npsn_sekolah_tujuan,
+                'nama_sekolah_tujuan': draft.nama_sekolah_tujuan,
+                'alamat_sekolah_tujuan': draft.alamat_sekolah_tujuan,
+                'alasan_pindah': draft.alasan_pindah,
+                'nomor_surat_sekolah': draft.nomor_surat_sekolah,
+                'tanggal_surat_sekolah': draft.tanggal_surat_sekolah
+            };
             
-            fields.forEach(field => {
-                const input = document.querySelector(`[name="${field}"]`);
-                if (input && draft[field]) {
-                    input.value = draft[field];
+            Object.entries(fieldMappings).forEach(([fieldName, value]) => {
+                if (value !== null && value !== undefined && value !== '') {
+                    const input = document.querySelector(`[name="${fieldName}"]`);
+                    if (input) {
+                        input.value = value;
+                        console.log(`✓ Set ${fieldName} = "${value}"`);
+                    } else {
+                        console.warn(`✗ Input not found: ${fieldName}`);
+                    }
                 }
             });
             
-            // Handle province/city selects
+            // Handle hidden inputs for province/city
             if (draft.provinsi_tujuan) {
-                document.getElementById('provinsi_tujuan').value = draft.provinsi_tujuan;
+                const provHidden = document.getElementById('provinsi_tujuan');
+                if (provHidden) {
+                    provHidden.value = draft.provinsi_tujuan;
+                    console.log('✓ Set provinsi_tujuan =', draft.provinsi_tujuan);
+                }
             }
             if (draft.kabupaten_kota_tujuan) {
-                document.getElementById('kabupaten_kota_tujuan').value = draft.kabupaten_kota_tujuan;
+                const kabHidden = document.getElementById('kabupaten_kota_tujuan');
+                if (kabHidden) {
+                    kabHidden.value = draft.kabupaten_kota_tujuan;
+                    console.log('✓ Set kabupaten_kota_tujuan =', draft.kabupaten_kota_tujuan);
+                }
             }
+            
+            console.log('=== DRAFT POPULATION COMPLETE ===');
         });
+        @else
+        console.log('No draft detected - new submission mode');
         @endif
 
         /**
