@@ -1436,10 +1436,30 @@
             // ------------------------------------------------------------------
             // SMART UPLOAD STRATEGY (Prevents 413 Payload Too Large)
             // ------------------------------------------------------------------
-            const MAX_PAYLOAD = 3.5 * 1024 * 1024; // 3.5MB Safe Limit
+            const SERVER_LIMIT = 4.0 * 1024 * 1024; // 4.0MB Absolute Max per Request
+            const SEQUENTIAL_THRESHOLD = 3.0 * 1024 * 1024; // 3.0MB Threshold for splitting
 
-            if (totalPayloadSize > MAX_PAYLOAD) {
-                console.info(`Total payload ${totalPayloadSize} bytes > ${MAX_PAYLOAD}. Switching to sequential upload.`);
+            // 1. Check for INDIVIDUAL huge files (Must block these)
+            let oversizedFile = null;
+            inputs.forEach(input => {
+                if (input.type === 'file' && input.files[0]) {
+                    if (input.files[0].size > SERVER_LIMIT) {
+                        oversizedFile = input.files[0].name;
+                    }
+                }
+            });
+
+            if (oversizedFile) {
+                const subMB = (SERVER_LIMIT / (1024 * 1024)).toFixed(1);
+                alert(`⚠️ Gagal Menyimpan: File "${oversizedFile}" terlalu besar (> ${subMB} MB).\n\nServer menolak file diatas 4 MB. Silakan kompres file PDF/Foto Anda terlebih dahulu.`);
+                showSaveIndicator('Gagal: File terlalu besar', 'error');
+                isSaving = false;
+                return false;
+            }
+
+            // 2. Decide Strategy
+            if (totalPayloadSize > SEQUENTIAL_THRESHOLD) {
+                console.info(`Total payload ${totalPayloadSize} bytes > ${SEQUENTIAL_THRESHOLD}. Switching to sequential upload.`);
 
                 // 1. Upload Text Data + First File (to create/update record)
                 // 2. Upload remaining files one by one
