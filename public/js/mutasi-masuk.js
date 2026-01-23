@@ -1410,6 +1410,7 @@
             formData.append('student_index', index);
 
             // Collect all fields from this student card
+            let totalPayloadSize = 0; // Estimate
             const inputs = card.querySelectorAll('input, select, textarea');
             inputs.forEach(input => {
                 const name = input.name;
@@ -1422,6 +1423,7 @@
                     if (input.type === 'file') {
                         if (input.files[0]) {
                             formData.append(fieldName, input.files[0]);
+                            totalPayloadSize += input.files[0].size;
                         }
                     } else if (input.type === 'checkbox') {
                         formData.append(fieldName, input.checked ? '1' : '0');
@@ -1430,6 +1432,13 @@
                     }
                 }
             });
+
+            // Prevent Vercel 4.5MB Payload Limit
+            if (totalPayloadSize > 4 * 1024 * 1024) { // 4MB Limit
+                const sizeMB = (totalPayloadSize / (1024 * 1024)).toFixed(2);
+                alert(`⚠️ Gagal Menyimpan: Total ukuran file (${sizeMB} MB) melebihi batas server (4 MB per siswa).\n\nSilakan kompres file PDF/Foto Anda atau upload sebagian saja terlebih dahulu.`);
+                throw new Error(`Payload too large: ${sizeMB} MB`);
+            }
 
             const response = await fetch(API.addStudent(draftId), {
                 method: 'POST',
