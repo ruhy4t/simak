@@ -104,8 +104,50 @@ class FileUploadService
      * @param string|null $subDir Optional subdirectory
      * @return string Relative path to the uploaded file
      */
-    public function uploadPdf(UploadedFile $file, string $prefix, string $suffix, ?string $subDir = null): string
+    public function uploadPdf($file, string $prefix, string $suffix, ?string $subDir = null): string
     {
+        // Handle Temporary File Path (String)
+        if (is_string($file)) {
+            // Validate temp path to prevent traversal
+            if (!str_starts_with($file, 'temp_uploads/')) {
+                throw new \Exception('Invalid temporary file path.');
+            }
+
+            if (!Storage::disk('local')->exists($file)) {
+                throw new \Exception('Temporary file not found or expired.');
+            }
+
+            // Build safe filename
+            $safePrefix = $this->sanitizeFilename($prefix);
+            $safeSuffix = $this->sanitizeFilename($suffix);
+            $filename = "{$safePrefix}_{$safeSuffix}.pdf";
+
+            // Determine final path
+            if ($subDir) {
+                $cleanSubDir = trim($subDir, '/');
+                $storedPath = $cleanSubDir . '/' . $filename;
+            } else {
+                $storedPath = $filename;
+            }
+
+            $disk = $this->getDisk();
+
+            // Move/Copy from local temp to target disk
+            $content = Storage::disk('local')->get($file);
+            Storage::disk($disk)->put($storedPath, $content);
+
+            // Delete temp file
+            Storage::disk('local')->delete($file);
+
+            Log::info("Moved temp file {$file} to {$disk}: {$storedPath}");
+            return $storedPath;
+        }
+
+        // Standard UploadedFile handling
+        if (!($file instanceof UploadedFile)) {
+            throw new \Exception('Invalid file input.');
+        }
+
         // Validate extension
         $ext = strtolower($file->getClientOriginalExtension());
         if ($ext !== 'pdf') {
@@ -144,8 +186,52 @@ class FileUploadService
     /**
      * Upload an Image file (JPG, PNG, WebP)
      */
-    public function uploadImage(UploadedFile $file, string $prefix, string $suffix, ?string $subDir = null): string
+    public function uploadImage($file, string $prefix, string $suffix, ?string $subDir = null): string
     {
+        // Handle Temporary File Path (String)
+        if (is_string($file)) {
+            // Validate temp path to prevent traversal
+            if (!str_starts_with($file, 'temp_uploads/')) {
+                throw new \Exception('Invalid temporary file path.');
+            }
+
+            if (!Storage::disk('local')->exists($file)) {
+                throw new \Exception('Temporary file not found or expired.');
+            }
+
+            // Determine extension from file content or original name if stored
+            // For now, assume webp or jpg based on mime check if possible? 
+            // Simplified: Default to .jpg or try to guess. 
+            // Better: TemporaryUploadController should store extension in metadata?
+            // Fallback: Check extension from path if present
+            $ext = pathinfo($file, PATHINFO_EXTENSION) ?: 'jpg';
+
+            // Build safe filename
+            $safePrefix = $this->sanitizeFilename($prefix);
+            $safeSuffix = $this->sanitizeFilename($suffix);
+            $filename = "{$safePrefix}_{$safeSuffix}.{$ext}";
+
+            // Determine final path
+            if ($subDir) {
+                $cleanSubDir = trim($subDir, '/');
+                $storedPath = $cleanSubDir . '/' . $filename;
+            } else {
+                $storedPath = $filename;
+            }
+
+            $disk = $this->getDisk();
+
+            // Move/Copy from local temp to target disk
+            $content = Storage::disk('local')->get($file);
+            Storage::disk($disk)->put($storedPath, $content);
+
+            // Delete temp file
+            Storage::disk('local')->delete($file);
+
+            Log::info("Moved temp image {$file} to {$disk}: {$storedPath}");
+            return $storedPath;
+        }
+
         $ext = strtolower($file->getClientOriginalExtension());
         $allowed = ['jpg', 'jpeg', 'png', 'webp'];
 
@@ -238,14 +324,19 @@ class FileUploadService
      */
     public function uploadSuratPermohonan($request, string $idMutasi): ?string
     {
-        if (!$request->hasFile('file_surat_permohonan')) {
+        $file = $request->file('file_surat_permohonan');
+        if (!$file) {
+            $file = $request->input('file_surat_permohonan');
+        }
+
+        if (!$file) {
             return null;
         }
 
         $subDir = $this->getDateBasedPath('masuk');
 
         return $this->uploadPdf(
-            $request->file('file_surat_permohonan'),
+            $file,
             $idMutasi,
             'surat_permohonan',
             $subDir
@@ -271,13 +362,21 @@ class FileUploadService
 
         foreach ($fields as $field) {
             $fileKey = "siswa.{$studentIndex}.{$field}";
-            if ($request->hasFile($fileKey)) {
-                $file = $request->file($fileKey);
 
-                // Validate MIME type
-                $mimeType = $file->getMimeType();
-                if ($mimeType !== 'application/pdf') {
-                    throw new \Exception("File {$field} siswa #" . ($studentIndex + 1) . " harus berformat PDF.");
+            $file = $request->file($fileKey);
+            if (!$file) {
+                // Check flat input name (dot notation might be converted to array in PHP)
+                // In Laravel request->input('siswa.0.file_...') works.
+                $file = $request->input($fileKey);
+            }
+
+            if ($file) {
+                // Only validate MIME if it's an UploadedFile object
+                if ($file instanceof UploadedFile) {
+                    $mimeType = $file->getMimeType();
+                    if ($mimeType !== 'application/pdf') {
+                        throw new \Exception("File {$field} siswa #" . ($studentIndex + 1) . " harus berformat PDF.");
+                    }
                 }
 
                 $filePaths[$field] = $this->uploadPdf(

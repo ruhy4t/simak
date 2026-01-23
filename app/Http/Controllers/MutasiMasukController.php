@@ -535,66 +535,87 @@ class MutasiMasukController extends Controller
                 $field = 'file_rekam_didik';
                 $fileKey = "siswa.{$idx}.{$field}";
 
-                if ($request->hasFile($fileKey)) {
-                    $file = $request->file($fileKey);
-                    $mimeType = $file->getMimeType();
+                $file = $request->file($fileKey);
+                if (!$file) {
+                    $file = $request->input($fileKey);
+                }
 
-                    // Path resolution moved to inside if block using temp dir
-
-                    if (in_array($mimeType, ['image/jpeg', 'image/png'])) {
-                        // ATTEMPT Convert to WebP (Only if GD is available)
-                        $useWebP = extension_loaded('gd');
-                        $conversionSuccess = false;
-                        // Use /tmp directory for Vercel/Production safety
-                        $tempDir = sys_get_temp_dir();
-                        $tempFilename = $this->sanitizeFilename($idMutasi) . "_siswa{$idx}_{$field}.webp";
-                        $tempPath = $tempDir . '/' . $tempFilename;
-
-                        if ($useWebP) {
-                            $conversionSuccess = $this->imageService->convertToWebP($file, $tempPath);
-                        }
-
-                        if ($conversionSuccess && file_exists($tempPath)) {
-                            // Manual upload of the converted file
-                            $filename = $tempFilename;
-                            $destinationPath = $uploadPathKey . '/' . $filename;
-
-                            // Use the configured disk from service
-                            $disk = $this->fileUploadService->isCloudStorage() ? 'b2' : 'private_docs';
-
-                            try {
-                                \Illuminate\Support\Facades\Storage::disk($disk)->put($destinationPath, file_get_contents($tempPath));
-                                $filePaths[$field] = $destinationPath;
-
-                                // Clean up temp file
-                                @unlink($tempPath);
-                            } catch (\Exception $e) {
-                                Log::error("Failed to upload converted WebP: " . $e->getMessage());
-                                $conversionSuccess = false; // Trigger fallback
-                            }
-                        }
-
-                        // FALLBACK if conversion failed or upload failed
-                        if (!$conversionSuccess) {
-                            // FALLBACK: Upload original file if GD missing or Conversion Failed
-                            // Use the new uploadImage method in service
-                            $filePaths[$field] = $this->fileUploadService->uploadImage(
-                                $file,
-                                $idMutasi,
-                                "siswa{$idx}_{$field}",
-                                $uploadPathKey
-                            );
-                        }
-                    } elseif ($mimeType === 'application/pdf') {
-                        // Use service for PDF
-                        $filePaths[$field] = $this->fileUploadService->uploadPdf(
+                if ($file) {
+                    // CASE 1: Temp File Path (String)
+                    if (is_string($file)) {
+                        // Just use the service to move it. 
+                        // Note: We skip the WebP conversion logic for temp files to simplify, 
+                        // or we could implement it in service if really needed. 
+                        // For now, simple move is safer.
+                        $filePaths[$field] = $this->fileUploadService->uploadImage(
                             $file,
                             $idMutasi,
                             "siswa{$idx}_{$field}",
-                            $this->fileUploadService->getDateBasedPath('masuk')
+                            $uploadPathKey
                         );
-                    } else {
-                        throw new \Exception("File Rekam Didik siswa #" . ($idx + 1) . " harus berformat PDF, JPEG, atau PNG.");
+                    }
+                    // CASE 2: UploadedFile Object (Standard)
+                    elseif ($file instanceof \Illuminate\Http\UploadedFile) {
+                        $mimeType = $file->getMimeType();
+
+                        // Path resolution moved to inside if block using temp dir
+
+                        if (in_array($mimeType, ['image/jpeg', 'image/png'])) {
+                            // ATTEMPT Convert to WebP (Only if GD is available)
+                            $useWebP = extension_loaded('gd');
+                            $conversionSuccess = false;
+                            // Use /tmp directory for Vercel/Production safety
+                            $tempDir = sys_get_temp_dir();
+                            $tempFilename = $this->sanitizeFilename($idMutasi) . "_siswa{$idx}_{$field}.webp";
+                            $tempPath = $tempDir . '/' . $tempFilename;
+
+                            if ($useWebP) {
+                                $conversionSuccess = $this->imageService->convertToWebP($file, $tempPath);
+                            }
+
+                            if ($conversionSuccess && file_exists($tempPath)) {
+                                // Manual upload of the converted file
+                                $filename = $tempFilename;
+                                $destinationPath = $uploadPathKey . '/' . $filename;
+
+                                // Use the configured disk from service
+                                $disk = $this->fileUploadService->isCloudStorage() ? 'b2' : 'private_docs';
+
+                                try {
+                                    // Use 'putFileAs' or 'put' with contents
+                                    \Illuminate\Support\Facades\Storage::disk($disk)->put($destinationPath, file_get_contents($tempPath));
+                                    $filePaths[$field] = $destinationPath;
+
+                                    // Clean up temp file
+                                    @unlink($tempPath);
+                                } catch (\Exception $e) {
+                                    Log::error("Failed to upload converted WebP: " . $e->getMessage());
+                                    $conversionSuccess = false; // Trigger fallback
+                                }
+                            }
+
+                            // FALLBACK if conversion failed or upload failed
+                            if (!$conversionSuccess) {
+                                // FALLBACK: Upload original file if GD missing or Conversion Failed
+                                // Use the new uploadImage method in service
+                                $filePaths[$field] = $this->fileUploadService->uploadImage(
+                                    $file,
+                                    $idMutasi,
+                                    "siswa{$idx}_{$field}",
+                                    $uploadPathKey
+                                );
+                            }
+                        } elseif ($mimeType === 'application/pdf') {
+                            // Use service for PDF
+                            $filePaths[$field] = $this->fileUploadService->uploadPdf(
+                                $file,
+                                $idMutasi,
+                                "siswa{$idx}_{$field}",
+                                $this->fileUploadService->getDateBasedPath('masuk')
+                            );
+                        } else {
+                            throw new \Exception("File Rekam Didik siswa #" . ($idx + 1) . " harus berformat PDF, JPEG, atau PNG.");
+                        }
                     }
                 }
 
@@ -1493,7 +1514,39 @@ class MutasiMasukController extends Controller
         $studentIndex = (int) $request->input('student_index', 0);
 
         try {
-            // Build file paths array
+            // Find existing student first (Strict check within this draft)
+            // Use ID if provided in request (hidden input), otherwise matching logic
+            $existingStudent = null;
+
+            // Prefer ID driven update if frontend provides it (safer)
+            // But frontend "addStudentToDraft" uses index logic.
+            // Let's stick to the current logic but optimize query
+
+            $existingStudent = DB::table('mutasi_masuk_siswa')
+                ->where('id_mutasi', $id)
+                ->orderBy('id')
+                ->skip($studentIndex)
+                ->take(1)
+                ->first();
+
+            // Helper for deletion (copied from revision logic)
+            $deleteOldFile = function ($oldPath) {
+                if (empty($oldPath))
+                    return;
+                // Try Secure Path
+                $securePath = storage_path('app/dokumen_rahasia/' . ltrim($oldPath, '/'));
+                // Fix for inconsistent path storage (some have 'dokumen/' prefix in DB)
+                if (!file_exists($securePath) && str_starts_with($oldPath, 'dokumen/')) {
+                    $securePath = storage_path('app/dokumen_rahasia/' . substr($oldPath, 8));
+                }
+
+                if (file_exists($securePath)) {
+                    @unlink($securePath);
+                    Log::info("Deleted replaced file: $oldPath");
+                }
+            };
+
+            // Build file paths array and DELETE old files if replaced
             $filePaths = [];
             $uploadPathKey = $this->fileUploadService->getDateBasedPath('masuk');
             $isDinasEntry = (bool) $draft->is_dinas_entry;
@@ -1511,6 +1564,11 @@ class MutasiMasukController extends Controller
 
                 foreach ($fileFields as $field) {
                     if ($request->hasFile($field)) {
+                        // DELETE OLD FILE IF EXISTS
+                        if ($existingStudent && !empty($existingStudent->$field)) {
+                            $deleteOldFile($existingStudent->$field);
+                        }
+
                         $file = $request->file($field);
                         $filePaths[$field] = $this->fileUploadService->uploadPdf(
                             $file,
@@ -1523,6 +1581,11 @@ class MutasiMasukController extends Controller
 
                 // Handle Rekam Didik (Image/PDF)
                 if ($request->hasFile('file_rekam_didik')) {
+                    // DELETE OLD FILE IF EXISTS
+                    if ($existingStudent && !empty($existingStudent->file_rekam_didik)) {
+                        $deleteOldFile($existingStudent->file_rekam_didik);
+                    }
+
                     $file = $request->file('file_rekam_didik');
                     $mimeType = $file->getMimeType();
 
@@ -1562,15 +1625,6 @@ class MutasiMasukController extends Controller
                 }
             }
 
-            // Check if student record already exists (update) or create new
-            $existingStudent = DB::table('mutasi_masuk_siswa')
-                ->where('id_mutasi', $id)
-                ->whereRaw(
-                    "nama_murid = ? OR id = (SELECT id FROM mutasi_masuk_siswa WHERE id_mutasi = ? ORDER BY id LIMIT 1 OFFSET ?)",
-                    [$this->sanitize($request->nama_murid), $id, $studentIndex]
-                )
-                ->first();
-
             $studentData = [
                 'id_mutasi' => $id,
                 'nama_murid' => $this->sanitize($request->nama_murid),
@@ -1606,10 +1660,12 @@ class MutasiMasukController extends Controller
             if ($existingStudent) {
                 // Update existing
                 DB::table('mutasi_masuk_siswa')->where('id', $existingStudent->id)->update($studentData);
+                $actionMsg = 'diupdate';
             } else {
                 // Insert new
                 $studentData['created_at'] = now();
                 DB::table('mutasi_masuk_siswa')->insert($studentData);
+                $actionMsg = 'disimpan';
             }
 
             // Only update timestamp, NOT jumlah_siswa (preserve user's intended count)
@@ -1618,11 +1674,11 @@ class MutasiMasukController extends Controller
             ]);
 
             $actualCount = DB::table('mutasi_masuk_siswa')->where('id_mutasi', $id)->count();
-            Log::info("Student saved to draft {$id}: index {$studentIndex}, total saved: {$actualCount}");
+            Log::info("Student {$actionMsg} to draft {$id}: index {$studentIndex}");
 
             return response()->json([
                 'success' => true,
-                'message' => 'Siswa #' . ($studentIndex + 1) . ' berhasil disimpan',
+                'message' => 'Siswa #' . ($studentIndex + 1) . ' berhasil ' . $actionMsg,
                 'student_count' => $actualCount
             ]);
 

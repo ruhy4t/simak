@@ -783,6 +783,112 @@
         }, 500);
     };
 
+    // --- Sequential Upload Logic ---
+    async function uploadFilesSequentially() {
+        const fileInputs = document.querySelectorAll('input[type="file"]');
+        const filesToUpload = [];
+
+        // Identify files
+        fileInputs.forEach(input => {
+            if (input.files.length > 0) {
+                // Skip if already has a hidden input replacement (double submit protection)
+                if (!document.querySelector(`input[name="${input.name}"][type="hidden"]`)) {
+                    filesToUpload.push(input);
+                }
+            }
+        });
+
+        if (filesToUpload.length === 0) return true;
+
+        // Show Progress Modal
+        const modalHtml = `
+            <div id="uploadProgressModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 z-50 flex items-center justify-center">
+                <div class="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full text-center">
+                    <div class="mb-4">
+                        <div class="w-16 h-16 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">Mengunggah Berkas...</h3>
+                    <p class="text-gray-600 mb-6">Mohon jangan tutup halaman ini.</p>
+                    
+                    <div class="w-full bg-gray-200 rounded-full h-4 mb-2 overflow-hidden">
+                        <div id="uploadProgressBar" class="bg-blue-600 h-4 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                    <p id="uploadProgressText" class="text-sm font-medium text-gray-700">0 / ${filesToUpload.length}</p>
+                    <p id="currentFileText" class="text-xs text-gray-400 mt-2 truncate"></p>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+        const progressBar = document.getElementById('uploadProgressBar');
+        const progressText = document.getElementById('uploadProgressText');
+        const currentFileText = document.getElementById('currentFileText');
+        const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+        let successCount = 0;
+
+        for (let i = 0; i < filesToUpload.length; i++) {
+            const input = filesToUpload[i];
+            const file = input.files[0];
+
+            // Update UI
+            const percent = Math.round((i / filesToUpload.length) * 100);
+            progressBar.style.width = `${percent}%`;
+            progressText.textContent = `${i + 1} / ${filesToUpload.length}`;
+            currentFileText.textContent = `Mengunggah: ${file.name}`;
+
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                const response = await fetch('/api/upload-temp', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': token
+                    },
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error('Upload failed');
+
+                const result = await response.json();
+
+                if (result.success && result.path) {
+                    // Create hidden input with temp path
+                    const hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.name = input.name; // Keep same name for controller
+                    hiddenInput.value = result.path;
+                    form.appendChild(hiddenInput);
+
+                    // Disable original input so it's not sent
+                    input.disabled = true;
+                    successCount++;
+                } else {
+                    throw new Error(result.message || 'Unknown error');
+                }
+            } catch (error) {
+                console.error('Upload Error:', error);
+                alert(`Gagal mengunggah file: ${file.name}\n${error.message}`);
+                const modal = document.getElementById('uploadProgressModal');
+                if (modal) modal.remove();
+
+                // Re-enable all inputs if failed
+                filesToUpload.forEach(inp => inp.disabled = false);
+                document.querySelectorAll(`input[type="hidden"][value^="temp_uploads/"]`).forEach(el => el.remove());
+
+                return false; // Stop submission
+            }
+        }
+
+        // Finish
+        progressBar.style.width = '100%';
+        currentFileText.textContent = 'Selesai! Mengirim data...';
+        await new Promise(r => setTimeout(r, 500)); // Brief pause
+
+        return true;
+    }
+
     // --- Main Logic on Load ---
     document.addEventListener('DOMContentLoaded', () => {
         form = document.getElementById('formMutasiMasuk');
@@ -792,6 +898,32 @@
         navButtons = document.getElementById('siswaNavButtons');
         prevBtn = document.getElementById('prevSiswa');
         nextBtn = document.getElementById('nextSiswa');
+
+        if (form) {
+            form.addEventListener('submit', async function (e) {
+                // Prevent default submission
+                e.preventDefault();
+
+                // Validate form (native HTML validation check)
+                if (!form.checkValidity()) {
+                    form.reportValidity();
+                    return;
+                }
+
+                if (isSaving) return; // Prevent double click
+                isSaving = true;
+
+                // Execute Sequential Upload
+                const uploadSuccess = await uploadFilesSequentially();
+
+                if (uploadSuccess) {
+                    form.submit(); // Submit purely
+                } else {
+                    isSaving = false;
+                }
+            });
+        }
+
 
         function renderTabs(count) {
             if (!tabNav) return;
@@ -901,7 +1033,11 @@
                 fileFields.forEach(field => {
                     if (field.required) {
                         const input = card.querySelector(`[name*="[${field.name}]"]`);
-                        if (input && !input.files?.length) {
+                        // Fix: Check if file already exists (data-has-file) OR new file is selected
+                        const hasExistingFile = input && input.getAttribute('data-has-file') === 'true';
+                        const hasNewFile = input && input.files && input.files.length > 0;
+
+                        if (input && !hasExistingFile && !hasNewFile) {
                             errors.push(field.label);
                         }
                     }
@@ -1689,3 +1825,6 @@
     };
 
 })();
+
+
+

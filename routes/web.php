@@ -243,6 +243,7 @@ Route::middleware(['auth', \App\Http\Middleware\EnsurePasswordChanged::class])->
 
 // Keep old route for backward compatibility
 Route::middleware('auth')->group(function () {
+    Route::post('/api/upload-temp', [App\Http\Controllers\TemporaryUploadController::class, 'store'])->name('api.upload-temp');
     Route::get('/mutasi', fn() => redirect()->route('mutasi.keluar.index'));
     Route::post('/session/alive', fn() => response()->noContent())->name('session.alive');
 });
