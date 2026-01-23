@@ -210,6 +210,16 @@
                                                 <i class="bi bi-pencil-square"></i>
                                                 Lanjutkan
                                             </a>
+                                            <form action="{{ route('mutasi.masuk.draft.delete', $mutasi->id_mutasi) }}" method="POST" class="inline"
+                                                onsubmit="return confirm('Apakah Anda yakin ingin menghapus draft ini?\n\nSemua file yang sudah diunggah juga akan dihapus secara permanen.');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit"
+                                                    class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-red-500 text-white hover:bg-red-600 shadow-md shadow-red-500/20 transition-all hover:-translate-y-0.5"
+                                                    title="Hapus Draft">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
                                         @else
                                             <a href="{{ route('mutasi.masuk.show', $mutasi->id_mutasi) }}"
                                                 class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-blue-600 text-white hover:bg-blue-700 shadow-md shadow-blue-500/20 transition-all hover:-translate-y-0.5"

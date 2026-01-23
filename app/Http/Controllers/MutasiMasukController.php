@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
@@ -1787,5 +1788,104 @@ class MutasiMasukController extends Controller
             'npsnSekolahTujuan',
             'alamatSekolahTujuan'
         ));
+    }
+
+    /**
+     * Delete a Draft - Only allowed for status 'Draft'
+     * Deletes header, all students, and all uploaded files
+     */
+    public function deleteDraft(Request $request, string $id)
+    {
+        $user = Auth::user();
+
+        // Only Operator, Sekolah can delete their own drafts
+        if (!in_array($user->role, ['Operator', 'Sekolah', 'Dinas', 'SuperAdmin'])) {
+            abort(403, 'Anda tidak memiliki akses untuk menghapus draft.');
+        }
+
+        return DB::transaction(function () use ($id, $user) {
+            $mutasi = DB::table('mutasi_masuk')
+                ->where('id_mutasi', $id)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$mutasi) {
+                return back()->with('error', 'Draft tidak ditemukan.');
+            }
+
+            // Authorization check
+            if ($user->role === 'Operator' || $user->role === 'Sekolah') {
+                if ($mutasi->pengusul !== $user->username && $mutasi->npsn_sekolah_tujuan !== $user->npsn) {
+                    abort(403, 'Anda tidak berhak menghapus draft ini.');
+                }
+            }
+
+            // Only allow deleting Draft status
+            if ($mutasi->status !== 'Draft') {
+                return back()->with('error', 'Hanya usulan dengan status Draft yang dapat dihapus. Gunakan tombol Batalkan untuk status lain.');
+            }
+
+            // Get storage disk
+            $disk = $this->fileUploadService->getDisk();
+            $tempDisk = $this->fileUploadService->getTempDisk();
+
+            // Delete header files
+            $headerFiles = ['file_surat_permohonan', 'file_arsip_scan'];
+            foreach ($headerFiles as $col) {
+                if (!empty($mutasi->$col)) {
+                    try {
+                        // Check if it's a temp file
+                        if (str_starts_with($mutasi->$col, 'temp_uploads/')) {
+                            Storage::disk($tempDisk)->delete($mutasi->$col);
+                        } else {
+                            Storage::disk($disk)->delete($mutasi->$col);
+                        }
+                        Log::info("Deleted header file on draft delete: " . $mutasi->$col);
+                    } catch (\Exception $e) {
+                        Log::warning("Failed to delete header file: " . $mutasi->$col);
+                    }
+                }
+            }
+
+            // Delete student files
+            $siswaList = DB::table('mutasi_masuk_siswa')->where('id_mutasi', $id)->get();
+            $fileColumns = [
+                'file_surat_pindah',
+                'file_surat_dapodik',
+                'file_rekomendasi',
+                'file_ijazah_sd',
+                'file_rapor',
+                'file_surat_penyaluran',
+                'file_rekam_didik'
+            ];
+
+            foreach ($siswaList as $siswa) {
+                foreach ($fileColumns as $col) {
+                    if (!empty($siswa->$col)) {
+                        try {
+                            if (str_starts_with($siswa->$col, 'temp_uploads/')) {
+                                Storage::disk($tempDisk)->delete($siswa->$col);
+                            } else {
+                                Storage::disk($disk)->delete($siswa->$col);
+                            }
+                            Log::info("Deleted student file on draft delete: " . $siswa->$col);
+                        } catch (\Exception $e) {
+                            Log::warning("Failed to delete student file: " . $siswa->$col);
+                        }
+                    }
+                }
+            }
+
+            // Delete student records
+            DB::table('mutasi_masuk_siswa')->where('id_mutasi', $id)->delete();
+
+            // Delete header record
+            DB::table('mutasi_masuk')->where('id_mutasi', $id)->delete();
+
+            Log::info("Draft {$id} deleted by {$user->username}");
+
+            return redirect()->route('mutasi.masuk.index')
+                ->with('success', 'Draft berhasil dihapus beserta semua file yang sudah diunggah.');
+        });
     }
 }

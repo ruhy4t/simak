@@ -194,48 +194,48 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Surat Pindah dari Sekolah Asal *</label>
                         <input type="file" name="siswa[${index}][file_surat_pindah]" accept=".pdf" required
-                            class="w-full px-4 py-2 border rounded-lg bg-white" onchange="window.validateFile(this, 0.25)">
-                        <p class="text-xs text-gray-500 italic mt-1">Surat keterangan pindah asli. Maks 250KB.</p>
+                            class="w-full px-4 py-2 border rounded-lg bg-white" onchange="window.validateFile(this, 1)">
+                        <p class="text-xs text-gray-500 italic mt-1">Surat keterangan pindah asli. Maks 1MB.</p>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Surat Pindah dari Dapodik/Emis*</label>
                         <input type="file" name="siswa[${index}][file_surat_dapodik]" accept=".pdf" required
-                            class="w-full px-4 py-2 border rounded-lg bg-white" onchange="window.validateFile(this, 0.25)">
-                        <p class="text-xs text-gray-500 italic mt-1">Dicetak dari Dapodik/Emis. Maks 250KB.</p>
+                            class="w-full px-4 py-2 border rounded-lg bg-white" onchange="window.validateFile(this, 1)">
+                        <p class="text-xs text-gray-500 italic mt-1">Dicetak dari Dapodik/Emis. Maks 1MB.</p>
                     </div>
                     <div id="rekomendasi_container_${index}">
                         <label class="block text-sm font-medium text-gray-700 mb-1">
                             Rekomendasi Dinas/Kemenag <span id="rekomendasi_required_${index}" class="text-red-500">*</span>
                         </label>
                         <input type="file" name="siswa[${index}][file_rekomendasi]" id="file_rekomendasi_${index}" accept=".pdf" required
-                            class="w-full px-4 py-2 border rounded-lg bg-white" onchange="window.validateFile(this, 0.25)">
-                        <p class="text-xs text-gray-500 italic mt-1">Wajib diunggah. Silahkan unggah rekomendasi/keterangan mutasi keluar yang diterbitkan oleh Dinas Pendidikan / Kemenag asal. Maks 250KB.</p>
+                            class="w-full px-4 py-2 border rounded-lg bg-white" onchange="window.validateFile(this, 1)">
+                        <p class="text-xs text-gray-500 italic mt-1">Wajib diunggah. Silahkan unggah rekomendasi/keterangan mutasi keluar yang diterbitkan oleh Dinas Pendidikan / Kemenag asal. Maks 1MB.</p>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Ijazah SD *</label>
                         <input type="file" name="siswa[${index}][file_ijazah_sd]" accept=".pdf" required
-                            class="w-full px-4 py-2 border rounded-lg bg-white" onchange="window.validateFile(this, 0.25)">
-                        <p class="text-xs text-gray-500 italic mt-1">Scan ijazah SD dari dokumen asli. Maks 250KB.</p>
+                            class="w-full px-4 py-2 border rounded-lg bg-white" onchange="window.validateFile(this, 1)">
+                        <p class="text-xs text-gray-500 italic mt-1">Scan ijazah SD dari dokumen asli. Maks 1MB.</p>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Rapor SMP Lengkap *</label>
                         <input type="file" name="siswa[${index}][file_rapor]" accept=".pdf" required
-                            class="w-full px-4 py-2 border rounded-lg bg-white" onchange="window.validateFile(this, 1)">
-                        <p class="text-xs text-gray-500 italic mt-1">Semester 1 s.d terakhir. Maks 1MB.</p>
+                            class="w-full px-4 py-2 border rounded-lg bg-white" onchange="window.validateFile(this, 2)">
+                        <p class="text-xs text-gray-500 italic mt-1">Semester 1 s.d terakhir. Maks 2MB.</p>
                     </div>
                     <div id="penyaluran_container_${index}" class="hidden">
                         <label class="block text-sm font-medium text-gray-700 mb-1">Surat Penyaluran Kemdikdasmen *</label>
                         <input type="file" name="siswa[${index}][file_surat_penyaluran]" id="file_surat_penyaluran_${index}" accept=".pdf"
-                            class="w-full px-4 py-2 border rounded-lg bg-white" onchange="window.validateFile(this, 0.25)">
-                        <p class="text-xs text-gray-500 italic mt-1">Wajib untuk siswa luar negeri. Maks 250KB.</p>
+                            class="w-full px-4 py-2 border rounded-lg bg-white" onchange="window.validateFile(this, 1)">
+                        <p class="text-xs text-gray-500 italic mt-1">Wajib untuk siswa luar negeri. Maks 1MB.</p>
                     </div>
                     <div id="rekam_didik_container_${index}">
                         <label class="block text-sm font-medium text-gray-700 mb-1">
                             Rekam Didik dari Dapodik <span id="rekam_didik_required_${index}" class="text-red-500">*</span>
                         </label>
                         <input type="file" name="siswa[${index}][file_rekam_didik]" id="file_rekam_didik_${index}" accept=".pdf,.jpg,.jpeg,.png" required
-                            class="w-full px-4 py-2 border rounded-lg bg-white" onchange="window.validateFile(this, 0.25)">
-                        <p class="text-xs text-gray-500 italic mt-1">Silahkan koordinasi dengan bagian dapodik Dinas Pendidikan Kota Bogor untuk screenshot Rekam Didik. PDF/JPEG/PNG. Maks 250KB.</p>
+                            class="w-full px-4 py-2 border rounded-lg bg-white" onchange="window.validateFile(this, 1)">
+                        <p class="text-xs text-gray-500 italic mt-1">Silahkan koordinasi dengan bagian dapodik Dinas Pendidikan Kota Bogor untuk screenshot Rekam Didik. PDF/JPEG/PNG. Maks 1MB.</p>
                     </div>
                 </div>`}
             </div>
@@ -483,26 +483,23 @@
         }
     };
 
-    // File Validation & Compression
+    // File Validation & Immediate Upload (Upload-on-Select Pattern)
+    // This uploads files to temp storage immediately when selected, avoiding payload limits
     window.validateFile = async function (input, maxMB) {
         if (input.files && input.files[0]) {
             let file = input.files[0];
 
             // Check if image and compress if needed
             if (file.type.match(/image.*/) && window.ImageCompressor) {
-                // Show loading state (optional UI enhancement, simplistic here)
                 const originalText = input.nextElementSibling ? input.nextElementSibling.textContent : '';
                 if (input.nextElementSibling) input.nextElementSibling.textContent = 'Mengompres...';
 
                 try {
                     const compressedFile = await window.ImageCompressor.compress(file);
-
-                    // Replace file in input (need DataTransfer for FileList)
                     const dataTransfer = new DataTransfer();
                     dataTransfer.items.add(compressedFile);
                     input.files = dataTransfer.files;
-                    file = compressedFile; // update reference
-
+                    file = compressedFile;
                     console.log(`File compressed: ${file.size} bytes`);
                 } catch (e) {
                     console.error('Compression failed:', e);
@@ -517,10 +514,108 @@
             if (fileSize > maxSize) {
                 alert(`⚠️ Ukuran file terlalu besar!\n\nMaksimal: ${maxMB} MB\nUkuran file Anda: ${(fileSize / (1024 * 1024)).toFixed(2)} MB`);
                 input.value = '';
+                return;
             }
+
+            // ============================================
+            // ASYNC UPLOAD: Upload immediately to server
+            // ============================================
+            await uploadFileImmediately(input, file);
+
             updateTotalSize();
         }
     };
+
+    /**
+     * Upload file immediately to /api/upload-temp
+     * Creates hidden input with temp path, marks file input as uploaded
+     */
+    async function uploadFileImmediately(input, file) {
+        const parentNode = input.parentNode;
+
+        // Create/update status indicator
+        let statusEl = parentNode.querySelector('.upload-status-indicator');
+        if (!statusEl) {
+            statusEl = document.createElement('div');
+            statusEl.className = 'upload-status-indicator mt-2 text-xs';
+            parentNode.insertBefore(statusEl, input.nextSibling);
+        }
+
+        // Show uploading state
+        statusEl.innerHTML = `
+            <span class="flex items-center gap-2 text-blue-600">
+                <i class="bi bi-arrow-repeat animate-spin"></i>
+                <span>Mengunggah...</span>
+            </span>
+        `;
+        input.classList.add('opacity-50');
+        input.disabled = true;
+
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            const response = await fetch('/api/upload-temp', {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': token },
+                body: formData
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || `Server error: ${response.status}`);
+            }
+
+            const result = await response.json();
+
+            if (result.success && result.path) {
+                // Success: Create hidden input with temp path
+                const existingHidden = document.querySelector(`input[type="hidden"][name="${input.name}"]`);
+                if (existingHidden) existingHidden.remove();
+
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = input.name; // Same name, will override file input on submit
+                hiddenInput.value = result.path;
+                hiddenInput.dataset.tempPath = 'true';
+                parentNode.appendChild(hiddenInput);
+
+                // Mark file input as already uploaded
+                input.setAttribute('data-has-file', 'true');
+                input.removeAttribute('required'); // No longer required since uploaded
+
+                // Show success state
+                statusEl.innerHTML = `
+                    <span class="flex items-center gap-2 text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg">
+                        <i class="bi bi-check-circle-fill"></i>
+                        <span class="font-medium">Berhasil diunggah</span>
+                        <span class="text-slate-400">(${(file.size / 1024).toFixed(0)} KB)</span>
+                    </span>
+                `;
+
+                console.log(`Async upload success: ${input.name} -> ${result.path}`);
+            } else {
+                throw new Error(result.message || 'Upload failed');
+            }
+        } catch (error) {
+            console.error('Async upload error:', error);
+
+            // Show error state
+            statusEl.innerHTML = `
+                <span class="flex items-center gap-2 text-red-600 bg-red-50 px-3 py-1.5 rounded-lg">
+                    <i class="bi bi-x-circle-fill"></i>
+                    <span class="font-medium">Gagal: ${error.message}</span>
+                </span>
+            `;
+
+            // Clear file input so user can retry
+            input.value = '';
+        } finally {
+            input.classList.remove('opacity-50');
+            input.disabled = false;
+        }
+    }
 
     function updateTotalSize() {
         let total = 0;
@@ -910,17 +1005,37 @@
                     return;
                 }
 
+                // Check for pending uploads (still showing "Mengunggah...")
+                const pendingUploads = document.querySelectorAll('.upload-status-indicator .bi-arrow-repeat');
+                if (pendingUploads.length > 0) {
+                    alert('⏳ Mohon tunggu hingga semua file selesai diunggah.');
+                    return;
+                }
+
+                // Check for failed uploads
+                const failedUploads = document.querySelectorAll('.upload-status-indicator .bi-x-circle-fill');
+                if (failedUploads.length > 0) {
+                    alert('❌ Ada file yang gagal diunggah. Silakan pilih ulang file yang gagal.');
+                    return;
+                }
+
                 if (isSaving) return; // Prevent double click
                 isSaving = true;
 
-                // Execute Sequential Upload
-                const uploadSuccess = await uploadFilesSequentially();
-
-                if (uploadSuccess) {
-                    form.submit(); // Submit purely
-                } else {
-                    isSaving = false;
+                // Show loading modal
+                const modal = document.getElementById('loadingModal');
+                if (modal) {
+                    modal.classList.remove('hidden');
+                    modal.classList.add('flex');
                 }
+
+                // Disable file inputs to prevent them being sent (hidden inputs will be sent instead)
+                document.querySelectorAll('input[type="file"][data-has-file="true"]').forEach(input => {
+                    input.disabled = true;
+                });
+
+                // Submit form (files already uploaded via temp path hidden inputs)
+                form.submit();
             });
         }
 

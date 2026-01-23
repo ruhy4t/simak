@@ -64,6 +64,18 @@ class FileUploadService
     }
 
     /**
+     * Get the disk for temporary uploads.
+     * B2 in production (Vercel doesn't persist local), local in development.
+     */
+    public function getTempDisk(): string
+    {
+        if (config('filesystems.disks.b2.key') && app()->environment('production')) {
+            return 'b2';
+        }
+        return 'local';
+    }
+
+    /**
      * Sanitize filename - only allow safe characters
      */
     public function sanitizeFilename(string $filename): string
@@ -113,7 +125,10 @@ class FileUploadService
                 throw new \Exception('Invalid temporary file path.');
             }
 
-            if (!Storage::disk('local')->exists($file)) {
+            // Temp files are stored on B2 in production, local in dev
+            $tempDisk = $this->getTempDisk();
+
+            if (!Storage::disk($tempDisk)->exists($file)) {
                 throw new \Exception('Temporary file not found or expired.');
             }
 
@@ -132,14 +147,14 @@ class FileUploadService
 
             $disk = $this->getDisk();
 
-            // Move/Copy from local temp to target disk
-            $content = Storage::disk('local')->get($file);
+            // Move/Copy from temp disk to target disk
+            $content = Storage::disk($tempDisk)->get($file);
             Storage::disk($disk)->put($storedPath, $content);
 
             // Delete temp file
-            Storage::disk('local')->delete($file);
+            Storage::disk($tempDisk)->delete($file);
 
-            Log::info("Moved temp file {$file} to {$disk}: {$storedPath}");
+            Log::info("Moved temp file {$file} from {$tempDisk} to {$disk}: {$storedPath}");
             return $storedPath;
         }
 
@@ -195,15 +210,14 @@ class FileUploadService
                 throw new \Exception('Invalid temporary file path.');
             }
 
-            if (!Storage::disk('local')->exists($file)) {
+            // Temp files are stored on B2 in production, local in dev
+            $tempDisk = $this->getTempDisk();
+
+            if (!Storage::disk($tempDisk)->exists($file)) {
                 throw new \Exception('Temporary file not found or expired.');
             }
 
-            // Determine extension from file content or original name if stored
-            // For now, assume webp or jpg based on mime check if possible? 
-            // Simplified: Default to .jpg or try to guess. 
-            // Better: TemporaryUploadController should store extension in metadata?
-            // Fallback: Check extension from path if present
+            // Get extension from path
             $ext = pathinfo($file, PATHINFO_EXTENSION) ?: 'jpg';
 
             // Build safe filename
@@ -221,14 +235,14 @@ class FileUploadService
 
             $disk = $this->getDisk();
 
-            // Move/Copy from local temp to target disk
-            $content = Storage::disk('local')->get($file);
+            // Move/Copy from temp disk to target disk
+            $content = Storage::disk($tempDisk)->get($file);
             Storage::disk($disk)->put($storedPath, $content);
 
             // Delete temp file
-            Storage::disk('local')->delete($file);
+            Storage::disk($tempDisk)->delete($file);
 
-            Log::info("Moved temp image {$file} to {$disk}: {$storedPath}");
+            Log::info("Moved temp image {$file} from {$tempDisk} to {$disk}: {$storedPath}");
             return $storedPath;
         }
 

@@ -135,6 +135,7 @@ Route::middleware(['auth', \App\Http\Middleware\EnsurePasswordChanged::class])->
         Route::post('/draft/{id}/siswa', [MutasiMasukController::class, 'addStudentToDraft'])->name('draft.addStudent');
         Route::post('/draft/{id}/finalize', [MutasiMasukController::class, 'finalizeDraft'])->name('draft.finalize');
         Route::get('/draft/{id}/resume', [MutasiMasukController::class, 'resumeDraft'])->name('draft.resume');
+        Route::delete('/draft/{id}', [MutasiMasukController::class, 'deleteDraft'])->name('draft.delete');
     });
 
     // User Management (Sekolah Only)
