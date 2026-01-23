@@ -1433,28 +1433,84 @@
                 }
             });
 
-            // Prevent Vercel 4.5MB Payload Limit
-            if (totalPayloadSize > 4 * 1024 * 1024) { // 4MB Limit
-                const sizeMB = (totalPayloadSize / (1024 * 1024)).toFixed(2);
-                alert(`⚠️ Gagal Menyimpan: Total ukuran file (${sizeMB} MB) melebihi batas server (4 MB per siswa).\n\nSilakan kompres file PDF/Foto Anda atau upload sebagian saja terlebih dahulu.`);
-                throw new Error(`Payload too large: ${sizeMB} MB`);
-            }
+            // ------------------------------------------------------------------
+            // SMART UPLOAD STRATEGY (Prevents 413 Payload Too Large)
+            // ------------------------------------------------------------------
+            const MAX_PAYLOAD = 3.5 * 1024 * 1024; // 3.5MB Safe Limit
 
-            const response = await fetch(API.addStudent(draftId), {
-                method: 'POST',
-                headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
-                body: formData
-            });
+            if (totalPayloadSize > MAX_PAYLOAD) {
+                console.info(`Total payload ${totalPayloadSize} bytes > ${MAX_PAYLOAD}. Switching to sequential upload.`);
 
-            const result = await response.json();
+                // 1. Upload Text Data + First File (to create/update record)
+                // 2. Upload remaining files one by one
 
-            if (result.success) {
+                let filesToSend = [];
+                inputs.forEach(input => {
+                    if (input.type === 'file' && input.files[0]) {
+                        const match = input.name.match(/siswa\[\d+\]\[(.+)\]/);
+                        if (match) filesToSend.push({ field: match[1], file: input.files[0] });
+                    }
+                });
+
+                // Helper to build base FormData (Text only)
+                const buildBaseFormData = () => {
+                    const fd = new FormData();
+                    fd.append('student_index', index);
+                    inputs.forEach(input => {
+                        const name = input.name;
+                        if (!name || input.type === 'file') return; // Skip files
+                        const match = name.match(/siswa\[\d+\]\[(.+)\]/);
+                        if (match) {
+                            const fieldName = match[1];
+                            if (input.type === 'checkbox') fd.append(fieldName, input.checked ? '1' : '0');
+                            else fd.append(fieldName, input.value);
+                        }
+                    });
+                    return fd;
+                };
+
+                // Execute Sequential Uploads
+                let successCount = 0;
+                for (let i = 0; i < filesToSend.length; i++) {
+                    const fileItem = filesToSend[i];
+                    showSaveIndicator(`Mengupload file ${i + 1}/${filesToSend.length} (${(fileItem.file.size / 1024 / 1024).toFixed(1)} MB)...`);
+
+                    const fd = buildBaseFormData();
+                    fd.append(fileItem.field, fileItem.file);
+
+                    const response = await fetch(API.addStudent(draftId), {
+                        method: 'POST',
+                        headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
+                        body: fd
+                    });
+
+                    const result = await response.json();
+                    if (!result.success) throw new Error(result.message || `Gagal upload file ${fileItem.field}`);
+                    successCount++;
+                }
+
                 savedStudents.add(index);
                 markTabAsSaved(index);
-                showSaveIndicator('Siswa #' + (index + 1) + ' tersimpan ✓', 'success');
+                showSaveIndicator('Semua data berhasil disimpan ✓', 'success');
                 return true;
+
             } else {
-                throw new Error(result.message || 'Failed to save student');
+                // STANDARD UPLOAD (Small Payload)
+                const response = await fetch(API.addStudent(draftId), {
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
+                    body: formData
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    savedStudents.add(index);
+                    markTabAsSaved(index);
+                    showSaveIndicator('Siswa #' + (index + 1) + ' tersimpan ✓', 'success');
+                    return true;
+                } else {
+                    throw new Error(result.message || 'Failed to save student');
+                }
             }
         } catch (e) {
             console.error('Save student error:', e);
