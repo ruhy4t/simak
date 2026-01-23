@@ -357,6 +357,10 @@ document.addEventListener('DOMContentLoaded', function () {
 let lookupAsalTimeout;
 window.lookupNpsnSekolahAsal = function (npsn) {
     const CONFIG = window.MUTASI_CONFIG || {};
+    if (!CONFIG.routes || !CONFIG.routes.apiSatpen) {
+        alert('System Error: Konfigurasi rute tidak ditemukan. Mohon refresh halaman.');
+        return;
+    }
     const statusEl = document.getElementById('npsn_asal_status');
     const namaEl = document.getElementById('nama_sekolah_asal');
     const alamatEl = document.getElementById('alamat_sekolah_asal');
@@ -418,6 +422,8 @@ window.lookupNpsnSekolahAsal = function (npsn) {
 
             statusEl.innerHTML = '<i class="bi bi-exclamation-circle text-red-500"></i>';
             console.error('NPSN lookup error:', error);
+            // Show alert to user since console is blocked
+            alert('Gagal mengambil data sekolah: ' + error.message);
         }
     }, 500);
 }
