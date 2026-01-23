@@ -8,4 +8,7 @@
  */
 
 // Forward to Laravel's entry point
-require __DIR__ . '/../public/index.php';
+// Forward to Laravel's entry point
+// require __DIR__ . '/../public/index.php';
+
+echo "DEBUG: Runtime is working. PHP Version: " . phpversion();
