@@ -112,12 +112,10 @@ class MutasiMasukController extends Controller
                 $query->where('npsn_sekolah_tujuan', $user->npsn);
             } elseif (in_array($user->role, ['Dinas', 'SuperAdmin'])) {
                 // Dinas cannot see 'Draft' from Operator/Sekolah
-                // Only show rows where status IS NOT 'Draft' OR created by Dinas themselves
-                $query->where(function ($q) {
+                // Only show rows where status IS NOT 'Draft' OR created by themselves
+                $query->where(function ($q) use ($user) {
                     $q->where('status', '!=', 'Draft')
-                        ->orWhereIn('pengusul', function ($sub) {
-                            $sub->select('username')->from('users')->whereIn('role', ['Dinas', 'SuperAdmin']);
-                        });
+                        ->orWhere('pengusul', $user->username);
                 });
             }
 
