@@ -98,17 +98,14 @@ class MutasiMasukController extends Controller
 
         try {
             // Use Eloquent Model for relationships
-            $query = \App\Models\MutasiMasuk::query() // Use Model instead of DB table
-                ->with('siswa:id,id_mutasi,nama_murid,nisn,nama_sekolah_asal,npsn_sekolah_asal,kabupaten_kota_asal')
+            $query = \App\Models\MutasiMasuk::query()
+                ->with('siswa') // Load all siswa columns to prevent missing attribute errors
                 ->orderBy('tanggal_pengajuan', 'desc');
 
             // Role-based filtering
             // STRICT: Only PROPOSER sees data for Operator AND Sekolah
             if ($user->role === 'Operator' || $user->role === 'Sekolah') {
                 $query->where('pengusul', $user->username);
-            } elseif (in_array($user->role, ['Dinas', 'SuperAdmin'])) {
-                // Eager load siswa for Popover details
-                $query->with('siswa:id,id_mutasi,nama_murid,nisn,nama_sekolah_asal');
             }
 
             if ($request->filled('search')) {
