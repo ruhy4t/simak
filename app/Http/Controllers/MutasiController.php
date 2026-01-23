@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 class MutasiController extends Controller
@@ -1124,5 +1125,61 @@ class MutasiController extends Controller
         $npsnSekolahAsal = $draft->npsn_sekolah_asal ?? '';
 
         return view('mutasi.keluar.create', compact('user', 'draft', 'alamatSekolahAsal', 'namaSekolahAsal', 'npsnSekolahAsal'));
+    }
+
+    /**
+     * Delete Draft - Permanently remove draft data
+     */
+    public function deleteDraft(string $id)
+    {
+        $user = Auth::user();
+
+        $draft = DB::table('mutasi_keluar')
+            ->where('id_mutasi', $id)
+            ->first();
+
+        if (!$draft) {
+            return back()->with('error', 'Draft tidak ditemukan.');
+        }
+
+        // Authorization
+        $isOwner = ($user->role === 'Operator' && $draft->pengusul === $user->username)
+            || ($user->role === 'Sekolah' && $draft->npsn_sekolah_asal === $user->npsn)
+            || in_array($user->role, ['Dinas', 'SuperAdmin']);
+
+        if (!$isOwner) {
+            abort(403, 'Anda tidak berhak menghapus draft ini.');
+        }
+
+        if ($draft->status !== 'Draft') {
+            return back()->with('error', 'Hanya usulan dengan status Draft yang dapat dihapus.');
+        }
+
+        // Delete files if any (though currently drafts don't save files, good to be safe)
+        // Check standard columns just in case
+        $fileColumns = ['file_suket_keluar', 'file_suket_dapo', 'file_suket_diterima', 'file_rapor', 'file_arsip_scan'];
+
+        // Get disk (private_docs/b2)
+        $disk = $this->fileUploadService->getDisk();
+        $tempDisk = $this->fileUploadService->getTempDisk();
+
+        foreach ($fileColumns as $col) {
+            if (!empty($draft->$col)) {
+                try {
+                    if (str_starts_with($draft->$col, 'temp_uploads/')) {
+                        Storage::disk($tempDisk)->delete($draft->$col);
+                    } else {
+                        Storage::disk($disk)->delete($draft->$col);
+                    }
+                } catch (\Exception $e) {
+                    Log::warning("Failed to delete draft file: " . $draft->$col);
+                }
+            }
+        }
+
+        DB::table('mutasi_keluar')->where('id_mutasi', $id)->delete();
+
+        return redirect()->route('mutasi.keluar.index')
+            ->with('success', 'Draft berhasil dihapus.');
     }
 }
