@@ -55,11 +55,9 @@ class MutasiController extends Controller
                 ->whereNull('deleted_at') // HIDE SOFT DELETED
                 ->orderBy('tanggal_pengajuan', 'desc');
 
-            // Role-based filtering - Operator only sees their own data
-            if ($user->role === 'Operator') {
+            // Role-based filtering - STRICT: Only PROPOSER sees data
+            if ($user->role === 'Operator' || $user->role === 'Sekolah') {
                 $query->where('pengusul', $user->username);
-            } elseif ($user->role === 'Sekolah') {
-                $query->where('npsn_sekolah_asal', $user->npsn);
             }
 
             // Search filter with sanitization
@@ -155,12 +153,13 @@ class MutasiController extends Controller
                 abort(404);
             }
 
-            // Authorization: Only owner can cancel
-            $isOwner = ($user->role === 'Operator' && $mutasi->pengusul === $user->username)
-                || ($user->role === 'Sekolah' && $mutasi->npsn_sekolah_asal === $user->npsn);
-
-            if (!$isOwner) {
-                abort(403, 'Anda tidak berhak menghapus usulan ini.');
+            // Authorization: STRICT Only PROPOSER can cancel
+            if ($user->role === 'Operator' || $user->role === 'Sekolah') {
+                if ($mutasi->pengusul !== $user->username) {
+                    abort(403, 'Anda tidak berhak menghapus usulan ini (bukan pengusul asli).');
+                }
+            } elseif (!in_array($user->role, ['Dinas', 'SuperAdmin'])) {
+                abort(403);
             }
 
             // 3. Strict Status Check
@@ -209,9 +208,9 @@ class MutasiController extends Controller
         if (!$mutasi)
             abort(404);
 
-        // Case-insensitive check
+        // Case-insensitive check STRICT
         if (strtolower($mutasi->pengusul) !== strtolower($user->username)) {
-            abort(403);
+            abort(403, 'Hanya akun pengusul yang dapat mengedit revisi.');
         }
 
         // Allow Revision for 'Perlu Perbaikan' OR 'Dibatalkan'
@@ -378,12 +377,13 @@ class MutasiController extends Controller
             abort(404);
         }
 
-        // Authorization: Only owner can delete (cancel)
-        $isOwner = ($user->role === 'Operator' && $mutasi->pengusul === $user->username)
-            || ($user->role === 'Sekolah' && $mutasi->npsn_sekolah_asal === $user->npsn);
-
-        if (!$isOwner) {
-            abort(403, 'Anda tidak berhak menghapus usulan ini.');
+        // Authorization: STRICT Only PROPOSER can delete (cancel)
+        if ($user->role === 'Operator' || $user->role === 'Sekolah') {
+            if ($mutasi->pengusul !== $user->username) {
+                abort(403, 'Anda tidak berhak menghapus usulan ini (bukan pengusul asli).');
+            }
+        } elseif (!in_array($user->role, ['Dinas', 'SuperAdmin'])) {
+            abort(403);
         }
 
         // Validation: Only allow delete for specific statuses
@@ -620,15 +620,17 @@ class MutasiController extends Controller
         }
 
         // Security: Authorization Check (IDOR Protection)
+        // STRICT: Only PROPOSER can see
         $user = Auth::user();
-        if ($user->role === 'Operator') {
+        if ($user->role === 'Operator' || $user->role === 'Sekolah') {
             if ($mutasi->pengusul !== $user->username) {
-                abort(403, 'Unauthorized access.');
+                // Check if it's the SAME NPSN? NO, user wants strict proposer.
+                // But previously I allowed if npsn matches.
+                // Strict: Only match username.
+                abort(403, 'Unauthorized access (Strict: Not Proposer).');
             }
-        } elseif ($user->role === 'Sekolah') {
-            if ($mutasi->npsn_sekolah_asal !== $user->npsn) {
-                abort(403, 'Unauthorized access.');
-            }
+        } elseif (!in_array($user->role, ['Dinas', 'SuperAdmin'])) {
+            abort(403);
         }
 
         $firstDocKey = 'file_suket_keluar';

@@ -103,10 +103,9 @@ class MutasiMasukController extends Controller
                 ->orderBy('tanggal_pengajuan', 'desc');
 
             // Role-based filtering
-            if ($user->role === 'Operator') {
+            // STRICT: Only PROPOSER sees data for Operator AND Sekolah
+            if ($user->role === 'Operator' || $user->role === 'Sekolah') {
                 $query->where('pengusul', $user->username);
-            } elseif ($user->role === 'Sekolah') {
-                $query->where('npsn_sekolah_tujuan', $user->npsn);
             } elseif (in_array($user->role, ['Dinas', 'SuperAdmin'])) {
                 // Eager load siswa for Popover details
                 $query->with('siswa:id,id_mutasi,nama_murid,nisn,nama_sekolah_asal');
@@ -195,12 +194,13 @@ class MutasiMasukController extends Controller
                 abort(404);
             }
 
-            // Authorization: Only owner can cancel
-            $isOwner = ($user->role === 'Operator' && $mutasi->pengusul === $user->username)
-                || ($user->role === 'Sekolah' && $mutasi->npsn_sekolah_tujuan === $user->npsn);
-
-            if (!$isOwner) {
-                abort(403, 'Anda tidak berhak menghapus usulan ini.');
+            // Authorization: STRICT Only PROPOSER can cancel
+            if ($user->role === 'Operator' || $user->role === 'Sekolah') {
+                if ($mutasi->pengusul !== $user->username) {
+                    abort(403, 'Anda tidak berhak menghapus usulan ini (bukan pengusul asli).');
+                }
+            } elseif (!in_array($user->role, ['Dinas', 'SuperAdmin'])) {
+                abort(403);
             }
 
             // 3. Strict Status Check
@@ -654,15 +654,14 @@ class MutasiMasukController extends Controller
         }
 
         // Authorization check
+        // STRICT: Only PROPOSER can see
         $user = Auth::user();
-        if ($user->role === 'Operator') {
+        if ($user->role === 'Operator' || $user->role === 'Sekolah') {
             if ($mutasi->pengusul !== $user->username) {
-                abort(403, 'Anda tidak memiliki akses ke data ini.');
+                abort(403, 'Anda tidak memiliki akses ke data ini (Strict: Bukan Pengusul).');
             }
-        } elseif ($user->role === 'Sekolah') {
-            if ($mutasi->npsn_sekolah_tujuan !== $user->npsn) {
-                abort(403, 'Anda tidak memiliki akses ke data ini.');
-            }
+        } elseif (!in_array($user->role, ['Dinas', 'SuperAdmin'])) {
+            abort(403);
         }
 
         $siswaList = DB::table('mutasi_masuk_siswa')
