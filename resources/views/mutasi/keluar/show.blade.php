@@ -149,6 +149,41 @@
             </div>
         </div>
 
+        <!-- Layout Split untuk Verifikasi Dinas -->
+        @if(in_array(auth()->user()->role, ['Operator', 'Sekolah']) && $mutasi->status === 'Selesai' && $mutasi->file_arsip_scan)
+            <div x-data="{ showDoc: false }"
+                class="bg-white rounded-xl shadow-sm border border-slate-100 p-8 text-center max-w-4xl mx-auto my-12 animate-fade-in-up">
+                <div
+                    class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 ring-8 ring-green-50">
+                    <i class="bi bi-file-earmark-check-fill text-4xl text-green-600"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-slate-900 mb-2">Mutasi Selesai</h2>
+                <p class="text-slate-600 mb-8 leading-relaxed max-w-2xl mx-auto">
+                    Pengajuan mutasi ini telah disetujui dan Surat Keterangan Pindah Masuk telah diterbitkan pada tanggal
+                    <span
+                        class="font-semibold text-slate-900">{{ \Carbon\Carbon::parse($mutasi->tanggal_surat_izin)->translatedFormat('j F Y') }}</span>
+                    dengan nomor <span class="font-semibold text-slate-900 font-mono">{{ $mutasi->nomor_surat_izin }}</span>
+                    dan diunggah pada tanggal <span
+                        class="font-semibold text-slate-900">{{ \Carbon\Carbon::parse($mutasi->updated_at)->translatedFormat('j F Y') }}</span>
+                    jam <span
+                        class="font-semibold text-slate-900">{{ \Carbon\Carbon::parse($mutasi->updated_at)->format('H:i') }}</span>
+                </p>
+
+                <div class="flex justify-center mb-0">
+                    <button @click="showDoc = !showDoc"
+                        class="inline-flex items-center gap-2 px-6 py-3 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 hover:shadow-lg hover:shadow-green-500/30 transition-all hover:-translate-y-1">
+                        <i class="bi" :class="showDoc ? 'bi-chevron-up' : 'bi-eye-fill'"></i>
+                        <span x-text="showDoc ? 'Tutup Surat Keterangan' : 'Lihat Surat Keterangan'"></span>
+                    </button>
+                    <!-- Optional: Direct Download/Print Button if needed, but Viewer is best -->
+                </div>
+
+                <div x-show="showDoc" x-transition class="border-t border-slate-100 pt-8 mt-8">
+                    <x-document-viewer :path="$mutasi->file_arsip_scan" height="800px" />
+                </div>
+            </div>
+        @endif
+
         <!-- Main Layout - 2-Column for Dinas, Single-Column for Others -->
         <div class="{{ $isDinas ? 'grid grid-cols-1 lg:grid-cols-2 gap-6' : '' }}"
             x-data="verifikasiKeluar('{{ $firstDocKey }}')">
@@ -420,4 +455,4 @@
                 }
             }
         }
-    </script>@endsection
+</script>@endsection
