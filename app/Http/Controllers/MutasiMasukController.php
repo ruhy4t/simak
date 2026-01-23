@@ -305,14 +305,14 @@ class MutasiMasukController extends Controller
         $isDinasEntry = $request->has('is_dinas_entry');
 
         // Validate jumlah_siswa first
-        if ($jumlahSiswa < 1 || $jumlahSiswa > 20) {
-            return back()->withErrors(['jumlah_siswa' => 'Jumlah siswa harus antara 1-20'])->withInput();
+        if ($jumlahSiswa < 1 || $jumlahSiswa > 5) {
+            return back()->withErrors(['jumlah_siswa' => 'Jumlah siswa harus antara 1-5'])->withInput();
         }
 
 
         // Base validation with custom messages
         $rules = [
-            'jumlah_siswa' => 'required|integer|min:1|max:20',
+            'jumlah_siswa' => 'required|integer|min:1|max:5',
             'nomor_surat' => 'required|string|max:50',
             'tanggal_surat' => 'required|date|before_or_equal:today|after:1900-01-01',
             'npsn_sekolah_tujuan' => 'required|string|size:8',
@@ -335,7 +335,7 @@ class MutasiMasukController extends Controller
             'jumlah_siswa.required' => 'Jumlah siswa wajib diisi.',
             'jumlah_siswa.integer' => 'Jumlah siswa harus berupa angka.',
             'jumlah_siswa.min' => 'Jumlah siswa minimal 1.',
-            'jumlah_siswa.max' => 'Jumlah siswa maksimal 20 per pengajuan.',
+            'jumlah_siswa.max' => 'Jumlah siswa maksimal 5 per pengajuan.',
             'nomor_surat.required' => 'Nomor Surat Permohonan wajib diisi.',
             'nomor_surat.max' => 'Nomor Surat maksimal 50 karakter.',
             'tanggal_surat.required' => 'Tanggal Surat Permohonan wajib diisi.',
