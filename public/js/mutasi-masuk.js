@@ -1003,6 +1003,9 @@
         /**
          * Populate form fields from CONFIG.students (when resuming draft)
          */
+        /**
+         * Populate form fields from CONFIG.students (when resuming draft)
+         */
         function populateDraftStudents() {
             const students = CONFIG.students || [];
             if (!students.length) {
@@ -1010,8 +1013,11 @@
             }
 
             students.forEach((student, idx) => {
+                // Determine if manual entry (not found via NPSN)
+                // "npsn_ditemukan" is 1/true if found, 0/false if manual
+                const isManual = student.npsn_ditemukan == 0 || student.npsn_ditemukan === '0' || student.npsn_ditemukan === false;
 
-                // Text fields
+                // 1. TEXT FIELDS
                 const textFields = [
                     'nama_murid', 'nisn', 'nis', 'tempat_lahir', 'tanggal_lahir',
                     'tanggal_diterima', 'npsn_sekolah_asal', 'nama_sekolah_asal',
@@ -1024,7 +1030,7 @@
                     }
                 });
 
-                // Select fields
+                // 2. SELECT FIELDS (Gender, Class)
                 ['jenis_kelamin', 'kelas'].forEach(field => {
                     const el = document.querySelector(`[name="siswa[${idx}][${field}]"]`);
                     if (el && student[field]) {
@@ -1032,36 +1038,111 @@
                     }
                 });
 
-                // Province - delayed loading needed
+                // 3. MANUAL ENTRY HANDLING (Unlock fields if manual)
+                if (isManual) {
+                    const namaEl = document.getElementById(`nama_asal_${idx}`);
+                    const alamatEl = document.getElementById(`alamat_asal_${idx}`);
+                    const provEl = document.getElementById(`provinsi_asal_select_${idx}`); // SELECT
+                    const kabEl = document.getElementById(`kabkota_asal_select_${idx}`); // SELECT
+
+                    if (namaEl) {
+                        namaEl.readOnly = false;
+                        namaEl.classList.remove('bg-gray-100');
+                    }
+                    if (alamatEl) {
+                        alamatEl.readOnly = false;
+                        alamatEl.classList.remove('bg-gray-100');
+                    }
+                    if (provEl) {
+                        provEl.readOnly = false;
+                        provEl.classList.remove('bg-gray-100');
+                    }
+                    if (kabEl) {
+                        kabEl.readOnly = false;
+                        kabEl.classList.remove('bg-gray-100');
+                    }
+
+                    // Set status to "Manual Input" visual
+                    const statusEl = document.getElementById(`npsn_status_${idx}`);
+                    if (statusEl) {
+                        statusEl.innerHTML = '<span class="text-yellow-600 text-xs">Input Manual (Restore)</span>';
+                    }
+                } else {
+                    // If found, ensure lock visual is applied (re-apply just in case)
+                    const namaEl = document.getElementById(`nama_asal_${idx}`);
+                    if (namaEl && namaEl.value) {
+                        namaEl.readOnly = true;
+                        namaEl.classList.add('bg-gray-100');
+                    }
+                    const alamatEl = document.getElementById(`alamat_asal_${idx}`);
+                    if (alamatEl && alamatEl.value) {
+                        alamatEl.readOnly = true;
+                        alamatEl.classList.add('bg-gray-100');
+                    }
+                }
+
+                // 4. PROVINCE & CITY POPULATION (With Fuzzy Match for Name vs ID)
                 if (student.provinsi_asal) {
                     setTimeout(() => {
                         const provSelect = document.getElementById(`provinsi_asal_select_${idx}`);
                         const provHidden = document.getElementById(`provinsi_asal_${idx}`);
+
                         if (provSelect) {
-                            // Set value when options are loaded
                             const checkInterval = setInterval(() => {
                                 if (provSelect.options.length > 1) {
                                     clearInterval(checkInterval);
-                                    provSelect.value = student.provinsi_asal;
-                                    if (provHidden) provHidden.value = student.provinsi_asal;
-                                    provSelect.dispatchEvent(new Event('change'));
 
-                                    // Then set kabupaten after a delay
-                                    if (student.kabupaten_kota_asal) {
-                                        setTimeout(() => {
-                                            const kabSelect = document.getElementById(`kabkota_asal_select_${idx}`);
-                                            const kabHidden = document.getElementById(`kabkota_asal_${idx}`);
-                                            if (kabSelect) {
-                                                const kabInterval = setInterval(() => {
-                                                    if (kabSelect.options.length > 1) {
-                                                        clearInterval(kabInterval);
-                                                        kabSelect.value = student.kabupaten_kota_asal;
-                                                        if (kabHidden) kabHidden.value = student.kabupaten_kota_asal;
-                                                    }
-                                                }, 100);
-                                                setTimeout(() => clearInterval(kabInterval), 5000);
-                                            }
-                                        }, 500);
+                                    // Helper to find option by Value OR Text
+                                    const options = Array.from(provSelect.options);
+                                    let match = options.find(o => o.value === student.provinsi_asal); // Try ID/Value match
+
+                                    if (!match) {
+                                        // Try Text match (Case insensitive)
+                                        match = options.find(o => o.text.trim().toLowerCase() === student.provinsi_asal.trim().toLowerCase());
+                                    }
+
+                                    if (match) {
+                                        provSelect.value = match.value;
+                                        if (provHidden) provHidden.value = match.value; // Store ID/Value
+                                        // Trigger change to load cities
+                                        provSelect.dispatchEvent(new Event('change'));
+
+                                        // 5. CITY POPULATION
+                                        if (student.kabupaten_kota_asal) {
+                                            setTimeout(() => {
+                                                const kabSelect = document.getElementById(`kabkota_asal_select_${idx}`);
+                                                const kabHidden = document.getElementById(`kabkota_asal_${idx}`);
+
+                                                if (kabSelect) {
+                                                    const kabInterval = setInterval(() => {
+                                                        if (kabSelect.options.length > 1) {
+                                                            clearInterval(kabInterval);
+
+                                                            const kabOptions = Array.from(kabSelect.options);
+                                                            let kabMatch = kabOptions.find(o => o.value === student.kabupaten_kota_asal);
+
+                                                            if (!kabMatch) {
+                                                                kabMatch = kabOptions.find(o => o.text.trim().toLowerCase() === student.kabupaten_kota_asal.trim().toLowerCase());
+                                                            }
+
+                                                            if (kabMatch) {
+                                                                kabSelect.value = kabMatch.value;
+                                                                if (kabHidden) kabHidden.value = kabMatch.value;
+                                                            } else {
+                                                                console.warn(`City mismatch for ${student.kabupaten_kota_asal}, forcing value if manual.`);
+                                                                // Should we force it? Only if we add an option dynamically? 
+                                                                // Standard selects might not allow custom value unless added.
+                                                                // Ideally API returns IDs, but if we saved Name, we match Name.
+                                                            }
+                                                        }
+                                                    }, 100);
+                                                    setTimeout(() => clearInterval(kabInterval), 5000);
+                                                }
+                                            }, 500); // Wait for cities API to load
+                                        }
+
+                                    } else {
+                                        console.warn(`Province mismatch for ${student.provinsi_asal}`);
                                     }
                                 }
                             }, 100);
