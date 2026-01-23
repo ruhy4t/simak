@@ -234,8 +234,8 @@
                             Rekam Didik dari Dapodik <span id="rekam_didik_required_${index}" class="text-red-500">*</span>
                         </label>
                         <input type="file" name="siswa[${index}][file_rekam_didik]" id="file_rekam_didik_${index}" accept=".pdf,.jpg,.jpeg,.png" required
-                            class="w-full px-4 py-2 border rounded-lg bg-white" onchange="window.validateFile(this, 1)">
-                        <p class="text-xs text-gray-500 italic mt-1">Silahkan koordinasi dengan bagian dapodik Dinas Pendidikan Kota Bogor untuk screenshot Rekam Didik. PDF/JPEG/PNG. Maks 1MB.</p>
+                            class="w-full px-4 py-2 border rounded-lg bg-white" onchange="window.validateFile(this, 0.5)">
+                        <p class="text-xs text-gray-500 italic mt-1">Silahkan koordinasi dengan bagian dapodik Dinas Pendidikan Kota Bogor untuk screenshot Rekam Didik. PDF/JPEG/PNG. Maks 500KB.</p>
                     </div>
                 </div>`}
             </div>
