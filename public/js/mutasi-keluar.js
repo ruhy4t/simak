@@ -381,8 +381,18 @@ window.lookupNpsnSekolahAsal = function (npsn) {
     lookupAsalTimeout = setTimeout(async () => {
         try {
             const response = await fetch(CONFIG.routes.apiSatpen.replace(':npsn', npsn));
-            const data = await response.json();
-            console.log('Lookup Asal Result:', data); // DEBUG LOG
+            const text = await response.text(); // Read raw text first
+            let data;
+
+            try {
+                data = JSON.parse(text);
+                console.log('Lookup Asal Result:', data);
+            } catch (e) {
+                console.error('JSON Parse Error:', e);
+                console.log('Raw Response:', text);
+                alert('Server Error: ' + text.substring(0, 150)); // Show snippet
+                throw new Error('Invalid JSON Response');
+            }
 
             if (data.found) {
                 // FOUND: Auto-fill and Lock
