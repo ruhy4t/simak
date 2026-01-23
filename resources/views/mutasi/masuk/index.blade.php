@@ -215,9 +215,10 @@
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit"
-                                                    class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-red-500 text-white hover:bg-red-600 shadow-md shadow-red-500/20 transition-all hover:-translate-y-0.5"
+                                                    class="inline-flex items-center justify-center px-3 py-1.5 rounded-lg bg-red-500 text-white hover:bg-red-600 shadow-md shadow-red-500/20 transition-all hover:-translate-y-0.5 text-sm font-medium gap-1"
                                                     title="Hapus Draft">
                                                     <i class="bi bi-trash"></i>
+                                                    Hapus Draft
                                                 </button>
                                             </form>
                                         @else
