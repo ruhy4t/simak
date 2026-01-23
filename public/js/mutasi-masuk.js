@@ -463,16 +463,22 @@
                 kabHidden.value = '';
             }
 
-            // Files Required
-            if (suratPindahInput) suratPindahInput.setAttribute('required', 'required');
-            if (suratDapodikInput) suratDapodikInput.setAttribute('required', 'required');
+            // Files Required (ONLY IF NOT PREVIOUSLY SAVED)
+            const setRequiredIfNoFile = (input) => {
+                if (input && input.getAttribute('data-has-file') !== 'true') {
+                    input.setAttribute('required', 'required');
+                }
+            };
+
+            setRequiredIfNoFile(suratPindahInput);
+            setRequiredIfNoFile(suratDapodikInput);
 
             // NEW: Reset Rekomendasi to Default (ALWAYS REQUIRED for Dalam Negeri)
-            if (fileRekomendasi) fileRekomendasi.setAttribute('required', 'required');
+            setRequiredIfNoFile(fileRekomendasi);
             if (rekomendasiRequired) rekomendasiRequired.classList.remove('hidden');
 
             // NEW: Rekam Didik Required for Dalam Negeri (with NISN)
-            if (fileRekamDidik) fileRekamDidik.setAttribute('required', 'required');
+            setRequiredIfNoFile(fileRekamDidik);
             if (rekamDidikRequired) rekamDidikRequired.classList.remove('hidden');
         }
     };
@@ -1174,6 +1180,34 @@
                         const cb = document.querySelector(`[name="siswa[${idx}][${field}]"]`);
                         if (cb) {
                             cb.checked = true;
+                        }
+                    }
+                });
+
+                // 5. EXISTING FILES HANDLING
+                const fileFields = [
+                    'file_surat_pindah', 'file_surat_dapodik', 'file_rekomendasi',
+                    'file_ijazah_sd', 'file_rapor', 'file_surat_penyaluran', 'file_rekam_didik'
+                ];
+
+                fileFields.forEach(field => {
+                    const filePath = student[field];
+                    if (filePath && typeof filePath === 'string' && filePath.length > 5) {
+                        const input = document.querySelector(`[name="siswa[${idx}][${field}]"]`);
+                        if (input) {
+                            input.setAttribute('data-has-file', 'true');
+                            input.removeAttribute('required');
+                            const existingStatus = input.parentNode.querySelector('.file-status-indicator');
+                            if (!existingStatus) {
+                                const statusDiv = document.createElement('div');
+                                statusDiv.className = 'file-status-indicator mt-2 flex items-center gap-2 text-xs text-emerald-600 bg-emerald-50 p-2 rounded-lg border border-emerald-100';
+                                statusDiv.innerHTML = `
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    <span class="font-bold">File Tersimpan</span>
+                                    <span class="text-slate-500">(Upload baru jika ingin mengubah)</span>
+                                `;
+                                input.parentNode.insertBefore(statusDiv, input.nextSibling);
+                            }
                         }
                     }
                 });
