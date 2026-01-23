@@ -6,7 +6,8 @@
     <div class="space-y-8 animate-fade-in-up">
         <!-- Header -->
         <div class="flex items-center gap-4">
-            <a href="{{ route('mutasi.keluar.index') }}" class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all">
+            <a href="{{ route('mutasi.keluar.index') }}"
+                class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all">
                 <i class="bi bi-arrow-left text-xl"></i>
             </a>
             <div>
@@ -15,7 +16,8 @@
                         <i class="bi bi-pencil-square text-amber-500 mr-2"></i>
                         Lanjutkan Draft
                     </h1>
-                    <p class="text-slate-500 mt-1">Melanjutkan draft: <strong class="font-mono">{{ $draft->id_mutasi }}</strong></p>
+                    <p class="text-slate-500 mt-1">Melanjutkan draft: <strong class="font-mono">{{ $draft->id_mutasi }}</strong>
+                    </p>
                 @else
                     <h1 class="text-2xl font-bold text-slate-900">Buat Mutasi Keluar</h1>
                     <p class="text-slate-500 mt-1">Ajukan permohonan mutasi siswa keluar</p>
@@ -24,7 +26,8 @@
         </div>
 
         <!-- Form -->
-        <form id="formMutasiKeluar" action="{{ route('mutasi.keluar.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+        <form id="formMutasiKeluar" action="{{ route('mutasi.keluar.store') }}" method="POST" enctype="multipart/form-data"
+            class="space-y-6">
             @csrf
             @if(isset($draft) && $draft)
                 <input type="hidden" name="draft_id" value="{{ $draft->id_mutasi }}">
@@ -41,30 +44,31 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Nama Siswa *</label>
-                        <input type="text" name="nama_murid" value="{{ old('nama_murid', optional($draft)->nama_murid ?? '') }}" required
+                        <input type="text" name="nama_murid"
+                            value="{{ old('nama_murid', optional($draft)->nama_murid ?? '') }}" required
                             class="w-full px-4 py-2.5 bg-slate-50 border-0 rounded-xl focus:ring-2 focus:ring-sky-100 focus:bg-white transition text-slate-800 placeholder:text-slate-400 @error('nama_murid') ring-2 ring-rose-100 @enderror"
                             placeholder="Nama lengkap siswa">
                         @error('nama_murid')<p class="text-rose-500 text-xs mt-1 font-medium">{{ $message }}</p>@enderror
                     </div>
                     <!-- NISN & NIS -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">
-                            NISN <span class="text-rose-500">*</span>
-                        </label>
-                        <input type="text" name="nisn" value="{{ old('nisn', optional($draft)->nisn ?? '') }}" required
-                            class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition"
-                            placeholder="Nomor Induk Siswa Nasional" minlength="10" maxlength="10">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">
+                                NISN <span class="text-rose-500">*</span>
+                            </label>
+                            <input type="text" name="nisn" value="{{ old('nisn', optional($draft)->nisn ?? '') }}" required
+                                class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition"
+                                placeholder="Nomor Induk Siswa Nasional" minlength="10" maxlength="10">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">
+                                NIS/NIPD <span class="text-rose-500">*</span>
+                            </label>
+                            <input type="text" name="nis" value="{{ old('nis', optional($draft)->nis ?? '') }}" required
+                                class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition"
+                                placeholder="Nomor Induk Siswa / Peserta Didik">
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">
-                            NIS/NIPD <span class="text-rose-500">*</span>
-                        </label>
-                        <input type="text" name="nis" value="{{ old('nis', optional($draft)->nis ?? '') }}" required
-                            class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition"
-                            placeholder="Nomor Induk Siswa / Peserta Didik">
-                    </div>
-                </div>
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Kelas *</label>
                         <select name="kelas" required
@@ -79,14 +83,16 @@
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Tempat Lahir *</label>
-                        <input type="text" name="tempat_lahir" value="{{ old('tempat_lahir', optional($draft)->tempat_lahir ?? '') }}" required
+                        <input type="text" name="tempat_lahir"
+                            value="{{ old('tempat_lahir', optional($draft)->tempat_lahir ?? '') }}" required
                             class="w-full px-4 py-2.5 bg-slate-50 border-0 rounded-xl focus:ring-2 focus:ring-sky-100 focus:bg-white transition text-slate-800 placeholder:text-slate-400 @error('tempat_lahir') ring-2 ring-rose-100 @enderror"
                             placeholder="Kota/Kabupaten">
                         @error('tempat_lahir')<p class="text-rose-500 text-xs mt-1 font-medium">{{ $message }}</p>@enderror
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Tanggal Lahir *</label>
-                        <input type="date" name="tanggal_lahir" value="{{ old('tanggal_lahir', optional($draft)->tanggal_lahir ?? '') }}" required
+                        <input type="date" name="tanggal_lahir"
+                            value="{{ old('tanggal_lahir', optional($draft)->tanggal_lahir ?? '') }}" required
                             class="w-full px-4 py-2.5 bg-slate-50 border-0 rounded-xl focus:ring-2 focus:ring-sky-100 focus:bg-white transition text-slate-800 cursor-pointer @error('tanggal_lahir') ring-2 ring-rose-100 @enderror">
                         @error('tanggal_lahir')<p class="text-rose-500 text-xs mt-1 font-medium">{{ $message }}</p>@enderror
                     </div>
@@ -121,8 +127,7 @@
                         <div class="relative">
                             <input type="text" name="npsn_sekolah_asal" id="npsn_sekolah_asal"
                                 value="{{ old('npsn_sekolah_asal', $npsnSekolahAsal ?? $user->npsn ?? '') }}" required
-                                maxlength="8"
-                                {{ $isLocked ? 'readonly' : '' }}
+                                maxlength="8" {{ $isLocked ? 'readonly' : '' }}
                                 class="w-full px-4 py-2.5 border-0 rounded-xl focus:ring-2 focus:ring-sky-100 transition outline-none {{ $isLocked ? 'bg-slate-100 text-slate-500 cursor-not-allowed font-mono' : 'bg-slate-50 focus:bg-white text-slate-800' }}"
                                 oninput="lookupNpsnSekolahAsal(this.value)">
                             <span id="npsn_asal_status" class="absolute right-4 top-1/2 -translate-y-1/2 text-sm"></span>
@@ -137,28 +142,34 @@
                     </div>
                     <div class="md:col-span-2">
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Alamat Sekolah Asal *</label>
-                        <textarea name="alamat_sekolah_asal" id="alamat_sekolah_asal" required rows="2"
-                            {{ $isLocked ? 'readonly' : '' }}
+                        <textarea name="alamat_sekolah_asal" id="alamat_sekolah_asal" required rows="2" {{ $isLocked ? 'readonly' : '' }}
                             class="w-full px-4 py-2.5 border-0 rounded-xl focus:ring-2 focus:ring-sky-100 transition outline-none resize-none @error('alamat_sekolah_asal') ring-2 ring-rose-100 @enderror {{ $isLocked ? 'bg-slate-100 text-slate-500 cursor-not-allowed' : 'bg-slate-50 focus:bg-white text-slate-800' }}">{{ old('alamat_sekolah_asal', $alamatSekolahAsal ?? '') }}</textarea>
-                        @error('alamat_sekolah_asal')<p class="text-rose-500 text-xs mt-1 font-medium">{{ $message }}</p>@enderror
+                        @error('alamat_sekolah_asal')<p class="text-rose-500 text-xs mt-1 font-medium">{{ $message }}</p>
+                        @enderror
                     </div>
                     <!-- Di section Sekolah Asal, setelah field alamat_sekolah_asal -->
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Nomor Surat Mutasi *</label>
                         <p class="text-xs text-rose-500 italic mb-2">Silahkan isi dengan Nomor Surat Keterangan Pindah dari
                             Sekolah</p>
-                        <input type="text" name="nomor_surat_sekolah" value="{{ old('nomor_surat_sekolah', optional($draft)->nomor_surat_sekolah ?? '') }}" required
+                        <input type="text" name="nomor_surat_sekolah"
+                            value="{{ old('nomor_surat_sekolah', optional($draft)->nomor_surat_sekolah ?? '') }}" required
                             class="w-full px-4 py-2.5 bg-slate-50 border-0 rounded-xl focus:ring-2 focus:ring-sky-100 focus:bg-white transition text-slate-800 placeholder:text-slate-400 @error('nomor_surat_sekolah') ring-2 ring-rose-100 @enderror"
                             placeholder="contoh: 421/XXX/SMP/2024">
-                        @error('nomor_surat_sekolah')<p class="text-rose-500 text-xs mt-1 font-medium">{{ $message }}</p>@enderror
+                        @error('nomor_surat_sekolah')<p class="text-rose-500 text-xs mt-1 font-medium">{{ $message }}</p>
+                        @enderror
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Tanggal Surat Mutasi *</label>
-                        <p class="text-xs text-rose-500 italic mb-2">Silahkan isi dengan Tanggal Surat Keterangan Pindah dari
+                        <p class="text-xs text-rose-500 italic mb-2">Silahkan isi dengan Tanggal Surat Keterangan Pindah
+                            dari
                             Sekolah</p>
-                        <input type="date" name="tanggal_surat_sekolah" value="{{ old('tanggal_surat_sekolah', optional($draft)->tanggal_surat_sekolah ?? '') }}" required
+                        <input type="date" name="tanggal_surat_sekolah"
+                            value="{{ old('tanggal_surat_sekolah', optional($draft)->tanggal_surat_sekolah ?? '') }}"
+                            required
                             class="w-full px-4 py-2.5 bg-slate-50 border-0 rounded-xl focus:ring-2 focus:ring-sky-100 focus:bg-white transition text-slate-800 cursor-pointer @error('tanggal_surat_sekolah') ring-2 ring-rose-100 @enderror">
-                        @error('tanggal_surat_sekolah')<p class="text-rose-500 text-xs mt-1 font-medium">{{ $message }}</p>@enderror
+                        @error('tanggal_surat_sekolah')<p class="text-rose-500 text-xs mt-1 font-medium">{{ $message }}</p>
+                        @enderror
                     </div>
                 </div>
             </div>
@@ -177,7 +188,8 @@
                                 id="npsn_required_label">*</span></label>
                         <div class="relative">
                             <input type="text" name="npsn_sekolah_tujuan" id="npsn_sekolah_tujuan"
-                                value="{{ old('npsn_sekolah_tujuan', optional($draft)->npsn_sekolah_tujuan ?? '') }}" maxlength="8"
+                                value="{{ old('npsn_sekolah_tujuan', optional($draft)->npsn_sekolah_tujuan ?? '') }}"
+                                maxlength="8"
                                 class="w-full px-4 py-2.5 bg-slate-50 border-0 rounded-xl focus:ring-2 focus:ring-sky-100 focus:bg-white transition text-slate-800 placeholder:text-slate-400 font-mono @error('npsn_sekolah_tujuan') ring-2 ring-rose-100 @enderror"
                                 placeholder="8 karakter (contoh: 12345678 atau P1234567)">
                             <span id="npsn_loading" class="hidden absolute right-3 top-2.5 text-slate-400">
@@ -185,7 +197,8 @@
                             </span>
                         </div>
                         <p id="npsn_status" class="text-xs mt-1 text-slate-500">Contoh: 12345678 atau P1234567 (PKBM)</p>
-                        @error('npsn_sekolah_tujuan')<p class="text-rose-500 text-xs mt-1 font-medium">{{ $message }}</p>@enderror
+                        @error('npsn_sekolah_tujuan')<p class="text-rose-500 text-xs mt-1 font-medium">{{ $message }}</p>
+                        @enderror
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Nama Sekolah Tujuan *</label>
@@ -193,7 +206,8 @@
                             value="{{ old('nama_sekolah_tujuan', optional($draft)->nama_sekolah_tujuan ?? '') }}" required
                             class="w-full px-4 py-2.5 bg-slate-50 border-0 rounded-xl focus:ring-2 focus:ring-sky-100 focus:bg-white transition text-slate-800 placeholder:text-slate-400 @error('nama_sekolah_tujuan') ring-2 ring-rose-100 @enderror"
                             placeholder="Nama sekolah tujuan">
-                        @error('nama_sekolah_tujuan')<p class="text-rose-500 text-xs mt-1 font-medium">{{ $message }}</p>@enderror
+                        @error('nama_sekolah_tujuan')<p class="text-rose-500 text-xs mt-1 font-medium">{{ $message }}</p>
+                        @enderror
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Provinsi Tujuan *</label>
@@ -203,7 +217,8 @@
                         </select>
                         <input type="hidden" id="provinsi_tujuan" name="provinsi_tujuan"
                             value="{{ old('provinsi_tujuan', optional($draft)->provinsi_tujuan ?? '') }}">
-                        @error('provinsi_tujuan')<p class="text-rose-500 text-xs mt-1 font-medium">{{ $message }}</p>@enderror
+                        @error('provinsi_tujuan')<p class="text-rose-500 text-xs mt-1 font-medium">{{ $message }}</p>
+                        @enderror
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Kabupaten/Kota Tujuan *</label>
@@ -213,22 +228,27 @@
                         </select>
                         <input type="hidden" id="kabupaten_kota_tujuan" name="kabupaten_kota_tujuan"
                             value="{{ old('kabupaten_kota_tujuan', optional($draft)->kabupaten_kota_tujuan ?? '') }}">
-                        @error('kabupaten_kota_tujuan')<p class="text-rose-500 text-xs mt-1 font-medium">{{ $message }}</p>@enderror
+                        @error('kabupaten_kota_tujuan')<p class="text-rose-500 text-xs mt-1 font-medium">{{ $message }}</p>
+                        @enderror
                     </div>
                     <div class="md:col-span-2">
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Alamat Sekolah Tujuan *</label>
                         <textarea name="alamat_sekolah_tujuan" id="alamat_sekolah_tujuan" rows="2" required
                             class="w-full px-4 py-2.5 bg-slate-50 border-0 rounded-xl focus:ring-2 focus:ring-sky-100 focus:bg-white transition text-slate-800 placeholder:text-slate-400 resize-none @error('alamat_sekolah_tujuan') ring-2 ring-rose-100 @enderror"
                             placeholder="Alamat lengkap sekolah tujuan">{{ old('alamat_sekolah_tujuan', optional($draft)->alamat_sekolah_tujuan ?? '') }}</textarea>
-                        @error('alamat_sekolah_tujuan')<p class="text-rose-500 text-xs mt-1 font-medium">{{ $message }}</p>@enderror
+                        @error('alamat_sekolah_tujuan')<p class="text-rose-500 text-xs mt-1 font-medium">{{ $message }}</p>
+                        @enderror
                     </div>
                     <div class="md:col-span-2">
-                        <label class="flex items-center gap-3 cursor-pointer p-4 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors">
+                        <label
+                            class="flex items-center gap-3 cursor-pointer p-4 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors">
                             <input type="checkbox" name="tujuan_luar_negeri" id="tujuan_luar_negeri" value="1"
-                                class="w-5 h-5 rounded text-sky-600 focus:ring-sky-500 border-slate-300" onchange="toggleTujuanLuarNegeri()">
+                                class="w-5 h-5 rounded text-sky-600 focus:ring-sky-500 border-slate-300"
+                                onchange="toggleTujuanLuarNegeri()">
                             <div>
                                 <span class="text-sm font-semibold text-slate-700">Sekolah Tujuan di Luar Negeri</span>
-                                <p class="text-xs text-slate-500 mt-0.5">Centang jika siswa pindah ke sekolah di luar negeri. NPSN menjadi opsional.</p>
+                                <p class="text-xs text-slate-500 mt-0.5">Centang jika siswa pindah ke sekolah di luar
+                                    negeri. NPSN menjadi opsional.</p>
                             </div>
                         </label>
                         <input type="hidden" id="tujuan_luar_negeri_hidden" name="tujuan_luar_negeri_flag" value="0">
@@ -236,8 +256,9 @@
                 </div>
                 <p class="text-xs text-slate-500 mt-4 flex items-center gap-1.5 p-3 bg-slate-50 rounded-lg">
                     <i class="bi bi-info-circle-fill text-sky-500"></i>
-                    <span>Jika NPSN tidak ditemukan di database, silakan cari di <a href="https://referensi.data.kemendikdasmen.go.id/pendidikan/dikdas" target="_blank"
-                        class="text-sky-600 hover:text-sky-700 hover:underline font-medium">referensi.data.kemendikdasmen.go.id</a></span>
+                    <span>Jika NPSN tidak ditemukan di database, silakan cari di <a
+                            href="https://referensi.data.kemendikdasmen.go.id/pendidikan/dikdas" target="_blank"
+                            class="text-sky-600 hover:text-sky-700 hover:underline font-medium">referensi.data.kemendikdasmen.go.id</a></span>
                 </p>
             </div>
 
@@ -279,31 +300,38 @@
                         <span class="mt-0.5">Centang dokumen yang sudah diserahkan secara fisik oleh pemohon.</span>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <label class="flex items-center gap-3 p-4 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors group">
+                        <label
+                            class="flex items-center gap-3 p-4 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors group">
                             <input type="checkbox" name="has_suket_keluar" value="1" required
                                 class="w-5 h-5 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500 transition">
                             <div>
-                                <span class="font-semibold text-slate-700 group-hover:text-slate-900">Surat Keterangan Keluar</span>
+                                <span class="font-semibold text-slate-700 group-hover:text-slate-900">Surat Keterangan
+                                    Keluar</span>
                                 <p class="text-xs text-slate-500 mt-0.5">Dari Kepala Sekolah Asal</p>
                             </div>
                         </label>
-                        <label class="flex items-center gap-3 p-4 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors group">
+                        <label
+                            class="flex items-center gap-3 p-4 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors group">
                             <input type="checkbox" name="has_suket_dapo" value="1" required
                                 class="w-5 h-5 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500 transition">
                             <div>
-                                <span class="font-semibold text-slate-700 group-hover:text-slate-900">Surat Keterangan Dapodik</span>
+                                <span class="font-semibold text-slate-700 group-hover:text-slate-900">Surat Keterangan
+                                    Dapodik</span>
                                 <p class="text-xs text-slate-500 mt-0.5">Dicetak dari Aplikasi Dapodik</p>
                             </div>
                         </label>
-                        <label class="flex items-center gap-3 p-4 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors group">
+                        <label
+                            class="flex items-center gap-3 p-4 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors group">
                             <input type="checkbox" name="has_suket_diterima" value="1" required
                                 class="w-5 h-5 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500 transition">
                             <div>
-                                <span class="font-semibold text-slate-700 group-hover:text-slate-900">Surat Keterangan Diterima</span>
+                                <span class="font-semibold text-slate-700 group-hover:text-slate-900">Surat Keterangan
+                                    Diterima</span>
                                 <p class="text-xs text-slate-500 mt-0.5">Dari Kepala Sekolah Tujuan</p>
                             </div>
                         </label>
-                        <label class="flex items-center gap-3 p-4 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors group">
+                        <label
+                            class="flex items-center gap-3 p-4 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors group">
                             <input type="checkbox" name="has_rapor" value="1" required
                                 class="w-5 h-5 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500 transition">
                             <div>
@@ -316,34 +344,42 @@
                     <!-- Mode Normal: Upload File -->
                     <div class="bg-amber-50 border border-amber-100 rounded-xl p-4 mb-6 text-sm text-amber-800 flex gap-3">
                         <i class="bi bi-exclamation-circle-fill text-lg"></i>
-                        <span class="mt-0.5">Semua dokumen harus dalam format <strong>PDF</strong>. Maksimal 1MB per file (kecuali rapor 2MB).</span>
+                        <span class="mt-0.5">Semua dokumen harus dalam format <strong>PDF</strong>. Maksimal 1MB per file
+                            (kecuali rapor 2MB).</span>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label class="block text-sm font-semibold text-slate-700 mb-2">Surat Keterangan Keluar *</label>
-                            <p class="text-xs text-rose-500 italic mb-2">Silahkan unggah PDF hasil scan dari dokumen asli Surat Keterangan Mutasi / Keluar dari Kepala Sekolah</p>
+                            <p class="text-xs text-rose-500 italic mb-2">Silahkan unggah PDF hasil scan dari dokumen asli Surat
+                                Keterangan Mutasi / Keluar dari Kepala Sekolah</p>
                             <input type="file" name="file_suket_keluar" accept=".pdf" required onchange="validateFile(this, 1)"
                                 class="w-full px-4 py-2.5 bg-slate-50 border-0 rounded-xl focus:ring-2 focus:ring-sky-100 transition file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100 text-slate-500 @error('file_suket_keluar') ring-2 ring-rose-100 @enderror">
-                            @error('file_suket_keluar')<p class="text-rose-500 text-xs mt-1 font-medium">{{ $message }}</p>@enderror
+                            @error('file_suket_keluar')<p class="text-rose-500 text-xs mt-1 font-medium">{{ $message }}</p>
+                            @enderror
                         </div>
                         <div>
                             <label class="block text-sm font-semibold text-slate-700 mb-2">Surat Keterangan Dapodik *</label>
-                            <p class="text-xs text-rose-500 italic mb-2">Silahkan unggah PDF hasil scan Surat Keterangan yang dicetak dari Aplikasi Dapodik (sudah TTD Kepala Sekolah)</p>
+                            <p class="text-xs text-rose-500 italic mb-2">Silahkan unggah PDF hasil scan Surat Keterangan yang
+                                dicetak dari Aplikasi Dapodik (sudah TTD Kepala Sekolah)</p>
                             <input type="file" name="file_suket_dapo" accept=".pdf" required onchange="validateFile(this, 1)"
                                 class="w-full px-4 py-2.5 bg-slate-50 border-0 rounded-xl focus:ring-2 focus:ring-sky-100 transition file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100 text-slate-500 @error('file_suket_dapo') ring-2 ring-rose-100 @enderror">
-                            @error('file_suket_dapo')<p class="text-rose-500 text-xs mt-1 font-medium">{{ $message }}</p>@enderror
+                            @error('file_suket_dapo')<p class="text-rose-500 text-xs mt-1 font-medium">{{ $message }}</p>
+                            @enderror
                         </div>
                         <div>
                             <label class="block text-sm font-semibold text-slate-700 mb-2">Surat Keterangan Diterima *</label>
-                            <p class="text-xs text-rose-500 italic mb-2">Silahkan unggah PDF hasil scan Surat Keterangan Diterima dari Sekolah Tujuan (sudah TTD)</p>
+                            <p class="text-xs text-rose-500 italic mb-2">Silahkan unggah PDF hasil scan Surat Keterangan
+                                Diterima dari Sekolah Tujuan (sudah TTD)</p>
                             <input type="file" name="file_suket_diterima" accept=".pdf" required
                                 onchange="validateFile(this, 1)"
                                 class="w-full px-4 py-2.5 bg-slate-50 border-0 rounded-xl focus:ring-2 focus:ring-sky-100 transition file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100 text-slate-500 @error('file_suket_diterima') ring-2 ring-rose-100 @enderror">
-                            @error('file_suket_diterima')<p class="text-rose-500 text-xs mt-1 font-medium">{{ $message }}</p>@enderror
+                            @error('file_suket_diterima')<p class="text-rose-500 text-xs mt-1 font-medium">{{ $message }}</p>
+                            @enderror
                         </div>
                         <div>
                             <label class="block text-sm font-semibold text-slate-700 mb-2">Rapor Lengkap *</label>
-                            <p class="text-xs text-rose-500 italic mb-2">Upload Rapor SMP lengkap (Identitas, Nilai, Mutasi) yang sudah ditandatangani. Maks 2MB.</p>
+                            <p class="text-xs text-rose-500 italic mb-2">Upload Rapor SMP lengkap (Identitas, Nilai, Mutasi)
+                                yang sudah ditandatangani. Maks 2MB.</p>
                             <input type="file" name="file_rapor" accept=".pdf" required onchange="validateFile(this, 2)"
                                 class="w-full px-4 py-2.5 bg-slate-50 border-0 rounded-xl focus:ring-2 focus:ring-sky-100 transition file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100 text-slate-500 @error('file_rapor') ring-2 ring-rose-100 @enderror">
                             @error('file_rapor')<p class="text-rose-500 text-xs mt-1 font-medium">{{ $message }}</p>@enderror
@@ -363,8 +399,7 @@
                     <i class="bi bi-save mr-2"></i>
                     <span>Simpan Draft</span>
                 </button>
-                <button type="button" id="btnSubmitKeluar"
-                    onclick="showSubmittingModal()"
+                <button type="button" id="btnSubmitKeluar" onclick="showSubmittingModal()"
                     class="px-6 py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl transition font-medium flex items-center shadow-lg shadow-slate-900/20">
                     <i class="bi bi-send-fill mr-2"></i>
                     <span>Kirim Pengajuan</span>
@@ -395,7 +430,7 @@
         function showSubmittingModal() {
             if (isSubmitting) return;
             isSubmitting = true;
-            
+
             // Calculate total file size
             let totalSize = 0;
             const fileInputs = document.querySelectorAll('input[type="file"]');
@@ -417,7 +452,7 @@
             const modal = document.getElementById('loadingModal');
             modal.classList.remove('hidden');
             modal.classList.add('flex');
-            
+
             // Submit form after showing modal
             setTimeout(() => {
                 const form = document.getElementById('formMutasiKeluar');
@@ -431,149 +466,161 @@
             }, 100);
         }
     </script>
-    
+
     <style>
-        .animate-fade-in-up { animation: fadeInUp 0.5s ease-out; }
+        .animate-fade-in-up {
+            animation: fadeInUp 0.5s ease-out;
+        }
+
         @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
     </style>
 @endsection
 
 @push('scripts')
-    <script src="{{ asset('js/mutasi-keluar.js') }}?v={{ time() }}"></script>
     <script>
-        window.MUTASI_CONFIG = {
-            routes: {
-                index: '{{ route('mutasi.keluar.index') }}',
-                apiNpsn: '{{ route('mutasi.keluar.api.npsn', ['npsn' => ':npsn']) }}',
-                apiSatpen: '{{ route('satpen.api.find', ['npsn' => ':npsn']) }}',
-                apiProvinces: '{{ route('mutasi.keluar.api.provinces') }}',
-                apiRegencies: '{{ route('mutasi.keluar.api.regencies', ['provinceId' => ':provinceId']) }}',
-                saveDraft: '{{ route('mutasi.keluar.draft.save') }}'
-            },
-            draftId: @json(isset($draft) ? $draft->id_mutasi : null)
-        };
-
-        // Populate draft values if resuming
-        @if(isset($draft) && $draft)
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('=== DRAFT RESUME MODE ===');
-            const draft = @json($draft);
-            console.log('Draft data from DB:', draft);
-            
-            // Force populate ALL form fields from draft
-            const fieldMappings = {
-                'nama_murid': draft.nama_murid,
-                'nisn': draft.nisn,
-                'nis': draft.nis,
-                'kelas': draft.kelas,
-                'tempat_lahir': draft.tempat_lahir,
-                'tanggal_lahir': draft.tanggal_lahir,
-                'jenis_kelamin': draft.jenis_kelamin,
-                'npsn_sekolah_tujuan': draft.npsn_sekolah_tujuan,
-                'nama_sekolah_tujuan': draft.nama_sekolah_tujuan,
-                'alamat_sekolah_tujuan': draft.alamat_sekolah_tujuan,
-                'alasan_pindah': draft.alasan_pindah,
-                'nomor_surat_sekolah': draft.nomor_surat_sekolah,
-                'tanggal_surat_sekolah': draft.tanggal_surat_sekolah
+         window.MUTASI_CONFIG = {
+                routes: {
+                    index: '{{ route('mutasi.keluar.index') }}',
+                    apiNpsn: '{{ route('mutasi.keluar.api.npsn', ['npsn' => ':npsn']) }}',
+                    // Use the SAME working endpoint for Sekolah Asal
+                    apiSatpen: '{{ route('mutasi.keluar.api.npsn', ['npsn' => ':npsn']) }}', 
+                    apiProvinces: '{{ route('mutasi.keluar.api.provinces') }}',
+                    apiRegencies: '{{ route('mutasi.keluar.api.regencies', ['provinceId' => ':provinceId']) }}',
+                    saveDraft: '{{ route('mutasi.keluar.draft.save') }}'
+                },
+                draftId: @json(isset($draft) ? $draft->id_mutasi : null)
             };
-            
-            Object.entries(fieldMappings).forEach(([fieldName, value]) => {
-                if (value !== null && value !== undefined && value !== '') {
-                    const input = document.querySelector(`[name="${fieldName}"]`);
-                    if (input) {
-                        input.value = value;
-                        console.log(`✓ Set ${fieldName} = "${value}"`);
-                    }
-                }
-            });
+        </script>
+        <script src="{{ asset('js/mutasi-keluar.js') }}?v={{ time() }}"></script>
 
-            // Handle Luar Negeri Checkbox
-            if (draft.tujuan_luar_negeri == 1 || draft.tujuan_luar_negeri === '1') {
-                const lnCheckbox = document.getElementById('tujuan_luar_negeri');
-                if (lnCheckbox) {
-                    lnCheckbox.checked = true;
-                    // Trigger the toggle function to update UI (hide NPSN requirement, etc.)
-                    // Use setTimeout to ensure function is defined/available
-                    setTimeout(() => {
-                        if (typeof toggleTujuanLuarNegeri === 'function') {
-                            toggleTujuanLuarNegeri();
-                        } else {
-                            // Fallback if function not yet loaded (though it should be)
-                            const npsnInput = document.getElementById('npsn_sekolah_tujuan');
-                             if (npsnInput) {
-                                npsnInput.removeAttribute('required');
-                                npsnInput.placeholder = 'Kosongkan jika tidak ada';
-                             }
-                             const hiddenFlag = document.getElementById('tujuan_luar_negeri_hidden');
-                             if (hiddenFlag) hiddenFlag.value = '1';
+            // Populate draft values if resuming
+            @if(isset($draft) && $draft)
+                document.addEventListener('DOMContentLoaded', function() {
+                    console.log('=== DRAFT RESUME MODE ===');
+                    const draft = @json($draft);
+                    console.log('Draft data from DB:', draft);
+
+                    // Force populate ALL form fields from draft
+                    const fieldMappings = {
+                        'nama_murid': draft.nama_murid,
+                        'nisn': draft.nisn,
+                        'nis': draft.nis,
+                        'kelas': draft.kelas,
+                        'tempat_lahir': draft.tempat_lahir,
+                        'tanggal_lahir': draft.tanggal_lahir,
+                        'jenis_kelamin': draft.jenis_kelamin,
+                        'npsn_sekolah_tujuan': draft.npsn_sekolah_tujuan,
+                        'nama_sekolah_tujuan': draft.nama_sekolah_tujuan,
+                        'alamat_sekolah_tujuan': draft.alamat_sekolah_tujuan,
+                        'alasan_pindah': draft.alasan_pindah,
+                        'nomor_surat_sekolah': draft.nomor_surat_sekolah,
+                        'tanggal_surat_sekolah': draft.tanggal_surat_sekolah
+                    };
+
+                    Object.entries(fieldMappings).forEach(([fieldName, value]) => {
+                        if (value !== null && value !== undefined && value !== '') {
+                            const input = document.querySelector(`[name="${fieldName}"]`);
+                            if (input) {
+                                input.value = value;
+                                console.log(`✓ Set ${fieldName} = "${value}"`);
+                            }
                         }
-                    }, 100);
-                    console.log('✓ Set tujuan_luar_negeri = true');
-                }
-            }
+                    });
 
-            // Handle Dinas Checkboxes (if applicable)
-            const dinasCheckboxes = {
-                'has_suket_keluar': draft.ceklis_surat_sekolah,
-                'has_suket_dapo': draft.ceklis_berkas_dapodik,
-                'has_suket_diterima': draft.ceklis_sekolah_tujuan,
-                'has_rapor': draft.ceklis_rapor
-            };
-
-            Object.entries(dinasCheckboxes).forEach(([inputName, value]) => {
-                if (value == 1 || value === '1' || value === true) {
-                    const cb = document.querySelector(`[name="${inputName}"]`);
-                    if (cb) {
-                        cb.checked = true;
-                        console.log(`✓ Checked ${inputName}`);
+                    // Handle Luar Negeri Checkbox
+                    if (draft.tujuan_luar_negeri == 1 || draft.tujuan_luar_negeri === '1') {
+                        const lnCheckbox = document.getElementById('tujuan_luar_negeri');
+                        if (lnCheckbox) {
+                            lnCheckbox.checked = true;
+                            // Trigger the toggle function to update UI (hide NPSN requirement, etc.)
+                            // Use setTimeout to ensure function is defined/available
+                            setTimeout(() => {
+                                if (typeof toggleTujuanLuarNegeri === 'function') {
+                                    toggleTujuanLuarNegeri();
+                                } else {
+                                    // Fallback if function not yet loaded (though it should be)
+                                    const npsnInput = document.getElementById('npsn_sekolah_tujuan');
+                                     if (npsnInput) {
+                                        npsnInput.removeAttribute('required');
+                                        npsnInput.placeholder = 'Kosongkan jika tidak ada';
+                                     }
+                                     const hiddenFlag = document.getElementById('tujuan_luar_negeri_hidden');
+                                     if (hiddenFlag) hiddenFlag.value = '1';
+                                }
+                            }, 100);
+                            console.log('✓ Set tujuan_luar_negeri = true');
+                        }
                     }
-                }
-            });
-            
-            // Handle hidden inputs for province/city
-            if (draft.provinsi_tujuan) {
-                const provHidden = document.getElementById('provinsi_tujuan');
-                if (provHidden) {
-                    provHidden.value = draft.provinsi_tujuan;
-                    console.log('✓ Set provinsi_tujuan =', draft.provinsi_tujuan);
-                }
-            }
-            if (draft.kabupaten_kota_tujuan) {
-                const kabHidden = document.getElementById('kabupaten_kota_tujuan');
-                if (kabHidden) {
-                    kabHidden.value = draft.kabupaten_kota_tujuan;
-                    console.log('✓ Set kabupaten_kota_tujuan =', draft.kabupaten_kota_tujuan);
-                }
-            }
-            
-            console.log('=== DRAFT POPULATION COMPLETE ===');
-        });
-        @else
-        console.log('No draft detected - new submission mode');
-        @endif
 
-        /**
-         * Save current form as Draft
-         */
-        function saveDraftKeluar() {
-            const form = document.getElementById('formMutasiKeluar');
-            if (!form) return;
+                    // Handle Dinas Checkboxes (if applicable)
+                    const dinasCheckboxes = {
+                        'has_suket_keluar': draft.ceklis_surat_sekolah,
+                        'has_suket_dapo': draft.ceklis_berkas_dapodik,
+                        'has_suket_diterima': draft.ceklis_sekolah_tujuan,
+                        'has_rapor': draft.ceklis_rapor
+                    };
 
-            // Change form action to draft route
-            const originalAction = form.action;
-            form.action = '{{ route('mutasi.keluar.draft.save') }}';
-            
-            // Show saving indicator
-            const btn = document.getElementById('btnSaveDraft');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="bi bi-hourglass-split animate-spin mr-2"></i> Menyimpan...';
-            btn.disabled = true;
-            
-            // Submit form
-            form.submit();
-        }
-    </script>
+                    Object.entries(dinasCheckboxes).forEach(([inputName, value]) => {
+                        if (value == 1 || value === '1' || value === true) {
+                            const cb = document.querySelector(`[name="${inputName}"]`);
+                            if (cb) {
+                                cb.checked = true;
+                                console.log(`✓ Checked ${inputName}`);
+                            }
+                        }
+                    });
+
+                    // Handle hidden inputs for province/city
+                    if (draft.provinsi_tujuan) {
+                        const provHidden = document.getElementById('provinsi_tujuan');
+                        if (provHidden) {
+                            provHidden.value = draft.provinsi_tujuan;
+                            console.log('✓ Set provinsi_tujuan =', draft.provinsi_tujuan);
+                        }
+                    }
+                    if (draft.kabupaten_kota_tujuan) {
+                        const kabHidden = document.getElementById('kabupaten_kota_tujuan');
+                        if (kabHidden) {
+                            kabHidden.value = draft.kabupaten_kota_tujuan;
+                            console.log('✓ Set kabupaten_kota_tujuan =', draft.kabupaten_kota_tujuan);
+                        }
+                    }
+
+                    console.log('=== DRAFT POPULATION COMPLETE ===');
+                });
+            @else
+                console.log('No draft detected - new submission mode');
+            @endif
+
+            /**
+             * Save current form as Draft
+             */
+            function saveDraftKeluar() {
+                const form = document.getElementById('formMutasiKeluar');
+                if (!form) return;
+
+                // Change form action to draft route
+                const originalAction = form.action;
+                form.action = '{{ route('mutasi.keluar.draft.save') }}';
+
+                // Show saving indicator
+                const btn = document.getElementById('btnSaveDraft');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="bi bi-hourglass-split animate-spin mr-2"></i> Menyimpan...';
+                btn.disabled = true;
+
+                // Submit form
+                form.submit();
+            }
+        </script>
 @endpush

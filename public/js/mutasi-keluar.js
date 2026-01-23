@@ -380,34 +380,18 @@ window.lookupNpsnSekolahAsal = function (npsn) {
 
     lookupAsalTimeout = setTimeout(async () => {
         try {
-            const response = await fetch(CONFIG.routes.apiSatpen.replace(':npsn', npsn), {
-                headers: {
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            });
-            console.log('Lookup Status:', response.status); // DEBUG LOG
-            const text = await response.text(); // Read raw text first
-            let data;
+            const response = await fetch(CONFIG.routes.apiSatpen.replace(':npsn', npsn));
+            const data = await response.json();
+            console.log('Lookup Asal Result:', data); // DEBUG LOG
 
-            try {
-                data = JSON.parse(text);
-                console.log('Lookup Asal Result:', data);
-            } catch (e) {
-                console.error('JSON Parse Error:', e);
-                console.log('Raw Response:', text);
-                alert('Server Error: ' + text.substring(0, 150)); // Show snippet
-                throw new Error('Invalid JSON Response');
-            }
-
-            if (data.found) {
+            if (data.success && data.data) {
                 // FOUND: Auto-fill and Lock
-                namaEl.value = data.nama || '';
+                namaEl.value = data.data.nama || '';
                 namaEl.readOnly = true;
                 namaEl.classList.add('bg-gray-100');
 
-                if (data.alamat_lengkap) {
-                    alamatEl.value = data.alamat_lengkap;
+                if (data.data.alamat_lengkap) {
+                    alamatEl.value = data.data.alamat_lengkap;
                     alamatEl.readOnly = true;
                     alamatEl.classList.add('bg-gray-100');
                 } else {
