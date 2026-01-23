@@ -361,6 +361,8 @@ window.lookupNpsnSekolahAsal = function (npsn) {
     const namaEl = document.getElementById('nama_sekolah_asal');
     const alamatEl = document.getElementById('alamat_sekolah_asal');
 
+    console.log('Lookup Asal Triggered:', npsn); // DEBUG LOG
+
     // Only proceed if elements exist (might be hidden/disabled for some roles)
     if (!namaEl || !alamatEl) return;
 
@@ -376,6 +378,7 @@ window.lookupNpsnSekolahAsal = function (npsn) {
         try {
             const response = await fetch(CONFIG.routes.apiSatpen.replace(':npsn', npsn));
             const data = await response.json();
+            console.log('Lookup Asal Result:', data); // DEBUG LOG
 
             if (data.found) {
                 // FOUND: Auto-fill and Lock
