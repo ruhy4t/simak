@@ -380,7 +380,13 @@ window.lookupNpsnSekolahAsal = function (npsn) {
 
     lookupAsalTimeout = setTimeout(async () => {
         try {
-            const response = await fetch(CONFIG.routes.apiSatpen.replace(':npsn', npsn));
+            const response = await fetch(CONFIG.routes.apiSatpen.replace(':npsn', npsn), {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            console.log('Lookup Status:', response.status); // DEBUG LOG
             const text = await response.text(); // Read raw text first
             let data;
 
