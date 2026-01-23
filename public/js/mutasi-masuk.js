@@ -194,28 +194,28 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Surat Pindah dari Sekolah Asal *</label>
                         <input type="file" name="siswa[${index}][file_surat_pindah]" accept=".pdf" required
-                            class="w-full px-4 py-2 border rounded-lg bg-white" onchange="window.validateFile(this, 0.5)">
-                        <p class="text-xs text-gray-500 italic mt-1">Surat keterangan pindah asli. Maks 500KB.</p>
+                            class="w-full px-4 py-2 border rounded-lg bg-white" onchange="window.validateFile(this, 0.25)">
+                        <p class="text-xs text-gray-500 italic mt-1">Surat keterangan pindah asli. Maks 250KB.</p>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Surat Pindah dari Dapodik/Emis*</label>
                         <input type="file" name="siswa[${index}][file_surat_dapodik]" accept=".pdf" required
-                            class="w-full px-4 py-2 border rounded-lg bg-white" onchange="window.validateFile(this, 0.5)">
-                        <p class="text-xs text-gray-500 italic mt-1">Dicetak dari Dapodik/Emis. Maks 500KB.</p>
+                            class="w-full px-4 py-2 border rounded-lg bg-white" onchange="window.validateFile(this, 0.25)">
+                        <p class="text-xs text-gray-500 italic mt-1">Dicetak dari Dapodik/Emis. Maks 250KB.</p>
                     </div>
                     <div id="rekomendasi_container_${index}">
                         <label class="block text-sm font-medium text-gray-700 mb-1">
                             Rekomendasi Dinas/Kemenag <span id="rekomendasi_required_${index}" class="text-red-500">*</span>
                         </label>
                         <input type="file" name="siswa[${index}][file_rekomendasi]" id="file_rekomendasi_${index}" accept=".pdf" required
-                            class="w-full px-4 py-2 border rounded-lg bg-white" onchange="window.validateFile(this, 0.5)">
-                        <p class="text-xs text-gray-500 italic mt-1">Wajib diunggah. Silahkan unggah rekomendasi/keterangan mutasi keluar yang diterbitkan oleh Dinas Pendidikan / Kemenag asal. Maks 500KB.</p>
+                            class="w-full px-4 py-2 border rounded-lg bg-white" onchange="window.validateFile(this, 0.25)">
+                        <p class="text-xs text-gray-500 italic mt-1">Wajib diunggah. Silahkan unggah rekomendasi/keterangan mutasi keluar yang diterbitkan oleh Dinas Pendidikan / Kemenag asal. Maks 250KB.</p>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Ijazah SD *</label>
                         <input type="file" name="siswa[${index}][file_ijazah_sd]" accept=".pdf" required
-                            class="w-full px-4 py-2 border rounded-lg bg-white" onchange="window.validateFile(this, 0.5)">
-                        <p class="text-xs text-gray-500 italic mt-1">Scan ijazah SD dari dokumen asli. Maks 500KB.</p>
+                            class="w-full px-4 py-2 border rounded-lg bg-white" onchange="window.validateFile(this, 0.25)">
+                        <p class="text-xs text-gray-500 italic mt-1">Scan ijazah SD dari dokumen asli. Maks 250KB.</p>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Rapor SMP Lengkap *</label>
@@ -226,16 +226,16 @@
                     <div id="penyaluran_container_${index}" class="hidden">
                         <label class="block text-sm font-medium text-gray-700 mb-1">Surat Penyaluran Kemdikdasmen *</label>
                         <input type="file" name="siswa[${index}][file_surat_penyaluran]" id="file_surat_penyaluran_${index}" accept=".pdf"
-                            class="w-full px-4 py-2 border rounded-lg bg-white" onchange="window.validateFile(this, 0.5)">
-                        <p class="text-xs text-gray-500 italic mt-1">Wajib untuk siswa luar negeri. Maks 500KB.</p>
+                            class="w-full px-4 py-2 border rounded-lg bg-white" onchange="window.validateFile(this, 0.25)">
+                        <p class="text-xs text-gray-500 italic mt-1">Wajib untuk siswa luar negeri. Maks 250KB.</p>
                     </div>
                     <div id="rekam_didik_container_${index}">
                         <label class="block text-sm font-medium text-gray-700 mb-1">
                             Rekam Didik dari Dapodik <span id="rekam_didik_required_${index}" class="text-red-500">*</span>
                         </label>
                         <input type="file" name="siswa[${index}][file_rekam_didik]" id="file_rekam_didik_${index}" accept=".pdf,.jpg,.jpeg,.png" required
-                            class="w-full px-4 py-2 border rounded-lg bg-white" onchange="window.validateFile(this, 0.5)">
-                        <p class="text-xs text-gray-500 italic mt-1">Silahkan koordinasi dengan bagian dapodik Dinas Pendidikan Kota Bogor untuk screenshot Rekam Didik. PDF/JPEG/PNG. Maks 500KB.</p>
+                            class="w-full px-4 py-2 border rounded-lg bg-white" onchange="window.validateFile(this, 0.25)">
+                        <p class="text-xs text-gray-500 italic mt-1">Silahkan koordinasi dengan bagian dapodik Dinas Pendidikan Kota Bogor untuk screenshot Rekam Didik. PDF/JPEG/PNG. Maks 250KB.</p>
                     </div>
                 </div>`}
             </div>
