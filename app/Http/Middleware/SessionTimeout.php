@@ -13,7 +13,7 @@ class SessionTimeout
      * Session idle timeout in minutes.
      * After this period of inactivity, user will be logged out.
      */
-    protected int $timeout = 60;
+    protected int $timeout = 60; // Fallback, normally overridden in handle by config
 
     /**
      * Handle an incoming request.
@@ -21,6 +21,9 @@ class SessionTimeout
      */
     public function handle(Request $request, Closure $next): Response
     {
+        // Use system config lifetime (default 120) or fallback to 60
+        $this->timeout = config('session.lifetime', 60);
+
         if (!Auth::check()) {
             return $next($request);
         }
