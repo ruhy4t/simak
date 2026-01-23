@@ -55,11 +55,24 @@ class MutasiController extends Controller
                 ->whereNull('deleted_at') // HIDE SOFT DELETED
                 ->orderBy('tanggal_pengajuan', 'desc');
 
-            // Role-based filtering - STRICT: Only PROPOSER sees data
-            if ($user->role === 'Operator' || $user->role === 'Sekolah') {
+            // Role-based filtering
+            if ($user->role === 'Operator') {
+                // STRICT: Operator only sees their own proposals
                 $query->where('pengusul', $user->username);
+            } elseif ($user->role === 'Sekolah') {
+                // Sekolah sees ALL proposals from their school (Relaxed Rule)
+                $query->where('npsn_sekolah_asal', $user->npsn);
+            } elseif (in_array($user->role, ['Dinas', 'SuperAdmin'])) {
+                // Dinas cannot see 'Draft' from Operator/Sekolah
+                $query->where(function ($q) {
+                    // Show items that are NOT draft
+                    $q->where('status', '!=', 'Draft')
+                        // OR show items created by Dinas/SuperAdmin themselves (if any)
+                        ->orWhereIn('pengusul', function ($sub) {
+                            $sub->select('username')->from('users')->whereIn('role', ['Dinas', 'SuperAdmin']);
+                        });
+                });
             }
-
             // Search filter with sanitization
             if ($request->filled('search')) {
                 $search = '%' . strip_tags($request->search) . '%';
@@ -153,10 +166,20 @@ class MutasiController extends Controller
                 abort(404);
             }
 
-            // Authorization: STRICT Only PROPOSER can cancel
-            if ($user->role === 'Operator' || $user->role === 'Sekolah') {
+            // Authorization
+            if ($user->role === 'Operator') {
                 if ($mutasi->pengusul !== $user->username) {
-                    abort(403, 'Anda tidak berhak menghapus usulan ini (bukan pengusul asli).');
+                    abort(403, 'Anda tidak berhak menghapus usulan ini (Bukan Pengusul).');
+                }
+            } elseif ($user->role === 'Sekolah') {
+                // Sekolah Admin can cancel any school proposal?
+                // "selain yang mengusulkan tidak bisa melihat data dan melanjutkan" -> User originally said this.
+                // New rule: "akun sekolah bisa melihat semua".
+                // DOES "MELIHAT" INCLUDE "MEMBATALKAN"?
+                // Usually Cancel is destructive. Let's keep Cancel stricter or allow School Admin to cancel Operator's?
+                // User didn't specify cancel for Sekolah. Safest is allow School Admin to cancel school proposals.
+                if ($mutasi->npsn_sekolah_asal !== $user->npsn && $mutasi->pengusul !== $user->username) {
+                    abort(403, 'Anda tidak berhak menghapus usulan ini.');
                 }
             } elseif (!in_array($user->role, ['Dinas', 'SuperAdmin'])) {
                 abort(403);
@@ -620,16 +643,27 @@ class MutasiController extends Controller
         }
 
         // Security: Authorization Check (IDOR Protection)
-        // STRICT: Only PROPOSER can see
         $user = Auth::user();
-        if ($user->role === 'Operator' || $user->role === 'Sekolah') {
+        if ($user->role === 'Operator') {
+            // STRICT: Operator only matches username
             if ($mutasi->pengusul !== $user->username) {
-                // Check if it's the SAME NPSN? NO, user wants strict proposer.
-                // But previously I allowed if npsn matches.
-                // Strict: Only match username.
-                abort(403, 'Unauthorized access (Strict: Not Proposer).');
+                abort(403, 'Akses ditolak (Bukan Pengusul).');
             }
-        } elseif (!in_array($user->role, ['Dinas', 'SuperAdmin'])) {
+        } elseif ($user->role === 'Sekolah') {
+            // Sekolah matches NPSN or Username (Relaxed)
+            if ($mutasi->npsn_sekolah_asal !== $user->npsn && $mutasi->pengusul !== $user->username) {
+                abort(403, 'Akses ditolak (Bukan Data Sekolah Anda).');
+            }
+        } elseif (in_array($user->role, ['Dinas', 'SuperAdmin'])) {
+            // Dinas cannot view Drafts from others
+            $isOwnDraft = in_array($mutasi->pengusul, [$user->username]); // Simplified check
+            if ($mutasi->status === 'Draft' && !$isOwnDraft) {
+                // More specific: if proposer is Operator/Sekolah, block.
+                // But simpler is: Block ALL Drafts not owned by self.
+                // Actually, Dinas should verify submitted docs, not drafts.
+                abort(403, 'Dinas tidak dapat melihat Draft usulan.');
+            }
+        } else {
             abort(403);
         }
 

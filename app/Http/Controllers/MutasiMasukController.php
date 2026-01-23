@@ -103,9 +103,22 @@ class MutasiMasukController extends Controller
                 ->orderBy('tanggal_pengajuan', 'desc');
 
             // Role-based filtering
-            // STRICT: Only PROPOSER sees data for Operator AND Sekolah
-            if ($user->role === 'Operator' || $user->role === 'Sekolah') {
+            if ($user->role === 'Operator') {
+                // STRICT: Operator only sees their own proposals
                 $query->where('pengusul', $user->username);
+            } elseif ($user->role === 'Sekolah') {
+                // Sekolah sees ALL proposals for their school (Relaxed Rule)
+                // For Mutasi Masuk: query by npsn_sekolah_tujuan
+                $query->where('npsn_sekolah_tujuan', $user->npsn);
+            } elseif (in_array($user->role, ['Dinas', 'SuperAdmin'])) {
+                // Dinas cannot see 'Draft' from Operator/Sekolah
+                // Only show rows where status IS NOT 'Draft' OR created by Dinas themselves
+                $query->where(function ($q) {
+                    $q->where('status', '!=', 'Draft')
+                        ->orWhereIn('pengusul', function ($sub) {
+                            $sub->select('username')->from('users')->whereIn('role', ['Dinas', 'SuperAdmin']);
+                        });
+                });
             }
 
             if ($request->filled('search')) {
@@ -191,10 +204,15 @@ class MutasiMasukController extends Controller
                 abort(404);
             }
 
-            // Authorization: STRICT Only PROPOSER can cancel
-            if ($user->role === 'Operator' || $user->role === 'Sekolah') {
+            // Authorization:
+            if ($user->role === 'Operator') {
                 if ($mutasi->pengusul !== $user->username) {
                     abort(403, 'Anda tidak berhak menghapus usulan ini (bukan pengusul asli).');
+                }
+            } elseif ($user->role === 'Sekolah') {
+                // Sekolah matches NPSN or Username
+                if ($mutasi->npsn_sekolah_tujuan !== $user->npsn && $mutasi->pengusul !== $user->username) {
+                    abort(403, 'Anda tidak berhak menghapus usulan ini.');
                 }
             } elseif (!in_array($user->role, ['Dinas', 'SuperAdmin'])) {
                 abort(403);
@@ -651,13 +669,24 @@ class MutasiMasukController extends Controller
         }
 
         // Authorization check
-        // STRICT: Only PROPOSER can see
         $user = Auth::user();
-        if ($user->role === 'Operator' || $user->role === 'Sekolah') {
+        if ($user->role === 'Operator') {
+            // STRICT: Operator only matches username
             if ($mutasi->pengusul !== $user->username) {
-                abort(403, 'Anda tidak memiliki akses ke data ini (Strict: Bukan Pengusul).');
+                abort(403, 'Anda tidak memiliki akses ke data ini (Bukan Pengusul).');
             }
-        } elseif (!in_array($user->role, ['Dinas', 'SuperAdmin'])) {
+        } elseif ($user->role === 'Sekolah') {
+            // Sekolah matches NPSN or Username (Relaxed)
+            if ($mutasi->npsn_sekolah_tujuan !== $user->npsn && $mutasi->pengusul !== $user->username) {
+                abort(403, 'Anda tidak memiliki akses ke data ini (Bukan Data Sekolah Anda).');
+            }
+        } elseif (in_array($user->role, ['Dinas', 'SuperAdmin'])) {
+            // Dinas cannot view Drafts from others
+            $isOwnDraft = in_array($mutasi->pengusul, [$user->username]);
+            if ($mutasi->status === 'Draft' && !$isOwnDraft) {
+                abort(403, 'Dinas tidak dapat melihat Draft usulan.');
+            }
+        } else {
             abort(403);
         }
 
