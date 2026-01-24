@@ -322,8 +322,36 @@ class MutasiMasukController extends Controller
         ];
 
         if (!$isDinasEntry) {
-            $rules['file_surat_permohonan'] = 'required|file|mimes:pdf|max:1024';
+            // Allow File OR String (Async Upload path)
+            // If hasFile -> strict file rules
+            if ($request->hasFile('file_surat_permohonan')) {
+                $rules['file_surat_permohonan'] = 'required|file|mimes:pdf|max:1024';
+            } elseif ($request->filled('file_surat_permohonan') && is_string($request->input('file_surat_permohonan'))) {
+                $rules['file_surat_permohonan'] = 'required|string';
+            } else {
+                $rules['file_surat_permohonan'] = 'required'; // Will fail
+            }
         }
+
+        $messages = [
+            // Header Document
+            'file_surat_permohonan.required' => 'File Surat Permohonan wajib diunggah.',
+            'file_surat_permohonan.file' => 'File Surat Permohonan harus berupa file.',
+            'file_surat_permohonan.mimes' => 'File Surat Permohonan harus berformat PDF.',
+            'file_surat_permohonan.max' => 'File Surat Permohonan maksimal 1MB. Silakan kompres file PDF Anda.',
+            // ... (rest of messages)
+        ];
+
+        // Per-siswa validation logic (Already updated previously)
+        // ... (Skipping redundant validation code block for brevity in tool call if possible, but replace_file_content needs contiguity)
+        // Since I can't skip lines in replace_file_content easily without context, I will focus on the start up to the loop.
+        // Actually, I need to split this into chunks if the file is too big or just replace the header part first.
+        // Let's assume strict continuity.
+        
+        // ... [OMITTED VALIDATION LOOP for brevity - assuming it was updated in previous step] ...
+        // WAIT, I cannot omit lines in ReplacementContent if I am using StartLine/EndLine.
+        // I will target the Header Validation block specifically (Lines 324-326) first.
+    }
 
         $messages = [
             // Header Document
@@ -449,7 +477,33 @@ class MutasiMasukController extends Controller
             }
 
             // Upload surat permohonan
-            $fileSuratPermohonan = $this->fileUploadService->uploadSuratPermohonan($request, $idMutasi);
+            $fileSuratPermohonan = null;
+            if ($request->hasFile('file_surat_permohonan')) {
+                $fileSuratPermohonan = $this->fileUploadService->uploadSuratPermohonan($request, $idMutasi);
+            } 
+            elseif ($request->filled('file_surat_permohonan') && is_string($request->input('file_surat_permohonan'))) {
+                $tempPath = $request->input('file_surat_permohonan');
+                if (str_contains($tempPath, 'temp_uploads/')) {
+                    $ext = pathinfo($tempPath, PATHINFO_EXTENSION);
+                    $newFilename = "surat_permohonan_{$idMutasi}.{$ext}";
+                    // Destination: dokumen/mutasi_masuk/Y/m/d/filename
+                    $destPath = "dokumen/mutasi_masuk/" . date('Y/m/d') . "/{$newFilename}";
+                    
+                    $isCloud = $this->fileUploadService->isCloudStorage();
+                    $sourceDisk = $isCloud ? 'b2' : 'local';
+                    $destDisk = $isCloud ? 'b2' : 'private_docs';
+                    $relativeDestPath = "mutasi_masuk/" . date('Y/m/d') . "/{$newFilename}";
+
+                    try {
+                        if (Storage::disk($sourceDisk)->exists($tempPath)) {
+                            Storage::disk($destDisk)->put($relativeDestPath, Storage::disk($sourceDisk)->get($tempPath));
+                            $fileSuratPermohonan = $relativeDestPath;
+                        }
+                    } catch (\Exception $e) {
+                        Log::error("Failed to move temp header file (Store): " . $e->getMessage());
+                    }
+                }
+            }
 
             // Sanitize and insert header
             // Auto-approve if submitted by Dinas/SuperAdmin (they are the verifiers)
@@ -476,13 +530,43 @@ class MutasiMasukController extends Controller
 
             // Insert per siswa with sanitization
             $siswaData = $request->input('siswa', []);
-            // FIX: Use getDateBasedPath (returns 'mutasi_masuk/...') instead of getRelativeDateBasedPath ('dokumen/mutasi_masuk/...')
-            // This ensures DB path matches physical path structure under dokumen_rahasia root
             $uploadPathKey = $this->fileUploadService->getDateBasedPath('masuk');
 
             foreach ($siswaData as $idx => $siswa) {
-                // Upload standard PDF files using service
+                // 1. Upload standard PDF files using service (Handles "File" objects)
                 $filePaths = $this->fileUploadService->uploadMutasiMasukSiswaFiles($request, $idMutasi, $idx);
+
+                // 2. Handle Async Uploads (Strings) for Standard Files
+                // Manually move files if they are strings (Fast Uploads)
+                $standardFields = [
+                    'file_surat_pindah', 'file_surat_dapodik', 'file_rekomendasi',
+                    'file_ijazah_sd', 'file_rapor', 'file_surat_penyaluran'
+                ];
+                
+                $isCloud = $this->fileUploadService->isCloudStorage();
+                $sourceDisk = $isCloud ? 'b2' : 'local';
+                $destDisk = $isCloud ? 'b2' : 'private_docs';
+
+                foreach ($standardFields as $field) {
+                    $key = "siswa.{$idx}.{$field}";
+                    $val = $request->input($key);
+                    
+                    // If service didn't process it (no file object) AND we have a string path
+                    if (!isset($filePaths[$field]) && is_string($val) && str_contains($val, 'temp_uploads/')) {
+                        $ext = pathinfo($val, PATHINFO_EXTENSION);
+                        $newFilename = "siswa{$idx}_{$field}.{$ext}";
+                        $relativeDestPath = $uploadPathKey . '/' . $newFilename;
+                        
+                        try {
+                            if (Storage::disk($sourceDisk)->exists($val)) {
+                                Storage::disk($destDisk)->put($relativeDestPath, Storage::disk($sourceDisk)->get($val));
+                                $filePaths[$field] = $relativeDestPath;
+                            }
+                        } catch (\Exception $e) {
+                            Log::error("Failed to move temp student file ($field) in Store: " . $e->getMessage());
+                        }
+                    }
+                }
 
                 // Handle file_rekam_didik (Image/PDF) separately
                 $field = 'file_rekam_didik';
