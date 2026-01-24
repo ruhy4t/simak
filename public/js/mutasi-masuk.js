@@ -1431,6 +1431,46 @@
                 // "npsn_ditemukan" is 1/true if found, 0/false if manual
                 const isManual = student.npsn_ditemukan == 0 || student.npsn_ditemukan === '0' || student.npsn_ditemukan === false;
 
+                // 0. FILES HANDLING (Priority - Do this first so it's visible immediately)
+                const fileFields = [
+                    'file_surat_pindah', 'file_surat_dapodik', 'file_rekomendasi',
+                    'file_ijazah_sd', 'file_rapor', 'file_surat_penyaluran', 'file_rekam_didik'
+                ];
+
+                fileFields.forEach(field => {
+                    const filePath = student[field];
+                    if (filePath && typeof filePath === 'string' && filePath.length > 5) {
+                        const input = document.querySelector(`[name="siswa[${idx}][${field}]"]`);
+                        if (input) {
+                            input.setAttribute('data-has-file', 'true');
+                            input.removeAttribute('required');
+
+                            // 1. Visual Indicator
+                            const existingStatus = input.parentNode.querySelector('.file-status-indicator');
+                            if (!existingStatus) {
+                                const statusDiv = document.createElement('div');
+                                statusDiv.className = 'file-status-indicator mt-2 flex items-center gap-2 text-xs text-emerald-600 bg-emerald-50 p-2 rounded-lg border border-emerald-100';
+                                statusDiv.innerHTML = `
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    <span class="font-bold">File Tersimpan</span>
+                                    <span class="text-slate-500">(Upload baru jika ingin mengubah)</span>
+                                `;
+                                input.parentNode.insertBefore(statusDiv, input.nextSibling);
+                            }
+
+                            // 2. HIDDEN INPUT FOR SUBMISSION (Fix for Silent Failure)
+                            const existingHidden = document.querySelector(`input[name="siswa[${idx}][${field}]"][type="hidden"]`);
+                            if (existingHidden) existingHidden.remove();
+
+                            const hiddenInput = document.createElement('input');
+                            hiddenInput.type = 'hidden';
+                            hiddenInput.name = `siswa[${idx}][${field}]`;
+                            hiddenInput.value = filePath;
+                            form.appendChild(hiddenInput);
+                        }
+                    }
+                });
+
                 // 1. TEXT FIELDS
                 const textFields = [
                     'nama_murid', 'nisn', 'nis', 'tempat_lahir', 'tanggal_lahir',
@@ -1838,19 +1878,41 @@
             const SERVER_LIMIT = 4.0 * 1024 * 1024; // 4.0MB Absolute Max per Request
             const SEQUENTIAL_THRESHOLD = 3.0 * 1024 * 1024; // 3.0MB Threshold for splitting
 
-            // 1. Check for INDIVIDUAL huge files (Must block these)
+            // 1. Check for File Size Limits (Business Rules)
             let oversizedFile = null;
+            let limitMsg = '';
+
             inputs.forEach(input => {
                 if (input.type === 'file' && input.files[0]) {
-                    if (input.files[0].size > SERVER_LIMIT) {
+                    const fileSize = input.files[0].size;
+                    const fieldName = input.name;
+
+                    // Rapor: Max 2MB
+                    if (fieldName.includes('file_rapor')) {
+                        if (fileSize > 2 * 1024 * 1024) {
+                            oversizedFile = input.files[0].name;
+                            limitMsg = 'Maksimal 2 MB untuk file Rapor.';
+                        }
+                    }
+                    // Others: Max 1MB
+                    else {
+                        if (fileSize > 1 * 1024 * 1024) {
+                            oversizedFile = input.files[0].name;
+                            limitMsg = 'Maksimal 1 MB untuk dokumen ini.';
+                        }
+                    }
+
+                    // Absolute Server Safe Limit (4MB)
+                    if (fileSize > 4 * 1024 * 1024) {
                         oversizedFile = input.files[0].name;
+                        limitMsg = 'File terlalu besar (Server Limit 4MB).';
                     }
                 }
             });
 
             if (oversizedFile) {
-                const subMB = (SERVER_LIMIT / (1024 * 1024)).toFixed(1);
-                alert(`⚠️ Gagal Menyimpan: File "${oversizedFile}" terlalu besar (> ${subMB} MB).\n\nServer menolak file diatas 4 MB. Silakan kompres file PDF/Foto Anda terlebih dahulu.`);
+                const sizeMB = (SERVER_LIMIT / (1024 * 1024)).toFixed(1);
+                alert(`⚠️ Gagal Menyimpan: File "${oversizedFile}" melebihi batas.\n\n${limitMsg}`);
                 showSaveIndicator('Gagal: File terlalu besar', 'error');
                 isSaving = false;
                 return false;
