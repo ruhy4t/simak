@@ -259,3 +259,37 @@ Route::middleware('auth')->group(function () {
     Route::post('/session/alive', fn() => response()->noContent())->name('session.alive');
 });
 
+// --- Temporary Route for Fixing Production CORS ---
+Route::get('/sys-admin/fix-cors', function () {
+    $disk = 'b2';
+    $bucket = config("filesystems.disks.$disk.bucket");
+
+    if (!$bucket) {
+        return response()->json(['error' => 'B2 Bucket not configured.'], 500);
+    }
+
+    try {
+        $client = \Illuminate\Support\Facades\Storage::disk($disk)->getClient();
+        $corsRules = [
+            'CORSRules' => [
+                [
+                    'AllowedHeaders' => ['*'],
+                    'AllowedMethods' => ['GET', 'PUT', 'POST', 'HEAD', 'DELETE'],
+                    'AllowedOrigins' => ['*'],
+                    'ExposeHeaders' => ['ETag'],
+                    'MaxAgeSeconds' => 3000
+                ],
+            ],
+        ];
+
+        $client->putBucketCors([
+            'Bucket' => $bucket,
+            'CORSConfiguration' => $corsRules['CORSConfiguration']
+        ]);
+
+        return response()->json(['success' => true, 'message' => "CORS updated for bucket: $bucket"]);
+    } catch (\Exception $e) {
+        return response()->json(['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()], 500);
+    }
+});
+
