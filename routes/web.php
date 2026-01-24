@@ -274,7 +274,7 @@ Route::get('/sys-admin/fix-cors', function () {
             'CORSRules' => [
                 [
                     'AllowedHeaders' => ['*'],
-                    'AllowedMethods' => ['GET', 'PUT', 'POST', 'HEAD', 'DELETE'],
+                    'AllowedMethods' => ['GET', 'PUT', 'POST', 'HEAD', 'DELETE', 'OPTIONS'],
                     'AllowedOrigins' => ['*'],
                     'ExposeHeaders' => ['ETag'],
                     'MaxAgeSeconds' => 3000
