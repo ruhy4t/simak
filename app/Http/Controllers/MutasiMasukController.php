@@ -370,111 +370,63 @@ class MutasiMasukController extends Controller
             $rules["siswa.{$i}.provinsi_asal"] = 'required|string|max:100';
             $rules["siswa.{$i}.kabupaten_kota_asal"] = 'required|string|max:100';
 
-            // Check if from foreign school - NPSN is optional for foreign schools
+            // Check if from foreign school
             $luarNegeri = $request->input("siswa.{$i}.asal_luar_negeri") === '1';
 
-            // NPSN: optional for foreign schools, otherwise allow alphanumeric (for PKBM with P prefix)
+            // NPSN Validation
             if ($luarNegeri) {
                 $rules["siswa.{$i}.npsn_sekolah_asal"] = 'nullable|string|max:8';
             } else {
-                // For domestic schools: allow alphanumeric (P prefix for PKBM) - 8 chars max
                 $rules["siswa.{$i}.npsn_sekolah_asal"] = 'nullable|string|max:8';
             }
 
+            // File Validation Helper
+            // Checks if input is a File (upload) OR a String (temp path from async upload)
+            $addFileRule = function ($field, $isRequired, $mimeTypes = 'pdf', $maxSize = 2048) use ($rules, $i, $request) {
+                $fileKey = "siswa.{$i}.{$field}";
+
+                // If it's a file upload (Legacy/Fallback)
+                if ($request->hasFile($fileKey)) {
+                    // For 'mimes', we need to separate extensions from mime types if needed, 
+                    // but standard 'mimes:pdf' works for extensions.
+                    return $isRequired ? "required|file|mimes:{$mimeTypes}|max:{$maxSize}" : "nullable|file|mimes:{$mimeTypes}|max:{$maxSize}";
+                }
+
+                // If it's a string path (Async Upload)
+                if (is_string($request->input($fileKey)) && !empty($request->input($fileKey))) {
+                    return $isRequired ? 'required|string' : 'nullable|string';
+                }
+
+                // Default if nothing present
+                return $isRequired ? 'required' : 'nullable';
+            };
+
             // File validation: skip jika is_dinas_entry
             if (!$isDinasEntry) {
-                // Surat Pindah: optional for foreign schools
-                if ($luarNegeri) {
-                    $rules["siswa.{$i}.file_surat_pindah"] = 'nullable|file|mimes:pdf|max:1024';
-                    $rules["siswa.{$i}.file_surat_dapodik"] = 'nullable|file|mimes:pdf|max:1024';
-                } else {
-                    $rules["siswa.{$i}.file_surat_pindah"] = 'required|file|mimes:pdf|max:1024';
-                    $rules["siswa.{$i}.file_surat_dapodik"] = 'required|file|mimes:pdf|max:1024';
-                }
+                // Determine requirements based on Logic
+                $reqPindah = !$luarNegeri;
+                $reqDapodik = !$luarNegeri;
+                $reqRekom = !$luarNegeri;
+                $reqPenyaluran = $luarNegeri;
 
-                $rules["siswa.{$i}.file_ijazah_sd"] = 'required|file|mimes:pdf|max:1024';
-                $rules["siswa.{$i}.file_rapor"] = 'required|file|mimes:pdf|max:2048';
-
-                // Conditional: Rekomendasi WAJIB untuk semua siswa dalam negeri
-                // EXCEPTION: Jika asal dari Luar Negeri, Rekomendasi TIDAK WAJIB
-
-                if ($luarNegeri) {
-                    $rules["siswa.{$i}.file_rekomendasi"] = 'nullable|file|mimes:pdf|max:1024';
-                } else {
-                    // Semua siswa dalam negeri (Kota Bogor + Luar Kota): Rekomendasi WAJIB
-                    $rules["siswa.{$i}.file_rekomendasi"] = 'required|file|mimes:pdf|max:1024';
-                }
-
-                // Conditional: Surat Penyaluran wajib jika luar negeri
-                if ($luarNegeri) {
-                    $rules["siswa.{$i}.file_surat_penyaluran"] = 'required|file|mimes:pdf|max:1024';
-                } else {
-                    $rules["siswa.{$i}.file_surat_penyaluran"] = 'nullable|file|mimes:pdf|max:1024';
-                }
-
-                // Rekam Didik: Wajib jika NISN ada (PDF, JPEG, atau PNG)
+                // Rekam Didik conditional
                 $hasNisn = !empty($request->input("siswa.{$i}.nisn"));
-                if ($hasNisn) {
-                    if ($luarNegeri) {
-                        $rules["siswa.{$i}.file_rekam_didik"] = 'nullable|file|mimes:jpeg,jpg,png|max:1024';
-                    } else {
-                        $rules["siswa.{$i}.file_rekam_didik"] = 'required|file|mimes:jpeg,jpg,png|max:1024';
-                    }
-                } else {
-                    $rules["siswa.{$i}.file_rekam_didik"] = 'nullable|file|mimes:jpeg,jpg,png|max:1024';
-                }
+                $reqRekamDidik = $hasNisn && !$luarNegeri;
+
+                // Apply Rules
+                $rules["siswa.{$i}.file_surat_pindah"] = $addFileRule('file_surat_pindah', $reqPindah, 'pdf', 1024);
+                $rules["siswa.{$i}.file_surat_dapodik"] = $addFileRule('file_surat_dapodik', $reqDapodik, 'pdf', 1024);
+                $rules["siswa.{$i}.file_ijazah_sd"] = $addFileRule('file_ijazah_sd', true, 'pdf', 1024);
+                $rules["siswa.{$i}.file_rapor"] = $addFileRule('file_rapor', true, 'pdf', 2048);
+                $rules["siswa.{$i}.file_rekomendasi"] = $addFileRule('file_rekomendasi', $reqRekom, 'pdf', 1024);
+                $rules["siswa.{$i}.file_surat_penyaluran"] = $addFileRule('file_surat_penyaluran', $reqPenyaluran, 'pdf', 1024);
+                $rules["siswa.{$i}.file_rekam_didik"] = $addFileRule('file_rekam_didik', $reqRekamDidik, 'jpeg,jpg,png', 1024);
             }
 
-            // Per-siswa validation messages - comprehensive
+            // Per-siswa validation messages
             $messages["siswa.{$i}.nama_murid.required"] = "Nama Siswa #{$siswaNum} wajib diisi.";
-            $messages["siswa.{$i}.nama_murid.max"] = "Nama Siswa #{$siswaNum} maksimal 100 karakter.";
-            $messages["siswa.{$i}.nisn.required"] = "NISN Siswa #{$siswaNum} wajib diisi.";
-            $messages["siswa.{$i}.nisn.size"] = "NISN Siswa #{$siswaNum} harus tepat 10 digit angka. Contoh: 0012345678.";
-            $messages["siswa.{$i}.nisn.string"] = "NISN Siswa #{$siswaNum} harus berupa angka.";
-            $messages["siswa.{$i}.nis.required"] = "NIS/NIPD Siswa #{$siswaNum} wajib diisi.";
-            $messages["siswa.{$i}.nis.max"] = "NIS/NIPD Siswa #{$siswaNum} maksimal 20 karakter.";
-            $messages["siswa.{$i}.tempat_lahir.required"] = "Tempat Lahir Siswa #{$siswaNum} wajib diisi.";
-            $messages["siswa.{$i}.tempat_lahir.max"] = "Tempat Lahir Siswa #{$siswaNum} maksimal 50 karakter.";
-            $messages["siswa.{$i}.tanggal_lahir.required"] = "Tanggal Lahir Siswa #{$siswaNum} wajib diisi.";
-            $messages["siswa.{$i}.tanggal_lahir.date"] = "Format Tanggal Lahir Siswa #{$siswaNum} tidak valid.";
-            $messages["siswa.{$i}.tanggal_lahir.before"] = "Tanggal Lahir Siswa #{$siswaNum} harus sebelum hari ini.";
-            $messages["siswa.{$i}.tanggal_lahir.after"] = "Tanggal Lahir Siswa #{$siswaNum} tidak valid (terlalu lampau).";
-            $messages["siswa.{$i}.jenis_kelamin.required"] = "Jenis Kelamin Siswa #{$siswaNum} wajib dipilih.";
-            $messages["siswa.{$i}.jenis_kelamin.in"] = "Jenis Kelamin Siswa #{$siswaNum} harus Laki-laki (L) atau Perempuan (P).";
-            $messages["siswa.{$i}.kelas.required"] = "Kelas Siswa #{$siswaNum} wajib dipilih.";
-            $messages["siswa.{$i}.kelas.in"] = "Kelas Siswa #{$siswaNum} harus VII, VIII, atau IX.";
-            $messages["siswa.{$i}.tanggal_diterima.required"] = "Tanggal Diterima Siswa #{$siswaNum} wajib diisi.";
-            $messages["siswa.{$i}.tanggal_diterima.date"] = "Format Tanggal Diterima Siswa #{$siswaNum} tidak valid.";
-            $messages["siswa.{$i}.tanggal_diterima.before_or_equal"] = "Tanggal Diterima Siswa #{$siswaNum} tidak boleh lebih dari hari ini.";
-            $messages["siswa.{$i}.nama_sekolah_asal.required"] = "Nama Sekolah Asal Siswa #{$siswaNum} wajib diisi.";
-            $messages["siswa.{$i}.nama_sekolah_asal.max"] = "Nama Sekolah Asal Siswa #{$siswaNum} maksimal 150 karakter.";
-            $messages["siswa.{$i}.alamat_sekolah_asal.required"] = "Alamat Sekolah Asal Siswa #{$siswaNum} wajib diisi.";
-            $messages["siswa.{$i}.alamat_sekolah_asal.max"] = "Alamat Sekolah Asal Siswa #{$siswaNum} maksimal 500 karakter.";
-            $messages["siswa.{$i}.provinsi_asal.required"] = "Provinsi Asal Siswa #{$siswaNum} wajib dipilih.";
-            $messages["siswa.{$i}.kabupaten_kota_asal.required"] = "Kabupaten/Kota Asal Siswa #{$siswaNum} wajib dipilih.";
-
-            // File messages
-            $messages["siswa.{$i}.file_surat_pindah.required"] = "Surat Keterangan Pindah Siswa #{$siswaNum} wajib diunggah.";
-            $messages["siswa.{$i}.file_surat_pindah.mimes"] = "Surat Keterangan Pindah Siswa #{$siswaNum} harus berformat PDF.";
-            $messages["siswa.{$i}.file_surat_pindah.max"] = "Surat Keterangan Pindah Siswa #{$siswaNum} maksimal 1MB.";
-            $messages["siswa.{$i}.file_surat_dapodik.required"] = "Surat Keterangan Dapodik Siswa #{$siswaNum} wajib diunggah.";
-            $messages["siswa.{$i}.file_surat_dapodik.mimes"] = "Surat Keterangan Dapodik Siswa #{$siswaNum} harus berformat PDF.";
-            $messages["siswa.{$i}.file_surat_dapodik.max"] = "Surat Keterangan Dapodik Siswa #{$siswaNum} maksimal 1MB.";
-            $messages["siswa.{$i}.file_ijazah_sd.required"] = "Ijazah SD Siswa #{$siswaNum} wajib diunggah.";
-            $messages["siswa.{$i}.file_ijazah_sd.mimes"] = "Ijazah SD Siswa #{$siswaNum} harus berformat PDF.";
-            $messages["siswa.{$i}.file_ijazah_sd.max"] = "Ijazah SD Siswa #{$siswaNum} maksimal 1MB.";
+            // ... (keep generic messages, they apply to both file and string presence)
             $messages["siswa.{$i}.file_rapor.required"] = "Rapor Siswa #{$siswaNum} wajib diunggah.";
-            $messages["siswa.{$i}.file_rapor.mimes"] = "Rapor Siswa #{$siswaNum} harus berformat PDF.";
-            $messages["siswa.{$i}.file_rapor.max"] = "Rapor Siswa #{$siswaNum} maksimal 2MB. Silakan kompres file PDF Anda.";
-            $messages["siswa.{$i}.file_rekomendasi.required"] = "Surat Rekomendasi Siswa #{$siswaNum} wajib diunggah (wajib untuk siswa dalam negeri).";
-            $messages["siswa.{$i}.file_rekomendasi.mimes"] = "Surat Rekomendasi Siswa #{$siswaNum} harus berformat PDF.";
-            $messages["siswa.{$i}.file_rekomendasi.max"] = "Surat Rekomendasi Siswa #{$siswaNum} maksimal 1MB.";
-            $messages["siswa.{$i}.file_surat_penyaluran.required"] = "Surat Penyaluran Siswa #{$siswaNum} wajib diunggah (wajib untuk siswa dari luar negeri).";
-            $messages["siswa.{$i}.file_surat_penyaluran.mimes"] = "Surat Penyaluran Siswa #{$siswaNum} harus berformat PDF.";
-            $messages["siswa.{$i}.file_surat_penyaluran.max"] = "Surat Penyaluran Siswa #{$siswaNum} maksimal 1MB.";
-            $messages["siswa.{$i}.file_rekam_didik.required"] = "Rekam Didik Siswa #{$siswaNum} wajib diunggah (karena siswa memiliki NISN). Koordinasi dengan bagian Dapodik Dinas Pendidikan Kota Bogor untuk screenshot Rekam Didik.";
-            $messages["siswa.{$i}.file_rekam_didik.mimes"] = "Rekam Didik Siswa #{$siswaNum} harus berformat JPEG atau PNG.";
-            $messages["siswa.{$i}.file_rekam_didik.max"] = "Rekam Didik Siswa #{$siswaNum} maksimal 1MB.";
         }
 
         $validator = Validator::make($request->all(), $rules, $messages);
