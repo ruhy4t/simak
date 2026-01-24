@@ -1575,6 +1575,32 @@
                 setTimeout(() => populateDraftStudents(), 500);
             }
 
+            // NEW: Populate Header File Indicator
+            if (CONFIG.draft && CONFIG.draft.file_surat_permohonan) {
+                const headerFileInput = document.querySelector('input[name="file_surat_permohonan"]');
+                if (headerFileInput) {
+                    const filePath = CONFIG.draft.file_surat_permohonan;
+                    if (filePath && typeof filePath === 'string' && filePath.length > 5) {
+                        headerFileInput.setAttribute('data-has-file', 'true');
+                        // For header, we might want to keep it required if user wants to change it? 
+                        // Usually if saved, not required.
+                        headerFileInput.removeAttribute('required');
+
+                        const existingStatus = headerFileInput.parentNode.querySelector('.file-status-indicator');
+                        if (!existingStatus) {
+                            const statusDiv = document.createElement('div');
+                            statusDiv.className = 'file-status-indicator mt-2 flex items-center gap-2 text-xs text-emerald-600 bg-emerald-50 p-2 rounded-lg border border-emerald-100';
+                            statusDiv.innerHTML = `
+                                <i class="bi bi-check-circle-fill"></i>
+                                <span class="font-bold">File Tersimpan (Surat Permohonan)</span>
+                                <span class="text-slate-500">(Upload baru jika ingin mengubah)</span>
+                            `;
+                            headerFileInput.parentNode.insertBefore(statusDiv, headerFileInput.nextSibling);
+                        }
+                    }
+                }
+            }
+
             jumlahInput.addEventListener('change', function () {
                 const newCount = Math.min(Math.max(parseInt(this.value) || 1, 1), 20);
                 this.value = newCount;
