@@ -612,6 +612,13 @@
             }
 
             const initResult = await initResponse.json();
+
+            // SECURITY CHECK: Ensure URL is HTTPS if current page is HTTPS
+            if (window.location.protocol === 'https:' && initResult.upload_url && initResult.upload_url.startsWith('http:')) {
+                log('WARNING: Upload URL is HTTP (Mixed Content Risk)', 'warning');
+            }
+            log(`Upload URL generated: ${initResult.upload_url.substring(0, 50)}...`, 'info');
+
             log('Upload URL received', 'success');
 
             let finalPath = '';

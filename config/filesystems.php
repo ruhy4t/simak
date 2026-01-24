@@ -32,7 +32,13 @@ return [
             'secret' => env('B2_SECRET_ACCESS_KEY'),
             'region' => env('B2_REGION', 'us-west-004'),
             'bucket' => env('B2_BUCKET'),
-            'endpoint' => env('B2_ENDPOINT'),
+            'endpoint' => (function () {
+                $endpoint = env('B2_ENDPOINT');
+                if ($endpoint && !str_starts_with($endpoint, 'http')) {
+                    return 'https://' . $endpoint;
+                }
+                return $endpoint;
+            })(),
             'use_path_style_endpoint' => true,
             'throw' => true,
         ],
