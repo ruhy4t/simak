@@ -688,6 +688,23 @@ class MutasiMasukController extends Controller
 
             // Notify Dinas users about new submission (wrapped in try-catch to not affect save)
             try {
+                // CLEANUP DRAFT: If this was a resume operation, delete the old draft DB records
+                // We do NOT delete files because they are reused/moved to the new ID
+                if ($request->filled('draft_id')) {
+                    $draftId = $request->draft_id;
+                    $oldDraft = DB::table('mutasi_masuk')
+                        ->where('id_mutasi', $draftId)
+                        ->where('status', 'Draft')
+                        ->where('pengusul', $user->username) // Security check
+                        ->first();
+
+                    if ($oldDraft) {
+                        DB::table('mutasi_masuk_siswa')->where('id_mutasi', $draftId)->delete();
+                        DB::table('mutasi_masuk')->where('id_mutasi', $draftId)->delete();
+                        Log::info("Old Draft {$draftId} cleaned up after submission {$idMutasi}");
+                    }
+                }
+
                 $newMutasi = DB::table('mutasi_masuk')->where('id_mutasi', $idMutasi)->first();
                 // Skip notification if submitter is Dinas/SuperAdmin (they already know about their own submission)
                 if ($newMutasi && !in_array($user->role, ['Dinas', 'SuperAdmin'])) {
