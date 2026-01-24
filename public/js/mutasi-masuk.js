@@ -530,8 +530,13 @@
      * Upload file immediately to /api/upload-temp
      * Creates hidden input with temp path, marks file input as uploaded
      */
+    /**
+     * Upload file immediately
+     * Supports Direct Upload to B2 (bypass server) or Legacy Upload (local)
+     */
     async function uploadFileImmediately(input, file) {
         const parentNode = input.parentNode;
+        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
         // Create/update status indicator
         let statusEl = parentNode.querySelector('.upload-status-indicator');
@@ -545,31 +550,93 @@
         statusEl.innerHTML = `
             <span class="flex items-center gap-2 text-blue-600">
                 <i class="bi bi-arrow-repeat animate-spin"></i>
-                <span>Mengunggah...</span>
+                <span>Memproses upload...</span>
             </span>
         `;
         input.classList.add('opacity-50');
         input.disabled = true;
 
         try {
-            const formData = new FormData();
-            formData.append('file', file);
-
-            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-            const response = await fetch('/api/upload-temp', {
+            // STEP 1: Get Upload URL / Strategy
+            const initResponse = await fetch('/api/upload-temp-url', {
                 method: 'POST',
-                headers: { 'X-CSRF-TOKEN': token },
-                body: formData
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': token
+                },
+                body: JSON.stringify({
+                    filename: file.name,
+                    content_type: file.type
+                })
             });
 
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.message || `Server error: ${response.status}`);
+            if (!initResponse.ok) {
+                // If 404/500, fallback to legacy might be risky, but let's check
+                throw new Error('Gagal inisialisasi upload.');
             }
 
-            const result = await response.json();
+            const initResult = await initResponse.json();
+            let finalPath = '';
 
-            if (result.success && result.path) {
+            // STEP 2: Execute Upload
+            if (initResult.success === true && initResult.upload_url && initResult.method === 'PUT') {
+                // --- MODE 1: DIRECT UPLOAD (B2) ---
+                statusEl.innerHTML = `
+                    <span class="flex items-center gap-2 text-blue-600">
+                        <i class="bi bi-cloud-arrow-up animate-pulse"></i>
+                        <span>Mengirim ke Cloud... (0%)</span>
+                    </span>
+                `;
+
+                // Use XMLHttpRequest for progress tracking (optional but nice)
+                // Or simple fetch for now since it's simpler
+                const headers = initResult.headers || {};
+                // headers['Content-Type'] = file.type; // Usually required for Presigned URL to match signature
+
+                const uploadResponse = await fetch(initResult.upload_url, {
+                    method: 'PUT',
+                    headers: headers,
+                    body: file
+                });
+
+                if (!uploadResponse.ok) {
+                    throw new Error(`Gagal kirim ke B2: ${uploadResponse.statusText}`);
+                }
+
+                // Upload Success!
+                finalPath = initResult.relative_path;
+
+            } else if (initResult.is_local || initResult.use_check_upload === false) {
+                // --- MODE 2: LEGACY UPLOAD (Local/Server) ---
+                // Fallback for local development or if direct upload disabled
+                statusEl.innerHTML = `
+                    <span class="flex items-center gap-2 text-blue-600">
+                        <i class="bi bi-hdd-network animate-spin"></i>
+                        <span>Mengunggah ke Server...</span>
+                    </span>
+                `;
+
+                const formData = new FormData();
+                formData.append('file', file);
+
+                const legacyResponse = await fetch('/api/upload-temp', {
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': token },
+                    body: formData
+                });
+
+                if (!legacyResponse.ok) throw new Error('Upload server gagal.');
+                const legacyResult = await legacyResponse.json();
+
+                if (!legacyResult.success) throw new Error(legacyResult.message || 'Upload gagal.');
+                finalPath = legacyResult.path;
+
+            } else {
+                throw new Error(initResult.message || 'Respons server tidak dikenali.');
+            }
+
+            // STEP 3: Finalize UI
+            if (finalPath) {
                 // Success: Create hidden input with temp path
                 const existingHidden = document.querySelector(`input[type="hidden"][name="${input.name}"]`);
                 if (existingHidden) existingHidden.remove();
@@ -577,7 +644,7 @@
                 const hiddenInput = document.createElement('input');
                 hiddenInput.type = 'hidden';
                 hiddenInput.name = input.name; // Same name, will override file input on submit
-                hiddenInput.value = result.path;
+                hiddenInput.value = finalPath;
                 hiddenInput.dataset.tempPath = 'true';
                 parentNode.appendChild(hiddenInput);
 
@@ -587,17 +654,16 @@
 
                 // Show success state
                 statusEl.innerHTML = `
-                    <span class="flex items-center gap-2 text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg">
-                        <i class="bi bi-check-circle-fill"></i>
-                        <span class="font-medium">Berhasil diunggah</span>
-                        <span class="text-slate-400">(${(file.size / 1024).toFixed(0)} KB)</span>
-                    </span>
-                `;
+                     <span class="flex items-center gap-2 text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg">
+                         <i class="bi bi-check-circle-fill"></i>
+                         <span class="font-medium">Berhasil diunggah</span>
+                         <span class="text-slate-400">(${(file.size / 1024).toFixed(0)} KB)</span>
+                     </span>
+                 `;
 
-                console.log(`Async upload success: ${input.name} -> ${result.path}`);
-            } else {
-                throw new Error(result.message || 'Upload failed');
+                console.log(`Async upload success: ${input.name} -> ${finalPath}`);
             }
+
         } catch (error) {
             console.error('Async upload error:', error);
 
