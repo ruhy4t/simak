@@ -128,9 +128,9 @@ class TemporaryUploadController extends Controller
     {
         // Only use direct upload if B2 is configured AND we are in production
         // OR if forced for testing (you can remove 'production' check if testing locally with B2)
-        return config('filesystems.disks.b2.key') && app()->environment('production');
-        // Uncomment below to test locally if B2 credentials are set
-        // return !empty(config('filesystems.disks.b2.key'));
+        // FORCE FALSE FOR NOW TO BYPASS CORS ISSUES
+        return false;
+        // return config('filesystems.disks.b2.key') && app()->environment('production');
     }
 
 
