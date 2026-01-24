@@ -671,7 +671,7 @@
                            <i class="bi bi-check-circle-fill"></i>
                            <div class="flex flex-col">
                              <span class="font-bold text-sm">Upload Berhasil</span>
-                             <span class="text-xs text-slate-500">File siap dikirim</span>
+                             <span class="text-xs text-slate-500">Berkas tersimpan sementara</span>
                            </div>
                        </div>
                    `;
