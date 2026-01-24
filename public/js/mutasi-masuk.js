@@ -244,27 +244,31 @@
     }
 
     // Load provinces
-    async function loadProvinces(selectId) {
+    function loadProvinces(selectId) {
         const select = document.getElementById(selectId);
-        if (!select) return;
+        if (!select) return Promise.resolve();
+
+        // If already loaded (more than default option), return immediately
+        if (select.options.length > 1) return Promise.resolve();
+
         select.innerHTML = '<option value="">Pilih Provinsi</option>';
 
-        try {
-            const response = await fetch(CONFIG.routes.apiProvinces);
-            const result = await response.json();
-
-            if (result.success && result.data) {
-                result.data.forEach(prov => {
-                    const option = document.createElement('option');
-                    option.value = prov.name;
-                    option.dataset.id = prov.id;
-                    option.textContent = prov.name;
-                    select.appendChild(option);
-                });
-            }
-        } catch (e) {
-            console.error('Failed to load provinces', e);
-        }
+        return fetch(CONFIG.routes.apiProvinces)
+            .then(response => response.json())
+            .then(result => {
+                if (result.success && result.data) {
+                    result.data.forEach(prov => {
+                        const option = document.createElement('option');
+                        option.value = prov.name;
+                        option.dataset.id = prov.id;
+                        option.textContent = prov.name;
+                        select.appendChild(option);
+                    });
+                }
+            })
+            .catch(e => {
+                console.error('Failed to load provinces', e);
+            });
     }
 
     function setupSiswaEvents(index) {
@@ -1305,33 +1309,100 @@
             }
         }
 
-        function restoreOldValues() {
-            Object.keys(OLD_VALUES).forEach(idx => {
+        async function restoreOldValues() {
+            const indices = Object.keys(OLD_VALUES);
+            for (const idx of indices) {
                 const siswa = OLD_VALUES[idx];
-                // Restore logic here (simplified for brevity but covering key fields)
-                // Text Inputs
+
+                // 1. Text Inputs (Restore standard fields)
                 ['nama_murid', 'nisn', 'nis', 'nama_sekolah_asal', 'alamat_sekolah_asal'].forEach(f => {
                     const el = document.querySelector(`[name="siswa[${idx}][${f}]"]`);
                     if (el && siswa[f]) el.value = siswa[f];
                 });
-                // Checkboxes
+
+                // 2. Checkboxes (Luar Negeri)
                 if (siswa['asal_luar_negeri'] == '1') {
                     const cb = document.getElementById(`luar_negeri_${idx}`);
-                    if (cb) { cb.checked = true; window.toggleLuarNegeri(idx); }
-                }
-                // Province/City (manual trigger required)
-                if (siswa['provinsi_asal']) {
-                    const sel = document.getElementById(`provinsi_asal_select_${idx}`);
-                    if (sel) {
-                        sel.value = siswa['provinsi_asal'];
-                        sel.dispatchEvent(new Event('change'));
-                        setTimeout(() => {
-                            const kab = document.getElementById(`kabkota_asal_select_${idx}`);
-                            if (kab && siswa['kabupaten_kota_asal']) kab.value = siswa['kabupaten_kota_asal'];
-                        }, 100);
+                    if (cb) {
+                        cb.checked = true;
+                        window.toggleLuarNegeri(idx);
                     }
                 }
-            });
+
+                // 3. Province & City (Async Restoration)
+                const provSelect = document.getElementById(`provinsi_asal_select_${idx}`);
+                if (provSelect && siswa['provinsi_asal']) {
+                    // Wait for options to be populated (if not already)
+                    if (provSelect.options.length <= 1) {
+                        await loadProvinces(`provinsi_asal_select_${idx}`);
+                    }
+
+                    // Try to find the option by value or text
+                    let match = Array.from(provSelect.options).find(o => o.value === siswa['provinsi_asal']);
+                    if (!match) {
+                        // Try text match
+                        match = Array.from(provSelect.options).find(o => o.text.trim().toLowerCase() === siswa['provinsi_asal'].trim().toLowerCase());
+                    }
+
+                    if (match) {
+                        provSelect.value = match.value;
+                    } else {
+                        // If not found in list (e.g. data mismatch), force add it to preserve value
+                        const opt = document.createElement('option');
+                        opt.value = siswa['provinsi_asal'];
+                        opt.textContent = siswa['provinsi_asal'];
+                        provSelect.appendChild(opt);
+                        provSelect.value = siswa['provinsi_asal'];
+                    }
+
+                    // Trigger change to load cities
+                    provSelect.dispatchEvent(new Event('change'));
+
+                    // 4. Restore City (Wait for city options)
+                    if (siswa['kabupaten_kota_asal']) {
+                        const kabSelect = document.getElementById(`kabkota_asal_select_${idx}`);
+                        if (kabSelect) {
+                            // Poll for city options to load
+                            let attempts = 0;
+                            const checkCityInterval = setInterval(() => {
+                                attempts++;
+                                // Stop if too many attempts (5s) to prevent infinite loop
+                                if (attempts > 50) {
+                                    clearInterval(checkCityInterval);
+                                    // Fallback: Force add city option if it didn't load
+                                    if (kabSelect.options.length <= 1) {
+                                        const opt = document.createElement('option');
+                                        opt.value = siswa['kabupaten_kota_asal'];
+                                        opt.textContent = siswa['kabupaten_kota_asal'];
+                                        kabSelect.appendChild(opt);
+                                        kabSelect.value = siswa['kabupaten_kota_asal'];
+                                    }
+                                    return;
+                                }
+
+                                if (kabSelect.options.length > 1 && !kabSelect.disabled) {
+                                    clearInterval(checkCityInterval);
+
+                                    let kabMatch = Array.from(kabSelect.options).find(o => o.value === siswa['kabupaten_kota_asal']);
+                                    if (!kabMatch) {
+                                        kabMatch = Array.from(kabSelect.options).find(o => o.text.trim().toLowerCase() === siswa['kabupaten_kota_asal'].trim().toLowerCase());
+                                    }
+
+                                    if (kabMatch) {
+                                        kabSelect.value = kabMatch.value;
+                                    } else {
+                                        const opt = document.createElement('option');
+                                        opt.value = siswa['kabupaten_kota_asal'];
+                                        opt.textContent = siswa['kabupaten_kota_asal'];
+                                        kabSelect.appendChild(opt);
+                                        kabSelect.value = siswa['kabupaten_kota_asal'];
+                                    }
+                                }
+                            }, 100);
+                        }
+                    }
+                }
+            }
         }
 
         /**
@@ -1340,13 +1411,22 @@
         /**
          * Populate form fields from CONFIG.students (when resuming draft)
          */
-        function populateDraftStudents() {
+        async function populateDraftStudents() {
             const students = CONFIG.students || [];
             if (!students.length) {
                 return;
             }
 
-            students.forEach((student, idx) => {
+            // Loop through sequential indices
+            for (let idx = 0; idx < students.length; idx++) {
+                const student = students[idx];
+
+                // SKIPPING IF OLD VALUES EXIST (Validation Error Priority)
+                if (OLD_VALUES && OLD_VALUES[idx]) {
+                    console.log(`Skipping draft population for index ${idx} because OLD_VALUES exist.`);
+                    continue;
+                }
+
                 // Determine if manual entry (not found via NPSN)
                 // "npsn_ditemukan" is 1/true if found, 0/false if manual
                 const isManual = student.npsn_ditemukan == 0 || student.npsn_ditemukan === '0' || student.npsn_ditemukan === false;
@@ -1415,241 +1495,190 @@
                     }
                 }
 
-                // 4. PROVINCE & CITY POPULATION (With Fuzzy Match for Name vs ID)
+                // 4. PROVINCE & CITY POPULATION (Async & Robust)
                 if (student.provinsi_asal) {
-                    setTimeout(() => {
-                        const provSelect = document.getElementById(`provinsi_asal_select_${idx}`);
-                        const provHidden = document.getElementById(`provinsi_asal_${idx}`);
+                    const provSelect = document.getElementById(`provinsi_asal_select_${idx}`);
+                    const provHidden = document.getElementById(`provinsi_asal_${idx}`);
 
-                        if (provSelect) {
-                            const checkInterval = setInterval(() => {
-                                if (provSelect.options.length > 1) {
-                                    clearInterval(checkInterval);
+                    if (provSelect) {
+                        // Wait for options to be populated (if not already)
+                        if (provSelect.options.length <= 1) {
+                            await loadProvinces(`provinsi_asal_select_${idx}`);
+                        }
 
-                                    // Helper to find option by Value OR Text
-                                    const options = Array.from(provSelect.options);
-                                    let match = options.find(o => o.value === student.provinsi_asal); // Try ID/Value match
+                        // Try to find the option by value or text
+                        let match = Array.from(provSelect.options).find(o => o.value === student.provinsi_asal);
+                        if (!match) {
+                            // Try text match (Case insensitive)
+                            match = Array.from(provSelect.options).find(o => o.text.trim().toLowerCase() === student.provinsi_asal.trim().toLowerCase());
+                        }
 
-                                    if (!match) {
-                                        // Try Text match (Case insensitive)
-                                        match = options.find(o => o.text.trim().toLowerCase() === student.provinsi_asal.trim().toLowerCase());
-                                    }
+                        if (match) {
+                            provSelect.value = match.value;
+                            if (provHidden) provHidden.value = match.value;
+                        } else {
+                            // If not found in list (e.g. data mismatch), force add it to preserve value
+                            const opt = document.createElement('option');
+                            opt.value = student.provinsi_asal;
+                            opt.textContent = student.provinsi_asal;
+                            provSelect.appendChild(opt);
+                            provSelect.value = student.provinsi_asal;
+                            if (provHidden) provHidden.value = student.provinsi_asal;
+                        }
 
-                                    if (match) {
-                                        provSelect.value = match.value;
-                                        if (provHidden) provHidden.value = match.value; // Store ID/Value
-                                        // Trigger change to load cities
-                                        provSelect.dispatchEvent(new Event('change'));
+                        // Trigger change to load cities
+                        provSelect.dispatchEvent(new Event('change'));
 
-                                        // 5. CITY POPULATION
-                                        if (student.kabupaten_kota_asal) {
-                                            setTimeout(() => {
-                                                const kabSelect = document.getElementById(`kabkota_asal_select_${idx}`);
-                                                const kabHidden = document.getElementById(`kabkota_asal_${idx}`);
+                        // 5. CITY POPULATION (Wait for city options)
+                        if (student.kabupaten_kota_asal) {
+                            const kabSelect = document.getElementById(`kabkota_asal_select_${idx}`);
+                            const kabHidden = document.getElementById(`kabkota_asal_${idx}`);
 
-                                                if (kabSelect) {
-                                                    const kabInterval = setInterval(() => {
-                                                        if (kabSelect.options.length > 1) {
-                                                            clearInterval(kabInterval);
-
-                                                            const kabOptions = Array.from(kabSelect.options);
-                                                            let kabMatch = kabOptions.find(o => o.value === student.kabupaten_kota_asal);
-
-                                                            if (!kabMatch) {
-                                                                kabMatch = kabOptions.find(o => o.text.trim().toLowerCase() === student.kabupaten_kota_asal.trim().toLowerCase());
-                                                            }
-
-                                                            if (kabMatch) {
-                                                                kabSelect.value = kabMatch.value;
-                                                                if (kabHidden) kabHidden.value = kabMatch.value;
-                                                            } else {
-                                                                // FALLBACK: Force Add Option
-                                                                const opt = document.createElement('option');
-                                                                opt.value = student.kabupaten_kota_asal;
-                                                                opt.text = student.kabupaten_kota_asal;
-                                                                kabSelect.add(opt);
-                                                                kabSelect.value = student.kabupaten_kota_asal;
-                                                                if (kabHidden) kabHidden.value = student.kabupaten_kota_asal;
-                                                            }
-                                                        }
-                                                    }, 100);
-                                                    setTimeout(() => clearInterval(kabInterval), 5000);
-                                                }
-                                            }, 500); // Wait for cities API to load
+                            if (kabSelect) {
+                                // Poll for city options to load
+                                await new Promise(resolve => {
+                                    let attempts = 0;
+                                    const checkCityInterval = setInterval(() => {
+                                        attempts++;
+                                        if (attempts > 50) { // 5 seconds
+                                            clearInterval(checkCityInterval);
+                                            resolve(); // Stop waiting
+                                            return;
                                         }
 
-                                    } else {
-                                        // FALLBACK: Force Add Option for Province
-                                        const opt = document.createElement('option');
-                                        opt.value = student.provinsi_asal;
-                                        opt.text = student.provinsi_asal;
-                                        provSelect.add(opt);
-                                        provSelect.value = student.provinsi_asal;
-                                        if (provHidden) provHidden.value = student.provinsi_asal;
+                                        if (kabSelect.options.length > 1 && !kabSelect.disabled) {
+                                            clearInterval(checkCityInterval);
+                                            resolve(); // Loaded!
+                                        }
+                                    }, 100);
+                                });
 
-                                        // Still try to trigger change to load cities if valid ID, 
-                                        // but usually manual text won't trigger API. 
-                                        // We just ensure the value is displayed.
-                                        provSelect.dispatchEvent(new Event('change'));
-                                    }
+                                // Try to Select or Force Add
+                                let kabMatch = Array.from(kabSelect.options).find(o => o.value === student.kabupaten_kota_asal);
+                                if (!kabMatch) {
+                                    kabMatch = Array.from(kabSelect.options).find(o => o.text.trim().toLowerCase() === student.kabupaten_kota_asal.trim().toLowerCase());
                                 }
-                            }, 100);
-                            setTimeout(() => clearInterval(checkInterval), 5000);
-                        }
-                    }, 200);
-                }
 
-                // Handle luar negeri checkbox
-                if (student.asal_luar_negeri == 1 || student.asal_luar_negeri === '1') {
-                    const cb = document.getElementById(`luar_negeri_${idx}`);
-                    if (cb) {
-                        cb.checked = true;
-                        window.toggleLuarNegeri(idx);
-                    }
-                }
-
-                // Handle Dinas/SuperAdmin confirmation checkboxes
-                const checkboxFields = [
-                    'has_surat_pindah',
-                    'has_surat_dapodik',
-                    'has_rekomendasi',
-                    'has_ijazah_sd',
-                    'has_rapor',
-                    'has_surat_penyaluran'
-                ];
-                checkboxFields.forEach(field => {
-                    if (student[field] == 1 || student[field] === '1' || student[field] === true) {
-                        const cb = document.querySelector(`[name="siswa[${idx}][${field}]"]`);
-                        if (cb) {
-                            cb.checked = true;
-                        }
-                    }
-                });
-
-                // 5. EXISTING FILES HANDLING
-                const fileFields = [
-                    'file_surat_pindah', 'file_surat_dapodik', 'file_rekomendasi',
-                    'file_ijazah_sd', 'file_rapor', 'file_surat_penyaluran', 'file_rekam_didik'
-                ];
-
-                fileFields.forEach(field => {
-                    const filePath = student[field];
-                    if (filePath && typeof filePath === 'string' && filePath.length > 5) {
-                        const input = document.querySelector(`[name="siswa[${idx}][${field}]"]`);
-                        if (input) {
-                            input.setAttribute('data-has-file', 'true');
-                            input.removeAttribute('required');
-                            const existingStatus = input.parentNode.querySelector('.file-status-indicator');
-                            if (!existingStatus) {
-                                const statusDiv = document.createElement('div');
-                                statusDiv.className = 'file-status-indicator mt-2 flex items-center gap-2 text-xs text-emerald-600 bg-emerald-50 p-2 rounded-lg border border-emerald-100';
-                                statusDiv.innerHTML = `
-                                    <i class="bi bi-check-circle-fill"></i>
-                                    <span class="font-bold">File Tersimpan</span>
-                                    <span class="text-slate-500">(Upload baru jika ingin mengubah)</span>
-                                `;
-                                input.parentNode.insertBefore(statusDiv, input.nextSibling);
+                                if (kabMatch) {
+                                    kabSelect.value = kabMatch.value;
+                                    if (kabHidden) kabHidden.value = kabMatch.value;
+                                } else {
+                                    const opt = document.createElement('option');
+                                    opt.value = student.kabupaten_kota_asal;
+                                    opt.textContent = student.kabupaten_kota_asal;
+                                    kabSelect.appendChild(opt);
+                                    kabSelect.value = student.kabupaten_kota_asal;
+                                    if (kabHidden) kabHidden.value = student.kabupaten_kota_asal;
+                                }
                             }
                         }
                     }
-                });
-            });
-        }
+                }
 
-        // Initialize Form
-        if (jumlahInput) {
-            // Use draft.jumlah_siswa (user's intended slots) NOT students.length (actual saved count)
-            let studentCount;
-            if (CONFIG.draft && CONFIG.draft.jumlah_siswa) {
-                studentCount = parseInt(CONFIG.draft.jumlah_siswa);
-                console.log(`Using draft jumlah_siswa: ${studentCount}`);
-            } else {
-                studentCount = OLD_JUMLAH;
-            }
+                // Initialize Form
+                if (jumlahInput) {
+                    // Use draft.jumlah_siswa (user's intended slots) NOT students.length (actual saved count)
+                    let studentCount;
+                    if (CONFIG.draft && CONFIG.draft.jumlah_siswa) {
+                        studentCount = parseInt(CONFIG.draft.jumlah_siswa);
+                        console.log(`Using draft jumlah_siswa: ${studentCount}`);
+                    } else {
+                        studentCount = OLD_JUMLAH;
+                    }
 
-            jumlahInput.value = studentCount;
-            renderSiswaForms(parseInt(studentCount) || 1);
+                    jumlahInput.value = studentCount;
+                    renderSiswaForms(parseInt(studentCount) || 1);
 
-            // Populate from draft students if available
-            if (CONFIG.students && CONFIG.students.length > 0) {
-                setTimeout(() => populateDraftStudents(), 500);
-            }
+                    // Populate from draft students if available
+                    if (CONFIG.students && CONFIG.students.length > 0) {
+                        setTimeout(() => populateDraftStudents(), 500);
+                    }
 
-            // NEW: Populate Header File Indicator
-            if (CONFIG.draft && CONFIG.draft.file_surat_permohonan) {
-                const headerFileInput = document.querySelector('input[name="file_surat_permohonan"]');
-                if (headerFileInput) {
-                    const filePath = CONFIG.draft.file_surat_permohonan;
-                    if (filePath && typeof filePath === 'string' && filePath.length > 5) {
-                        headerFileInput.setAttribute('data-has-file', 'true');
-                        // For header, we might want to keep it required if user wants to change it? 
-                        // Usually if saved, not required.
-                        headerFileInput.removeAttribute('required');
+                    // NEW: Populate Header File Indicator
+                    if (CONFIG.draft && CONFIG.draft.file_surat_permohonan) {
+                        const headerFileInput = document.querySelector('input[name="file_surat_permohonan"]');
+                        if (headerFileInput) {
+                            const filePath = CONFIG.draft.file_surat_permohonan;
+                            if (filePath && typeof filePath === 'string' && filePath.length > 5) {
+                                headerFileInput.setAttribute('data-has-file', 'true');
+                                // For header, we might want to keep it required if user wants to change it? 
+                                // Usually if saved, not required.
+                                headerFileInput.removeAttribute('required');
 
-                        const existingStatus = headerFileInput.parentNode.querySelector('.file-status-indicator');
-                        if (!existingStatus) {
-                            const statusDiv = document.createElement('div');
-                            statusDiv.className = 'file-status-indicator mt-2 flex items-center gap-2 text-xs text-emerald-600 bg-emerald-50 p-2 rounded-lg border border-emerald-100';
-                            statusDiv.innerHTML = `
+                                const existingStatus = headerFileInput.parentNode.querySelector('.file-status-indicator');
+                                if (!existingStatus) {
+                                    const statusDiv = document.createElement('div');
+                                    statusDiv.className = 'file-status-indicator mt-2 flex items-center gap-2 text-xs text-emerald-600 bg-emerald-50 p-2 rounded-lg border border-emerald-100';
+                                    statusDiv.innerHTML = `
                                 <i class="bi bi-check-circle-fill"></i>
                                 <span class="font-bold">File Tersimpan (Surat Permohonan)</span>
                                 <span class="text-slate-500">(Upload baru jika ingin mengubah)</span>
                             `;
-                            headerFileInput.parentNode.insertBefore(statusDiv, headerFileInput.nextSibling);
+                                    headerFileInput.parentNode.insertBefore(statusDiv, headerFileInput.nextSibling);
+                                }
+
+                                // HIDDEN INPUT FOR SUBMISSION
+                                const existingHidden = document.querySelector(`input[name="file_surat_permohonan"][type="hidden"]`);
+                                if (existingHidden) existingHidden.remove();
+
+                                const hiddenInput = document.createElement('input');
+                                hiddenInput.type = 'hidden';
+                                hiddenInput.name = 'file_surat_permohonan';
+                                hiddenInput.value = filePath;
+                                form.appendChild(hiddenInput);
+                            }
                         }
                     }
+
+                    jumlahInput.addEventListener('change', function () {
+                        const newCount = Math.min(Math.max(parseInt(this.value) || 1, 1), 20);
+                        this.value = newCount;
+
+                        // If draft mode and reducing count, warn user
+                        if (draftId && newCount < totalSiswa) {
+                            if (!confirm(`Mengurangi jumlah siswa dari ${totalSiswa} ke ${newCount}. Data siswa #${newCount + 1} dst akan tersimpan di database tapi tidak ditampilkan. Lanjutkan?`)) {
+                                this.value = totalSiswa;
+                                return;
+                            }
+                        }
+
+                        // Re-render forms but preserve existing students data for previously populated forms
+                        renderSiswaForms(newCount);
+
+                        // Re-populate from draft students if available
+                        if (CONFIG.students && CONFIG.students.length > 0) {
+                            setTimeout(() => populateDraftStudents(), 300);
+                        }
+
+                        // Sync Header if Draft exists
+                        if (draftId) {
+                            updateDraftHeader(draftId, { jumlah_siswa: newCount });
+                        }
+                    });
                 }
-            }
 
-            jumlahInput.addEventListener('change', function () {
-                const newCount = Math.min(Math.max(parseInt(this.value) || 1, 1), 20);
-                this.value = newCount;
+                if (prevBtn) prevBtn.addEventListener('click', () => { if (currentSiswa > 0) showSiswa(currentSiswa - 1); });
+                if (nextBtn) nextBtn.addEventListener('click', () => { if (currentSiswa < totalSiswa - 1) showSiswa(currentSiswa + 1); });
 
-                // If draft mode and reducing count, warn user
-                if (draftId && newCount < totalSiswa) {
-                    if (!confirm(`Mengurangi jumlah siswa dari ${totalSiswa} ke ${newCount}. Data siswa #${newCount + 1} dst akan tersimpan di database tapi tidak ditampilkan. Lanjutkan?`)) {
-                        this.value = totalSiswa;
-                        return;
-                    }
+                // Prevent double submit
+                if (form) {
+                    form.addEventListener('submit', function (e) {
+                        // If draft mode and more than 1 student, use AJAX finalize
+                        if (draftId && totalSiswa > 1) {
+                            e.preventDefault();
+                            finalizeDraftSubmit();
+                            return;
+                        }
+
+                        const btn = document.getElementById('btnSubmit');
+                        if (btn) {
+                            btn.disabled = true;
+                            btn.innerHTML = '<i class="bi bi-arrow-repeat animate-spin mr-2"></i> Memproses...';
+                        }
+                    });
                 }
 
-                // Re-render forms but preserve existing students data for previously populated forms
-                renderSiswaForms(newCount);
-
-                // Re-populate from draft students if available
-                if (CONFIG.students && CONFIG.students.length > 0) {
-                    setTimeout(() => populateDraftStudents(), 300);
-                }
-
-                // Sync Header if Draft exists
-                if (draftId) {
-                    updateDraftHeader(draftId, { jumlah_siswa: newCount });
-                }
             });
-        }
-
-        if (prevBtn) prevBtn.addEventListener('click', () => { if (currentSiswa > 0) showSiswa(currentSiswa - 1); });
-        if (nextBtn) nextBtn.addEventListener('click', () => { if (currentSiswa < totalSiswa - 1) showSiswa(currentSiswa + 1); });
-
-        // Prevent double submit
-        if (form) {
-            form.addEventListener('submit', function (e) {
-                // If draft mode and more than 1 student, use AJAX finalize
-                if (draftId && totalSiswa > 1) {
-                    e.preventDefault();
-                    finalizeDraftSubmit();
-                    return;
-                }
-
-                const btn = document.getElementById('btnSubmit');
-                if (btn) {
-                    btn.disabled = true;
-                    btn.innerHTML = '<i class="bi bi-arrow-repeat animate-spin mr-2"></i> Memproses...';
-                }
-            });
-        }
-
-    });
 
     // ======================================================================
     // AUTO-SAVE DRAFT FUNCTIONS
@@ -2035,9 +2064,11 @@
                 return;
             }
 
-            // Save current student
+            // Save ALL students to ensure nothing is missed (Fix for Missing 5th Student)
             if (totalSiswa > 0) {
-                await saveCurrentStudent(currentSiswa);
+                for (let i = 0; i < totalSiswa; i++) {
+                    await saveCurrentStudent(i);
+                }
             }
 
             showSaveIndicator('📝 Draft tersimpan! Mengalihkan...', 'success');

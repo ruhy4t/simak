@@ -129,18 +129,19 @@ class SatuanPendidikanController extends Controller
      */
     public function getProvinces()
     {
-        // Try Local DB First
+        // 1. Try Local DB First (Priority)
         if (\Schema::hasTable('ref_provinsi')) {
-            $provinces = Cache::rememberForever('ref_provinces_local', function () {
+            // Cache for 30 days if local
+            $provinces = Cache::remember('ref_provinces_local_db', 2592000, function () {
                 return \DB::table('ref_provinsi')->select(['id', 'nama as name'])->orderBy('nama')->get();
             });
 
             if ($provinces->isNotEmpty()) {
-                return response()->json(['success' => true, 'source' => 'local', 'data' => $provinces]);
+                return response()->json(['success' => true, 'source' => 'local_db', 'data' => $provinces]);
             }
         }
 
-        // Fallback to External API (Emsifa)
+        // 2. Fallback to External API (Emsifa) - Only if local is empty
         return Cache::remember('ref_provinces_external', 86400, function () { // Cache for 24h
             try {
                 $response = Http::timeout(5)->get('https://emsifa.github.io/api-wilayah-indonesia/api/provinces.json');
@@ -159,9 +160,17 @@ class SatuanPendidikanController extends Controller
      */
     public function getRegencies($provinceId)
     {
-        // 1. Try Local DB
+        // 1. Try Local DB (Priority)
         if (\Schema::hasTable('ref_kabupaten')) {
-            $regencies = Cache::rememberForever("ref_regencies_local_{$provinceId}", function () use ($provinceId) {
+            $regencies = Cache::remember("ref_regencies_local_db_{$provinceId}", 2592000, function () use ($provinceId) {
+                // If provinceId is numeric (ID) -> use province_id column
+                // If provinceId is string name (from UI) -> we might need to find by name from ref_provinsi first?
+                // The UI sends ID if selected from dropdown (if we set option.dataset.id). 
+                // BUT mutasi-masuk.js sets val=name. 
+                // The JS logic: loadProvinces sets option.value = prov.name AND option.dataset.id = prov.id.
+                // The UI listener uses: provId = selectedOption.dataset.id.
+                // So $provinceId received here IS the ID. Correct.
+
                 return \DB::table('ref_kabupaten')
                     ->where('province_id', $provinceId)
                     ->select(['id', 'nama as name'])
@@ -174,20 +183,7 @@ class SatuanPendidikanController extends Controller
             }
         }
 
-        // 2. Try Local JSON File
-        if (file_exists(public_path('data/kabkota.json'))) {
-            $regencies = Cache::remember("ref_regencies_json_{$provinceId}", 86400, function () use ($provinceId) {
-                $content = file_get_contents(public_path('data/kabkota.json'));
-                $data = json_decode($content, true);
-                return collect($data)->where('province_id', $provinceId)->values();
-            });
-
-            if ($regencies->isNotEmpty()) {
-                return response()->json(['success' => true, 'source' => 'local_file', 'data' => $regencies]);
-            }
-        }
-
-        // 3. Fallback to External API (Emsifa)
+        // 2. Fallback to External API (Emsifa)
         return Cache::remember("ref_regencies_external_{$provinceId}", 86400, function () use ($provinceId) {
             try {
                 $response = Http::timeout(5)->get("https://emsifa.github.io/api-wilayah-indonesia/api/regencies/{$provinceId}.json");

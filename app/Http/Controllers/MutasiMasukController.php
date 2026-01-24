@@ -481,6 +481,9 @@ class MutasiMasukController extends Controller
                     } catch (\Exception $e) {
                         Log::error("Failed to move temp header file (Store): " . $e->getMessage());
                     }
+                } else {
+                    // ACCEPT EXISTING PERSISTENT PATH (Resume Draft)
+                    $fileSuratPermohonan = $tempPath;
                 }
             }
 
@@ -535,18 +538,23 @@ class MutasiMasukController extends Controller
                     $val = $request->input($key);
 
                     // If service didn't process it (no file object) AND we have a string path
-                    if (!isset($filePaths[$field]) && is_string($val) && str_contains($val, 'temp_uploads/')) {
-                        $ext = pathinfo($val, PATHINFO_EXTENSION);
-                        $newFilename = "siswa{$idx}_{$field}.{$ext}";
-                        $relativeDestPath = $uploadPathKey . '/' . $newFilename;
+                    if (!isset($filePaths[$field]) && is_string($val) && !empty($val)) {
+                        if (str_contains($val, 'temp_uploads/')) {
+                            $ext = pathinfo($val, PATHINFO_EXTENSION);
+                            $newFilename = "siswa{$idx}_{$field}.{$ext}";
+                            $relativeDestPath = $uploadPathKey . '/' . $newFilename;
 
-                        try {
-                            if (Storage::disk($sourceDisk)->exists($val)) {
-                                Storage::disk($destDisk)->put($relativeDestPath, Storage::disk($sourceDisk)->get($val));
-                                $filePaths[$field] = $relativeDestPath;
+                            try {
+                                if (Storage::disk($sourceDisk)->exists($val)) {
+                                    Storage::disk($destDisk)->put($relativeDestPath, Storage::disk($sourceDisk)->get($val));
+                                    $filePaths[$field] = $relativeDestPath;
+                                }
+                            } catch (\Exception $e) {
+                                Log::error("Failed to move temp student file ($field) in Store: " . $e->getMessage());
                             }
-                        } catch (\Exception $e) {
-                            Log::error("Failed to move temp student file ($field) in Store: " . $e->getMessage());
+                        } else {
+                            // PERSISTENT PATH (Resume Draft): Use existing
+                            $filePaths[$field] = $val;
                         }
                     }
                 }
@@ -563,16 +571,21 @@ class MutasiMasukController extends Controller
                 if ($file) {
                     // CASE 1: Temp File Path (String)
                     if (is_string($file)) {
-                        // Just use the service to move it. 
-                        // Note: We skip the WebP conversion logic for temp files to simplify, 
-                        // or we could implement it in service if really needed. 
-                        // For now, simple move is safer.
-                        $filePaths[$field] = $this->fileUploadService->uploadImage(
-                            $file,
-                            $idMutasi,
-                            "siswa{$idx}_{$field}",
-                            $uploadPathKey
-                        );
+                        if (str_contains($file, 'temp_uploads/')) {
+                            // Just use the service to move it. 
+                            // Note: We skip the WebP conversion logic for temp files to simplify, 
+                            // or we could implement it in service if really needed. 
+                            // For now, simple move is safer.
+                            $filePaths[$field] = $this->fileUploadService->uploadImage(
+                                $file,
+                                $idMutasi,
+                                "siswa{$idx}_{$field}",
+                                $uploadPathKey
+                            );
+                        } else {
+                            // PERSISTENT PATH (Resume Draft)
+                            $filePaths[$field] = $file;
+                        }
                     }
                     // CASE 2: UploadedFile Object (Standard)
                     elseif ($file instanceof \Illuminate\Http\UploadedFile) {
