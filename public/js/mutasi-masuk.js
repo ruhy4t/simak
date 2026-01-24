@@ -1574,111 +1574,113 @@
                         }
                     }
                 }
+            }
+        }
 
-                // Initialize Form
-                if (jumlahInput) {
-                    // Use draft.jumlah_siswa (user's intended slots) NOT students.length (actual saved count)
-                    let studentCount;
-                    if (CONFIG.draft && CONFIG.draft.jumlah_siswa) {
-                        studentCount = parseInt(CONFIG.draft.jumlah_siswa);
-                        console.log(`Using draft jumlah_siswa: ${studentCount}`);
-                    } else {
-                        studentCount = OLD_JUMLAH;
-                    }
+        // Initialize Form
+        if (jumlahInput) {
+            // Use draft.jumlah_siswa (user's intended slots) NOT students.length (actual saved count)
+            let studentCount;
+            if (CONFIG.draft && CONFIG.draft.jumlah_siswa) {
+                studentCount = parseInt(CONFIG.draft.jumlah_siswa);
+                console.log(`Using draft jumlah_siswa: ${studentCount}`);
+            } else {
+                studentCount = OLD_JUMLAH;
+            }
 
-                    jumlahInput.value = studentCount;
-                    renderSiswaForms(parseInt(studentCount) || 1);
+            jumlahInput.value = studentCount;
+            renderSiswaForms(parseInt(studentCount) || 1);
 
-                    // Populate from draft students if available
-                    if (CONFIG.students && CONFIG.students.length > 0) {
-                        setTimeout(() => populateDraftStudents(), 500);
-                    }
+            // Populate from draft students if available
+            if (CONFIG.students && CONFIG.students.length > 0) {
+                setTimeout(() => populateDraftStudents(), 500);
+            }
 
-                    // NEW: Populate Header File Indicator
-                    if (CONFIG.draft && CONFIG.draft.file_surat_permohonan) {
-                        const headerFileInput = document.querySelector('input[name="file_surat_permohonan"]');
-                        if (headerFileInput) {
-                            const filePath = CONFIG.draft.file_surat_permohonan;
-                            if (filePath && typeof filePath === 'string' && filePath.length > 5) {
-                                headerFileInput.setAttribute('data-has-file', 'true');
-                                // For header, we might want to keep it required if user wants to change it? 
-                                // Usually if saved, not required.
-                                headerFileInput.removeAttribute('required');
+            // NEW: Populate Header File Indicator
+            if (CONFIG.draft && CONFIG.draft.file_surat_permohonan) {
+                const headerFileInput = document.querySelector('input[name="file_surat_permohonan"]');
+                if (headerFileInput) {
+                    const filePath = CONFIG.draft.file_surat_permohonan;
+                    if (filePath && typeof filePath === 'string' && filePath.length > 5) {
+                        headerFileInput.setAttribute('data-has-file', 'true');
+                        // For header, we might want to keep it required if user wants to change it? 
+                        // Usually if saved, not required.
+                        headerFileInput.removeAttribute('required');
 
-                                const existingStatus = headerFileInput.parentNode.querySelector('.file-status-indicator');
-                                if (!existingStatus) {
-                                    const statusDiv = document.createElement('div');
-                                    statusDiv.className = 'file-status-indicator mt-2 flex items-center gap-2 text-xs text-emerald-600 bg-emerald-50 p-2 rounded-lg border border-emerald-100';
-                                    statusDiv.innerHTML = `
+                        const existingStatus = headerFileInput.parentNode.querySelector('.file-status-indicator');
+                        if (!existingStatus) {
+                            const statusDiv = document.createElement('div');
+                            statusDiv.className = 'file-status-indicator mt-2 flex items-center gap-2 text-xs text-emerald-600 bg-emerald-50 p-2 rounded-lg border border-emerald-100';
+                            statusDiv.innerHTML = `
                                 <i class="bi bi-check-circle-fill"></i>
                                 <span class="font-bold">File Tersimpan (Surat Permohonan)</span>
                                 <span class="text-slate-500">(Upload baru jika ingin mengubah)</span>
                             `;
-                                    headerFileInput.parentNode.insertBefore(statusDiv, headerFileInput.nextSibling);
-                                }
-
-                                // HIDDEN INPUT FOR SUBMISSION
-                                const existingHidden = document.querySelector(`input[name="file_surat_permohonan"][type="hidden"]`);
-                                if (existingHidden) existingHidden.remove();
-
-                                const hiddenInput = document.createElement('input');
-                                hiddenInput.type = 'hidden';
-                                hiddenInput.name = 'file_surat_permohonan';
-                                hiddenInput.value = filePath;
-                                form.appendChild(hiddenInput);
-                            }
+                            headerFileInput.parentNode.insertBefore(statusDiv, headerFileInput.nextSibling);
                         }
+
+                        // HIDDEN INPUT FOR SUBMISSION
+                        const existingHidden = document.querySelector(`input[name="file_surat_permohonan"][type="hidden"]`);
+                        if (existingHidden) existingHidden.remove();
+
+                        const hiddenInput = document.createElement('input');
+                        hiddenInput.type = 'hidden';
+                        hiddenInput.name = 'file_surat_permohonan';
+                        hiddenInput.value = filePath;
+                        form.appendChild(hiddenInput);
                     }
+                }
+            }
 
-                    jumlahInput.addEventListener('change', function () {
-                        const newCount = Math.min(Math.max(parseInt(this.value) || 1, 1), 20);
-                        this.value = newCount;
+            jumlahInput.addEventListener('change', function () {
+                const newCount = Math.min(Math.max(parseInt(this.value) || 1, 1), 20);
+                this.value = newCount;
 
-                        // If draft mode and reducing count, warn user
-                        if (draftId && newCount < totalSiswa) {
-                            if (!confirm(`Mengurangi jumlah siswa dari ${totalSiswa} ke ${newCount}. Data siswa #${newCount + 1} dst akan tersimpan di database tapi tidak ditampilkan. Lanjutkan?`)) {
-                                this.value = totalSiswa;
-                                return;
-                            }
-                        }
-
-                        // Re-render forms but preserve existing students data for previously populated forms
-                        renderSiswaForms(newCount);
-
-                        // Re-populate from draft students if available
-                        if (CONFIG.students && CONFIG.students.length > 0) {
-                            setTimeout(() => populateDraftStudents(), 300);
-                        }
-
-                        // Sync Header if Draft exists
-                        if (draftId) {
-                            updateDraftHeader(draftId, { jumlah_siswa: newCount });
-                        }
-                    });
+                // If draft mode and reducing count, warn user
+                if (draftId && newCount < totalSiswa) {
+                    if (!confirm(`Mengurangi jumlah siswa dari ${totalSiswa} ke ${newCount}. Data siswa #${newCount + 1} dst akan tersimpan di database tapi tidak ditampilkan. Lanjutkan?`)) {
+                        this.value = totalSiswa;
+                        return;
+                    }
                 }
 
-                if (prevBtn) prevBtn.addEventListener('click', () => { if (currentSiswa > 0) showSiswa(currentSiswa - 1); });
-                if (nextBtn) nextBtn.addEventListener('click', () => { if (currentSiswa < totalSiswa - 1) showSiswa(currentSiswa + 1); });
+                // Re-render forms but preserve existing students data for previously populated forms
+                renderSiswaForms(newCount);
 
-                // Prevent double submit
-                if (form) {
-                    form.addEventListener('submit', function (e) {
-                        // If draft mode and more than 1 student, use AJAX finalize
-                        if (draftId && totalSiswa > 1) {
-                            e.preventDefault();
-                            finalizeDraftSubmit();
-                            return;
-                        }
-
-                        const btn = document.getElementById('btnSubmit');
-                        if (btn) {
-                            btn.disabled = true;
-                            btn.innerHTML = '<i class="bi bi-arrow-repeat animate-spin mr-2"></i> Memproses...';
-                        }
-                    });
+                // Re-populate from draft students if available
+                if (CONFIG.students && CONFIG.students.length > 0) {
+                    setTimeout(() => populateDraftStudents(), 300);
                 }
 
+                // Sync Header if Draft exists
+                if (draftId) {
+                    updateDraftHeader(draftId, { jumlah_siswa: newCount });
+                }
             });
+        }
+
+        if (prevBtn) prevBtn.addEventListener('click', () => { if (currentSiswa > 0) showSiswa(currentSiswa - 1); });
+        if (nextBtn) nextBtn.addEventListener('click', () => { if (currentSiswa < totalSiswa - 1) showSiswa(currentSiswa + 1); });
+
+        // Prevent double submit
+        if (form) {
+            form.addEventListener('submit', function (e) {
+                // If draft mode and more than 1 student, use AJAX finalize
+                if (draftId && totalSiswa > 1) {
+                    e.preventDefault();
+                    finalizeDraftSubmit();
+                    return;
+                }
+
+                const btn = document.getElementById('btnSubmit');
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="bi bi-arrow-repeat animate-spin mr-2"></i> Memproses...';
+                }
+            });
+        }
+
+    });
 
     // ======================================================================
     // AUTO-SAVE DRAFT FUNCTIONS
