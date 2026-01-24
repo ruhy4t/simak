@@ -538,6 +538,15 @@
         const parentNode = input.parentNode;
         const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
+        // DEBUG: Add connection test
+        try {
+            const testResp = await fetch('/ajax/debug-connection');
+            console.log('API Connection Test:', testResp.status, await testResp.text());
+        } catch (e) {
+            console.error('API Connection Test Failed:', e);
+            alert('Koneksi ke server gagal total. Cek log console.');
+        }
+
         // Create/update status indicator
         let statusEl = parentNode.querySelector('.upload-status-indicator');
         if (!statusEl) {
@@ -548,16 +557,23 @@
 
         // Show uploading state
         statusEl.innerHTML = `
-            <span class="flex items-center gap-2 text-blue-600">
-                <i class="bi bi-arrow-repeat animate-spin"></i>
-                <span>Memproses upload...</span>
-            </span>
-        `;
+             <div class="flex flex-col gap-1">
+                <span class="flex items-center gap-2 text-blue-600">
+                    <i class="bi bi-arrow-repeat animate-spin"></i>
+                    <span>Memproses upload...</span>
+                </span>
+                <span class="text-xs text-gray-500 debug-log">Inisialisasi...</span>
+             </div>
+         `;
+        const logEl = statusEl.querySelector('.debug-log');
+
         input.classList.add('opacity-50');
         input.disabled = true;
 
         try {
             // STEP 1: Get Upload URL / Strategy
+            logEl.textContent = 'Menghubungi /ajax/upload-temp-url...';
+
             const initResponse = await fetch('/ajax/upload-temp-url', {
                 method: 'POST',
                 headers: {
@@ -570,37 +586,47 @@
                 })
             });
 
+            logEl.textContent = `Response status: ${initResponse.status}`;
+
             if (!initResponse.ok) {
                 // Try to get error details from JSON response
                 let errorMessage = 'Gagal inisialisasi upload.';
+                let details = '';
                 try {
-                    const errorData = await initResponse.json();
+                    const errorText = await initResponse.text();
+                    logEl.textContent += ` | Body: ${errorText.substring(0, 50)}...`;
+
+                    // Try parse json
+                    const errorData = JSON.parse(errorText);
                     if (errorData.message) {
                         errorMessage += ' ' + errorData.message;
                     }
+                    details = JSON.stringify(errorData);
                 } catch (e) {
                     errorMessage += ' (' + initResponse.status + ')';
+                    details = 'Non-JSON response';
                 }
-                throw new Error(errorMessage);
+                throw new Error(errorMessage + ' | ' + details);
             }
 
             const initResult = await initResponse.json();
+            logEl.textContent = 'Mendapatkan URL upload...';
             let finalPath = '';
 
             // STEP 2: Execute Upload
             if (initResult.success === true && initResult.upload_url && initResult.method === 'PUT') {
                 // --- MODE 1: DIRECT UPLOAD (B2) ---
                 statusEl.innerHTML = `
-                    <span class="flex items-center gap-2 text-blue-600">
-                        <i class="bi bi-cloud-arrow-up animate-pulse"></i>
-                        <span>Mengirim ke Cloud... (0%)</span>
-                    </span>
-                `;
+                     <div class="flex flex-col gap-1">
+                        <span class="flex items-center gap-2 text-blue-600">
+                            <i class="bi bi-cloud-arrow-up animate-pulse"></i>
+                            <span>Mengirim ke Cloud... (0%)</span>
+                        </span>
+                        <span class="text-xs text-gray-500">Target: B2 Storage</span>
+                     </div>
+                 `;
 
-                // Use XMLHttpRequest for progress tracking (optional but nice)
-                // Or simple fetch for now since it's simpler
                 const headers = initResult.headers || {};
-                // headers['Content-Type'] = file.type; // Usually required for Presigned URL to match signature
 
                 const uploadResponse = await fetch(initResult.upload_url, {
                     method: 'PUT',
@@ -609,7 +635,7 @@
                 });
 
                 if (!uploadResponse.ok) {
-                    throw new Error(`Gagal kirim ke B2: ${uploadResponse.statusText}`);
+                    throw new Error(`Gagal kirim ke B2: ${uploadResponse.statusText} (${uploadResponse.status})`);
                 }
 
                 // Upload Success!
@@ -617,13 +643,7 @@
 
             } else if (initResult.is_local || initResult.use_check_upload === false) {
                 // --- MODE 2: LEGACY UPLOAD (Local/Server) ---
-                // Fallback for local development or if direct upload disabled
-                statusEl.innerHTML = `
-                    <span class="flex items-center gap-2 text-blue-600">
-                        <i class="bi bi-hdd-network animate-spin"></i>
-                        <span>Mengunggah ke Server...</span>
-                    </span>
-                `;
+                logEl.textContent = 'Menggunakan Legacy Upload...';
 
                 const formData = new FormData();
                 formData.append('file', file);
@@ -634,7 +654,11 @@
                     body: formData
                 });
 
-                if (!legacyResponse.ok) throw new Error('Upload server gagal.');
+                if (!legacyResponse.ok) {
+                    const txt = await legacyResponse.text();
+                    throw new Error(`Upload server gagal: ${legacyResponse.status} - ${txt.substring(0, 100)}`);
+                }
+
                 const legacyResult = await legacyResponse.json();
 
                 if (!legacyResult.success) throw new Error(legacyResult.message || 'Upload gagal.');
@@ -646,45 +670,47 @@
 
             // STEP 3: Finalize UI
             if (finalPath) {
-                // Success: Create hidden input with temp path
+                // Success logic...
                 const existingHidden = document.querySelector(`input[type="hidden"][name="${input.name}"]`);
                 if (existingHidden) existingHidden.remove();
 
                 const hiddenInput = document.createElement('input');
                 hiddenInput.type = 'hidden';
-                hiddenInput.name = input.name; // Same name, will override file input on submit
+                hiddenInput.name = input.name;
                 hiddenInput.value = finalPath;
                 hiddenInput.dataset.tempPath = 'true';
                 parentNode.appendChild(hiddenInput);
 
-                // Mark file input as already uploaded
                 input.setAttribute('data-has-file', 'true');
-                input.removeAttribute('required'); // No longer required since uploaded
+                input.removeAttribute('required');
 
-                // Show success state
                 statusEl.innerHTML = `
-                     <span class="flex items-center gap-2 text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg">
-                         <i class="bi bi-check-circle-fill"></i>
-                         <span class="font-medium">Berhasil diunggah</span>
-                         <span class="text-slate-400">(${(file.size / 1024).toFixed(0)} KB)</span>
-                     </span>
-                 `;
-
-                console.log(`Async upload success: ${input.name} -> ${finalPath}`);
+                      <span class="flex items-center gap-2 text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg">
+                          <i class="bi bi-check-circle-fill"></i>
+                          <span class="font-medium">Berhasil diunggah</span>
+                          <span class="text-slate-400">(${(file.size / 1024).toFixed(0)} KB)</span>
+                      </span>
+                  `;
             }
 
         } catch (error) {
-            console.error('Async upload error:', error);
+            console.error('Async upload debug:', error);
 
-            // Show error state
+            // Show error state with DETAILED logs
             statusEl.innerHTML = `
-                <span class="flex items-center gap-2 text-red-600 bg-red-50 px-3 py-1.5 rounded-lg">
-                    <i class="bi bi-x-circle-fill"></i>
-                    <span class="font-medium">Gagal: ${error.message}</span>
-                </span>
-            `;
+                 <div class="flex flex-col gap-1 p-2 bg-red-50 rounded text-red-700">
+                    <div class="font-bold flex items-center gap-2">
+                        <i class="bi bi-x-circle-fill"></i> Gagal Upload
+                    </div>
+                    <div class="text-xs font-mono break-all whitespace-pre-wrap border-t border-red-200 mt-1 pt-1">
+                        ${error.message || error}
+                    </div>
+                    <div class="text-[10px] text-red-500">
+                        Cek Console (F12) untuk detail lengkap.
+                    </div>
+                 </div>
+             `;
 
-            // Clear file input so user can retry
             input.value = '';
         } finally {
             input.classList.remove('opacity-50');
