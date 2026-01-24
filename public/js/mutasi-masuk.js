@@ -571,8 +571,17 @@
             });
 
             if (!initResponse.ok) {
-                // If 404/500, fallback to legacy might be risky, but let's check
-                throw new Error('Gagal inisialisasi upload.');
+                // Try to get error details from JSON response
+                let errorMessage = 'Gagal inisialisasi upload.';
+                try {
+                    const errorData = await initResponse.json();
+                    if (errorData.message) {
+                        errorMessage += ' ' + errorData.message;
+                    }
+                } catch (e) {
+                    errorMessage += ' (' + initResponse.status + ')';
+                }
+                throw new Error(errorMessage);
             }
 
             const initResult = await initResponse.json();

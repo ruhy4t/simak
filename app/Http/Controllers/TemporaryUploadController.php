@@ -71,6 +71,14 @@ class TemporaryUploadController extends Controller
         $contentType = $request->input('content_type');
         $ext = pathinfo($filename, PATHINFO_EXTENSION);
 
+        // Check if B2 Bucket and Endpoint are configured
+        if (!config('filesystems.disks.b2.bucket') || !config('filesystems.disks.b2.endpoint')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Konfigurasi B2 (Bucket/Endpoint) belum lengkap di Vercel.'
+            ], 500);
+        }
+
         // Secure Filename
         $safeFilename = 'temp_' . now()->format('Ymd_His') . '_' . Str::random(20) . '.' . $ext;
         $path = 'temp_uploads/' . $safeFilename;
