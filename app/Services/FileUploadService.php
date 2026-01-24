@@ -347,6 +347,11 @@ class FileUploadService
             return null;
         }
 
+        // Check for persistent path (Resume Draft)
+        if (is_string($file) && !str_starts_with($file, 'temp_uploads/')) {
+            return $file;
+        }
+
         $subDir = $this->getDateBasedPath('masuk');
 
         return $this->uploadPdf(
@@ -385,6 +390,12 @@ class FileUploadService
             }
 
             if ($file) {
+                // Check for persistent path (Resume Draft)
+                if (is_string($file) && !str_starts_with($file, 'temp_uploads/')) {
+                    $filePaths[$field] = $file;
+                    continue;
+                }
+
                 // Only validate MIME if it's an UploadedFile object
                 if ($file instanceof UploadedFile) {
                     $mimeType = $file->getMimeType();
