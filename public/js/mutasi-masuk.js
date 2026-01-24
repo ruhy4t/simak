@@ -1463,10 +1463,13 @@
                                                                 kabSelect.value = kabMatch.value;
                                                                 if (kabHidden) kabHidden.value = kabMatch.value;
                                                             } else {
-                                                                console.warn(`City mismatch for ${student.kabupaten_kota_asal}, forcing value if manual.`);
-                                                                // Should we force it? Only if we add an option dynamically? 
-                                                                // Standard selects might not allow custom value unless added.
-                                                                // Ideally API returns IDs, but if we saved Name, we match Name.
+                                                                // FALLBACK: Force Add Option
+                                                                const opt = document.createElement('option');
+                                                                opt.value = student.kabupaten_kota_asal;
+                                                                opt.text = student.kabupaten_kota_asal;
+                                                                kabSelect.add(opt);
+                                                                kabSelect.value = student.kabupaten_kota_asal;
+                                                                if (kabHidden) kabHidden.value = student.kabupaten_kota_asal;
                                                             }
                                                         }
                                                     }, 100);
@@ -1476,7 +1479,18 @@
                                         }
 
                                     } else {
-                                        console.warn(`Province mismatch for ${student.provinsi_asal}`);
+                                        // FALLBACK: Force Add Option for Province
+                                        const opt = document.createElement('option');
+                                        opt.value = student.provinsi_asal;
+                                        opt.text = student.provinsi_asal;
+                                        provSelect.add(opt);
+                                        provSelect.value = student.provinsi_asal;
+                                        if (provHidden) provHidden.value = student.provinsi_asal;
+
+                                        // Still try to trigger change to load cities if valid ID, 
+                                        // but usually manual text won't trigger API. 
+                                        // We just ensure the value is displayed.
+                                        provSelect.dispatchEvent(new Event('change'));
                                     }
                                 }
                             }, 100);
