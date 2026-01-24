@@ -558,7 +558,7 @@
 
         try {
             // STEP 1: Get Upload URL / Strategy
-            const initResponse = await fetch('/api/upload-temp-url', {
+            const initResponse = await fetch('/ajax/upload-temp-url', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -628,7 +628,7 @@
                 const formData = new FormData();
                 formData.append('file', file);
 
-                const legacyResponse = await fetch('/api/upload-temp', {
+                const legacyResponse = await fetch('/ajax/upload-temp', {
                     method: 'POST',
                     headers: { 'X-CSRF-TOKEN': token },
                     body: formData
