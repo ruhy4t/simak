@@ -284,7 +284,7 @@ Route::get('/sys-admin/fix-cors', function () {
 
         $client->putBucketCors([
             'Bucket' => $bucket,
-            'CORSConfiguration' => $corsRules['CORSConfiguration']
+            'CORSConfiguration' => $corsRules
         ]);
 
         return response()->json(['success' => true, 'message' => "CORS updated for bucket: $bucket"]);
