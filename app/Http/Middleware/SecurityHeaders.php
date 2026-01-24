@@ -25,11 +25,11 @@ class SecurityHeaders
         // 2. CSP (Content Security Policy) - "Super High Security"
         // Whitelist trusted sources only. No unsafe-inline for scripts (except what we extracted).
         $csp = "default-src 'self'; " .
-            "script-src 'self' https://cdn.jsdelivr.net 'unsafe-eval' 'unsafe-inline'; " . // unsafe-inline REQUIRED for Alpine.js attributes
-            "style-src 'self' 'unsafe-inline' https://fonts.bunny.net https://cdn.jsdelivr.net; " . // unsafe-inline needed for dynamic styles
+            "script-src 'self' https://cdn.jsdelivr.net https://cdn.tailwindcss.com 'unsafe-eval' 'unsafe-inline'; " . // unsafe-inline REQUIRED for Alpine
+            "style-src 'self' 'unsafe-inline' https://fonts.bunny.net https://cdn.jsdelivr.net https://cdn.tailwindcss.com; " .
             "font-src 'self' https://fonts.bunny.net https://cdn.jsdelivr.net; " .
-            "img-src 'self' data: https://api.qrserver.com https://images.unsplash.com https://www.transparenttextures.com; " . // Allow QR, Unsplash, Textures
-            "connect-src 'self' https://emsifa.github.io; " . // Allow API calls to regions
+            "img-src 'self' data: https://api.qrserver.com https://images.unsplash.com https://www.transparenttextures.com https://*.backblazeb2.com; " .
+            "connect-src 'self' https://emsifa.github.io https://*.backblazeb2.com https://*.s3.us-east-005.backblazeb2.com; " . // Allow B2 Uploads
             "frame-ancestors 'self'; " . // Prevent clickjacking
             "form-action 'self'; " .
             "base-uri 'self'; " .
