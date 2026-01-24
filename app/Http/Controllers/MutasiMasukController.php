@@ -1532,6 +1532,32 @@ class MutasiMasukController extends Controller
             if ($request->has('alamat_sekolah_tujuan'))
                 $updateData['alamat_sekolah_tujuan'] = $this->sanitize($request->alamat_sekolah_tujuan);
 
+            // Handle Header File Update
+            if ($request->hasFile('file_surat_permohonan')) {
+                $updateData['file_surat_permohonan'] = $this->fileUploadService->uploadSuratPermohonan($request, $id);
+            } elseif ($request->filled('file_surat_permohonan') && is_string($request->input('file_surat_permohonan'))) {
+                $tempPath = $request->input('file_surat_permohonan');
+                if (str_contains($tempPath, 'temp_uploads/')) {
+                    $ext = pathinfo($tempPath, PATHINFO_EXTENSION);
+                    $newFilename = "surat_permohonan_{$id}.{$ext}";
+                    $destPath = "dokumen/mutasi_masuk/" . date('Y/m/d') . "/{$newFilename}";
+
+                    $isCloud = $this->fileUploadService->isCloudStorage();
+                    $sourceDisk = $isCloud ? 'b2' : 'local';
+                    $destDisk = $isCloud ? 'b2' : 'private_docs';
+                    $relativeDestPath = "mutasi_masuk/" . date('Y/m/d') . "/{$newFilename}";
+
+                    try {
+                        if (Storage::disk($sourceDisk)->exists($tempPath)) {
+                            Storage::disk($destDisk)->put($relativeDestPath, Storage::disk($sourceDisk)->get($tempPath));
+                            $updateData['file_surat_permohonan'] = $relativeDestPath;
+                        }
+                    } catch (\Exception $e) {
+                        Log::error("Failed to move temp draft file (Update): " . $e->getMessage());
+                    }
+                }
+            }
+
             if (!empty($updateData)) {
                 $updateData['updated_at'] = now();
                 DB::table('mutasi_masuk')->where('id_mutasi', $id)->update($updateData);
