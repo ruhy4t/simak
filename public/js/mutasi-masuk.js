@@ -562,35 +562,9 @@
 
         try {
             log(`File: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`);
-            log(`CSRF Token: ${token ? 'Present (' + token.substring(0, 5) + '...)' : 'MISSING'}`);
 
-            // TEST 1: Connectivity (GET)
-            log('Test 1: Check Connection (GET)...');
-            try {
-                const getResp = await fetch('/ajax/debug-connection');
-                if (getResp.ok) log('Test 1 OK: Server reachable', 'success');
-                else log(`Test 1 Failed: Status ${getResp.status}`, 'error');
-            } catch (e) {
-                log(`Test 1 Error: ${e.message}`, 'error');
-                throw new Error('Koneksi dasar ke server gagal. Cek internet Anda.');
-            }
-
-            // TEST 2: Connectivity (POST) - Check for CORS/Method issues
-            log('Test 2: Check POST Method...');
-            try {
-                const postResp = await fetch('/ajax/debug-connection', {
-                    method: 'POST',
-                    headers: { 'X-CSRF-TOKEN': token }
-                });
-                if (postResp.ok) log('Test 2 OK: POST allowed', 'success');
-                else log(`Test 2 Failed: Status ${postResp.status}`, 'error');
-            } catch (e) {
-                log(`Test 2 Error: ${e.message}`, 'error');
-                log('Kemungkinan masalah: CORS, Firewall, atau Config Vercel.');
-            }
-
-            // REAL UPLOAD START
-            log('Starting Upload Init...');
+            // --- Step 1: Initialize Upload (Get URL) ---
+            log('Initializing upload...');
             const initResponse = await fetch('/ajax/upload-temp-url', {
                 method: 'POST',
                 headers: {
@@ -603,60 +577,80 @@
                 })
             });
 
-            log(`Init Response Status: ${initResponse.status}`);
-
             if (!initResponse.ok) {
                 const txt = await initResponse.text();
-                log(`Server Error Body: ${txt.substring(0, 100)}`, 'error');
-                throw new Error(`Init Failed: ${initResponse.status}`);
+                throw new Error(`Init Failed: ${initResponse.status} - ${txt.substring(0, 100)}`);
             }
 
             const initResult = await initResponse.json();
-
-            // SECURITY CHECK: Ensure URL is HTTPS if current page is HTTPS
-            if (window.location.protocol === 'https:' && initResult.upload_url && initResult.upload_url.startsWith('http:')) {
-                log('WARNING: Upload URL is HTTP (Mixed Content Risk)', 'warning');
-            }
-            log(`Upload URL generated: ${initResult.upload_url.substring(0, 50)}...`, 'info');
-
-            log('Upload URL received', 'success');
+            log('Upload initialized.', 'success');
 
             let finalPath = '';
+            let uploadSuccess = false;
 
-            // STEP 2: Execute Upload
+            // --- Step 2: Attempt Direct Upload (if available) ---
             if (initResult.success === true && initResult.upload_url && initResult.method === 'PUT') {
-                log('Mode: Direct Cloud Upload');
+                log('Attempting Direct Cloud Upload...');
 
-                const headers = initResult.headers || {};
+                try {
+                    // NOTE: removing unneeded headers that might trigger CORS if not allowed
+                    // The 'Content-Type' is usually required and signed.
+                    const headers = initResult.headers || {};
 
-                const uploadResponse = await fetch(initResult.upload_url, {
-                    method: 'PUT',
-                    headers: headers,
-                    body: file
-                });
+                    const uploadResponse = await fetch(initResult.upload_url, {
+                        method: 'PUT',
+                        headers: headers,
+                        body: file
+                    });
 
-                if (!uploadResponse.ok) throw new Error(`Cloud Upload Failed: ${uploadResponse.status}`);
-                finalPath = initResult.relative_path;
+                    if (!uploadResponse.ok) throw new Error(`Status ${uploadResponse.status}`);
 
-            } else if (initResult.is_local || initResult.use_check_upload === false) {
-                log('Mode: Local/Server Upload');
+                    finalPath = initResult.relative_path;
+                    uploadSuccess = true;
+                    log('Direct Upload Success!', 'success');
+
+                } catch (directError) {
+                    log(`Direct Upload Failed: ${directError.message}`, 'warning');
+                    log('Switching to Server Relay (Fallback)...', 'warning');
+                    // Fallback will proceed below
+                }
+            }
+
+            // --- Step 3: Fallback / Legacy Upload ---
+            // If direct upload was not attempted OR failed
+            if (!uploadSuccess) {
+                if (!initResult.is_local && !initResult.use_check_upload) {
+                    // If we are here, it means we tried direct and failed, so we are falling back.
+                    // OR initResult said don't use check upload but didn't give a URL (unlikely).
+                }
+
+                log(`Uploading via Server Relay...`);
+
                 const formData = new FormData();
                 formData.append('file', file);
 
                 const legacyResponse = await fetch('/ajax/upload-temp', {
-                    method: 'POST',
+                    method: 'POST', // Use POST for server upload
                     headers: { 'X-CSRF-TOKEN': token },
                     body: formData
                 });
 
-                if (!legacyResponse.ok) throw new Error(`Server Upload Failed: ${legacyResponse.status}`);
+                if (!legacyResponse.ok) {
+                    const errTxt = await legacyResponse.text();
+                    throw new Error(`Server Upload Failed: ${legacyResponse.status} - ${errTxt.substring(0, 50)}`);
+                }
+
                 const legacyResult = await legacyResponse.json();
+                if (!legacyResult.success) throw new Error(legacyResult.message || 'Unknown server error');
+
+                // If the server upload returns a path
                 finalPath = legacyResult.path;
+                uploadSuccess = true;
+                log('Server Upload Success!', 'success');
             }
 
-            if (finalPath) {
-                log(`Upload Success! Path: ${finalPath}`, 'success');
-
+            // --- Step 4: Finalize ---
+            if (uploadSuccess && finalPath) {
                 // Finalize Input
                 const existingHidden = document.querySelector(`input[type="hidden"][name="${input.name}"]`);
                 if (existingHidden) existingHidden.remove();
@@ -673,20 +667,27 @@
 
                 // Simplified Success UI
                 statusEl.innerHTML = `
-                      <div class="flex items-center gap-2 text-emerald-600 bg-emerald-50 px-3 py-2 rounded-lg mt-2">
-                          <i class="bi bi-check-circle-fill"></i>
-                          <div class="flex flex-col">
-                            <span class="font-bold text-sm">Upload Berhasil</span>
-                            <span class="text-xs text-slate-500">File siap dikirim</span>
-                          </div>
-                      </div>
-                  `;
+                       <div class="flex items-center gap-2 text-emerald-600 bg-emerald-50 px-3 py-2 rounded-lg mt-2">
+                           <i class="bi bi-check-circle-fill"></i>
+                           <div class="flex flex-col">
+                             <span class="font-bold text-sm">Upload Berhasil</span>
+                             <span class="text-xs text-slate-500">File siap dikirim</span>
+                           </div>
+                       </div>
+                   `;
+            } else {
+                throw new Error('Upload verification failed (no path returned)');
             }
 
         } catch (error) {
             console.error(error);
             log(`CRITICAL ERROR: ${error.message}`, 'error');
             input.value = ''; // Reset
+
+            // Show more helpful message for common errors
+            if (error.message.includes('Failed to fetch')) {
+                log('Hint: Koneksi terputus atau diblokir browser.', 'warning');
+            }
         } finally {
             input.classList.remove('opacity-50');
             input.disabled = false;
