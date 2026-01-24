@@ -1358,10 +1358,43 @@ class MutasiMasukController extends Controller
                 $idMutasi = 'MM' . date('Ymd') . str_pad($count, 4, '0', STR_PAD_LEFT);
             }
 
-            // Upload surat permohonan if provided
+            // Upload surat permohonan
             $fileSuratPermohonan = null;
+
+            // 1. Check for Standard Upload
             if ($request->hasFile('file_surat_permohonan')) {
                 $fileSuratPermohonan = $this->fileUploadService->uploadSuratPermohonan($request, $idMutasi);
+            }
+            // 2. Check for Async/Temp Upload (String Path)
+            elseif ($request->filled('file_surat_permohonan') && is_string($request->input('file_surat_permohonan'))) {
+                $tempPath = $request->input('file_surat_permohonan');
+                // Only process if it looks like a temp path
+                if (str_contains($tempPath, 'temp_uploads/')) {
+                    $ext = pathinfo($tempPath, PATHINFO_EXTENSION);
+                    $newFilename = "surat_permohonan_{$idMutasi}.{$ext}";
+                    $destPath = "dokumen/mutasi_masuk/" . date('Y/m/d') . "/{$newFilename}";
+
+                    // Move/Copy logic
+                    $isCloud = $this->fileUploadService->isCloudStorage();
+                    $sourceDisk = $isCloud ? 'b2' : 'local';
+                    $destDisk = $isCloud ? 'b2' : 'private_docs'; // private_docs handles 'dokumen_rahasia' root
+
+                    // Adjust destPath for private_docs (which already points to dokumen_rahasia)
+                    // If destDisk is private_docs, we want relative to dokumen_rahasia
+                    $relativeDestPath = "mutasi_masuk/" . date('Y/m/d') . "/{$newFilename}";
+
+                    try {
+                        $content = Storage::disk($sourceDisk)->get($tempPath);
+                        if ($content) {
+                            Storage::disk($destDisk)->put($relativeDestPath, $content);
+                            $fileSuratPermohonan = $relativeDestPath;
+                            // Optional: Delete temp
+                            // Storage::disk($sourceDisk)->delete($tempPath);
+                        }
+                    } catch (\Exception $e) {
+                        Log::error("Failed to move temp draft file: " . $e->getMessage());
+                    }
+                }
             }
 
             // Insert header as Draft
@@ -1506,6 +1539,11 @@ class MutasiMasukController extends Controller
 
             // Upload files if provided (not Dinas entry)
             if (!$isDinasEntry) {
+                // Determine Storage Settings
+                $isCloud = $this->fileUploadService->isCloudStorage();
+                $sourceDisk = $isCloud ? 'b2' : 'local';
+                $destDisk = $isCloud ? 'b2' : 'private_docs'; // private_docs = storage/app/dokumen_rahasia
+
                 $fileFields = [
                     'file_surat_pindah',
                     'file_surat_dapodik',
@@ -1516,6 +1554,7 @@ class MutasiMasukController extends Controller
                 ];
 
                 foreach ($fileFields as $field) {
+                    // Check for Standard Upload
                     if ($request->hasFile($field)) {
                         // DELETE OLD FILE IF EXISTS
                         if ($existingStudent && !empty($existingStudent->$field)) {
@@ -1530,16 +1569,42 @@ class MutasiMasukController extends Controller
                             $uploadPathKey
                         );
                     }
+                    // Check for Async/Temp Upload (String Path)
+                    elseif ($request->filled($field) && is_string($request->input($field))) {
+                        $tempPath = $request->input($field);
+                        if (str_contains($tempPath, 'temp_uploads/')) {
+                            // DELETE OLD FILE IF EXISTS
+                            if ($existingStudent && !empty($existingStudent->$field)) {
+                                $deleteOldFile($existingStudent->$field);
+                            }
+
+                            $ext = pathinfo($tempPath, PATHINFO_EXTENSION);
+                            $newFilename = "siswa{$studentIndex}_{$field}.{$ext}";
+                            $relativeDestPath = $uploadPathKey . '/' . $newFilename; // e.g. mutasi_masuk/2026/01/24/filename.pdf
+
+                            try {
+                                if (Storage::disk($sourceDisk)->exists($tempPath)) {
+                                    $content = Storage::disk($sourceDisk)->get($tempPath);
+                                    Storage::disk($destDisk)->put($relativeDestPath, $content);
+                                    $filePaths[$field] = $relativeDestPath;
+                                }
+                            } catch (\Exception $e) {
+                                Log::error("Failed to move temp student file ($field): " . $e->getMessage());
+                            }
+                        }
+                    }
                 }
 
                 // Handle Rekam Didik (Image/PDF)
-                if ($request->hasFile('file_rekam_didik')) {
-                    // DELETE OLD FILE IF EXISTS
+                // Similar logic for Rekam Didik which supports images
+                $field = 'file_rekam_didik';
+                if ($request->hasFile($field)) {
+                    // DELETE OLD FILE
                     if ($existingStudent && !empty($existingStudent->file_rekam_didik)) {
                         $deleteOldFile($existingStudent->file_rekam_didik);
                     }
 
-                    $file = $request->file('file_rekam_didik');
+                    $file = $request->file($field);
                     $mimeType = $file->getMimeType();
 
                     if (in_array($mimeType, ['image/jpeg', 'image/png'])) {
@@ -1555,7 +1620,7 @@ class MutasiMasukController extends Controller
 
                         if ($conversionSuccess && file_exists($tempPath)) {
                             $destinationPath = $uploadPathKey . '/' . $tempFilename;
-                            $disk = $this->fileUploadService->isCloudStorage() ? 'b2' : 'private_docs';
+                            $disk = $destDisk; // Use the same Dest Disk
                             \Illuminate\Support\Facades\Storage::disk($disk)->put($destinationPath, file_get_contents($tempPath));
                             $filePaths['file_rekam_didik'] = $destinationPath;
                             @unlink($tempPath);
@@ -1574,6 +1639,27 @@ class MutasiMasukController extends Controller
                             "siswa{$studentIndex}_file_rekam_didik",
                             $uploadPathKey
                         );
+                    }
+                } elseif ($request->filled($field) && is_string($request->input($field))) {
+                    $tempPath = $request->input($field);
+                    if (str_contains($tempPath, 'temp_uploads/')) {
+                        if ($existingStudent && !empty($existingStudent->file_rekam_didik)) {
+                            $deleteOldFile($existingStudent->file_rekam_didik);
+                        }
+
+                        $ext = pathinfo($tempPath, PATHINFO_EXTENSION);
+                        $newFilename = "siswa{$studentIndex}_{$field}.{$ext}";
+                        $relativeDestPath = $uploadPathKey . '/' . $newFilename;
+
+                        try {
+                            if (Storage::disk($sourceDisk)->exists($tempPath)) {
+                                $content = Storage::disk($sourceDisk)->get($tempPath);
+                                Storage::disk($destDisk)->put($relativeDestPath, $content);
+                                $filePaths[$field] = $relativeDestPath;
+                            }
+                        } catch (\Exception $e) {
+                            Log::error("Failed to move temp rekam didik: " . $e->getMessage());
+                        }
                     }
                 }
             }
