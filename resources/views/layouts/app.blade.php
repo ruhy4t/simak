@@ -479,6 +479,40 @@
                         </div>
                     @endif
 
+                    {{-- GLOBAL VALIDATION ERRORS LINK --}}
+                    @if($errors->any())
+                        <div x-data="{ show: true }" x-show="show" style="display: none;"
+                            class="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 sm:px-0">
+                            <div class="fixed inset-0 transition-opacity bg-slate-900/60 backdrop-blur-sm"
+                                @click="show = false"></div>
+                            <div
+                                class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:w-full sm:max-w-md border border-slate-100 ring-1 ring-black/5 animate-shake">
+                                <div class="bg-gradient-to-r from-orange-50 to-white px-6 py-6 flex items-start gap-4">
+                                    <div
+                                        class="flex-shrink-0 w-12 h-12 rounded-full bg-orange-100/50 flex items-center justify-center shadow-sm">
+                                        <i class="bi bi-exclamation-triangle text-orange-600 text-2xl"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-lg font-bold text-gray-900">Perhatian!</h3>
+                                        <div class="mt-2 text-sm text-gray-600 leading-relaxed">
+                                            <ul class="list-disc list-inside space-y-1">
+                                                @foreach ($errors->all() as $error)
+                                                    <li>{{ $error }}</li>
+                                                @endforeach
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="bg-gray-50/50 px-6 py-4 flex justify-end">
+                                    <button type="button" @click="show = false"
+                                        class="inline-flex justify-center rounded-xl bg-orange-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-orange-500/20 hover:bg-orange-500 hover:-translate-y-0.5 transition-all duration-200">
+                                        Perbaiki
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
                     @yield('content')
 
                 </main>
