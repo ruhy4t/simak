@@ -42,5 +42,6 @@ class Kernel extends HttpKernel
         'role' => \App\Http\Middleware\CheckRole::class,
         'workday' => \App\Http\Middleware\CheckWorkingDay::class,
         'dailytasks' => \App\Http\Middleware\DailyTasksMiddleware::class,
+        'cache.control' => \App\Http\Middleware\CacheControlMiddleware::class,
     ];
 }

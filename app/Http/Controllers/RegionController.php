@@ -6,11 +6,27 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 
+use App\Services\RegionCacheService;
+
 class RegionController extends Controller
 {
+    protected $cacheService;
+
+    public function __construct(RegionCacheService $cacheService)
+    {
+        $this->cacheService = $cacheService;
+    }
+
     public function index(Request $request)
     {
         try {
+            // Use Cache Service for base data?
+            // Actually index searches and filters, so caching the RESULT of search is hard.
+            // But we can cache the FULL list if needed.
+            // For now, let's keep the query logic BUT use the service for the 'Provinces' dropdown if needed.
+            // The current index implementation paginates searches, so we stick to DB query.
+            // BUT we must ensure we clear downstream caches when we modify data.
+
             // List provinces with search and pagination
             $query = DB::table('ref_provinsi')->orderBy('nama');
 
@@ -110,6 +126,8 @@ class RegionController extends Controller
                 ]);
             }
 
+            $this->cacheService->clearCacheFor($type, $request->parent_id);
+
             return back()->with('success', 'Data berhasil ditambahkan.');
         } catch (\Exception $e) {
             return back()->with('error', 'Gagal menambah data: ' . $e->getMessage());
@@ -122,6 +140,25 @@ class RegionController extends Controller
         $id = $request->input('id');
 
         try {
+            // Invalidate cache before deletion
+            if (in_array($type, ['kabupaten', 'kecamatan', 'kelurahan'])) {
+                $table = 'ref_' . $type;
+                $item = DB::table($table)->where('id', $id)->first();
+                $parentId = null;
+                if ($item) {
+                    if ($type == 'kabupaten')
+                        $parentId = $item->province_id;
+                    if ($type == 'kecamatan')
+                        $parentId = $item->regency_id;
+                    if ($type == 'kelurahan')
+                        $parentId = $item->district_id;
+
+                    $this->cacheService->clearCacheFor($type, $parentId);
+                }
+            } else {
+                $this->cacheService->clearCacheFor($type);
+            }
+
             if ($type === 'provinsi')
                 DB::table('ref_provinsi')->where('id', $id)->delete();
             elseif ($type === 'kabupaten')
@@ -167,6 +204,9 @@ class RegionController extends Controller
             // DO NOT set mock command. Let it be null so the Seeder knows it's not in CLI.
 
             $seeder->run();
+
+            // Clear Cache after sync
+            $this->cacheService->clearAll();
 
             return back()->with('success', 'Data wilayah berhasil disinkronisasi.');
         } catch (\Throwable $e) {

@@ -9,8 +9,16 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 
+use App\Services\RegionCacheService;
+
 class SatuanPendidikanController extends Controller
 {
+    protected $regionCache;
+
+    public function __construct(RegionCacheService $regionCache)
+    {
+        $this->regionCache = $regionCache;
+    }
     /**
      * Autocomplete search for Satuan Pendidikan
      * Prioritizes local database, falls back to external sources
@@ -129,30 +137,13 @@ class SatuanPendidikanController extends Controller
      */
     public function getProvinces()
     {
-        // 1. Try Local DB First (Priority)
-        if (\Schema::hasTable('ref_provinsi')) {
-            // Cache for 30 days if local
-            $provinces = Cache::remember('ref_provinces_local_db', 2592000, function () {
-                return \DB::table('ref_provinsi')->select(['id', 'nama as name'])->orderBy('nama')->get();
-            });
+        $result = $this->regionCache->getProvinces();
 
-            if ($provinces->isNotEmpty()) {
-                return response()->json(['success' => true, 'source' => 'local_db', 'data' => $provinces]);
-            }
+        if ($result['success']) {
+            return response()->json($result);
         }
 
-        // 2. Fallback to External API (Emsifa) - Only if local is empty
-        return Cache::remember('ref_provinces_external', 86400, function () { // Cache for 24h
-            try {
-                $response = Http::timeout(5)->get('https://emsifa.github.io/api-wilayah-indonesia/api/provinces.json');
-                if ($response->successful()) {
-                    return response()->json(['success' => true, 'source' => 'external', 'data' => $response->json()]);
-                }
-            } catch (\Exception $e) {
-                \Log::error('External province fetch failed: ' . $e->getMessage());
-            }
-            return response()->json(['success' => false, 'data' => [], 'message' => 'Gagal memuat data provinsi']);
-        });
+        return response()->json(['success' => false, 'data' => [], 'message' => $result['message'] ?? 'Gagal memuat data provinsi']);
     }
 
     /**
@@ -160,41 +151,13 @@ class SatuanPendidikanController extends Controller
      */
     public function getRegencies($provinceId)
     {
-        // 1. Try Local DB (Priority)
-        if (\Schema::hasTable('ref_kabupaten')) {
-            $regencies = Cache::remember("ref_regencies_local_db_{$provinceId}", 2592000, function () use ($provinceId) {
-                // If provinceId is numeric (ID) -> use province_id column
-                // If provinceId is string name (from UI) -> we might need to find by name from ref_provinsi first?
-                // The UI sends ID if selected from dropdown (if we set option.dataset.id). 
-                // BUT mutasi-masuk.js sets val=name. 
-                // The JS logic: loadProvinces sets option.value = prov.name AND option.dataset.id = prov.id.
-                // The UI listener uses: provId = selectedOption.dataset.id.
-                // So $provinceId received here IS the ID. Correct.
+        $result = $this->regionCache->getRegencies($provinceId);
 
-                return \DB::table('ref_kabupaten')
-                    ->where('province_id', $provinceId)
-                    ->select(['id', 'nama as name'])
-                    ->orderBy('nama')
-                    ->get();
-            });
-
-            if ($regencies->isNotEmpty()) {
-                return response()->json(['success' => true, 'source' => 'local_db', 'data' => $regencies]);
-            }
+        if ($result['success']) {
+            return response()->json($result);
         }
 
-        // 2. Fallback to External API (Emsifa)
-        return Cache::remember("ref_regencies_external_{$provinceId}", 86400, function () use ($provinceId) {
-            try {
-                $response = Http::timeout(5)->get("https://emsifa.github.io/api-wilayah-indonesia/api/regencies/{$provinceId}.json");
-                if ($response->successful()) {
-                    return response()->json(['success' => true, 'source' => 'external', 'data' => $response->json()]);
-                }
-            } catch (\Exception $e) {
-                \Log::error('External regency fetch failed: ' . $e->getMessage());
-            }
-            return response()->json(['success' => false, 'data' => [], 'message' => 'Gagal memuat data kabupaten']);
-        });
+        return response()->json(['success' => false, 'data' => [], 'message' => $result['message'] ?? 'Gagal memuat data kabupaten']);
     }
 
     /**
@@ -205,30 +168,8 @@ class SatuanPendidikanController extends Controller
      */
     public function getDistricts($regencyId)
     {
-        $districts = Cache::rememberForever("ref_districts_{$regencyId}", function () use ($regencyId) {
-            if (\Schema::hasTable('ref_kecamatan')) {
-                return \DB::table('ref_kecamatan')
-                    ->where('regency_id', $regencyId)
-                    ->select(['id', 'regency_id', 'nama as name'])
-                    ->orderBy('nama')
-                    ->get();
-            }
-            return collect([]);
-        });
-
-        if ($districts->isNotEmpty()) {
-            return response()->json([
-                'success' => true,
-                'source' => 'local_cached',
-                'data' => $districts,
-            ]);
-        }
-
-        return response()->json([
-            'success' => false,
-            'source' => 'local',
-            'data' => [],
-        ]);
+        $result = $this->regionCache->getDistricts($regencyId);
+        return response()->json($result);
     }
 
     /**
@@ -239,30 +180,8 @@ class SatuanPendidikanController extends Controller
      */
     public function getVillages($districtId)
     {
-        $villages = Cache::rememberForever("ref_villages_{$districtId}", function () use ($districtId) {
-            if (\Schema::hasTable('ref_kelurahan')) {
-                return \DB::table('ref_kelurahan')
-                    ->where('district_id', $districtId)
-                    ->select(['id', 'district_id', 'nama as name'])
-                    ->orderBy('nama')
-                    ->get();
-            }
-            return collect([]);
-        });
-
-        if ($villages->isNotEmpty()) {
-            return response()->json([
-                'success' => true,
-                'source' => 'local_cached',
-                'data' => $villages,
-            ]);
-        }
-
-        return response()->json([
-            'success' => false,
-            'source' => 'local',
-            'data' => [],
-        ]);
+        $result = $this->regionCache->getVillages($districtId);
+        return response()->json($result);
     }
     /**
      * Auto-save new school from Mutation data when status = "Selesai"

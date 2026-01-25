@@ -10,7 +10,7 @@ class AuditLog extends Model
     use HasFactory;
 
     protected $table = 'audit_logs';
-    public $timestamps = false;
+    public $timestamps = true;
 
     protected $fillable = [
         'event_type',
