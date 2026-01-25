@@ -257,6 +257,33 @@ class MutasiController extends Controller
     {
         $user = Auth::user();
 
+        // Check Schedule (Only for non-Dinas/SuperAdmin)
+        if (!in_array($user->role, ['Dinas', 'SuperAdmin'])) {
+            $today = now();
+
+            // 1. Check Holiday
+            if (\App\Models\Holiday::isHoliday($today->format('Y-m-d'))) {
+                return back()->with('error', 'Maaf, layanan mutasi tutup pada hari libur nasional.');
+            }
+
+            // 2. Check Allowed Days
+            $allowedDays = \App\Models\Setting::getAllowedDays(); // Returns [1,2,3,4,5] etc.
+            if (!empty($allowedDays) && !in_array($today->dayOfWeekIso, $allowedDays)) {
+                return back()->with('error', 'Maaf, layanan mutasi tidak beroperasi hari ini.');
+            }
+
+            // 3. Check Allowed Hours
+            if (\App\Models\Setting::isHourRestrictionEnabled()) {
+                $startTime = \App\Models\Setting::get('mutasi_start_time', '08:00');
+                $endTime = \App\Models\Setting::get('mutasi_end_time', '15:00');
+                $currentTime = $today->format('H:i');
+
+                if ($currentTime < $startTime || $currentTime > $endTime) {
+                    return back()->with('error', "Maaf, layanan mutasi hanya dapat diakses pada pukul $startTime - $endTime WIB.");
+                }
+            }
+        }
+
         $mutasi = DB::table('mutasi_keluar')->where('id_mutasi', $id)->first();
         if (!$mutasi) {
             abort(404);
@@ -427,6 +454,33 @@ class MutasiController extends Controller
     public function store(Request $request)
     {
         $user = Auth::user();
+
+        // Check Schedule (Only for non-Dinas/SuperAdmin)
+        if (!in_array($user->role, ['Dinas', 'SuperAdmin'])) {
+            $today = now();
+
+            // 1. Check Holiday
+            if (\App\Models\Holiday::isHoliday($today->format('Y-m-d'))) {
+                return back()->with('error', 'Maaf, layanan mutasi tutup pada hari libur nasional.');
+            }
+
+            // 2. Check Allowed Days
+            $allowedDays = \App\Models\Setting::getAllowedDays(); // Returns [1,2,3,4,5] etc.
+            if (!empty($allowedDays) && !in_array($today->dayOfWeekIso, $allowedDays)) {
+                return back()->with('error', 'Maaf, layanan mutasi tidak beroperasi hari ini.');
+            }
+
+            // 3. Check Allowed Hours
+            if (\App\Models\Setting::isHourRestrictionEnabled()) {
+                $startTime = \App\Models\Setting::get('mutasi_start_time', '08:00');
+                $endTime = \App\Models\Setting::get('mutasi_end_time', '15:00');
+                $currentTime = $today->format('H:i');
+
+                if ($currentTime < $startTime || $currentTime > $endTime) {
+                    return back()->with('error', "Maaf, layanan mutasi hanya dapat diakses pada pukul $startTime - $endTime WIB.");
+                }
+            }
+        }
 
         $rules = [
             'nama_murid' => 'required|string|max:100', // ...
