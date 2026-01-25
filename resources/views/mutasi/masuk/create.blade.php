@@ -101,15 +101,16 @@
             <!-- Header Surat -->
             <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 sm:p-8">
                 {{-- IMPORTANT WARNING LIMIT --}}
-                <div class="mb-6 bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-4">
-                    <div class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
-                        <i class="bi bi-exclamation-triangle-fill text-amber-600 text-xl"></i>
+                {{-- IMPORTANT WARNING LIMIT --}}
+                <div class="mb-6 bg-blue-50 border border-blue-200 rounded-xl p-4 flex gap-4">
+                    <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+                        <i class="bi bi-info-circle-fill text-blue-600 text-xl"></i>
                     </div>
                     <div>
-                        <h4 class="font-bold text-amber-900 text-sm">Pembatasan Jumlah Siswa</h4>
-                        <p class="text-sm text-amber-800 mt-1 leading-relaxed">
-                            Usulan Mutasi Masuk dibatasi maksimal <strong>5 orang siswa</strong> dalam sekali pengajuan. 
-                            <br>Jika usulan lebih dari 5 orang, silakan buat usulan baru dengan surat permohonan yang baru.
+                        <h4 class="font-bold text-blue-900 text-sm">Informasi Pengajuan</h4>
+                        <p class="text-sm text-blue-800 mt-1 leading-relaxed">
+                            Silakan masukkan jumlah siswa yang akan diajukan mutasi masuk.
+                            Pastikan data setiap siswa lengkap dan valid.
                         </p>
                     </div>
                 </div>
@@ -123,10 +124,10 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Jumlah Siswa *</label>
-                        <input type="number" name="jumlah_siswa" id="jumlah_siswa" min="1" max="5"
+                        <input type="number" name="jumlah_siswa" id="jumlah_siswa" min="1"
                             value="{{ old('jumlah_siswa', $draft->jumlah_siswa ?? 1) }}" required
                             class="w-full px-4 py-2.5 bg-slate-50 border-0 rounded-xl focus:ring-2 focus:ring-sky-100 focus:bg-white transition text-slate-800 placeholder:text-slate-400">
-                        <p class="text-xs text-slate-500 mt-2"><i class="bi bi-info-circle mr-1"></i>Maksimal 5 siswa per usulan.</p>
+                        <p class="text-xs text-slate-500 mt-2"><i class="bi bi-info-circle mr-1"></i>Jumlah siswa yang diajukan.</p>
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Nomor Surat *</label>

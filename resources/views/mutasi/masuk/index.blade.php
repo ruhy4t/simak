@@ -172,11 +172,20 @@
                                             @endif
                                         </div>
                                     </td>
-                                    <td class="px-6 py-4 text-sm text-slate-600">
-                                        <span
-                                            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 ring-1 ring-inset ring-indigo-600/10">
+                                    <td class="px-6 py-4 text-center">
+                                        <button
+                                            @click="
+                                                showModal = true; 
+                                                modalTitle = '#{{ $mutasi->id_mutasi }}'; 
+                                                siswaList = {{ json_encode($mutasi->siswa->map(fn($s) => [
+                                                    'nama' => $s->nama_murid,
+                                                    'nisn' => $s->nisn,
+                                                    'asal' => $s->nama_sekolah_asal
+                                                ])) }}
+                                            "
+                                            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 hover:bg-indigo-600 hover:text-white transition-all ring-1 ring-inset ring-indigo-600/10 hover:ring-indigo-600">
                                             <i class="bi bi-people-fill"></i> {{ $mutasi->jumlah_siswa }}
-                                        </span>
+                                        </button>
                                     </td>
                                 @endif
 

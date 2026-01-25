@@ -305,15 +305,41 @@ class MutasiMasukController extends Controller
         $jumlahSiswa = (int) $request->jumlah_siswa;
         $isDinasEntry = $request->has('is_dinas_entry');
 
-        // Validate jumlah_siswa first
-        if ($jumlahSiswa < 1 || $jumlahSiswa > 5) {
-            return back()->withErrors(['jumlah_siswa' => 'Jumlah siswa harus antara 1-5'])->withInput();
+        // Check Schedule (Only for non-Dinas/SuperAdmin)
+        if (!in_array($user->role, ['Dinas', 'SuperAdmin'])) {
+            $today = now();
+
+            // 1. Check Holiday
+            if (\App\Models\Holiday::isHoliday($today->format('Y-m-d'))) {
+                return back()->with('error', 'Maaf, layanan mutasi tutup pada hari libur nasional.');
+            }
+
+            // 2. Check Allowed Days
+            $allowedDays = \App\Models\Setting::getAllowedDays(); // Returns [1,2,3,4,5] etc.
+            if (!empty($allowedDays) && !in_array($today->dayOfWeekIso, $allowedDays)) {
+                return back()->with('error', 'Maaf, layanan mutasi tidak beroperasi hari ini.');
+            }
+
+            // 3. Check Allowed Hours
+            if (\App\Models\Setting::isHourRestrictionEnabled()) {
+                $startTime = \App\Models\Setting::get('mutasi_start_time', '08:00');
+                $endTime = \App\Models\Setting::get('mutasi_end_time', '15:00');
+                $currentTime = $today->format('H:i');
+
+                if ($currentTime < $startTime || $currentTime > $endTime) {
+                    return back()->with('error', "Maaf, layanan mutasi hanya dapat diakses pada pukul $startTime - $endTime WIB.");
+                }
+            }
         }
 
+        // Validate jumlah_siswa (Limit Removed, now just > 0)
+        if ($jumlahSiswa < 1) {
+            return back()->withErrors(['jumlah_siswa' => 'Jumlah siswa minimal 1'])->withInput();
+        }
 
         // Base validation with custom messages
         $rules = [
-            'jumlah_siswa' => 'required|integer|min:1|max:5',
+            'jumlah_siswa' => 'required|integer|min:1', // Removed max:5
             'nomor_surat' => 'required|string|max:50',
             'tanggal_surat' => 'required|date|before_or_equal:today|after:1900-01-01',
             'npsn_sekolah_tujuan' => 'required|string|size:8',
