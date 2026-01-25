@@ -22,11 +22,16 @@ class AuditLog extends Model
     // Static helper for easy logging
     public static function log(string $eventType, ?string $username, ?string $details = null): void
     {
-        self::create([
-            'event_type' => $eventType,
-            'username' => $username,
-            'ip_address' => request()->ip(),
-            'details' => $details,
-        ]);
+        try {
+            self::create([
+                'event_type' => $eventType,
+                'username' => $username ?? 'System', // Fallback for null username
+                'ip_address' => request()->ip(),
+                'details' => $details,
+            ]);
+        } catch (\Exception $e) {
+            // Silently fail but log to system error log so the app doesn't crash
+            \Illuminate\Support\Facades\Log::error("AuditLog Failed: " . $e->getMessage());
+        }
     }
 }
