@@ -153,6 +153,41 @@ class MutasiMasukController extends Controller
     {
         $user = Auth::user();
 
+        // Check Schedule (Only for non-Dinas/SuperAdmin)
+        if (!in_array($user->role, ['Dinas', 'SuperAdmin'])) {
+            $today = now();
+
+            // Common Schedule Retrieval
+            $dayNames = [0 => 'Minggu', 1 => 'Senin', 2 => 'Selasa', 3 => 'Rabu', 4 => 'Kamis', 5 => 'Jumat', 6 => 'Sabtu'];
+            $allowedDays = \App\Models\Setting::getAllowedDays();
+            $allowedDayNames = !empty($allowedDays) ? implode(', ', array_map(fn($d) => $dayNames[$d] ?? '', $allowedDays)) : 'Setiap Hari';
+
+            $startTime = \App\Models\Setting::get('working_hours_start', '08:00');
+            $endTime = \App\Models\Setting::get('working_hours_end', '15:00');
+            $blockData = [
+                'days' => $allowedDayNames,
+                'hours' => "{$startTime} - {$endTime} WIB"
+            ];
+
+            // 1. Check Holiday
+            if (\App\Models\Holiday::isHoliday($today->format('Y-m-d'))) {
+                return redirect()->route('mutasi.masuk.index')->with('schedule_block', $blockData);
+            }
+
+            // 2. Check Allowed Days
+            if (!empty($allowedDays) && !in_array($today->dayOfWeekIso, $allowedDays)) {
+                return redirect()->route('mutasi.masuk.index')->with('schedule_block', $blockData);
+            }
+
+            // 3. Check Allowed Hours
+            if (\App\Models\Setting::isHourRestrictionEnabled()) {
+                $currentTime = $today->format('H:i');
+                if ($currentTime < $startTime || $currentTime > $endTime) {
+                    return redirect()->route('mutasi.masuk.index')->with('schedule_block', $blockData);
+                }
+            }
+        }
+
         $alamatSekolahTujuan = '';
         $namaSekolahTujuan = $user->nama_sekolah ?? '';
         $npsnSekolahTujuan = $user->npsn ?? '';
@@ -322,8 +357,8 @@ class MutasiMasukController extends Controller
 
             // 3. Check Allowed Hours
             if (\App\Models\Setting::isHourRestrictionEnabled()) {
-                $startTime = \App\Models\Setting::get('mutasi_start_time', '08:00');
-                $endTime = \App\Models\Setting::get('mutasi_end_time', '15:00');
+                $startTime = \App\Models\Setting::get('working_hours_start', '08:00');
+                $endTime = \App\Models\Setting::get('working_hours_end', '15:00');
                 $currentTime = $today->format('H:i');
 
                 if ($currentTime < $startTime || $currentTime > $endTime) {
@@ -1111,6 +1146,41 @@ class MutasiMasukController extends Controller
             abort(403, 'Hanya akun pengusul yang dapat memperbaiki data ini.');
         }
 
+        // Check Schedule (Only for non-Dinas/SuperAdmin)
+        if (!in_array($user->role, ['Dinas', 'SuperAdmin'])) {
+            $today = now();
+
+            // Common Schedule Retrieval
+            $dayNames = [0 => 'Minggu', 1 => 'Senin', 2 => 'Selasa', 3 => 'Rabu', 4 => 'Kamis', 5 => 'Jumat', 6 => 'Sabtu'];
+            $allowedDays = \App\Models\Setting::getAllowedDays();
+            $allowedDayNames = !empty($allowedDays) ? implode(', ', array_map(fn($d) => $dayNames[$d] ?? '', $allowedDays)) : 'Setiap Hari';
+
+            $startTime = \App\Models\Setting::get('working_hours_start', '08:00');
+            $endTime = \App\Models\Setting::get('working_hours_end', '15:00');
+            $blockData = [
+                'days' => $allowedDayNames,
+                'hours' => "{$startTime} - {$endTime} WIB"
+            ];
+
+            // 1. Check Holiday
+            if (\App\Models\Holiday::isHoliday($today->format('Y-m-d'))) {
+                return redirect()->route('mutasi.masuk.index')->with('schedule_block', $blockData);
+            }
+
+            // 2. Check Allowed Days
+            if (!empty($allowedDays) && !in_array($today->dayOfWeekIso, $allowedDays)) {
+                return redirect()->route('mutasi.masuk.index')->with('schedule_block', $blockData);
+            }
+
+            // 3. Check Allowed Hours
+            if (\App\Models\Setting::isHourRestrictionEnabled()) {
+                $currentTime = $today->format('H:i');
+                if ($currentTime < $startTime || $currentTime > $endTime) {
+                    return redirect()->route('mutasi.masuk.index')->with('schedule_block', $blockData);
+                }
+            }
+        }
+
         // Allow edit when status is Perlu Perbaikan OR Dibatalkan
         if (!in_array($mutasi->status, ['Perlu Perbaikan', 'Dibatalkan'])) {
             return back()->with('error', 'Data hanya dapat diperbaiki jika status adalah Perlu Perbaikan atau Dibatalkan.');
@@ -1158,6 +1228,41 @@ class MutasiMasukController extends Controller
         // Security: Strictly only the original proposer/pengusul can resubmit
         if ($mutasi->pengusul !== $user->username) {
             abort(403, 'Hanya akun pengusul yang dapat mengirim ulang data ini.');
+        }
+
+        // Check Schedule (Only for non-Dinas/SuperAdmin)
+        if (!in_array($user->role, ['Dinas', 'SuperAdmin'])) {
+            $today = now();
+
+            // Common Schedule Retrieval
+            $dayNames = [0 => 'Minggu', 1 => 'Senin', 2 => 'Selasa', 3 => 'Rabu', 4 => 'Kamis', 5 => 'Jumat', 6 => 'Sabtu'];
+            $allowedDays = \App\Models\Setting::getAllowedDays();
+            $allowedDayNames = !empty($allowedDays) ? implode(', ', array_map(fn($d) => $dayNames[$d] ?? '', $allowedDays)) : 'Setiap Hari';
+
+            $startTime = \App\Models\Setting::get('working_hours_start', '08:00');
+            $endTime = \App\Models\Setting::get('working_hours_end', '15:00');
+            $blockData = [
+                'days' => $allowedDayNames,
+                'hours' => "{$startTime} - {$endTime} WIB"
+            ];
+
+            // 1. Check Holiday
+            if (\App\Models\Holiday::isHoliday($today->format('Y-m-d'))) {
+                return redirect()->route('mutasi.masuk.index')->with('schedule_block', $blockData);
+            }
+
+            // 2. Check Allowed Days
+            if (!empty($allowedDays) && !in_array($today->dayOfWeekIso, $allowedDays)) {
+                return redirect()->route('mutasi.masuk.index')->with('schedule_block', $blockData);
+            }
+
+            // 3. Check Allowed Hours
+            if (\App\Models\Setting::isHourRestrictionEnabled()) {
+                $currentTime = $today->format('H:i');
+                if ($currentTime < $startTime || $currentTime > $endTime) {
+                    return redirect()->route('mutasi.masuk.index')->with('schedule_block', $blockData);
+                }
+            }
         }
 
         if (!in_array($mutasi->status, ['Perlu Perbaikan', 'Dibatalkan'])) {
@@ -1958,6 +2063,41 @@ class MutasiMasukController extends Controller
         }
         if ($draft->pengusul !== $user->username && !in_array($user->role, ['Dinas', 'SuperAdmin'])) {
             return redirect()->route('mutasi.masuk.index')->with('error', 'Akses ditolak');
+        }
+
+        // Check Schedule (Only for non-Dinas/SuperAdmin)
+        if (!in_array($user->role, ['Dinas', 'SuperAdmin'])) {
+            $today = now();
+
+            // Common Schedule Retrieval
+            $dayNames = [0 => 'Minggu', 1 => 'Senin', 2 => 'Selasa', 3 => 'Rabu', 4 => 'Kamis', 5 => 'Jumat', 6 => 'Sabtu'];
+            $allowedDays = \App\Models\Setting::getAllowedDays();
+            $allowedDayNames = !empty($allowedDays) ? implode(', ', array_map(fn($d) => $dayNames[$d] ?? '', $allowedDays)) : 'Setiap Hari';
+
+            $startTime = \App\Models\Setting::get('working_hours_start', '08:00');
+            $endTime = \App\Models\Setting::get('working_hours_end', '15:00');
+            $blockData = [
+                'days' => $allowedDayNames,
+                'hours' => "{$startTime} - {$endTime} WIB"
+            ];
+
+            // 1. Check Holiday
+            if (\App\Models\Holiday::isHoliday($today->format('Y-m-d'))) {
+                return redirect()->route('mutasi.masuk.index')->with('schedule_block', $blockData);
+            }
+
+            // 2. Check Allowed Days
+            if (!empty($allowedDays) && !in_array($today->dayOfWeekIso, $allowedDays)) {
+                return redirect()->route('mutasi.masuk.index')->with('schedule_block', $blockData);
+            }
+
+            // 3. Check Allowed Hours
+            if (\App\Models\Setting::isHourRestrictionEnabled()) {
+                $currentTime = $today->format('H:i');
+                if ($currentTime < $startTime || $currentTime > $endTime) {
+                    return redirect()->route('mutasi.masuk.index')->with('schedule_block', $blockData);
+                }
+            }
         }
 
         // Load students

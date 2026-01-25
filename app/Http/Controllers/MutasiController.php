@@ -110,8 +110,8 @@ class MutasiController extends Controller
             $allowedDays = \App\Models\Setting::getAllowedDays();
             $allowedDayNames = !empty($allowedDays) ? implode(', ', array_map(fn($d) => $dayNames[$d] ?? '', $allowedDays)) : 'Setiap Hari';
 
-            $startTime = \App\Models\Setting::get('mutasi_start_time', '08:00');
-            $endTime = \App\Models\Setting::get('mutasi_end_time', '15:00');
+            $startTime = \App\Models\Setting::get('working_hours_start', '08:00');
+            $endTime = \App\Models\Setting::get('working_hours_end', '15:00');
             $blockData = [
                 'days' => $allowedDayNames,
                 'hours' => "{$startTime} - {$endTime} WIB"
@@ -272,8 +272,8 @@ class MutasiController extends Controller
             $allowedDays = \App\Models\Setting::getAllowedDays();
             $allowedDayNames = !empty($allowedDays) ? implode(', ', array_map(fn($d) => $dayNames[$d] ?? '', $allowedDays)) : 'Setiap Hari';
 
-            $startTime = \App\Models\Setting::get('mutasi_start_time', '08:00');
-            $endTime = \App\Models\Setting::get('mutasi_end_time', '15:00');
+            $startTime = \App\Models\Setting::get('working_hours_start', '08:00');
+            $endTime = \App\Models\Setting::get('working_hours_end', '15:00');
             $blockData = [
                 'days' => $allowedDayNames,
                 'hours' => "{$startTime} - {$endTime} WIB"
@@ -337,8 +337,8 @@ class MutasiController extends Controller
             $allowedDays = \App\Models\Setting::getAllowedDays();
             $allowedDayNames = !empty($allowedDays) ? implode(', ', array_map(fn($d) => $dayNames[$d] ?? '', $allowedDays)) : 'Setiap Hari';
 
-            $startTime = \App\Models\Setting::get('mutasi_start_time', '08:00');
-            $endTime = \App\Models\Setting::get('mutasi_end_time', '15:00');
+            $startTime = \App\Models\Setting::get('working_hours_start', '08:00');
+            $endTime = \App\Models\Setting::get('working_hours_end', '15:00');
 
             $blockData = [
                 'days' => $allowedDayNames,
@@ -544,8 +544,8 @@ class MutasiController extends Controller
             $allowedDays = \App\Models\Setting::getAllowedDays();
             $allowedDayNames = !empty($allowedDays) ? implode(', ', array_map(fn($d) => $dayNames[$d] ?? '', $allowedDays)) : 'Setiap Hari';
 
-            $startTime = \App\Models\Setting::get('mutasi_start_time', '08:00');
-            $endTime = \App\Models\Setting::get('mutasi_end_time', '15:00');
+            $startTime = \App\Models\Setting::get('working_hours_start', '08:00');
+            $endTime = \App\Models\Setting::get('working_hours_end', '15:00');
             $blockData = [
                 'days' => $allowedDayNames,
                 'hours' => "{$startTime} - {$endTime} WIB"
@@ -1260,6 +1260,41 @@ class MutasiController extends Controller
 
         if (!$isOwner) {
             abort(403, 'Anda tidak berhak mengakses draft ini.');
+        }
+
+        // Check Schedule (Only for non-Dinas/SuperAdmin)
+        if (!in_array($user->role, ['Dinas', 'SuperAdmin'])) {
+            $today = now();
+
+            // Common Schedule Retrieval
+            $dayNames = [0 => 'Minggu', 1 => 'Senin', 2 => 'Selasa', 3 => 'Rabu', 4 => 'Kamis', 5 => 'Jumat', 6 => 'Sabtu'];
+            $allowedDays = \App\Models\Setting::getAllowedDays();
+            $allowedDayNames = !empty($allowedDays) ? implode(', ', array_map(fn($d) => $dayNames[$d] ?? '', $allowedDays)) : 'Setiap Hari';
+
+            $startTime = \App\Models\Setting::get('working_hours_start', '08:00');
+            $endTime = \App\Models\Setting::get('working_hours_end', '15:00');
+            $blockData = [
+                'days' => $allowedDayNames,
+                'hours' => "{$startTime} - {$endTime} WIB"
+            ];
+
+            // 1. Check Holiday
+            if (\App\Models\Holiday::isHoliday($today->format('Y-m-d'))) {
+                return redirect()->route('mutasi.keluar.index')->with('schedule_block', $blockData);
+            }
+
+            // 2. Check Allowed Days
+            if (!empty($allowedDays) && !in_array($today->dayOfWeekIso, $allowedDays)) {
+                return redirect()->route('mutasi.keluar.index')->with('schedule_block', $blockData);
+            }
+
+            // 3. Check Allowed Hours
+            if (\App\Models\Setting::isHourRestrictionEnabled()) {
+                $currentTime = $today->format('H:i');
+                if ($currentTime < $startTime || $currentTime > $endTime) {
+                    return redirect()->route('mutasi.keluar.index')->with('schedule_block', $blockData);
+                }
+            }
         }
 
         // Pass draft data to create view
