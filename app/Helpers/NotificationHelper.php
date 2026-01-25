@@ -389,16 +389,17 @@ class NotificationHelper
 
         // Handle /start command
         if (str_starts_with($text, '/start')) {
-            $responseText = "👋 Halo, {$firstName}!\n\n"
-                . "🆔 <b>Chat ID Anda:</b>\n<code>{$chatId}</code>\n\n"
-                . "📋 <b>Cara Menggunakan:</b>\n"
-                . "1. Copy Chat ID di atas\n"
-                . "2. Login ke SIMAK\n"
-                . "3. Buka Menu Profil\n"
-                . "4. Paste Chat ID di kolom Telegram\n"
-                . "5. Simpan\n\n"
-                . "✅ Setelah itu, Anda akan menerima notifikasi status mutasi di Telegram!\n\n"
-                . "---\nSIMAK - Dinas Pendidikan Kota Bogor";
+            $responseText = "👋 <b>Halo, {$firstName}!</b>\n\n"
+                . "🆔 <b>CHAT ID ANDA:</b>\n\n"
+                . "👉 <code>{$chatId}</code> 👈\n\n" // Emphasize with arrows and code block
+                . "📋 <b>CARA MENGHUBUNGKAN:</b>\n"
+                . "1. Salin Chat ID di atas\n"
+                . "2. Login ke Aplikasi SIMAK\n"
+                . "3. Masuk ke Menu <b>Profil Saya</b>\n"
+                . "4. Tempel di kolom <b>Telegram Chat ID</b>\n"
+                . "5. Klik Simpan\n\n"
+                . "✅ <i>Akun Anda akan terhubung untuk menerima notifikasi otomatis.</i>\n\n"
+                . "---\n<b>SIMAK - Dinas Pendidikan Kota Bogor</b>";
 
             self::sendTelegram((string) $chatId, $responseText);
 

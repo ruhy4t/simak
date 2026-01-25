@@ -85,135 +85,133 @@
                                         class="flex-shrink-0 w-5 h-5 bg-blue-600 text-white rounded-full text-xs flex items-center justify-center">1</span>
                                     <span>Buka aplikasi <strong>Telegram</strong> di HP atau Desktop</span>
                                 </div>
-                                <div class="flex items-start gap-2">
-                                    <span
-                                        class="flex-shrink-0 w-5 h-5 bg-blue-600 text-white rounded-full text-xs flex items-center justify-center">2</span>
-                                    <span>Buka Telegram, cari bot: <code
-                                            class="bg-gray-100 px-1.5 py-0.5 rounded">@userinfobot</code></span>
-                                </div>
-                                <div class="flex items-start gap-2">
-                                    <span
-                                        class="flex-shrink-0 w-5 h-5 bg-blue-600 text-white rounded-full text-xs flex items-center justify-center">3</span>
-                                    <span>Klik tombol <strong>Start</strong>. Bot akan membalas dengan <strong>ID</strong>
-                                        Anda.</span>
-                                </div>
-                                <div class="flex items-start gap-2">
-                                    <span
-                                        class="flex-shrink-0 w-5 h-5 bg-blue-600 text-white rounded-full text-xs flex items-center justify-center">4</span>
-                                    <span>Copy angka ID tersebut.</span>
-                                </div>
-                                <div class="flex items-start gap-2">
-                                    <span
-                                        class="flex-shrink-0 w-5 h-5 bg-blue-600 text-white rounded-full text-xs flex items-center justify-center">5</span>
-                                    <span>Paste di kolom di atas & Simpan. Lalu chat bot kami:
-                                        <strong>@simak_smp_bot</strong> agar aktif.</span>
-                                </div>
-                                <div class="mt-3 pt-2 border-t border-blue-100">
-                                    <a href="https://t.me/simak_smp_bot" target="_blank"
-                                        class="inline-flex items-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-medium transition">
-                                        <i class="bi bi-telegram mr-1"></i> Buka Bot di Telegram
-                                    </a>
-                                </div>
+                                <span
+                                    class="flex-shrink-0 w-5 h-5 bg-blue-600 text-white rounded-full text-xs flex items-center justify-center">2</span>
+                                <span>Buka Telegram, cari bot kami: <code
+                                        class="bg-gray-100 px-1.5 py-0.5 rounded font-bold">@simak_smp_bot</code></span>
+                            </div>
+                            <div class="flex items-start gap-2">
+                                <span
+                                    class="flex-shrink-0 w-5 h-5 bg-blue-600 text-white rounded-full text-xs flex items-center justify-center">3</span>
+                                <span>Klik tombol <strong>Start</strong>. Bot akan membalas dengan <strong>Chat ID</strong>
+                                    Anda.</span>
+                            </div>
+                            <div class="flex items-start gap-2">
+                                <span
+                                    class="flex-shrink-0 w-5 h-5 bg-blue-600 text-white rounded-full text-xs flex items-center justify-center">4</span>
+                                <span>Salin Chat ID tersebut.</span>
+                            </div>
+                            <div class="flex items-start gap-2">
+                                <span
+                                    class="flex-shrink-0 w-5 h-5 bg-blue-600 text-white rounded-full text-xs flex items-center justify-center">5</span>
+                                <span>Tempel/Paste di kolom di atas lalu klik <strong>Simpan Perubahan</strong>.</span>
+                            </div>
+                            <div class="mt-3 pt-2 border-t border-blue-100">
+                                <a href="https://t.me/simak_smp_bot" target="_blank"
+                                    class="inline-flex items-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-medium transition">
+                                    <i class="bi bi-telegram mr-1"></i> Buka Bot di Telegram
+                                </a>
                             </div>
                         </div>
                     </div>
-
-                    @if($user->npsn)
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">NPSN</label>
-                            <input type="text" value="{{ $user->npsn }}" disabled
-                                class="w-full px-4 py-2 bg-gray-100 border rounded-lg text-gray-500 cursor-not-allowed">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Nama Sekolah</label>
-                            <input type="text" value="{{ $user->nama_sekolah }}" disabled
-                                class="w-full px-4 py-2 bg-gray-100 border rounded-lg text-gray-500 cursor-not-allowed">
-                        </div>
-                    @endif
-
-                    <button type="submit"
-                        class="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium py-2.5 rounded-lg transition">
-                        <i class="bi bi-check-lg mr-1"></i> Simpan Perubahan
-                    </button>
-                </form>
             </div>
 
-            <!-- Change Password -->
-            <div class="bg-white rounded-xl shadow-sm border p-6">
-                <h2 class="text-lg font-semibold text-gray-900 mb-4">
-                    <i class="bi bi-shield-lock mr-2 text-yellow-600"></i>
-                    Ubah Password
-                </h2>
+            @if($user->npsn)
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">NPSN</label>
+                    <input type="text" value="{{ $user->npsn }}" disabled
+                        class="w-full px-4 py-2 bg-gray-100 border rounded-lg text-gray-500 cursor-not-allowed">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nama Sekolah</label>
+                    <input type="text" value="{{ $user->nama_sekolah }}" disabled
+                        class="w-full px-4 py-2 bg-gray-100 border rounded-lg text-gray-500 cursor-not-allowed">
+                </div>
+            @endif
 
-                <form action="{{ route('profile.password') }}" method="POST" class="space-y-4">
-                    @csrf
-                    @method('PUT')
-
-                    <!-- Current Password -->
-                    <div x-data="{ show: false }">
-                        <label for="current_password" class="block text-sm font-medium text-gray-700 mb-1">Password Lama
-                            *</label>
-                        <div class="relative">
-                            <input :type="show ? 'text' : 'password'" id="current_password" name="current_password" required
-                                class="w-full px-4 py-2 pr-12 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none @error('current_password') border-red-500 @enderror">
-                            <button type="button" @click="show = !show"
-                                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none z-10 cursor-pointer transition-colors">
-                                <i class="bi" :class="show ? 'bi-eye-slash-fill' : 'bi-eye-fill'"></i>
-                            </button>
-                        </div>
-                        @error('current_password')
-                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <!-- New Password -->
-                    <div x-data="{ show: false }">
-                        <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password Baru *</label>
-                        <div class="relative">
-                            <input :type="show ? 'text' : 'password'" id="password" name="password" required
-                                class="w-full px-4 py-2 pr-12 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none @error('password') border-red-500 @enderror">
-                            <button type="button" @click="show = !show"
-                                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none z-10 cursor-pointer transition-colors">
-                                <i class="bi" :class="show ? 'bi-eye-slash-fill' : 'bi-eye-fill'"></i>
-                            </button>
-                        </div>
-                        @error('password')
-                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <!-- Confirm Password -->
-                    <div x-data="{ show: false }">
-                        <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-1">Konfirmasi
-                            Password Baru *</label>
-                        <div class="relative">
-                            <input :type="show ? 'text' : 'password'" id="password_confirmation"
-                                name="password_confirmation" required
-                                class="w-full px-4 py-2 pr-12 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none">
-                            <button type="button" @click="show = !show"
-                                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none z-10 cursor-pointer transition-colors">
-                                <i class="bi" :class="show ? 'bi-eye-slash-fill' : 'bi-eye-fill'"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm text-yellow-800">
-                        <i class="bi bi-info-circle mr-1"></i>
-                        <strong>Syarat Password:</strong>
-                        <ul class="list-disc ml-5 mt-1 space-y-0.5">
-                            <li>Minimal 8 karakter</li>
-                            <li>Huruf besar (A-Z)</li>
-                            <li>Huruf kecil (a-z)</li>
-                            <li>Angka (0-9)</li>
-                            <li>Minimal 1 karakter khusus (misal: !@#$%^&*_-+=)</li>
-                        </ul>
-                    </div>
-
-                    <button type="submit"
-                        class="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-medium py-2.5 rounded-lg transition">
-                        <i class="bi bi-key mr-1"></i> Ubah Password
-                    </button>
-                </form>
-            </div>
+            <button type="submit"
+                class="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium py-2.5 rounded-lg transition">
+                <i class="bi bi-check-lg mr-1"></i> Simpan Perubahan
+            </button>
+            </form>
         </div>
-    </div>@endsection
+
+        <!-- Change Password -->
+        <div class="bg-white rounded-xl shadow-sm border p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">
+                <i class="bi bi-shield-lock mr-2 text-yellow-600"></i>
+                Ubah Password
+            </h2>
+
+            <form action="{{ route('profile.password') }}" method="POST" class="space-y-4">
+                @csrf
+                @method('PUT')
+
+                <!-- Current Password -->
+                <div x-data="{ show: false }">
+                    <label for="current_password" class="block text-sm font-medium text-gray-700 mb-1">Password Lama
+                        *</label>
+                    <div class="relative">
+                        <input :type="show ? 'text' : 'password'" id="current_password" name="current_password" required
+                            class="w-full px-4 py-2 pr-12 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none @error('current_password') border-red-500 @enderror">
+                        <button type="button" @click="show = !show"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none z-10 cursor-pointer transition-colors">
+                            <i class="bi" :class="show ? 'bi-eye-slash-fill' : 'bi-eye-fill'"></i>
+                        </button>
+                    </div>
+                    @error('current_password')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <!-- New Password -->
+                <div x-data="{ show: false }">
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password Baru *</label>
+                    <div class="relative">
+                        <input :type="show ? 'text' : 'password'" id="password" name="password" required
+                            class="w-full px-4 py-2 pr-12 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none @error('password') border-red-500 @enderror">
+                        <button type="button" @click="show = !show"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none z-10 cursor-pointer transition-colors">
+                            <i class="bi" :class="show ? 'bi-eye-slash-fill' : 'bi-eye-fill'"></i>
+                        </button>
+                    </div>
+                    @error('password')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <!-- Confirm Password -->
+                <div x-data="{ show: false }">
+                    <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-1">Konfirmasi
+                        Password Baru *</label>
+                    <div class="relative">
+                        <input :type="show ? 'text' : 'password'" id="password_confirmation" name="password_confirmation"
+                            required
+                            class="w-full px-4 py-2 pr-12 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none">
+                        <button type="button" @click="show = !show"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none z-10 cursor-pointer transition-colors">
+                            <i class="bi" :class="show ? 'bi-eye-slash-fill' : 'bi-eye-fill'"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm text-yellow-800">
+                    <i class="bi bi-info-circle mr-1"></i>
+                    <strong>Syarat Password:</strong>
+                    <ul class="list-disc ml-5 mt-1 space-y-0.5">
+                        <li>Minimal 8 karakter</li>
+                        <li>Huruf besar (A-Z)</li>
+                        <li>Huruf kecil (a-z)</li>
+                        <li>Angka (0-9)</li>
+                        <li>Minimal 1 karakter khusus (misal: !@#$%^&*_-+=)</li>
+                    </ul>
+                </div>
+
+                <button type="submit"
+                    class="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-medium py-2.5 rounded-lg transition">
+                    <i class="bi bi-key mr-1"></i> Ubah Password
+                </button>
+            </form>
+        </div>
+    </div>
+</div>@endsection

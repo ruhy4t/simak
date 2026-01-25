@@ -1,2 +1,0 @@
-﻿origin	https://github.com/ruhy4t/simak (fetch)
-origin	https://github.com/ruhy4t/simak (push)

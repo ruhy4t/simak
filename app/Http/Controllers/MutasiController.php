@@ -105,25 +105,30 @@ class MutasiController extends Controller
         if (!in_array($user->role, ['Dinas', 'SuperAdmin'])) {
             $today = now();
 
+            // Common Schedule Retrieval
+            $dayNames = [0 => 'Minggu', 1 => 'Senin', 2 => 'Selasa', 3 => 'Rabu', 4 => 'Kamis', 5 => 'Jumat', 6 => 'Sabtu'];
+            $allowedDays = \App\Models\Setting::getAllowedDays();
+            $allowedDayNames = !empty($allowedDays) ? implode(', ', array_map(fn($d) => $dayNames[$d] ?? '', $allowedDays)) : 'Setiap Hari';
+
+            $startTime = \App\Models\Setting::get('mutasi_start_time', '08:00');
+            $endTime = \App\Models\Setting::get('mutasi_end_time', '15:00');
+            $scheduleMsg = "Layanan dibuka setiap hari {$allowedDayNames}, pukul {$startTime} - {$endTime} WIB.";
+
             // 1. Check Holiday
             if (\App\Models\Holiday::isHoliday($today->format('Y-m-d'))) {
-                return redirect()->route('mutasi.keluar.index')->with('error', 'Maaf, layanan mutasi tutup pada hari libur nasional.');
+                return redirect()->route('mutasi.keluar.index')->with('error', "Mohon Maaf Layanan Mutasi Keluar ditutup karena Hari Libur Nasional. {$scheduleMsg}");
             }
 
             // 2. Check Allowed Days
-            $allowedDays = \App\Models\Setting::getAllowedDays();
             if (!empty($allowedDays) && !in_array($today->dayOfWeekIso, $allowedDays)) {
-                return redirect()->route('mutasi.keluar.index')->with('error', 'Maaf, layanan mutasi tidak beroperasi hari ini.');
+                return redirect()->route('mutasi.keluar.index')->with('error', "Mohon Maaf Layanan Mutasi Keluar ditutup hari ini. {$scheduleMsg}");
             }
 
             // 3. Check Allowed Hours
             if (\App\Models\Setting::isHourRestrictionEnabled()) {
-                $startTime = \App\Models\Setting::get('mutasi_start_time', '08:00');
-                $endTime = \App\Models\Setting::get('mutasi_end_time', '15:00');
                 $currentTime = $today->format('H:i');
-
                 if ($currentTime < $startTime || $currentTime > $endTime) {
-                    return redirect()->route('mutasi.keluar.index')->with('error', "Maaf, layanan mutasi hanya dapat diakses pada pukul $startTime - $endTime WIB.");
+                    return redirect()->route('mutasi.keluar.index')->with('error', "Mohon Maaf Layanan Mutasi Keluar ditutup. {$scheduleMsg}");
                 }
             }
         }
@@ -259,25 +264,30 @@ class MutasiController extends Controller
         if (!in_array($user->role, ['Dinas', 'SuperAdmin'])) {
             $today = now();
 
+            // Common Schedule Retrieval
+            $dayNames = [0 => 'Minggu', 1 => 'Senin', 2 => 'Selasa', 3 => 'Rabu', 4 => 'Kamis', 5 => 'Jumat', 6 => 'Sabtu'];
+            $allowedDays = \App\Models\Setting::getAllowedDays();
+            $allowedDayNames = !empty($allowedDays) ? implode(', ', array_map(fn($d) => $dayNames[$d] ?? '', $allowedDays)) : 'Setiap Hari';
+
+            $startTime = \App\Models\Setting::get('mutasi_start_time', '08:00');
+            $endTime = \App\Models\Setting::get('mutasi_end_time', '15:00');
+            $scheduleMsg = "Layanan dibuka setiap hari {$allowedDayNames}, pukul {$startTime} - {$endTime} WIB.";
+
             // 1. Check Holiday
             if (\App\Models\Holiday::isHoliday($today->format('Y-m-d'))) {
-                return redirect()->route('mutasi.keluar.index')->with('error', 'Maaf, layanan mutasi tutup pada hari libur nasional.');
+                return redirect()->route('mutasi.keluar.index')->with('error', "Mohon Maaf Layanan Mutasi Keluar ditutup karena Hari Libur Nasional. {$scheduleMsg}");
             }
 
             // 2. Check Allowed Days
-            $allowedDays = \App\Models\Setting::getAllowedDays();
             if (!empty($allowedDays) && !in_array($today->dayOfWeekIso, $allowedDays)) {
-                return redirect()->route('mutasi.keluar.index')->with('error', 'Maaf, layanan mutasi tidak beroperasi hari ini.');
+                return redirect()->route('mutasi.keluar.index')->with('error', "Mohon Maaf Layanan Mutasi Keluar ditutup hari ini. {$scheduleMsg}");
             }
 
             // 3. Check Allowed Hours
             if (\App\Models\Setting::isHourRestrictionEnabled()) {
-                $startTime = \App\Models\Setting::get('mutasi_start_time', '08:00');
-                $endTime = \App\Models\Setting::get('mutasi_end_time', '15:00');
                 $currentTime = $today->format('H:i');
-
                 if ($currentTime < $startTime || $currentTime > $endTime) {
-                    return redirect()->route('mutasi.keluar.index')->with('error', "Maaf, layanan mutasi hanya dapat diakses pada pukul $startTime - $endTime WIB.");
+                    return redirect()->route('mutasi.keluar.index')->with('error', "Mohon Maaf Layanan Mutasi Keluar ditutup. {$scheduleMsg}");
                 }
             }
         }
@@ -318,13 +328,24 @@ class MutasiController extends Controller
 
             // 1. Check Holiday
             if (\App\Models\Holiday::isHoliday($today->format('Y-m-d'))) {
-                return back()->with('error', 'Maaf, layanan mutasi tutup pada hari libur nasional.');
+                $dayNames = [0 => 'Minggu', 1 => 'Senin', 2 => 'Selasa', 3 => 'Rabu', 4 => 'Kamis', 5 => 'Jumat', 6 => 'Sabtu'];
+                $allowedDays = \App\Models\Setting::getAllowedDays();
+                $allowedDayNames = !empty($allowedDays) ? implode(', ', array_map(fn($d) => $dayNames[$d] ?? '', $allowedDays)) : 'Setiap Hari';
+                $startTime = \App\Models\Setting::get('mutasi_start_time', '08:00');
+                $endTime = \App\Models\Setting::get('mutasi_end_time', '15:00');
+
+                return back()->with('error', "Mohon Maaf Layanan Mutasi Keluar ditutup karena Hari Libur Nasional. Layanan dibuka setiap hari {$allowedDayNames}, pukul {$startTime} - {$endTime} WIB.");
             }
 
             // 2. Check Allowed Days
             $allowedDays = \App\Models\Setting::getAllowedDays(); // Returns [1,2,3,4,5] etc.
             if (!empty($allowedDays) && !in_array($today->dayOfWeekIso, $allowedDays)) {
-                return back()->with('error', 'Maaf, layanan mutasi tidak beroperasi hari ini.');
+                $dayNames = [0 => 'Minggu', 1 => 'Senin', 2 => 'Selasa', 3 => 'Rabu', 4 => 'Kamis', 5 => 'Jumat', 6 => 'Sabtu'];
+                $allowedDayNames = !empty($allowedDays) ? implode(', ', array_map(fn($d) => $dayNames[$d] ?? '', $allowedDays)) : 'Setiap Hari';
+                $startTime = \App\Models\Setting::get('mutasi_start_time', '08:00');
+                $endTime = \App\Models\Setting::get('mutasi_end_time', '15:00');
+
+                return back()->with('error', "Mohon Maaf Layanan Mutasi Keluar ditutup hari ini. Layanan dibuka setiap hari {$allowedDayNames}, pukul {$startTime} - {$endTime} WIB.");
             }
 
             // 3. Check Allowed Hours
@@ -334,7 +355,11 @@ class MutasiController extends Controller
                 $currentTime = $today->format('H:i');
 
                 if ($currentTime < $startTime || $currentTime > $endTime) {
-                    return back()->with('error', "Maaf, layanan mutasi hanya dapat diakses pada pukul $startTime - $endTime WIB.");
+                    $dayNames = [0 => 'Minggu', 1 => 'Senin', 2 => 'Selasa', 3 => 'Rabu', 4 => 'Kamis', 5 => 'Jumat', 6 => 'Sabtu'];
+                    $allowedDays = \App\Models\Setting::getAllowedDays();
+                    $allowedDayNames = !empty($allowedDays) ? implode(', ', array_map(fn($d) => $dayNames[$d] ?? '', $allowedDays)) : 'Setiap Hari';
+
+                    return back()->with('error', "Mohon Maaf Layanan Mutasi Keluar ditutup. Layanan dibuka setiap hari {$allowedDayNames}, pukul {$startTime} - {$endTime} WIB.");
                 }
             }
         }
@@ -514,25 +539,31 @@ class MutasiController extends Controller
         if (!in_array($user->role, ['Dinas', 'SuperAdmin'])) {
             $today = now();
 
+            // Common Schedule Retrieval
+            $dayNames = [0 => 'Minggu', 1 => 'Senin', 2 => 'Selasa', 3 => 'Rabu', 4 => 'Kamis', 5 => 'Jumat', 6 => 'Sabtu'];
+            $allowedDays = \App\Models\Setting::getAllowedDays();
+            $allowedDayNames = !empty($allowedDays) ? implode(', ', array_map(fn($d) => $dayNames[$d] ?? '', $allowedDays)) : 'Setiap Hari';
+
+            $startTime = \App\Models\Setting::get('mutasi_start_time', '08:00');
+            $endTime = \App\Models\Setting::get('mutasi_end_time', '15:00');
+            $scheduleMsg = "Layanan dibuka setiap hari {$allowedDayNames}, pukul {$startTime} - {$endTime} WIB.";
+
             // 1. Check Holiday
             if (\App\Models\Holiday::isHoliday($today->format('Y-m-d'))) {
-                return back()->with('error', 'Maaf, layanan mutasi tutup pada hari libur nasional.');
+                return back()->with('error', "Mohon Maaf Layanan Mutasi Keluar ditutup karena Hari Libur Nasional. {$scheduleMsg}");
             }
 
             // 2. Check Allowed Days
-            $allowedDays = \App\Models\Setting::getAllowedDays(); // Returns [1,2,3,4,5] etc.
             if (!empty($allowedDays) && !in_array($today->dayOfWeekIso, $allowedDays)) {
-                return back()->with('error', 'Maaf, layanan mutasi tidak beroperasi hari ini.');
+                return back()->with('error', "Mohon Maaf Layanan Mutasi Keluar ditutup hari ini. {$scheduleMsg}");
             }
 
             // 3. Check Allowed Hours
             if (\App\Models\Setting::isHourRestrictionEnabled()) {
-                $startTime = \App\Models\Setting::get('mutasi_start_time', '08:00');
-                $endTime = \App\Models\Setting::get('mutasi_end_time', '15:00');
                 $currentTime = $today->format('H:i');
 
                 if ($currentTime < $startTime || $currentTime > $endTime) {
-                    return back()->with('error', "Maaf, layanan mutasi hanya dapat diakses pada pukul $startTime - $endTime WIB.");
+                    return back()->with('error', "Mohon Maaf Layanan Mutasi Keluar ditutup. {$scheduleMsg}");
                 }
             }
         }

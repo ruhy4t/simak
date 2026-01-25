@@ -1,5 +1,0 @@
-﻿9ba0c67 Fix: Backend validation for persistent file paths (resumed drafts)
-906040a Fix: Validation logic for existing files and exact file size limits (1MB/2MB)
-a050353 Fix: Syntax error in mutasi-masuk.js (missing braces)
-a55fe95 Fix: JS race conditions, missing students, and region data source
-c06d635 Fix: Show 'File Saved' indicator for Header File in Draft Resume
