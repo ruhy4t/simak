@@ -218,6 +218,42 @@
         </div>
     </div>
 
+    {{-- Schedule Block Modal --}}
+    @if(session('schedule_block'))
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm"
+            x-data="{ show: true }" x-show="show" x-transition.opacity>
+            <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden transform transition-all scale-100">
+                <div class="p-8 text-center">
+                    <div
+                        class="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-5">
+                        <i class="bi bi-shop text-3xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-800 mb-2">Layanan Tutup Sementara</h3>
+                    <p class="text-slate-500 text-sm mb-6 leading-relaxed">
+                        Mohon maaf, layanan ini sedang tutup sementara. Silakan kembali pada jadwal operasional.
+                    </p>
+
+                    <div class="bg-slate-50 rounded-2xl p-5 text-left text-sm space-y-3 mb-8 border border-slate-100">
+                        <p class="text-slate-700 font-semibold mb-2">Layanan hanya tersedia pada:</p>
+                        <div class="flex items-start gap-3 text-slate-600">
+                            <div class="w-6 flex justify-center"><i class="bi bi-calendar4-week text-indigo-500"></i></div>
+                            <span class="flex-1">{{ session('schedule_block')['days'] }}</span>
+                        </div>
+                        <div class="flex items-center gap-3 text-slate-600">
+                            <div class="w-6 flex justify-center"><i class="bi bi-alarm text-rose-500"></i></div>
+                            <span class="flex-1">{{ session('schedule_block')['hours'] }}</span>
+                        </div>
+                    </div>
+
+                    <button @click="show = false" type="button"
+                        class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition shadow-lg shadow-indigo-500/30 active:scale-95">
+                        OK, Saya Mengerti
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
     <style>
         .animate-fade-in-up {
             animation: fadeInUp 0.5s ease-out;
