@@ -175,7 +175,7 @@ class MutasiMasukController extends Controller
             }
 
             // 2. Check Allowed Days
-            if (!empty($allowedDays) && !in_array($today->dayOfWeekIso, $allowedDays)) {
+            if (!empty($allowedDays) && !in_array($today->dayOfWeek, $allowedDays)) {
                 return redirect()->route('mutasi.masuk.index')->with('schedule_block', $blockData);
             }
 
@@ -351,7 +351,7 @@ class MutasiMasukController extends Controller
 
             // 2. Check Allowed Days
             $allowedDays = \App\Models\Setting::getAllowedDays(); // Returns [1,2,3,4,5] etc.
-            if (!empty($allowedDays) && !in_array($today->dayOfWeekIso, $allowedDays)) {
+            if (!empty($allowedDays) && !in_array($today->dayOfWeek, $allowedDays)) {
                 return back()->with('error', 'Maaf, layanan mutasi tidak beroperasi hari ini.');
             }
 

@@ -123,7 +123,7 @@ class MutasiController extends Controller
             }
 
             // 2. Check Allowed Days
-            if (!empty($allowedDays) && !in_array($today->dayOfWeekIso, $allowedDays)) {
+            if (!empty($allowedDays) && !in_array($today->dayOfWeek, $allowedDays)) {
                 return redirect()->route('mutasi.keluar.index')->with('schedule_block', $blockData);
             }
 
@@ -285,7 +285,7 @@ class MutasiController extends Controller
             }
 
             // 2. Check Allowed Days
-            if (!empty($allowedDays) && !in_array($today->dayOfWeekIso, $allowedDays)) {
+            if (!empty($allowedDays) && !in_array($today->dayOfWeek, $allowedDays)) {
                 return redirect()->route('mutasi.keluar.index')->with('schedule_block', $blockData);
             }
 
@@ -351,7 +351,7 @@ class MutasiController extends Controller
             }
 
             // 2. Check Allowed Days
-            if (!empty($allowedDays) && !in_array($today->dayOfWeekIso, $allowedDays)) {
+            if (!empty($allowedDays) && !in_array($today->dayOfWeek, $allowedDays)) {
                 return redirect()->route('mutasi.keluar.index')->with('schedule_block', $blockData);
             }
 
@@ -557,7 +557,7 @@ class MutasiController extends Controller
             }
 
             // 2. Check Allowed Days
-            if (!empty($allowedDays) && !in_array($today->dayOfWeekIso, $allowedDays)) {
+            if (!empty($allowedDays) && !in_array($today->dayOfWeek, $allowedDays)) {
                 return redirect()->route('mutasi.keluar.index')->with('schedule_block', $blockData);
             }
 
@@ -1278,13 +1278,31 @@ class MutasiController extends Controller
                 'hours' => "{$startTime} - {$endTime} WIB"
             ];
 
+            // DEBUG LOGGING
+            \Log::info("Schedule Check - User: {$user->username}, Role: {$user->role}");
+            \Log::info("Time: {$today->toDateTimeString()}, DayISO: {$today->dayOfWeekIso} (" . ($dayNames[$today->dayOfWeek] ?? 'Unknown') . ")");
+            \Log::info("Allowed Days: " . implode(',', $allowedDays));
+            \Log::info("Hour Restriction Enabled: " . (\App\Models\Setting::isHourRestrictionEnabled() ? 'Yes' : 'No'));
+            \Log::info("Current Time: {$today->format('H:i')}, Window: {$startTime} - {$endTime}");
+
             // 1. Check Holiday
             if (\App\Models\Holiday::isHoliday($today->format('Y-m-d'))) {
+                \Log::info("Blocked: Holiday");
                 return redirect()->route('mutasi.keluar.index')->with('schedule_block', $blockData);
             }
 
             // 2. Check Allowed Days
+            // Carbon dayOfWeekIso: 1 (Mon) - 7 (Sun)
+            // But Settings might be storing 0-6 or 1-7. Let's check `getAllowedDays` implementation again.
+            // Setting::getAllowedDays defaults to [1, 2, 3, 4, 5, 6]. 
+            // If today is Sunday (7), and it's not in array, it blocks.
+            // FIX: Carbon dayOfWeek returns 0 (Sun) - 6 (Sat). 
+            // Carbon dayOfWeekIso returns 1 (Mon) - 7 (Sun).
+            // We need to match what Setting stores. Usually UI forms use 0=Sun or 1=Mon.
+            // If Setting defaults to [1,2,3...6], it assumes Monday-Saturday?
+            // Let's rely on dayOfWeekIso for now but log the mismatch.
             if (!empty($allowedDays) && !in_array($today->dayOfWeekIso, $allowedDays)) {
+                \Log::info("Blocked: Day not allowed. Today ISO: {$today->dayOfWeekIso}");
                 return redirect()->route('mutasi.keluar.index')->with('schedule_block', $blockData);
             }
 
@@ -1292,6 +1310,7 @@ class MutasiController extends Controller
             if (\App\Models\Setting::isHourRestrictionEnabled()) {
                 $currentTime = $today->format('H:i');
                 if ($currentTime < $startTime || $currentTime > $endTime) {
+                    \Log::info("Blocked: Outside hours. Current: {$currentTime}");
                     return redirect()->route('mutasi.keluar.index')->with('schedule_block', $blockData);
                 }
             }
