@@ -101,6 +101,33 @@ class MutasiController extends Controller
     {
         $user = Auth::user();
 
+        // Check Schedule (Only for non-Dinas/SuperAdmin)
+        if (!in_array($user->role, ['Dinas', 'SuperAdmin'])) {
+            $today = now();
+
+            // 1. Check Holiday
+            if (\App\Models\Holiday::isHoliday($today->format('Y-m-d'))) {
+                return redirect()->route('mutasi.keluar.index')->with('error', 'Maaf, form mutasi tutup pada hari libur nasional.');
+            }
+
+            // 2. Check Allowed Days
+            $allowedDays = \App\Models\Setting::getAllowedDays();
+            if (!empty($allowedDays) && !in_array($today->dayOfWeekIso, $allowedDays)) {
+                return redirect()->route('mutasi.keluar.index')->with('error', 'Maaf, form mutasi tidak beroperasi hari ini.');
+            }
+
+            // 3. Check Allowed Hours
+            if (\App\Models\Setting::isHourRestrictionEnabled()) {
+                $startTime = \App\Models\Setting::get('mutasi_start_time', '08:00');
+                $endTime = \App\Models\Setting::get('mutasi_end_time', '15:00');
+                $currentTime = $today->format('H:i');
+
+                if ($currentTime < $startTime || $currentTime > $endTime) {
+                    return redirect()->route('mutasi.keluar.index')->with('error', "Maaf, form mutasi hanya dapat diakses pada pukul $startTime - $endTime WIB.");
+                }
+            }
+        }
+
         // Initialize with user data
         $alamatSekolahAsal = $user->alamat ?? '';
         $namaSekolahAsal = $user->nama_sekolah ?? '';
@@ -227,6 +254,34 @@ class MutasiController extends Controller
     public function revisionEdit(string $id)
     {
         $user = Auth::user();
+
+        // Check Schedule (Only for non-Dinas/SuperAdmin)
+        if (!in_array($user->role, ['Dinas', 'SuperAdmin'])) {
+            $today = now();
+
+            // 1. Check Holiday
+            if (\App\Models\Holiday::isHoliday($today->format('Y-m-d'))) {
+                return redirect()->route('mutasi.keluar.index')->with('error', 'Maaf, perbaikan data tutup pada hari libur nasional.');
+            }
+
+            // 2. Check Allowed Days
+            $allowedDays = \App\Models\Setting::getAllowedDays();
+            if (!empty($allowedDays) && !in_array($today->dayOfWeekIso, $allowedDays)) {
+                return redirect()->route('mutasi.keluar.index')->with('error', 'Maaf, perbaikan data tidak beroperasi hari ini.');
+            }
+
+            // 3. Check Allowed Hours
+            if (\App\Models\Setting::isHourRestrictionEnabled()) {
+                $startTime = \App\Models\Setting::get('mutasi_start_time', '08:00');
+                $endTime = \App\Models\Setting::get('mutasi_end_time', '15:00');
+                $currentTime = $today->format('H:i');
+
+                if ($currentTime < $startTime || $currentTime > $endTime) {
+                    return redirect()->route('mutasi.keluar.index')->with('error', "Maaf, perbaikan data hanya dapat diakses pada pukul $startTime - $endTime WIB.");
+                }
+            }
+        }
+
         $mutasi = DB::table('mutasi_keluar')->where('id_mutasi', $id)->first();
 
         if (!$mutasi)
