@@ -13,4 +13,6 @@ composer.lock
 package-lock.json
 phpunit.xml
 README.md
+
 /tests
+/index.php
