@@ -538,6 +538,13 @@ class MutasiMasukController extends Controller
                         if (Storage::disk($sourceDisk)->exists($tempPath)) {
                             Storage::disk($destDisk)->put($relativeDestPath, Storage::disk($sourceDisk)->get($tempPath));
                             $fileSuratPermohonan = $relativeDestPath;
+                            // Delete temp file to prevent reuse
+                            try {
+                                Storage::disk($sourceDisk)->delete($tempPath);
+                                Log::info("Deleted temp file after store: {$tempPath}");
+                            } catch (\Exception $delEx) {
+                                Log::warning("Could not delete temp file: {$tempPath}");
+                            }
                         }
                     } catch (\Exception $e) {
                         Log::error("Failed to move temp header file (Store): " . $e->getMessage());
@@ -602,7 +609,7 @@ class MutasiMasukController extends Controller
                     if (!isset($filePaths[$field]) && is_string($val) && !empty($val)) {
                         if (str_contains($val, 'temp_uploads/')) {
                             $ext = pathinfo($val, PATHINFO_EXTENSION);
-                            $newFilename = "siswa{$idx}_{$field}.{$ext}";
+                            $newFilename = "{$idMutasi}_siswa{$idx}_{$field}.{$ext}";
                             $relativeDestPath = $uploadPathKey . '/' . $newFilename;
 
                             try {
@@ -1616,8 +1623,13 @@ class MutasiMasukController extends Controller
                         if ($content) {
                             Storage::disk($destDisk)->put($relativeDestPath, $content);
                             $fileSuratPermohonan = $relativeDestPath;
-                            // Optional: Delete temp
-                            // Storage::disk($sourceDisk)->delete($tempPath);
+                            // Delete temp file to prevent reuse
+                            try {
+                                Storage::disk($sourceDisk)->delete($tempPath);
+                                Log::info("Deleted temp file after moving: {$tempPath}");
+                            } catch (\Exception $delEx) {
+                                Log::warning("Could not delete temp file: {$tempPath}");
+                            }
                         }
                     } catch (\Exception $e) {
                         Log::error("Failed to move temp draft file: " . $e->getMessage());
@@ -1712,6 +1724,13 @@ class MutasiMasukController extends Controller
                         if (Storage::disk($sourceDisk)->exists($tempPath)) {
                             Storage::disk($destDisk)->put($relativeDestPath, Storage::disk($sourceDisk)->get($tempPath));
                             $updateData['file_surat_permohonan'] = $relativeDestPath;
+                            // Delete temp file to prevent reuse
+                            try {
+                                Storage::disk($sourceDisk)->delete($tempPath);
+                                Log::info("Deleted temp file after update: {$tempPath}");
+                            } catch (\Exception $delEx) {
+                                Log::warning("Could not delete temp file: {$tempPath}");
+                            }
                         }
                     } catch (\Exception $e) {
                         Log::error("Failed to move temp draft file (Update): " . $e->getMessage());
@@ -1858,7 +1877,7 @@ class MutasiMasukController extends Controller
                             }
 
                             $ext = pathinfo($tempPath, PATHINFO_EXTENSION);
-                            $newFilename = "siswa{$studentIndex}_{$field}.{$ext}";
+                            $newFilename = "{$id}_siswa{$studentIndex}_{$field}.{$ext}";
                             $relativeDestPath = $uploadPathKey . '/' . $newFilename; // e.g. mutasi_masuk/2026/01/24/filename.pdf
 
                             try {
@@ -1931,7 +1950,7 @@ class MutasiMasukController extends Controller
                         }
 
                         $ext = pathinfo($tempPath, PATHINFO_EXTENSION);
-                        $newFilename = "siswa{$studentIndex}_{$field}.{$ext}";
+                        $newFilename = "{$id}_siswa{$studentIndex}_{$field}.{$ext}";
                         $relativeDestPath = $uploadPathKey . '/' . $newFilename;
 
                         try {
