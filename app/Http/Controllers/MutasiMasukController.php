@@ -1769,20 +1769,45 @@ class MutasiMasukController extends Controller
                 ->take(1)
                 ->first();
 
-            // Helper for deletion (copied from revision logic)
-            $deleteOldFile = function ($oldPath) {
+            // Helper for deletion - supports both local and B2 storage
+            $isCloud = $this->fileUploadService->isCloudStorage();
+            $deleteOldFile = function ($oldPath) use ($isCloud) {
                 if (empty($oldPath))
                     return;
-                // Try Secure Path
-                $securePath = storage_path('app/dokumen_rahasia/' . ltrim($oldPath, '/'));
-                // Fix for inconsistent path storage (some have 'dokumen/' prefix in DB)
-                if (!file_exists($securePath) && str_starts_with($oldPath, 'dokumen/')) {
-                    $securePath = storage_path('app/dokumen_rahasia/' . substr($oldPath, 8));
-                }
 
-                if (file_exists($securePath)) {
-                    @unlink($securePath);
-                    Log::info("Deleted replaced file: $oldPath");
+                try {
+                    if ($isCloud) {
+                        // B2 Cloud Storage
+                        $disk = str_contains($oldPath, 'temp_uploads/') ? 'b2' : 'b2';
+                        if (Storage::disk($disk)->exists($oldPath)) {
+                            Storage::disk($disk)->delete($oldPath);
+                            Log::info("Deleted old B2 file: {$oldPath}");
+                        }
+                    } else {
+                        // Local Storage
+                        // Try Secure Path
+                        $securePath = storage_path('app/dokumen_rahasia/' . ltrim($oldPath, '/'));
+                        // Fix for inconsistent path storage (some have 'dokumen/' prefix in DB)
+                        if (!file_exists($securePath) && str_starts_with($oldPath, 'dokumen/')) {
+                            $securePath = storage_path('app/dokumen_rahasia/' . substr($oldPath, 8));
+                        }
+
+                        if (file_exists($securePath)) {
+                            @unlink($securePath);
+                            Log::info("Deleted old local file: {$oldPath}");
+                        }
+
+                        // Also try temp_uploads for local
+                        if (str_contains($oldPath, 'temp_uploads/')) {
+                            $tempPath = storage_path('app/' . $oldPath);
+                            if (file_exists($tempPath)) {
+                                @unlink($tempPath);
+                                Log::info("Deleted temp file: {$oldPath}");
+                            }
+                        }
+                    }
+                } catch (\Exception $e) {
+                    Log::warning("Failed to delete old file {$oldPath}: " . $e->getMessage());
                 }
             };
 
@@ -1841,6 +1866,10 @@ class MutasiMasukController extends Controller
                                     $content = Storage::disk($sourceDisk)->get($tempPath);
                                     Storage::disk($destDisk)->put($relativeDestPath, $content);
                                     $filePaths[$field] = $relativeDestPath;
+
+                                    // Delete temp file after successful move
+                                    Storage::disk($sourceDisk)->delete($tempPath);
+                                    Log::info("Moved and deleted temp file: {$tempPath} -> {$relativeDestPath}");
                                 }
                             } catch (\Exception $e) {
                                 Log::error("Failed to move temp student file ($field): " . $e->getMessage());
@@ -1910,6 +1939,10 @@ class MutasiMasukController extends Controller
                                 $content = Storage::disk($sourceDisk)->get($tempPath);
                                 Storage::disk($destDisk)->put($relativeDestPath, $content);
                                 $filePaths[$field] = $relativeDestPath;
+
+                                // Delete temp file after successful move
+                                Storage::disk($sourceDisk)->delete($tempPath);
+                                Log::info("Moved and deleted temp rekam didik: {$tempPath} -> {$relativeDestPath}");
                             }
                         } catch (\Exception $e) {
                             Log::error("Failed to move temp rekam didik: " . $e->getMessage());
@@ -2009,6 +2042,81 @@ class MutasiMasukController extends Controller
         }
 
         try {
+            // ============================================================
+            // TEMP FILE CLEANUP: Move temp files to permanent and delete temp
+            // ============================================================
+            $isCloud = $this->fileUploadService->isCloudStorage();
+            $sourceDisk = $isCloud ? 'b2' : 'local';
+            $destDisk = $isCloud ? 'b2' : 'private_docs';
+            $uploadPathKey = $this->fileUploadService->getDateBasedPath('masuk');
+
+            // Helper to move temp files and delete old temp
+            $moveAndCleanTemp = function ($tempPath, $filenamePrefix) use ($sourceDisk, $destDisk, $uploadPathKey, $id) {
+                if (empty($tempPath) || !str_contains($tempPath, 'temp_uploads/')) {
+                    return $tempPath; // Not a temp file, return as-is
+                }
+
+                try {
+                    if (!Storage::disk($sourceDisk)->exists($tempPath)) {
+                        Log::warning("Temp file not found during finalize: {$tempPath}");
+                        return $tempPath; // File not found, keep path as-is
+                    }
+
+                    $ext = pathinfo($tempPath, PATHINFO_EXTENSION);
+                    $safeId = preg_replace('/[^a-zA-Z0-9_-]/', '', $id);
+                    $newFilename = "{$safeId}_{$filenamePrefix}.{$ext}";
+                    $permanentPath = $uploadPathKey . '/' . $newFilename;
+
+                    // Move to permanent location
+                    $content = Storage::disk($sourceDisk)->get($tempPath);
+                    Storage::disk($destDisk)->put($permanentPath, $content);
+
+                    // Delete temp file
+                    Storage::disk($sourceDisk)->delete($tempPath);
+                    Log::info("Moved temp file to permanent: {$tempPath} -> {$permanentPath}");
+
+                    return $permanentPath;
+                } catch (\Exception $e) {
+                    Log::error("Failed to move temp file {$tempPath}: " . $e->getMessage());
+                    return $tempPath; // Keep original path on error
+                }
+            };
+
+            // Process header file (surat_permohonan)
+            if ($draft->file_surat_permohonan && str_contains($draft->file_surat_permohonan, 'temp_uploads/')) {
+                $newPath = $moveAndCleanTemp($draft->file_surat_permohonan, 'surat_permohonan');
+                if ($newPath !== $draft->file_surat_permohonan) {
+                    DB::table('mutasi_masuk')->where('id_mutasi', $id)->update(['file_surat_permohonan' => $newPath]);
+                }
+            }
+
+            // Process student files
+            $students = DB::table('mutasi_masuk_siswa')->where('id_mutasi', $id)->get();
+            $fileColumns = [
+                'file_surat_pindah',
+                'file_surat_dapodik',
+                'file_rekomendasi',
+                'file_ijazah_sd',
+                'file_rapor',
+                'file_surat_penyaluran',
+                'file_rekam_didik'
+            ];
+
+            foreach ($students as $index => $student) {
+                $updateData = [];
+                foreach ($fileColumns as $col) {
+                    if (!empty($student->$col) && str_contains($student->$col, 'temp_uploads/')) {
+                        $newPath = $moveAndCleanTemp($student->$col, "siswa{$index}_{$col}");
+                        if ($newPath !== $student->$col) {
+                            $updateData[$col] = $newPath;
+                        }
+                    }
+                }
+                if (!empty($updateData)) {
+                    DB::table('mutasi_masuk_siswa')->where('id', $student->id)->update($updateData);
+                }
+            }
+
             // Update status
             $newStatus = in_array($user->role, ['Dinas', 'SuperAdmin'])
                 ? 'Disetujui Dinas'

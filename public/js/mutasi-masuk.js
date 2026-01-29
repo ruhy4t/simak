@@ -1134,7 +1134,14 @@
             }
         }
 
-        function showSiswa(index) {
+        async function showSiswa(index) {
+            // Don't do anything if already on this tab or currently saving
+            if (index === currentSiswa) return;
+            if (isSaving) {
+                showSaveIndicator('⏳ Mohon tunggu, sedang menyimpan...', 'info');
+                return;
+            }
+
             // VALIDATION: Check if current student data is complete before switching forward
             if (index > currentSiswa && totalSiswa > 1) {
                 const validationResult = validateCurrentStudent(currentSiswa);
@@ -1144,11 +1151,34 @@
                 }
             }
 
-            // AUTO-SAVE: Save current student before switching (for all roles including Dinas/SuperAdmin)
-            if (draftId && currentSiswa !== index && !isSaving && totalSiswa > 1) {
-                saveCurrentStudent(currentSiswa).catch(e => console.error('Auto-save failed:', e));
+            // BLOCKING SAVE: Save current student before switching (wait for completion)
+            if (totalSiswa > 1) {
+                // Ensure draft exists first
+                if (!draftId) {
+                    showSaveIndicator('Membuat draft...', 'info');
+                    draftId = await createDraftIfNeeded();
+                    if (!draftId) {
+                        showSaveIndicator('❌ Gagal membuat draft. Pastikan data header sudah lengkap.', 'error');
+                        return; // Block switch if draft creation failed
+                    }
+                }
+
+                // Save current student and WAIT for it to complete
+                const saveSuccess = await saveCurrentStudent(currentSiswa);
+                if (!saveSuccess) {
+                    // Check if the student has any data (skip empty students)
+                    const card = document.querySelector(`.siswa-card[data-index="${currentSiswa}"]`);
+                    const namaInput = card?.querySelector('[name*="[nama_murid]"]');
+                    if (namaInput?.value?.trim()) {
+                        // Has data but failed to save - block navigation
+                        showSaveIndicator('❌ Gagal menyimpan data. Silakan coba lagi.', 'error');
+                        return;
+                    }
+                    // Empty student, allow navigation
+                }
             }
 
+            // Switch tabs visually
             document.querySelectorAll('.siswa-card').forEach((card, i) => {
                 card.classList.toggle('hidden', i !== index);
             });

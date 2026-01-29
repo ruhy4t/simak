@@ -84,17 +84,29 @@ class TemporaryUploadController extends Controller
         $path = 'temp_uploads/' . $safeFilename;
 
         try {
-            // 3. Generate Presigned URL
-            $disk = 'b2';
-            // Access the underlying S3 Client
-            $client = Storage::disk($disk)->getClient();
+            // 3. Generate Presigned URL using AWS S3 Client directly
+            // Note: Flysystem v3 doesn't expose getClient(), so we create the client directly
             $bucket = config('filesystems.disks.b2.bucket');
+            $endpoint = config('filesystems.disks.b2.endpoint');
+            $region = config('filesystems.disks.b2.region', 'us-west-004');
+            $key = config('filesystems.disks.b2.key');
+            $secret = config('filesystems.disks.b2.secret');
+
+            $client = new \Aws\S3\S3Client([
+                'version' => 'latest',
+                'region' => $region,
+                'endpoint' => $endpoint,
+                'use_path_style_endpoint' => true,
+                'credentials' => [
+                    'key' => $key,
+                    'secret' => $secret,
+                ],
+            ]);
 
             $cmd = $client->getCommand('PutObject', [
                 'Bucket' => $bucket,
                 'Key' => $path,
                 'ContentType' => $contentType,
-                // 'ACL' => 'public-read' // Optional: depends on bucket settings
             ]);
 
             $expiry = '+30 minutes';
@@ -126,11 +138,9 @@ class TemporaryUploadController extends Controller
      */
     private function shouldUseDirectUpload(): bool
     {
-        // Only use direct upload if B2 is configured AND we are in production
-        // OR if forced for testing (you can remove 'production' check if testing locally with B2)
-        // FORCE FALSE FOR NOW TO BYPASS CORS ISSUES
-        return false;
-        // return config('filesystems.disks.b2.key') && app()->environment('production');
+        // Use direct upload if B2 is configured AND we are in production
+        // This allows files to be uploaded directly to B2 from browser, bypassing Vercel payload limits
+        return config('filesystems.disks.b2.key') && app()->environment('production');
     }
 
 

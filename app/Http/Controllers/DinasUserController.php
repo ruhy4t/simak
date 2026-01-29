@@ -114,8 +114,9 @@ class DinasUserController extends Controller
         // SuperAdmin bisa tambah semua role, Dinas hanya Sekolah/Operator
         $allowedRoles = $user->role === 'SuperAdmin' ? ['Sekolah', 'Operator', 'Dinas'] : ['Sekolah', 'Operator'];
 
+        // Base validation (without global unique - we'll check scoped uniqueness separately)
         $rules = [
-            'username' => 'required|string|max:50|unique:users,username|regex:/^[a-zA-Z0-9_]+$/',
+            'username' => 'required|string|max:50|regex:/^[a-zA-Z0-9_]+$/',
             'nama_pengguna' => 'required|string|max:100',
             'role' => 'required|in:' . implode(',', $allowedRoles),
         ];
@@ -127,13 +128,39 @@ class DinasUserController extends Controller
         }
 
         $request->validate($rules, [
-            'username.unique' => 'Username sudah digunakan.',
             'username.regex' => 'Username hanya boleh huruf, angka, dan underscore.',
         ]);
 
+        $username = strtolower(preg_replace('/[^a-zA-Z0-9_]/', '', $request->username));
+        $npsn = in_array($request->role, ['Sekolah', 'Operator'])
+            ? preg_replace('/\D/', '', $request->npsn)
+            : null;
+
+        // Scoped uniqueness check based on role
+        if (in_array($request->role, ['Sekolah', 'Operator'])) {
+            // For Sekolah/Operator: username must be unique within the same NPSN
+            $existingUser = DB::table('users')
+                ->where('username', $username)
+                ->where('npsn', $npsn)
+                ->first();
+
+            if ($existingUser) {
+                return back()->withErrors(['username' => 'Username sudah digunakan di sekolah ini.'])->withInput();
+            }
+        } else {
+            // For Dinas: username must be globally unique (among Dinas users with null NPSN)
+            $existingUser = DB::table('users')
+                ->where('username', $username)
+                ->whereNull('npsn')
+                ->first();
+
+            if ($existingUser) {
+                return back()->withErrors(['username' => 'Username sudah digunakan.'])->withInput();
+            }
+        }
+
         // Additional validation: NPSN must be a local school (Kota Bogor)
         if (in_array($request->role, ['Sekolah', 'Operator'])) {
-            $npsn = preg_replace('/\D/', '', $request->npsn);
             $isLocalSchool = DB::table('satuan_pendidikan')
                 ->where('npsn', $npsn)
                 ->where('is_local', true)
@@ -146,7 +173,6 @@ class DinasUserController extends Controller
             }
         }
 
-        $username = strtolower(preg_replace('/[^a-zA-Z0-9_]/', '', $request->username));
         $password = Str::random(8) . rand(10, 99) . '@';
 
         $data = [
@@ -162,13 +188,13 @@ class DinasUserController extends Controller
         ];
 
         if (in_array($request->role, ['Sekolah', 'Operator'])) {
-            $data['npsn'] = preg_replace('/\D/', '', $request->npsn);
+            $data['npsn'] = $npsn;
             $data['nama_sekolah'] = $this->sanitize($request->nama_sekolah);
         }
 
         DB::table('users')->insert($data);
 
-        Log::info("User {$username} ({$request->role}) ditambahkan oleh {$user->username}");
+        Log::info("User {$username} ({$request->role}) ditambahkan oleh {$user->username}" . ($npsn ? " untuk NPSN {$npsn}" : ''));
 
         $roleLabel = $request->role;
         return back()->with('success', "✅ Akun {$roleLabel} berhasil dibuat!\n\n👤 Nama: {$request->nama_pengguna}\n📧 Username: {$username}\n🔑 Password: {$password}\n\n⚠️ Catat password ini!");
