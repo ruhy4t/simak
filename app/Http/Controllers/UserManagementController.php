@@ -60,40 +60,58 @@ class UserManagementController extends Controller
             abort(403);
         }
 
+        // Base validation (without global unique)
         $request->validate([
-            'username' => 'required|string|max:50|unique:users,username|regex:/^[a-zA-Z0-9_]+$/',
+            'username' => 'required|string|max:50|regex:/^[a-zA-Z0-9_]+$/',
             'nama_pengguna' => 'required|string|max:100',
             'no_kontak' => 'nullable|string|max:20',
         ], [
-            'username.unique' => 'Username sudah digunakan.',
             'username.regex' => 'Username hanya boleh huruf, angka, dan underscore.',
         ]);
 
-        // Sanitize inputs
+        // Sanitize username
         $username = strtolower(preg_replace('/[^a-zA-Z0-9_]/', '', $request->username));
+
+        // Scoped uniqueness check: username must be unique within the same NPSN
+        $existingUser = DB::table('users')
+            ->where('username', $username)
+            ->where('npsn', $user->npsn)
+            ->first();
+
+        if ($existingUser) {
+            return back()->withErrors(['username' => 'Username sudah digunakan di sekolah ini.'])->withInput();
+        }
+
+        // Sanitize other inputs
         $namaPengguna = $this->sanitize($request->nama_pengguna);
         $noKontak = $this->sanitize($request->no_kontak);
 
         // Generate random password
         $password = Str::random(8) . rand(10, 99) . '@';
 
-        DB::table('users')->insert([
-            'username' => $username,
-            'password' => Hash::make($password),
-            'nama_pengguna' => $namaPengguna,
-            'role' => 'Operator',
-            'npsn' => $user->npsn,
-            'nama_sekolah' => $user->nama_sekolah,
-            'no_kontak' => $noKontak,
-            'status' => 'Aktif',
-            'must_change_password' => true,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        try {
+            DB::table('users')->insert([
+                'username' => $username,
+                'password' => Hash::make($password),
+                'nama_pengguna' => $namaPengguna,
+                'role' => 'Operator',
+                'npsn' => $user->npsn,
+                'nama_sekolah' => $user->nama_sekolah,
+                'no_kontak' => $noKontak,
+                'status' => 'Aktif',
+                'is_active' => true,
+                'must_change_password' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
 
-        Log::info("Operator {$username} created by {$user->username}");
+            Log::info("Operator {$username} created by {$user->username} for NPSN {$user->npsn}");
 
-        return back()->with('success', "✅ Akun Operator baru berhasil dibuat!\n\n👤 Nama: {$namaPengguna}\n📧 Username: @{$username}\n🔑 Password: {$password}\n\n⚠️ Catat password ini, tidak bisa dilihat lagi!");
+            return back()->with('success', "✅ Akun Operator baru berhasil dibuat!\n\n👤 Nama: {$namaPengguna}\n📧 Username: @{$username}\n🔑 Password: {$password}\n\n⚠️ Catat password ini, tidak bisa dilihat lagi!");
+        } catch (\Exception $e) {
+            Log::error("Failed to create operator {$username}: " . $e->getMessage());
+            return back()->with('error', '❌ Gagal membuat akun operator. Silakan coba lagi atau hubungi administrator.')->withInput();
+        }
     }
 
     /**
