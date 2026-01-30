@@ -1771,22 +1771,51 @@ class MutasiMasukController extends Controller
         }
 
         $studentIndex = (int) $request->input('student_index', 0);
+        $requestNisn = $this->sanitizeNisn($request->nisn);
 
         try {
-            // Find existing student first (Strict check within this draft)
-            // Use ID if provided in request (hidden input), otherwise matching logic
+            // FIX: Safer student lookup - use NISN as primary identifier instead of unreliable skip()
+            // This prevents file paths being saved to wrong student when database order differs from form order
             $existingStudent = null;
 
-            // Prefer ID driven update if frontend provides it (safer)
-            // But frontend "addStudentToDraft" uses index logic.
-            // Let's stick to the current logic but optimize query
+            // PRIORITY 1: Find by NISN (most reliable - NISN is unique per student)
+            if (!empty($requestNisn)) {
+                $existingStudent = DB::table('mutasi_masuk_siswa')
+                    ->where('id_mutasi', $id)
+                    ->where('nisn', $requestNisn)
+                    ->first();
 
-            $existingStudent = DB::table('mutasi_masuk_siswa')
-                ->where('id_mutasi', $id)
-                ->orderBy('id')
-                ->skip($studentIndex)
-                ->take(1)
-                ->first();
+                if ($existingStudent) {
+                    Log::info("Found existing student by NISN: {$requestNisn} for draft {$id}");
+                }
+            }
+
+            // PRIORITY 2: Fallback to index-based lookup ONLY if NISN not found and this is a new student
+            if (!$existingStudent) {
+                // Get all students for this draft
+                $allStudents = DB::table('mutasi_masuk_siswa')
+                    ->where('id_mutasi', $id)
+                    ->orderBy('id')
+                    ->get();
+
+                // If student count matches or exceeds the index, get by position
+                if ($allStudents->count() > $studentIndex) {
+                    $potentialStudent = $allStudents->get($studentIndex);
+
+                    // SAFETY CHECK: Only use if NISN is empty (new record) or matches
+                    if ($potentialStudent) {
+                        if (empty($potentialStudent->nisn) || empty($requestNisn) || $potentialStudent->nisn === $requestNisn) {
+                            $existingStudent = $potentialStudent;
+                        } else {
+                            // NISN mismatch - likely a bug, log warning and treat as new insert
+                            Log::warning("NISN mismatch in addStudentToDraft: db={$potentialStudent->nisn}, request={$requestNisn}. Treating as new record.");
+                        }
+                    }
+                }
+            }
+
+            // Generate unique identifier for file naming (use DB id if exists, otherwise index + timestamp)
+            $studentFileId = $existingStudent ? $existingStudent->id : "new{$studentIndex}_" . time();
 
             // Helper for deletion - supports both local and B2 storage
             $isCloud = $this->fileUploadService->isCloudStorage();
@@ -1863,7 +1892,7 @@ class MutasiMasukController extends Controller
                         $filePaths[$field] = $this->fileUploadService->uploadPdf(
                             $file,
                             $id,
-                            "siswa{$studentIndex}_{$field}",
+                            "s{$studentFileId}_{$field}",
                             $uploadPathKey
                         );
                     }
@@ -1877,7 +1906,7 @@ class MutasiMasukController extends Controller
                             }
 
                             $ext = pathinfo($tempPath, PATHINFO_EXTENSION);
-                            $newFilename = "{$id}_siswa{$studentIndex}_{$field}.{$ext}";
+                            $newFilename = "{$id}_s{$studentFileId}_{$field}.{$ext}";
                             $relativeDestPath = $uploadPathKey . '/' . $newFilename; // e.g. mutasi_masuk/2026/01/24/filename.pdf
 
                             try {
@@ -1912,7 +1941,7 @@ class MutasiMasukController extends Controller
                     if (in_array($mimeType, ['image/jpeg', 'image/png'])) {
                         // Try WebP conversion
                         $tempDir = sys_get_temp_dir();
-                        $tempFilename = $this->sanitizeFilename($id) . "_siswa{$studentIndex}_file_rekam_didik.webp";
+                        $tempFilename = $this->sanitizeFilename($id) . "_s{$studentFileId}_file_rekam_didik.webp";
                         $tempPath = $tempDir . '/' . $tempFilename;
                         $conversionSuccess = false;
 
@@ -1930,7 +1959,7 @@ class MutasiMasukController extends Controller
                             $filePaths['file_rekam_didik'] = $this->fileUploadService->uploadImage(
                                 $file,
                                 $id,
-                                "siswa{$studentIndex}_file_rekam_didik",
+                                "s{$studentFileId}_file_rekam_didik",
                                 $uploadPathKey
                             );
                         }
@@ -1938,7 +1967,7 @@ class MutasiMasukController extends Controller
                         $filePaths['file_rekam_didik'] = $this->fileUploadService->uploadPdf(
                             $file,
                             $id,
-                            "siswa{$studentIndex}_file_rekam_didik",
+                            "s{$studentFileId}_file_rekam_didik",
                             $uploadPathKey
                         );
                     }
@@ -1950,7 +1979,7 @@ class MutasiMasukController extends Controller
                         }
 
                         $ext = pathinfo($tempPath, PATHINFO_EXTENSION);
-                        $newFilename = "{$id}_siswa{$studentIndex}_{$field}.{$ext}";
+                        $newFilename = "{$id}_s{$studentFileId}_{$field}.{$ext}";
                         $relativeDestPath = $uploadPathKey . '/' . $newFilename;
 
                         try {
