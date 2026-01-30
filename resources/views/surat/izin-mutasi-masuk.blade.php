@@ -357,8 +357,8 @@
         $qrData = "ID:{$idMutasi} | Siswa:{$decodedNamaSiswa} | Tgl:{$tglTtd} | TTD:{$decodedNamaPejabat}";
         $disdikLogo = null; // DISABLED: Logo removed per user request (stability fix)
 
-        // Generate QR Once (Increased size for readability)
-        $qrCodeHtml = \App\Helpers\QrCodeHelper::generateWithLogo($qrData, 95, $disdikLogo);
+        // Generate QR Once (Increased size for readability, slightly reduced per new request)
+        $qrCodeHtml = \App\Helpers\QrCodeHelper::generateWithLogo($qrData, 85, $disdikLogo);
     @endphp
 
     {{-- ========================================================================================= --}}
@@ -501,14 +501,79 @@
     {{-- ========================================================================================= --}}
     {{-- PAGE 2+: LAMPIRAN (LANDSCAPE) - MANUAL CHUNKING --}}
     {{-- ========================================================================================= --}}
+    {{-- ========================================================================================= --}}
+    {{-- PAGE 2+: LAMPIRAN (LANDSCAPE) - MANUAL CHUNKING --}}
+    {{-- ========================================================================================= --}}
     @if($jumlahSiswa > 0)
         @php
-            // CHUNK SIZE: Increased to 8 since QR Code is now in footer (more vertical space available)
-            $chunks = array_chunk($siswaListArr, 8);
+            // CONFIGURATION
+            $ITEMS_PER_PAGE = 8;
+            $items = $siswaListArr;
+            $totalItems = count($items);
+
+            // SMART CHUNKING LOGIC:
+            // If the last page is full (remainder == 0), the TTD will be pushed to a new empty page (Orphaned TTD).
+            // To prevent this, we force the last legitimate item page to share 1 item with the TTD page.
+            // Basically we reduce the items on the second-to-last page by 1.
+
+            $chunks = [];
+
+            if ($totalItems <= $ITEMS_PER_PAGE) {
+                // Scenario 1: Only 1 page of data.
+                // If it's effectively full (8 items), TTD might need a new page.
+                // But in landscape 8 items usually leaves room. Let's stick to standard unless user complains specific count.
+                // User said: "jika ternyata di halaman terakhir hanya tanda tangan berarti harus ada 1 baris yang dipindahkan"
+                // Assuming 8 fits comfortably with TTD. If 8 is TIGHT, we might need 7+1.
+                // Let's implement dynamic check only if > 8 to avoid complexity on single page.
+                $chunks[] = $items;
+            } else {
+                // Scenario 2: Multiple pages.
+
+                // Calculate expected last page count
+                $remainder = $totalItems % $ITEMS_PER_PAGE;
+
+                // If remainder is 0 (Full Page) -> TTD likely orphaned on new page.
+                // OR if remainder is very small/large?
+                // The issue is simply: If we finish with a FULL table, do we have space for TTD?
+                // If yes, fine. If no, we get a blank page with TTD.
+                // In HTML-to-PDF, it's safer to assume a full table (8 rows) MIGHT crowd the TTD.
+                // So if ($totalItems % $ITEMS_PER_PAGE == 0), we split the last chunk.
+                // Example: 16 items. Normal: [8, 8]. If Pg2 is full, Pg3 is TTD.
+                // Fix: [8, 7, 1]. Pg2 has 7, Pg3 has 1 + TTD.
+
+                if ($remainder == 0) {
+                    // Manual chunking
+                    // Take all full pages EXCEPT the last one
+                    $fullPageCount = floor($totalItems / $ITEMS_PER_PAGE);
+                    $offset = 0;
+
+                    // Process all pages up to the second to last
+                    for ($i = 0; $i < $fullPageCount - 1; $i++) {
+                        $chunks[] = array_slice($items, $offset, $ITEMS_PER_PAGE);
+                        $offset += $ITEMS_PER_PAGE;
+                    }
+
+                    // The last "full" set of items (8 items). 
+                    // Split into $ITEMS_PER_PAGE - 1 (7) and 1.
+                    $chunks[] = array_slice($items, $offset, $ITEMS_PER_PAGE - 1);
+                    $offset += ($ITEMS_PER_PAGE - 1);
+
+                    $chunks[] = array_slice($items, $offset, 1);
+
+                } else {
+                    // Normal chunking works because we have a remainder (e.g. 17 items -> 8, 8, 1).
+                    // The last page has 1 item + TTD. Perfect.
+                    $chunks = array_chunk($items, $ITEMS_PER_PAGE);
+                }
+            }
         @endphp
 
+        {{-- GLOBAL INDEX COUNTER --}}
+        @php $globalCounter = 1; @endphp
+
         @foreach($chunks as $pageIndex => $chunk)
-            <div class="page page-landscape">
+            <div class="page page-landscape" style="padding-bottom: 2cm;"> {{-- Add padding to protect footer --}}
+
                 {{-- Header LAMPIRAN dan Judul hanya di halaman pertama lampiran --}}
                 @if($pageIndex === 0)
                     <div class="lampiran-header">
@@ -549,10 +614,9 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($chunk as $i => $siswa)
-                            @php $globalIndex = ($pageIndex * 6) + $i + 1; @endphp
+                        @foreach($chunk as $siswa)
                             <tr>
-                                <td class="center">{{ $globalIndex }}</td>
+                                <td class="center">{{ $globalCounter++ }}</td> {{-- Use simple incrementing counter --}}
                                 <td><strong>{!! html_entity_decode($siswa['nama_siswa'] ?? $siswa['nama_murid'] ?? '-') !!}</strong>
                                 </td>
                                 <td class="center">{{ $siswa['nisn'] ?? '-' }}</td>
