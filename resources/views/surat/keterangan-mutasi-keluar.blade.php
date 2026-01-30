@@ -113,7 +113,7 @@
 
 
 
-        /* --- FOOTER FIXED --- */
+        /* --- FOOTER WITH 3-COLUMN LAYOUT --- */
 
         .footer-fixed {
 
@@ -125,37 +125,93 @@
 
             right: 2cm;
 
-            text-align: center;
-
-            border-top: 1px solid #999;
-
-            padding-top: 5px;
-
-            font-size: 9pt;
-
             background: white;
 
         }
 
 
 
-        .footer-fixed .quote {
 
-            font-style: italic;
 
-            color: #333;
 
-            margin-bottom: 1px;
+
+        .footer-content {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
 
         }
 
 
 
-        .footer-fixed .tagline {
+        .footer-left {
+
+            width: 100px;
+
+            flex-shrink: 0;
+
+        }
+
+
+
+        .footer-center {
+
+            flex: 1;
+
+            text-align: center;
+
+            font-size: 9pt;
+
+            padding: 0 10px;
+
+        }
+
+
+
+        .footer-right {
+
+            width: 100px;
+
+            flex-shrink: 0;
+
+        }
+
+
+
+        .footer-center .quote {
+
+            font-style: italic;
+
+            color: #333;
+
+            margin-bottom: 2px;
+
+            display: block;
+
+        }
+
+
+
+        .footer-center .tagline {
 
             font-weight: bold;
 
             color: #000;
+
+            display: block;
+
+        }
+
+
+
+        .footer-qr img {
+
+            width: 80px;
+
+            height: auto;
 
         }
 
@@ -452,38 +508,6 @@
             height: 60px;
 
         }
-
-
-
-        /* --- QR FIXED --- */
-
-        .qr-fixed {
-
-            position: absolute;
-
-            bottom: 3cm;
-
-            left: 3cm;
-
-            width: 100px;
-
-            text-align: center;
-
-            z-index: 10;
-
-        }
-
-
-
-        .qr-fixed p {
-
-            font-size: 8pt;
-
-            color: #666;
-
-            margin-top: 3px;
-
-        }
     </style>
 
 </head>
@@ -777,7 +801,8 @@
                         <td></td>
 
                         <td class="col-jabatan">
-                            {!! html_entity_decode(optional($penandatangan)->pangkat_golongan ?? 'Pangkat') !!}</td>
+                            {!! html_entity_decode(optional($penandatangan)->pangkat_golongan ?? 'Pangkat') !!}
+                        </td>
 
                     </tr>
 
@@ -798,48 +823,43 @@
 
 
 
-        {{-- QR CODE FIXED (kiri bawah) --}}
-
-        {{-- QR CODE RESTORED (ORIGINAL FORMAT + SAFE MODE) --}}
-        <div class="qr-fixed">
-            @php
-                // 1. Prepare Variables Safely
-                $idMutasi = $mutasi->id_mutasi ?? '-';
-
-                $tglUsulan = isset($mutasi->tanggal_pengajuan)
-                    ? \Carbon\Carbon::parse($mutasi->tanggal_pengajuan)->format('d/m/Y')
-                    : '-';
-
-                // Mapped property from PdfService is 'nama_siswa', fallback to 'nama_murid' just in case
-                $namaSiswa = $mutasi->nama_siswa ?? $mutasi->nama_murid ?? '-';
-
-                $tglTtd = isset($mutasi->tanggal_surat_izin)
-                    ? \Carbon\Carbon::parse($mutasi->tanggal_surat_izin)->format('d/m/Y')
-                    : now()->format('d/m/Y');
-
-                $namaPejabat = optional($penandatangan)->nama ?? '-';
-
-                // 2. Construct Data (Original Format: ID|TglUsulan|NamaSiswa|TTD:Tgl|Pejabat)
-                $qrContent = "{$idMutasi}|{$tglUsulan}|{$namaSiswa}|TTD:{$tglTtd}|{$namaPejabat}";
-
-                // 3. Logo Configuration (Null = No Logo, Safer for printing)
-                $qrLogo = null; 
-            @endphp
-
-            {{-- Generate QR --}}
-            {!! \App\Helpers\QrCodeHelper::generateWithLogo($qrContent, 100, $qrLogo) !!}
-        </div>
-
-
-
-        {{-- FOOTER FIXED --}}
+        {{-- FOOTER WITH 3-COLUMN LAYOUT (QR Left, Text Center, Empty Right) --}}
 
         <div class="footer-fixed">
+            {{-- Line removed --}}
+            <div class="footer-content">
+                <div class="footer-left footer-qr">
+                    @php
+                        // 1. Prepare Variables Safely
+                        $idMutasi = $mutasi->id_mutasi ?? '-';
 
-            <p class="quote">"dinu kiwari ngancik nu bihari, seja ayeuna sampeureun jaga"</p>
+                        $tglUsulan = isset($mutasi->tanggal_pengajuan)
+                            ? \Carbon\Carbon::parse($mutasi->tanggal_pengajuan)->format('d/m/Y')
+                            : '-';
 
-            <p class="tagline">Bogor Beres, Bogor Cerdas</p>
+                        // Mapped property from PdfService is 'nama_siswa', fallback to 'nama_murid' just in case
+                        $namaSiswa = $mutasi->nama_siswa ?? $mutasi->nama_murid ?? '-';
 
+                        $tglTtd = isset($mutasi->tanggal_surat_izin)
+                            ? \Carbon\Carbon::parse($mutasi->tanggal_surat_izin)->format('d/m/Y')
+                            : now()->format('d/m/Y');
+
+                        $namaPejabat = optional($penandatangan)->nama ?? '-';
+
+                        // 2. Construct Data (Original Format: ID|TglUsulan|NamaSiswa|TTD:Tgl|Pejabat)
+                        $qrContent = "{$idMutasi}|{$tglUsulan}|{$namaSiswa}|TTD:{$tglTtd}|{$namaPejabat}";
+
+                        // 3. Logo Configuration (Null = No Logo, Safer for printing)
+                        $qrLogo = null; 
+                    @endphp
+                    {!! \App\Helpers\QrCodeHelper::generateWithLogo($qrContent, 80, $qrLogo) !!}
+                </div>
+                <div class="footer-center">
+                    <span class="quote">"dinu kiwari ngancik nu bihari, seja ayeuna sampeureun jaga"</span>
+                    <span class="tagline">Bogor Beres, Bogor Cerdas</span>
+                </div>
+                <div class="footer-right"></div>
+            </div>
         </div>
 
     </div>

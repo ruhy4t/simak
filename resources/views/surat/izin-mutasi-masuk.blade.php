@@ -108,15 +108,11 @@
             height: auto;
         }
 
-        .footer-line {
-            border-top: 1px solid #000;
-            margin-bottom: 5px;
-            width: 100%;
-        }
+
 
         .footer-content {
             display: flex;
-            align-items: flex-start;
+            align-items: center;
             justify-content: space-between;
         }
 
@@ -488,7 +484,7 @@
 
         {{-- FOOTER WITH 3-COLUMN LAYOUT (QR Left, Text Center, Empty Right) --}}
         <div class="page-footer">
-            <div class="footer-line"></div>
+            {{-- Line removed per user request --}}
             <div class="footer-content">
                 <div class="footer-left footer-qr">{!! $qrCodeHtml !!}</div>
                 <div class="footer-center">
@@ -615,7 +611,7 @@
 
                 {{-- FOOTER WITH 3-COLUMN LAYOUT (QR Left, Text Center, Empty Right) --}}
                 <div class="page-footer">
-                    <div class="footer-line"></div>
+                    {{-- Line removed per user request --}}
                     <div class="footer-content">
                         <div class="footer-left footer-qr">{!! $qrCodeHtml !!}</div>
                         <div class="footer-center">
