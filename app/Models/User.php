@@ -104,16 +104,23 @@ class User extends Authenticatable
 
     public function incrementFailedLogin(): void
     {
-        // Reset counter if last update was more than 15 minutes ago
+        // Reset counter if last update was more than 5 minutes ago
         // This ensures the "5 attempts" window resets automatically
-        if ($this->updated_at && now()->diffInMinutes($this->updated_at) > 15) {
+        if ($this->updated_at && now()->diffInMinutes($this->updated_at) > 5) {
             $this->failed_login_attempts = 1;
         } else {
             $this->failed_login_attempts++;
         }
 
         if ($this->failed_login_attempts >= 5) {
-            $this->locked_until = now()->addMinutes(15);
+            $this->locked_until = now()->addMinutes(5);
+
+            // Log account lock event
+            \App\Models\AuditLog::log(
+                'ACCOUNT_LOCKED',
+                $this->username,
+                "Akun dikunci selama 5 menit karena 5x percobaan login gagal. Akan dibuka pada: " . $this->locked_until->format('d/m/Y H:i:s')
+            );
         }
 
         $this->save();

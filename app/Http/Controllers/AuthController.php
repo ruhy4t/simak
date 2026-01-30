@@ -43,7 +43,7 @@ class AuthController extends Controller
         $user = User::where('username', $username)->first();
 
         if (!$user) {
-            RateLimiter::hit($key, 900); // 15 minutes
+            RateLimiter::hit($key, 300); // 5 minutes
             AuditLog::log('LOGIN_FAILED', $username, 'User not found');
 
             $retries = RateLimiter::attempts($key);
@@ -54,10 +54,20 @@ class AuthController extends Controller
 
         // Check if user is locked
         if ($user->isLocked()) {
-            AuditLog::log('LOGIN_BLOCKED', $username, 'Account locked');
+            $remainingSeconds = now()->diffInSeconds($user->locked_until);
+            $remainingMinutes = ceil($remainingSeconds / 60);
+
+            AuditLog::log('LOGIN_BLOCKED', $username, "Account still locked. Remaining: {$remainingMinutes} menit");
             return back()->withErrors([
-                'username' => 'Akun terkunci. Silakan coba lagi nanti.',
+                'username' => "Akun terkunci karena percobaan login gagal. Silakan coba lagi dalam {$remainingMinutes} menit.",
             ])->withInput();
+        }
+
+        // Check if account was previously locked but now auto-unlocked
+        if ($user->locked_until && $user->locked_until->isPast()) {
+            AuditLog::log('ACCOUNT_AUTO_UNLOCKED', $username, 'Akun dibuka otomatis setelah masa penguncian 5 menit berakhir');
+            // Reset the lock fields (will be fully reset on successful login)
+            $user->update(['locked_until' => null, 'failed_login_attempts' => 0]);
         }
 
         // Check status using accessor for consistency
@@ -68,15 +78,21 @@ class AuthController extends Controller
 
         // Verify password
         if (!Hash::check($request->password, $user->password)) {
-            RateLimiter::hit($key, 900);
+            RateLimiter::hit($key, 300); // 5 minutes
 
-            // Increment logic is handled intelligently in User model (auto-reset after 15 mins)
+            // Increment logic is handled intelligently in User model (auto-reset after 5 mins)
             $user->incrementFailedLogin();
             AuditLog::log('LOGIN_FAILED', $username, 'Wrong password');
 
             // Get fresh count from DB to ensure accuracy
-            $currentFails = $user->fresh()->failed_login_attempts;
+            $freshUser = $user->fresh();
+            $currentFails = $freshUser->failed_login_attempts;
             $remaining = max(0, 5 - $currentFails);
+
+            // If account just got locked, show lock message
+            if ($freshUser->isLocked()) {
+                return back()->withErrors(['username' => "Akun dikunci selama 5 menit karena 5x percobaan login gagal."])->withInput();
+            }
 
             return back()->withErrors(['username' => "Username atau password salah. Sisa kesempatan: {$remaining} dari 5."])->withInput();
         }
