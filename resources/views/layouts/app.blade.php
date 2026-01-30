@@ -4,6 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="theme-color" content="#0f172a">
 
@@ -21,7 +24,7 @@
     </noscript>
 
     {{-- Bootstrap Icons --}}
-    <link rel="stylesheet" href="{{ asset('assets/css/bootstrap-icons.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/bootstrap-icons.css') }}?v={{ time() }}">
 
     {{-- Tailwind CSS CDN (Temporary Fix for Dev Build) --}}
     <script src="https://cdn.tailwindcss.com"></script>
@@ -189,7 +192,7 @@
 
 <body class="bg-slate-50 font-sans antialiased text-slate-800">
 
-    <script src="{{ asset('js/security.js') }}"></script>
+    <script src="{{ asset('js/security.js') }}?v={{ time() }}"></script>
 
     @auth
         <script>
@@ -200,7 +203,7 @@
                 warningMinutes: 2
             };
         </script>
-        <script src="{{ asset('js/session-monitor.js') }}"></script>
+        <script src="{{ asset('js/session-monitor.js') }}?v={{ time() }}"></script>
     @endauth
 
     @auth
