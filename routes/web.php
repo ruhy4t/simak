@@ -195,6 +195,10 @@ Route::middleware(['auth', \App\Http\Middleware\EnsurePasswordChanged::class])->
         Route::post('/admin/wilayah/sync', [\App\Http\Controllers\RegionController::class, 'sync'])->name('admin.regions.sync');
         Route::post('/admin/wilayah', [\App\Http\Controllers\RegionController::class, 'store'])->name('admin.regions.store');
         Route::delete('/admin/wilayah', [\App\Http\Controllers\RegionController::class, 'destroy'])->name('admin.regions.destroy');
+
+        // Permission Management (SuperAdmin only)
+        Route::get('/users/{user}/permissions', [\App\Http\Controllers\PermissionController::class, 'edit'])->name('permissions.edit');
+        Route::patch('/users/{user}/permissions', [\App\Http\Controllers\PermissionController::class, 'update'])->name('permissions.update');
     });
 
     // SuperAdmin & Dinas routes (Settings)

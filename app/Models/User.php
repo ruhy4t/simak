@@ -162,4 +162,128 @@ class User extends Authenticatable
         }
         return $this->npsn === $npsn;
     }
+
+    // ========== PERMISSION SYSTEM ==========
+
+    /**
+     * User's permission overrides
+     */
+    public function permissionOverrides()
+    {
+        return $this->belongsToMany(Permission::class, 'user_permissions')
+            ->withPivot('is_granted')
+            ->withTimestamps();
+    }
+
+    /**
+     * Check if user has a specific permission
+     * 
+     * Logic:
+     * 1. SuperAdmin always has all permissions
+     * 2. Check user-level override first (grant or revoke)
+     * 3. Fall back to role's default permissions
+     */
+    public function hasPermission(string $permissionName): bool
+    {
+        // SuperAdmin bypass
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
+        // Get permission model
+        $permission = Permission::where('name', $permissionName)->first();
+        if (!$permission) {
+            return false;
+        }
+
+        // Check user-level override
+        $override = $this->permissionOverrides()
+            ->where('permission_id', $permission->id)
+            ->first();
+
+        if ($override) {
+            return (bool) $override->pivot->is_granted;
+        }
+
+        // Fall back to role default
+        return $permission->isDefaultForRole($this->role);
+    }
+
+    /**
+     * Grant a permission to this user (override)
+     */
+    public function grantPermission(string $permissionName): bool
+    {
+        $permission = Permission::where('name', $permissionName)->first();
+        if (!$permission) {
+            return false;
+        }
+
+        $this->permissionOverrides()->syncWithoutDetaching([
+            $permission->id => ['is_granted' => true]
+        ]);
+
+        return true;
+    }
+
+    /**
+     * Revoke a permission from this user (override)
+     */
+    public function revokePermission(string $permissionName): bool
+    {
+        $permission = Permission::where('name', $permissionName)->first();
+        if (!$permission) {
+            return false;
+        }
+
+        $this->permissionOverrides()->syncWithoutDetaching([
+            $permission->id => ['is_granted' => false]
+        ]);
+
+        return true;
+    }
+
+    /**
+     * Remove permission override (revert to role default)
+     */
+    public function resetPermission(string $permissionName): bool
+    {
+        $permission = Permission::where('name', $permissionName)->first();
+        if (!$permission) {
+            return false;
+        }
+
+        $this->permissionOverrides()->detach($permission->id);
+        return true;
+    }
+
+    /**
+     * Get all effective permissions for this user
+     */
+    public function getEffectivePermissions(): array
+    {
+        if ($this->isSuperAdmin()) {
+            return Permission::pluck('name')->toArray();
+        }
+
+        // Get role defaults
+        $rolePermissionIds = Permission::getDefaultsForRole($this->role);
+
+        // Get user overrides
+        $overrides = $this->permissionOverrides()->get();
+
+        $grantedIds = collect($rolePermissionIds);
+
+        foreach ($overrides as $override) {
+            if ($override->pivot->is_granted) {
+                $grantedIds->push($override->id);
+            } else {
+                $grantedIds = $grantedIds->reject(fn($id) => $id == $override->id);
+            }
+        }
+
+        return Permission::whereIn('id', $grantedIds->unique())
+            ->pluck('name')
+            ->toArray();
+    }
 }

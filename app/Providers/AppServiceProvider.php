@@ -4,7 +4,10 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\Gate;
 use Carbon\Carbon;
+use App\Models\User;
+use App\Policies\UserPolicy;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -23,5 +26,8 @@ class AppServiceProvider extends ServiceProvider
         // Set locale Indonesia untuk format tanggal
         Carbon::setLocale('id');
         setlocale(LC_TIME, 'id_ID.UTF-8', 'id_ID', 'Indonesian');
+
+        // Register User Policy
+        Gate::policy(User::class, UserPolicy::class);
     }
 }
