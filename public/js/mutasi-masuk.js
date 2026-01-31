@@ -314,8 +314,9 @@
                         if (result.success && result.data) {
                             result.data.forEach(kab => {
                                 const option = document.createElement('option');
-                                option.value = kab.name;
-                                option.textContent = kab.name;
+                                const kabName = kab.name.replace(/Kabupaten/g, 'Kab.');
+                                option.value = kabName;
+                                option.textContent = kabName;
                                 kabSelect.appendChild(option);
                             });
                         }
@@ -620,15 +621,22 @@
                 }
             }
 
+
             // --- Step 3: Fallback / Legacy Upload ---
             // If direct upload was not attempted OR failed
             if (!uploadSuccess) {
                 if (!initResult.is_local && !initResult.use_check_upload) {
-                    // If we are here, it means we tried direct and failed, so we are falling back.
-                    // OR initResult said don't use check upload but didn't give a URL (unlikely).
+                    // Direct upload failed, and we shouldn't use server upload if it's large
                 }
 
                 log(`Uploading via Server Relay...`);
+
+                // VERCEL PAYLOAD LIMIT CHECK
+                // If file is > 4MB, server upload will fail with 413.
+                // We must abort here if direct upload failed and file is too large.
+                if (file.size > 4 * 1024 * 1024) {
+                    throw new Error('Direct Upload gagal & File terlalu besar untuk server (>4MB). Mohon cek koneksi atau hubungi admin (CORS issue?).');
+                }
 
                 const formData = new FormData();
                 formData.append('file', file);
@@ -638,6 +646,7 @@
                     headers: { 'X-CSRF-TOKEN': token },
                     body: formData
                 });
+
 
                 if (!legacyResponse.ok) {
                     const errTxt = await legacyResponse.text();
@@ -786,7 +795,8 @@
 
                                     // Match city
                                     let cityOptions = [...kabSelect.options];
-                                    let exactCityOpt = cityOptions.find(o => o.text.trim().toLowerCase() === result.kota.trim().toLowerCase());
+                                    let kotaNormalized = result.kota.replace(/Kabupaten/g, 'Kab.');
+                                    let exactCityOpt = cityOptions.find(o => o.text.trim().toLowerCase() === kotaNormalized.trim().toLowerCase());
 
                                     if (exactCityOpt) {
                                         kabSelect.value = exactCityOpt.value;

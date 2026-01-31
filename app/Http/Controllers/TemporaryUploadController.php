@@ -138,9 +138,10 @@ class TemporaryUploadController extends Controller
      */
     private function shouldUseDirectUpload(): bool
     {
-        // Use direct upload if B2 is configured AND we are in production
-        // This allows files to be uploaded directly to B2 from browser, bypassing Vercel payload limits
-        return config('filesystems.disks.b2.key') && app()->environment('production');
+        // Use direct upload if B2 is configured (Keys exist)
+        // We removed the strictly 'production' check to allow testing B2 in other environments if needed
+        // provided the keys are set in .env
+        return !empty(config('filesystems.disks.b2.key')) && !empty(config('filesystems.disks.b2.bucket'));
     }
 
 
@@ -150,8 +151,8 @@ class TemporaryUploadController extends Controller
      */
     private function getTempDisk(): string
     {
-        // Use B2 if configured AND in production
-        if (config('filesystems.disks.b2.key') && app()->environment('production')) {
+        // Use B2 if configured
+        if ($this->shouldUseDirectUpload()) {
             return 'b2';
         }
         return 'local';

@@ -84,8 +84,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (result.success && result.data) {
                         result.data.forEach(kab => {
                             const option = document.createElement('option');
-                            option.value = kab.name;
-                            option.textContent = kab.name;
+                            const kabName = kab.name.replace(/Kabupaten/g, 'Kab.');
+                            option.value = kabName;
+                            option.textContent = kabName;
                             kabkotaSelect.appendChild(option);
                         });
                         kabkotaSelect.disabled = false;
@@ -210,8 +211,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
                         // Set kabkota (only if data exists)
                         if (data.data.kota) {
-                            kabkotaSelect.innerHTML = `<option value="${data.data.kota}" selected>${data.data.kota}</option>`;
-                            kabkotaHidden.value = data.data.kota;
+                            const kotaName = data.data.kota.replace(/Kabupaten/g, 'Kab.');
+                            kabkotaSelect.innerHTML = `<option value="${kotaName}" selected>${kotaName}</option>`;
+                            kabkotaHidden.value = kotaName;
                             kabkotaSelect.disabled = true;
                             kabkotaSelect.classList.add('bg-gray-100');
                         } else {
