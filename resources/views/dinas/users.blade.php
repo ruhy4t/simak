@@ -156,7 +156,13 @@
                                             <i class="bi bi-pencil-square text-lg"></i>
                                         </a>
 
-                                        {{-- 2. Toggle Status (Active/Inactive) --}}
+                                        {{-- 2. Kelola Permission --}}
+                                        <a href="{{ route('permissions.edit', $u->id) }}" 
+                                            class="p-1.5 text-purple-600 hover:text-purple-800 rounded hover:bg-purple-50 transition" title="Kelola Permission">
+                                            <i class="bi bi-shield-lock text-lg"></i>
+                                        </a>
+
+                                        {{-- 3. Toggle Status (Active/Inactive) --}}
                                         <form action="{{ route('dinas.users.toggle', $u->id) }}" method="POST" class="inline">
                                             @csrf
                                             <button type="submit" class="p-1.5 rounded hover:bg-gray-100 transition" 

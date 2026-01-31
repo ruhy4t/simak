@@ -8,7 +8,7 @@
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
             <div class="flex items-center gap-2">
-                <a href="{{ route('pengguna.index') }}" class="text-gray-500 hover:text-gray-700">
+                <a href="{{ route('dinas.users') }}" class="text-gray-500 hover:text-gray-700">
                     <i class="bi bi-arrow-left text-lg"></i>
                 </a>
                 <h1 class="text-2xl font-bold text-gray-900">Kelola Permission</h1>
@@ -112,7 +112,7 @@
 
         {{-- Actions --}}
         <div class="flex items-center justify-end gap-3 mt-6">
-            <a href="{{ route('pengguna.index') }}" 
+            <a href="{{ route('dinas.users') }}" 
                class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition">
                 Batal
             </a>
