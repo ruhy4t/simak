@@ -404,6 +404,16 @@ class SatuanPendidikanController extends Controller
             'kecamatan' => 'nullable|string|max:50',
             'kota' => 'required|string|max:50',
             'provinsi' => 'required|string|max:50',
+            // New fields for school profile
+            'kepala_sekolah_nama' => 'nullable|string|max:150',
+            'kepala_sekolah_nip' => 'nullable|string|max:50',
+            'jumlah_siswa_7_l' => 'nullable|integer|min:0',
+            'jumlah_siswa_7_p' => 'nullable|integer|min:0',
+            'jumlah_siswa_8_l' => 'nullable|integer|min:0',
+            'jumlah_siswa_8_p' => 'nullable|integer|min:0',
+            'jumlah_siswa_9_l' => 'nullable|integer|min:0',
+            'jumlah_siswa_9_p' => 'nullable|integer|min:0',
+            'kop_surat' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ], [
             'npsn.size' => 'NPSN harus 8 digit',
             'npsn.unique' => 'NPSN sudah terdaftar',
@@ -420,7 +430,7 @@ class SatuanPendidikanController extends Controller
             ]);
             $alamatLengkap = implode(', ', $alamatParts);
 
-            \DB::table('satuan_pendidikan')->where('id', $id)->update([
+            $updateData = [
                 'npsn' => $request->npsn,
                 'nama' => $request->nama,
                 'bentuk_pendidikan' => $request->bentuk_pendidikan,
@@ -432,8 +442,31 @@ class SatuanPendidikanController extends Controller
                 'provinsi' => $request->provinsi,
                 'alamat_lengkap' => $alamatLengkap,
                 'is_local' => $request->is_local ?? 0,
+                // New profile fields
+                'kepala_sekolah_nama' => $request->kepala_sekolah_nama,
+                'kepala_sekolah_nip' => $request->kepala_sekolah_nip,
+                'jumlah_siswa_7_l' => $request->jumlah_siswa_7_l ?? 0,
+                'jumlah_siswa_7_p' => $request->jumlah_siswa_7_p ?? 0,
+                'jumlah_siswa_8_l' => $request->jumlah_siswa_8_l ?? 0,
+                'jumlah_siswa_8_p' => $request->jumlah_siswa_8_p ?? 0,
+                'jumlah_siswa_9_l' => $request->jumlah_siswa_9_l ?? 0,
+                'jumlah_siswa_9_p' => $request->jumlah_siswa_9_p ?? 0,
                 'updated_at' => now(),
-            ]);
+            ];
+
+            // Handle Kop Surat file upload
+            if ($request->hasFile('kop_surat')) {
+                // Delete old file if exists
+                if ($satpen->kop_surat_path && Storage::disk('public')->exists($satpen->kop_surat_path)) {
+                    Storage::disk('public')->delete($satpen->kop_surat_path);
+                }
+
+                // Upload new file
+                $path = $request->file('kop_surat')->store('uploads/kop_surat', 'public');
+                $updateData['kop_surat_path'] = $path;
+            }
+
+            \DB::table('satuan_pendidikan')->where('id', $id)->update($updateData);
 
             return redirect()->route('satpen.index')
                 ->with('success', "Satuan Pendidikan {$request->nama} berhasil diperbarui");

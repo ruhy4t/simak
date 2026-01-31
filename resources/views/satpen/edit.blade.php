@@ -17,7 +17,7 @@
 
         <!-- Form -->
         <div class="bg-white rounded-xl shadow-sm border p-6">
-            <form action="{{ route('satpen.update', $satpen->id) }}" method="POST" class="space-y-6">
+            <form action="{{ route('satpen.update', $satpen->id) }}" method="POST" enctype="multipart/form-data" class="space-y-6">
                 @csrf
                 @method('PUT')
 
@@ -149,6 +149,127 @@
                                 <i class="bi bi-globe text-gray-600 mr-1"></i> Eksternal (Luar Kota Bogor)
                             </span>
                         </label>
+                    </div>
+                </div>
+
+                <!-- Kepala Sekolah Section -->
+                <div class="border-t pt-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">
+                        <i class="bi bi-person-badge text-indigo-600 mr-2"></i>Data Kepala Sekolah
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap & Gelar</label>
+                            <input type="text" name="kepala_sekolah_nama"
+                                value="{{ old('kepala_sekolah_nama', $satpen->kepala_sekolah_nama ?? '') }}"
+                                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none"
+                                placeholder="contoh: Dr. H. Budi Santoso, M.Pd.">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">NIP</label>
+                            <input type="text" name="kepala_sekolah_nip"
+                                value="{{ old('kepala_sekolah_nip', $satpen->kepala_sekolah_nip ?? '') }}"
+                                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none font-mono"
+                                placeholder="Isi (-) jika Non-ASN">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Jumlah Siswa Section -->
+                <div class="border-t pt-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">
+                        <i class="bi bi-people text-blue-600 mr-2"></i>Jumlah Siswa Awal
+                    </h3>
+                    <div class="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-4">
+                        <p class="text-sm text-blue-700"><i class="bi bi-info-circle mr-1"></i> Data siswa awal digunakan sebagai saldo awal laporan mutasi bulanan.</p>
+                    </div>
+                    <div class="grid grid-cols-3 gap-4">
+                        <!-- Kelas 7 -->
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <label class="block text-sm font-bold text-gray-700 mb-3 text-center">Kelas VII</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-1 text-center">L</label>
+                                    <input type="number" name="jumlah_siswa_7_l" min="0"
+                                        value="{{ old('jumlah_siswa_7_l', $satpen->jumlah_siswa_7_l ?? 0) }}"
+                                        class="w-full px-2 py-2 border rounded-lg text-center focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-1 text-center">P</label>
+                                    <input type="number" name="jumlah_siswa_7_p" min="0"
+                                        value="{{ old('jumlah_siswa_7_p', $satpen->jumlah_siswa_7_p ?? 0) }}"
+                                        class="w-full px-2 py-2 border rounded-lg text-center focus:ring-2 focus:ring-pink-100 focus:border-pink-500 outline-none">
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Kelas 8 -->
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <label class="block text-sm font-bold text-gray-700 mb-3 text-center">Kelas VIII</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-1 text-center">L</label>
+                                    <input type="number" name="jumlah_siswa_8_l" min="0"
+                                        value="{{ old('jumlah_siswa_8_l', $satpen->jumlah_siswa_8_l ?? 0) }}"
+                                        class="w-full px-2 py-2 border rounded-lg text-center focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-1 text-center">P</label>
+                                    <input type="number" name="jumlah_siswa_8_p" min="0"
+                                        value="{{ old('jumlah_siswa_8_p', $satpen->jumlah_siswa_8_p ?? 0) }}"
+                                        class="w-full px-2 py-2 border rounded-lg text-center focus:ring-2 focus:ring-pink-100 focus:border-pink-500 outline-none">
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Kelas 9 -->
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <label class="block text-sm font-bold text-gray-700 mb-3 text-center">Kelas IX</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-1 text-center">L</label>
+                                    <input type="number" name="jumlah_siswa_9_l" min="0"
+                                        value="{{ old('jumlah_siswa_9_l', $satpen->jumlah_siswa_9_l ?? 0) }}"
+                                        class="w-full px-2 py-2 border rounded-lg text-center focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-1 text-center">P</label>
+                                    <input type="number" name="jumlah_siswa_9_p" min="0"
+                                        value="{{ old('jumlah_siswa_9_p', $satpen->jumlah_siswa_9_p ?? 0) }}"
+                                        class="w-full px-2 py-2 border rounded-lg text-center focus:ring-2 focus:ring-pink-100 focus:border-pink-500 outline-none">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kop Surat Section -->
+                <div class="border-t pt-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">
+                        <i class="bi bi-envelope-paper text-rose-600 mr-2"></i>Kop Surat Sekolah
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Upload Kop Surat Baru</label>
+                            <input type="file" name="kop_surat" accept="image/*"
+                                class="block w-full text-sm text-gray-500
+                                    file:mr-4 file:py-2 file:px-4
+                                    file:rounded-lg file:border-0
+                                    file:text-sm file:font-medium
+                                    file:bg-rose-50 file:text-rose-700
+                                    hover:file:bg-rose-100
+                                    cursor-pointer border border-dashed border-gray-300 rounded-lg p-2">
+                            <p class="text-xs text-gray-500 mt-1">Format: JPG, PNG. Maks 2MB</p>
+                        </div>
+                        <div>
+                            @if($satpen->kop_surat_path ?? false)
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Preview Terpasang</label>
+                                <img src="{{ Storage::url($satpen->kop_surat_path) }}" alt="Kop Surat"
+                                    class="w-full h-auto rounded-lg shadow-sm border">
+                            @else
+                                <div class="flex items-center justify-center h-full bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                                    <p class="text-sm text-gray-400"><i class="bi bi-image mr-1"></i> Belum ada kop surat</p>
+                                </div>
+                            @endif
+                        </div>
                     </div>
                 </div>
 
