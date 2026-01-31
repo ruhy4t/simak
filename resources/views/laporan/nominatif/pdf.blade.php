@@ -98,6 +98,7 @@
             <tr>
                 <th width="30">No</th>
                 <th width="70">Tanggal</th>
+                <th width="30">L/P</th>
                 <th>Nama Siswa</th>
                 <th width="80">NISN</th>
                 <th width="40">Kelas</th>
@@ -111,6 +112,7 @@
                 <tr>
                     <td class="text-center">{{ $index + 1 }}</td>
                     <td class="text-center">{{ \Carbon\Carbon::parse($item->tanggal)->format('d/m/Y') }}</td>
+                    <td class="text-center">{{ $item->jenis_kelamin }}</td>
                     <td>{!! html_entity_decode($item->nama_siswa) !!}</td>
                     <td class="text-center">{{ $item->nisn }}</td>
                     <td class="text-center">{{ $item->kelas }}</td>

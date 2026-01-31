@@ -79,41 +79,100 @@ class LaporanController extends Controller
 
             // Header row
             if ($user->role === 'Sekolah') {
-                fputcsv($file, ['No', 'Periode', 'Masuk VII', 'Masuk VIII', 'Masuk IX', 'Total Masuk', 'Keluar VII', 'Keluar VIII', 'Keluar IX', 'Total Keluar']);
+                fputcsv($file, [
+                    'No',
+                    'Periode',
+                    'Masuk VII (L)',
+                    'Masuk VII (P)',
+                    'Masuk VII (Total)',
+                    'Masuk VIII (L)',
+                    'Masuk VIII (P)',
+                    'Masuk VIII (Total)',
+                    'Masuk IX (L)',
+                    'Masuk IX (P)',
+                    'Masuk IX (Total)',
+                    'Total Masuk',
+                    'Keluar VII (L)',
+                    'Keluar VII (P)',
+                    'Keluar VII (Total)',
+                    'Keluar VIII (L)',
+                    'Keluar VIII (P)',
+                    'Keluar VIII (Total)',
+                    'Keluar IX (L)',
+                    'Keluar IX (P)',
+                    'Keluar IX (Total)',
+                    'Total Keluar'
+                ]);
             } else {
-                fputcsv($file, ['No', 'Nama Sekolah', 'Masuk VII', 'Masuk VIII', 'Masuk IX', 'Total Masuk', 'Keluar VII', 'Keluar VIII', 'Keluar IX', 'Total Keluar', 'Jumlah']);
+                fputcsv($file, [
+                    'No',
+                    'Nama Sekolah',
+                    'Masuk VII (L)',
+                    'Masuk VII (P)',
+                    'Masuk VII (Total)',
+                    'Masuk VIII (L)',
+                    'Masuk VIII (P)',
+                    'Masuk VIII (Total)',
+                    'Masuk IX (L)',
+                    'Masuk IX (P)',
+                    'Masuk IX (Total)',
+                    'Total Masuk',
+                    'Keluar VII (L)',
+                    'Keluar VII (P)',
+                    'Keluar VII (Total)',
+                    'Keluar VIII (L)',
+                    'Keluar VIII (P)',
+                    'Keluar VIII (Total)',
+                    'Keluar IX (L)',
+                    'Keluar IX (P)',
+                    'Keluar IX (Total)',
+                    'Total Keluar',
+                    'Jumlah Netto'
+                ]);
             }
 
             // Data rows
             foreach ($data as $index => $item) {
-                if ($user->role === 'Sekolah') {
-                    fputcsv($file, [
-                        $index + 1,
-                        $item['periode'],
-                        $item['masuk_vii'],
-                        $item['masuk_viii'],
-                        $item['masuk_ix'],
-                        $item['masuk'],
-                        $item['keluar_vii'],
-                        $item['keluar_viii'],
-                        $item['keluar_ix'],
-                        $item['keluar'],
-                    ]);
-                } else {
-                    fputcsv($file, [
-                        $index + 1,
-                        $item['nama_sekolah'],
-                        $item['masuk_vii'],
-                        $item['masuk_viii'],
-                        $item['masuk_ix'],
-                        $item['masuk'],
-                        $item['keluar_vii'],
-                        $item['keluar_viii'],
-                        $item['keluar_ix'],
-                        $item['keluar'],
-                        $item['netto'],
-                    ]);
+                $row = [
+                    $index + 1,
+                    $user->role === 'Sekolah' ? $item['periode'] : $item['nama_sekolah'],
+
+                    // Masuk VII
+                    $item['masuk_vii']['l'],
+                    $item['masuk_vii']['p'],
+                    $item['masuk_vii']['t'],
+                    // Masuk VIII
+                    $item['masuk_viii']['l'],
+                    $item['masuk_viii']['p'],
+                    $item['masuk_viii']['t'],
+                    // Masuk IX
+                    $item['masuk_ix']['l'],
+                    $item['masuk_ix']['p'],
+                    $item['masuk_ix']['t'],
+                    // Total Masuk
+                    $item['masuk'],
+
+                    // Keluar VII
+                    $item['keluar_vii']['l'],
+                    $item['keluar_vii']['p'],
+                    $item['keluar_vii']['t'],
+                    // Keluar VIII
+                    $item['keluar_viii']['l'],
+                    $item['keluar_viii']['p'],
+                    $item['keluar_viii']['t'],
+                    // Keluar IX
+                    $item['keluar_ix']['l'],
+                    $item['keluar_ix']['p'],
+                    $item['keluar_ix']['t'],
+                    // Total Keluar
+                    $item['keluar'],
+                ];
+
+                if ($user->role !== 'Sekolah') {
+                    $row[] = $item['netto'];
                 }
+
+                fputcsv($file, $row);
             }
 
             fclose($file);
@@ -125,6 +184,7 @@ class LaporanController extends Controller
     /**
      * Helper to fetch Rekap data with Kelas breakdown.
      * OPTIMIZED: Uses aggregate queries instead of N+1 pattern
+     * UPDATED: Includes Gender Breakdown (L/P)
      */
     private function getRekapData($start_date, $end_date, $user)
     {
@@ -139,9 +199,12 @@ class LaporanController extends Controller
                 ->where('mutasi_masuk.status', 'Selesai')
                 ->selectRaw('
                     mutasi_masuk.npsn_sekolah_tujuan as npsn,
-                    SUM(CASE WHEN mutasi_masuk_siswa.kelas IN ("7", "VII") THEN 1 ELSE 0 END) as masuk_vii,
-                    SUM(CASE WHEN mutasi_masuk_siswa.kelas IN ("8", "VIII") THEN 1 ELSE 0 END) as masuk_viii,
-                    SUM(CASE WHEN mutasi_masuk_siswa.kelas IN ("9", "IX") THEN 1 ELSE 0 END) as masuk_ix
+                    SUM(CASE WHEN mutasi_masuk_siswa.kelas IN ("7", "VII") AND mutasi_masuk_siswa.jenis_kelamin = "L" THEN 1 ELSE 0 END) as masuk_vii_l,
+                    SUM(CASE WHEN mutasi_masuk_siswa.kelas IN ("7", "VII") AND mutasi_masuk_siswa.jenis_kelamin = "P" THEN 1 ELSE 0 END) as masuk_vii_p,
+                    SUM(CASE WHEN mutasi_masuk_siswa.kelas IN ("8", "VIII") AND mutasi_masuk_siswa.jenis_kelamin = "L" THEN 1 ELSE 0 END) as masuk_viii_l,
+                    SUM(CASE WHEN mutasi_masuk_siswa.kelas IN ("8", "VIII") AND mutasi_masuk_siswa.jenis_kelamin = "P" THEN 1 ELSE 0 END) as masuk_viii_p,
+                    SUM(CASE WHEN mutasi_masuk_siswa.kelas IN ("9", "IX") AND mutasi_masuk_siswa.jenis_kelamin = "L" THEN 1 ELSE 0 END) as masuk_ix_l,
+                    SUM(CASE WHEN mutasi_masuk_siswa.kelas IN ("9", "IX") AND mutasi_masuk_siswa.jenis_kelamin = "P" THEN 1 ELSE 0 END) as masuk_ix_p
                 ')
                 ->groupBy('mutasi_masuk.npsn_sekolah_tujuan')
                 ->get()
@@ -152,9 +215,12 @@ class LaporanController extends Controller
                 ->where('status', 'Selesai')
                 ->selectRaw('
                     npsn_sekolah_asal as npsn,
-                    SUM(CASE WHEN kelas IN ("7", "VII") THEN 1 ELSE 0 END) as keluar_vii,
-                    SUM(CASE WHEN kelas IN ("8", "VIII") THEN 1 ELSE 0 END) as keluar_viii,
-                    SUM(CASE WHEN kelas IN ("9", "IX") THEN 1 ELSE 0 END) as keluar_ix
+                    SUM(CASE WHEN kelas IN ("7", "VII") AND jenis_kelamin = "L" THEN 1 ELSE 0 END) as keluar_vii_l,
+                    SUM(CASE WHEN kelas IN ("7", "VII") AND jenis_kelamin = "P" THEN 1 ELSE 0 END) as keluar_vii_p,
+                    SUM(CASE WHEN kelas IN ("8", "VIII") AND jenis_kelamin = "L" THEN 1 ELSE 0 END) as keluar_viii_l,
+                    SUM(CASE WHEN kelas IN ("8", "VIII") AND jenis_kelamin = "P" THEN 1 ELSE 0 END) as keluar_viii_p,
+                    SUM(CASE WHEN kelas IN ("9", "IX") AND jenis_kelamin = "L" THEN 1 ELSE 0 END) as keluar_ix_l,
+                    SUM(CASE WHEN kelas IN ("9", "IX") AND jenis_kelamin = "P" THEN 1 ELSE 0 END) as keluar_ix_p
                 ')
                 ->groupBy('npsn_sekolah_asal')
                 ->get()
@@ -167,51 +233,76 @@ class LaporanController extends Controller
                 $masuk = $masukStats->get($school->npsn);
                 $keluar = $keluarStats->get($school->npsn);
 
-                $masukVII = $masuk ? (int) $masuk->masuk_vii : 0;
-                $masukVIII = $masuk ? (int) $masuk->masuk_viii : 0;
-                $masukIX = $masuk ? (int) $masuk->masuk_ix : 0;
+                // Masuk Breakdown
+                $masukVII_L = $masuk ? (int) $masuk->masuk_vii_l : 0;
+                $masukVII_P = $masuk ? (int) $masuk->masuk_vii_p : 0;
+                $masukVIII_L = $masuk ? (int) $masuk->masuk_viii_l : 0;
+                $masukVIII_P = $masuk ? (int) $masuk->masuk_viii_p : 0;
+                $masukIX_L = $masuk ? (int) $masuk->masuk_ix_l : 0;
+                $masukIX_P = $masuk ? (int) $masuk->masuk_ix_p : 0;
+
+                $masukVII = $masukVII_L + $masukVII_P;
+                $masukVIII = $masukVIII_L + $masukVIII_P;
+                $masukIX = $masukIX_L + $masukIX_P;
                 $masukTotal = $masukVII + $masukVIII + $masukIX;
 
-                $keluarVII = $keluar ? (int) $keluar->keluar_vii : 0;
-                $keluarVIII = $keluar ? (int) $keluar->keluar_viii : 0;
-                $keluarIX = $keluar ? (int) $keluar->keluar_ix : 0;
+                // Keluar Breakdown
+                $keluarVII_L = $keluar ? (int) $keluar->keluar_vii_l : 0;
+                $keluarVII_P = $keluar ? (int) $keluar->keluar_vii_p : 0;
+                $keluarVIII_L = $keluar ? (int) $keluar->keluar_viii_l : 0;
+                $keluarVIII_P = $keluar ? (int) $keluar->keluar_viii_p : 0;
+                $keluarIX_L = $keluar ? (int) $keluar->keluar_ix_l : 0;
+                $keluarIX_P = $keluar ? (int) $keluar->keluar_ix_p : 0;
+
+                $keluarVII = $keluarVII_L + $keluarVII_P;
+                $keluarVIII = $keluarVIII_L + $keluarVIII_P;
+                $keluarIX = $keluarIX_L + $keluarIX_P;
                 $keluarTotal = $keluarVII + $keluarVIII + $keluarIX;
 
                 // Data Awal (From DB Profile)
-                $awalVII = (int) $school->jumlah_siswa_awal_7;
-                $awalVIII = (int) $school->jumlah_siswa_awal_8;
-                $awalIX = (int) $school->jumlah_siswa_awal_9;
+                // Use new fields if available, otherwise fallback is tricky but we'll assume new fields exist as per migration
+                $awalVII_L = (int) $school->jumlah_siswa_7_l;
+                $awalVII_P = (int) $school->jumlah_siswa_7_p;
+                $awalVIII_L = (int) $school->jumlah_siswa_8_l;
+                $awalVIII_P = (int) $school->jumlah_siswa_8_p;
+                $awalIX_L = (int) $school->jumlah_siswa_9_l;
+                $awalIX_P = (int) $school->jumlah_siswa_9_p;
+
+                $awalVII = $awalVII_L + $awalVII_P;
+                $awalVIII = $awalVIII_L + $awalVIII_P;
+                $awalIX = $awalIX_L + $awalIX_P;
                 $awalTotal = $awalVII + $awalVIII + $awalIX;
 
                 // Data Akhir (Awal + Masuk - Keluar)
-                $akhirVII = $awalVII + $masukVII - $keluarVII;
-                $akhirVIII = $awalVIII + $masukVIII - $keluarVIII;
-                $akhirIX = $awalIX + $masukIX - $keluarIX;
                 $akhirTotal = $awalTotal + $masukTotal - $keluarTotal;
 
                 if ($masukTotal > 0 || $keluarTotal > 0 || $awalTotal > 0) {
                     $data[] = [
                         'nama_sekolah' => $school->nama,
-                        // Awal
-                        'awal_vii' => $awalVII,
-                        'awal_viii' => $awalVIII,
-                        'awal_ix' => $awalIX,
+                        // Awal Structure [Total, L, P]
+                        'awal_vii' => ['t' => $awalVII, 'l' => $awalVII_L, 'p' => $awalVII_P],
+                        'awal_viii' => ['t' => $awalVIII, 'l' => $awalVIII_L, 'p' => $awalVIII_P],
+                        'awal_ix' => ['t' => $awalIX, 'l' => $awalIX_L, 'p' => $awalIX_P],
                         'awal' => $awalTotal,
-                        // Masuk
+
+                        // Masuk Structure [Total, L, P]
+                        'masuk_vii' => ['t' => $masukVII, 'l' => $masukVII_L, 'p' => $masukVII_P],
+                        'masuk_viii' => ['t' => $masukVIII, 'l' => $masukVIII_L, 'p' => $masukVIII_P],
+                        'masuk_ix' => ['t' => $masukIX, 'l' => $masukIX_L, 'p' => $masukIX_P],
                         'masuk' => $masukTotal,
-                        'masuk_vii' => $masukVII,
-                        'masuk_viii' => $masukVIII,
-                        'masuk_ix' => $masukIX,
-                        // Keluar
+
+                        // Keluar Structure [Total, L, P]
+                        'keluar_vii' => ['t' => $keluarVII, 'l' => $keluarVII_L, 'p' => $keluarVII_P],
+                        'keluar_viii' => ['t' => $keluarVIII, 'l' => $keluarVIII_L, 'p' => $keluarVIII_P],
+                        'keluar_ix' => ['t' => $keluarIX, 'l' => $keluarIX_L, 'p' => $keluarIX_P],
                         'keluar' => $keluarTotal,
-                        'keluar_vii' => $keluarVII,
-                        'keluar_viii' => $keluarVIII,
-                        'keluar_ix' => $keluarIX,
-                        // Akhir
-                        'akhir_vii' => $akhirVII,
-                        'akhir_viii' => $akhirVIII,
-                        'akhir_ix' => $akhirIX,
-                        'akhir' => $akhirTotal,
+
+                        // Akhir Structure [Total, L, P]
+                        'akhir_vii' => ['t' => ($awalVII_L + $masukVII_L - $keluarVII_L) + ($awalVII_P + $masukVII_P - $keluarVII_P), 'l' => ($awalVII_L + $masukVII_L - $keluarVII_L), 'p' => ($awalVII_P + $masukVII_P - $keluarVII_P)],
+                        'akhir_viii' => ['t' => ($awalVIII_L + $masukVIII_L - $keluarVIII_L) + ($awalVIII_P + $masukVIII_P - $keluarVIII_P), 'l' => ($awalVIII_L + $masukVIII_L - $keluarVIII_L), 'p' => ($awalVIII_P + $masukVIII_P - $keluarVIII_P)],
+                        'akhir_ix' => ['t' => ($awalIX_L + $masukIX_L - $keluarIX_L) + ($awalIX_P + $masukIX_P - $keluarIX_P), 'l' => ($awalIX_L + $masukIX_L - $keluarIX_L), 'p' => ($awalIX_P + $masukIX_P - $keluarIX_P)],
+                        'akhir' => $awalTotal + $masukTotal - $keluarTotal,
+
                         // Netto
                         'netto' => $masukTotal - $keluarTotal
                     ];
@@ -234,62 +325,91 @@ class LaporanController extends Controller
                 if ($monthStart > $monthEnd)
                     continue;
 
-                // Mutasi Masuk per kelas
-                $masukQuery = DB::table('mutasi_masuk')
+                // Mutasi Masuk per kelas & gender
+                $masukStats = DB::table('mutasi_masuk')
                     ->join('mutasi_masuk_siswa', 'mutasi_masuk.id_mutasi', '=', 'mutasi_masuk_siswa.id_mutasi')
                     ->where('mutasi_masuk.npsn_sekolah_tujuan', $npsn)
                     ->whereBetween('mutasi_masuk.tanggal_pengajuan', [$monthStart, $monthEnd])
-                    ->where('mutasi_masuk.status', 'Selesai');
+                    ->where('mutasi_masuk.status', 'Selesai')
+                    ->selectRaw('
+                        SUM(CASE WHEN mutasi_masuk_siswa.kelas IN ("7", "VII") AND mutasi_masuk_siswa.jenis_kelamin = "L" THEN 1 ELSE 0 END) as vii_l,
+                        SUM(CASE WHEN mutasi_masuk_siswa.kelas IN ("7", "VII") AND mutasi_masuk_siswa.jenis_kelamin = "P" THEN 1 ELSE 0 END) as vii_p,
+                        SUM(CASE WHEN mutasi_masuk_siswa.kelas IN ("8", "VIII") AND mutasi_masuk_siswa.jenis_kelamin = "L" THEN 1 ELSE 0 END) as viii_l,
+                        SUM(CASE WHEN mutasi_masuk_siswa.kelas IN ("8", "VIII") AND mutasi_masuk_siswa.jenis_kelamin = "P" THEN 1 ELSE 0 END) as viii_p,
+                        SUM(CASE WHEN mutasi_masuk_siswa.kelas IN ("9", "IX") AND mutasi_masuk_siswa.jenis_kelamin = "L" THEN 1 ELSE 0 END) as ix_l,
+                        SUM(CASE WHEN mutasi_masuk_siswa.kelas IN ("9", "IX") AND mutasi_masuk_siswa.jenis_kelamin = "P" THEN 1 ELSE 0 END) as ix_p
+                    ')
+                    ->first();
 
-                $masukVII = (clone $masukQuery)->whereIn('mutasi_masuk_siswa.kelas', ['7', 'VII'])->count();
-                $masukVIII = (clone $masukQuery)->whereIn('mutasi_masuk_siswa.kelas', ['8', 'VIII'])->count();
-                $masukIX = (clone $masukQuery)->whereIn('mutasi_masuk_siswa.kelas', ['9', 'IX'])->count();
-                $masukTotal = $masukVII + $masukVIII + $masukIX;
+                $m_vii_l = (int) ($masukStats->vii_l ?? 0);
+                $m_vii_p = (int) ($masukStats->vii_p ?? 0);
+                $m_viii_l = (int) ($masukStats->viii_l ?? 0);
+                $m_viii_p = (int) ($masukStats->viii_p ?? 0);
+                $m_ix_l = (int) ($masukStats->ix_l ?? 0);
+                $m_ix_p = (int) ($masukStats->ix_p ?? 0);
+                $masukTotal = $m_vii_l + $m_vii_p + $m_viii_l + $m_viii_p + $m_ix_l + $m_ix_p;
 
-                // Mutasi Keluar per kelas
-                $keluarQuery = MutasiKeluar::where('npsn_sekolah_asal', $npsn)
+                // Mutasi Keluar per kelas & gender
+                $keluarStats = MutasiKeluar::where('npsn_sekolah_asal', $npsn)
                     ->whereBetween('tanggal_pengajuan', [$monthStart, $monthEnd])
-                    ->where('status', 'Selesai');
+                    ->where('status', 'Selesai')
+                    ->selectRaw('
+                        SUM(CASE WHEN kelas IN ("7", "VII") AND jenis_kelamin = "L" THEN 1 ELSE 0 END) as vii_l,
+                        SUM(CASE WHEN kelas IN ("7", "VII") AND jenis_kelamin = "P" THEN 1 ELSE 0 END) as vii_p,
+                        SUM(CASE WHEN kelas IN ("8", "VIII") AND jenis_kelamin = "L" THEN 1 ELSE 0 END) as viii_l,
+                        SUM(CASE WHEN kelas IN ("8", "VIII") AND jenis_kelamin = "P" THEN 1 ELSE 0 END) as viii_p,
+                        SUM(CASE WHEN kelas IN ("9", "IX") AND jenis_kelamin = "L" THEN 1 ELSE 0 END) as ix_l,
+                        SUM(CASE WHEN kelas IN ("9", "IX") AND jenis_kelamin = "P" THEN 1 ELSE 0 END) as ix_p
+                    ')
+                    ->first();
 
-                $keluarVII = (clone $keluarQuery)->whereIn('kelas', ['7', 'VII'])->count();
-                $keluarVIII = (clone $keluarQuery)->whereIn('kelas', ['8', 'VIII'])->count();
-                $keluarIX = (clone $keluarQuery)->whereIn('kelas', ['9', 'IX'])->count();
-                $keluarTotal = $keluarVII + $keluarVIII + $keluarIX;
+                $k_vii_l = (int) ($keluarStats->vii_l ?? 0);
+                $k_vii_p = (int) ($keluarStats->vii_p ?? 0);
+                $k_viii_l = (int) ($keluarStats->viii_l ?? 0);
+                $k_viii_p = (int) ($keluarStats->viii_p ?? 0);
+                $k_ix_l = (int) ($keluarStats->ix_l ?? 0);
+                $k_ix_p = (int) ($keluarStats->ix_p ?? 0);
+                $keluarTotal = $k_vii_l + $k_vii_p + $k_viii_l + $k_viii_p + $k_ix_l + $k_ix_p;
 
                 // Data Awal (From DB Profile - Static)
-                $awalVII = (int) ($school->jumlah_siswa_awal_7 ?? 0);
-                $awalVIII = (int) ($school->jumlah_siswa_awal_8 ?? 0);
-                $awalIX = (int) ($school->jumlah_siswa_awal_9 ?? 0);
-                $awalTotal = $awalVII + $awalVIII + $awalIX;
+                $awalVII_L = (int) ($school->jumlah_siswa_7_l ?? 0);
+                $awalVII_P = (int) ($school->jumlah_siswa_7_p ?? 0);
+                $awalVIII_L = (int) ($school->jumlah_siswa_8_l ?? 0);
+                $awalVIII_P = (int) ($school->jumlah_siswa_8_p ?? 0);
+                $awalIX_L = (int) ($school->jumlah_siswa_9_l ?? 0);
+                $awalIX_P = (int) ($school->jumlah_siswa_9_p ?? 0);
 
-                // Data Akhir (Awal + Masuk - Keluar) - simplified per period row
-                $akhirVII = $awalVII + $masukVII - $keluarVII;
-                $akhirVIII = $awalVIII + $masukVIII - $keluarVIII;
-                $akhirIX = $awalIX + $masukIX - $keluarIX;
-                $akhirTotal = $awalTotal + $masukTotal - $keluarTotal;
+                $awalVII = $awalVII_L + $awalVII_P;
+                $awalVIII = $awalVIII_L + $awalVIII_P;
+                $awalIX = $awalIX_L + $awalIX_P;
+                $awalTotal = $awalVII + $awalVIII + $awalIX;
 
                 $data[] = [
                     'periode' => $dt->translatedFormat('F Y'),
                     // Awal
-                    'awal_vii' => $awalVII,
-                    'awal_viii' => $awalVIII,
-                    'awal_ix' => $awalIX,
+                    'awal_vii' => ['t' => $awalVII, 'l' => $awalVII_L, 'p' => $awalVII_P],
+                    'awal_viii' => ['t' => $awalVIII, 'l' => $awalVIII_L, 'p' => $awalVIII_P],
+                    'awal_ix' => ['t' => $awalIX, 'l' => $awalIX_L, 'p' => $awalIX_P],
                     'awal' => $awalTotal,
+
                     // Masuk
+                    'masuk_vii' => ['t' => $m_vii_l + $m_vii_p, 'l' => $m_vii_l, 'p' => $m_vii_p],
+                    'masuk_viii' => ['t' => $m_viii_l + $m_viii_p, 'l' => $m_viii_l, 'p' => $m_viii_p],
+                    'masuk_ix' => ['t' => $m_ix_l + $m_ix_p, 'l' => $m_ix_l, 'p' => $m_ix_p],
                     'masuk' => $masukTotal,
-                    'masuk_vii' => $masukVII,
-                    'masuk_viii' => $masukVIII,
-                    'masuk_ix' => $masukIX,
+
                     // Keluar
+                    'keluar_vii' => ['t' => $k_vii_l + $k_vii_p, 'l' => $k_vii_l, 'p' => $k_vii_p],
+                    'keluar_viii' => ['t' => $k_viii_l + $k_viii_p, 'l' => $k_viii_l, 'p' => $k_viii_p],
+                    'keluar_ix' => ['t' => $k_ix_l + $k_ix_p, 'l' => $k_ix_l, 'p' => $k_ix_p],
                     'keluar' => $keluarTotal,
-                    'keluar_vii' => $keluarVII,
-                    'keluar_viii' => $keluarVIII,
-                    'keluar_ix' => $keluarIX,
-                    // Akhir
-                    'akhir_vii' => $akhirVII,
-                    'akhir_viii' => $akhirVIII,
-                    'akhir_ix' => $akhirIX,
-                    'akhir' => $akhirTotal,
+
+                    // Akhir Structure [Total, L, P]
+                    'akhir_vii' => ['t' => ($awalVII_L + $m_vii_l - $k_vii_l) + ($awalVII_P + $m_vii_p - $k_vii_p), 'l' => ($awalVII_L + $m_vii_l - $k_vii_l), 'p' => ($awalVII_P + $m_vii_p - $k_vii_p)],
+                    'akhir_viii' => ['t' => ($awalVIII_L + $m_viii_l - $k_viii_l) + ($awalVIII_P + $m_viii_p - $k_viii_p), 'l' => ($awalVIII_L + $m_viii_l - $k_viii_l), 'p' => ($awalVIII_P + $m_viii_p - $k_viii_p)],
+                    'akhir_ix' => ['t' => ($awalIX_L + $m_ix_l - $k_ix_l) + ($awalIX_P + $m_ix_p - $k_ix_p), 'l' => ($awalIX_L + $m_ix_l - $k_ix_l), 'p' => ($awalIX_P + $m_ix_p - $k_ix_p)],
+                    'akhir' => $awalTotal + $masukTotal - $keluarTotal,
+
                     // Netto
                     'netto' => $masukTotal - $keluarTotal
                 ];
@@ -462,7 +582,7 @@ class LaporanController extends Controller
             fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF)); // BOM
 
             // Header
-            fputcsv($file, ['No', 'Tanggal', 'Jenis', 'Nama Siswa', 'NISN', 'Kelas', 'Asal Sekolah', 'Tujuan Sekolah', 'Status']);
+            fputcsv($file, ['No', 'Tanggal', 'Jenis', 'Nama Siswa', 'NISN', 'L/P', 'Kelas', 'Asal Sekolah', 'Tujuan Sekolah', 'Status']);
 
             foreach ($data as $index => $item) {
                 fputcsv($file, [
@@ -471,6 +591,7 @@ class LaporanController extends Controller
                     strtoupper($item->jenis),
                     $item->nama_siswa,
                     $item->nisn,
+                    $item->jenis_kelamin,
                     $item->kelas,
                     $item->asal,
                     $item->tujuan,
@@ -499,6 +620,7 @@ class LaporanController extends Controller
                     'mutasi_masuk.tanggal_pengajuan as tanggal',
                     'mutasi_masuk_siswa.nama_murid as nama_siswa',
                     'mutasi_masuk_siswa.nisn',
+                    'mutasi_masuk_siswa.jenis_kelamin', // Added
                     'mutasi_masuk_siswa.kelas',
                     'mutasi_masuk_siswa.nama_sekolah_asal as asal',
                     'mutasi_masuk.nama_sekolah_tujuan as tujuan',
@@ -524,6 +646,7 @@ class LaporanController extends Controller
                 'tanggal_pengajuan as tanggal',
                 'nama_murid as nama_siswa',
                 'nisn',
+                'jenis_kelamin', // Added
                 'kelas',
                 'nama_sekolah_asal as asal',
                 'nama_sekolah_tujuan as tujuan',
@@ -643,10 +766,10 @@ class LaporanController extends Controller
         // Top 10 Asal (Mutasi Masuk)
         $topAsalQuery = DB::table('mutasi_masuk_siswa')
             ->join('mutasi_masuk', 'mutasi_masuk_siswa.id_mutasi', '=', 'mutasi_masuk.id_mutasi')
-            ->select('mutasi_masuk_siswa.nama_sekolah_asal', DB::raw('count(*) as total'))
+            ->select('mutasi_masuk_siswa.nama_sekolah_asal', 'mutasi_masuk_siswa.npsn_sekolah_asal as npsn', DB::raw('count(*) as total'))
             ->whereBetween('mutasi_masuk.tanggal_pengajuan', [$start, $end])
             ->where('mutasi_masuk.status', 'Selesai')
-            ->groupBy('mutasi_masuk_siswa.nama_sekolah_asal')
+            ->groupBy('mutasi_masuk_siswa.nama_sekolah_asal', 'mutasi_masuk_siswa.npsn_sekolah_asal')
             ->orderByDesc('total')
             ->limit($limit);
 
@@ -657,10 +780,10 @@ class LaporanController extends Controller
         $topAsal = $topAsalQuery->get();
 
         // Top 10 Tujuan (Mutasi Keluar)
-        $topTujuanQuery = MutasiKeluar::select('nama_sekolah_tujuan', DB::raw('count(*) as total'))
+        $topTujuanQuery = MutasiKeluar::select('nama_sekolah_tujuan', 'npsn_sekolah_tujuan as npsn', DB::raw('count(*) as total'))
             ->whereBetween('tanggal_pengajuan', [$start, $end])
             ->where('status', 'Selesai')
-            ->groupBy('nama_sekolah_tujuan')
+            ->groupBy('nama_sekolah_tujuan', 'npsn_sekolah_tujuan')
             ->orderByDesc('total')
             ->limit($limit);
 

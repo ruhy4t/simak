@@ -105,21 +105,57 @@
                                 @endif
 
                                 <!-- Masuk per Kelas -->
-                                <td class="px-2 py-3 text-center text-xs">{{ $item['masuk_vii'] ?: '-' }}</td>
-                                <td class="px-2 py-3 text-center text-xs">{{ $item['masuk_viii'] ?: '-' }}</td>
-                                <td class="px-2 py-3 text-center text-xs">{{ $item['masuk_ix'] ?: '-' }}</td>
                                 <td class="px-2 py-3 text-center border-r">
-                                    <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-xs font-semibold">
+                                    <div class="font-bold text-gray-900">{{ $item['masuk_vii']['t'] }}</div>
+                                    <div class="text-[10px] text-gray-500 flex justify-center gap-1">
+                                        <span class="text-blue-600">L:{{ $item['masuk_vii']['l'] }}</span>
+                                        <span class="text-pink-600">P:{{ $item['masuk_vii']['p'] }}</span>
+                                    </div>
+                                </td>
+                                <td class="px-2 py-3 text-center border-r">
+                                    <div class="font-bold text-gray-900">{{ $item['masuk_viii']['t'] }}</div>
+                                    <div class="text-[10px] text-gray-500 flex justify-center gap-1">
+                                        <span class="text-blue-600">L:{{ $item['masuk_viii']['l'] }}</span>
+                                        <span class="text-pink-600">P:{{ $item['masuk_viii']['p'] }}</span>
+                                    </div>
+                                </td>
+                                <td class="px-2 py-3 text-center border-r">
+                                    <div class="font-bold text-gray-900">{{ $item['masuk_ix']['t'] }}</div>
+                                    <div class="text-[10px] text-gray-500 flex justify-center gap-1">
+                                        <span class="text-blue-600">L:{{ $item['masuk_ix']['l'] }}</span>
+                                        <span class="text-pink-600">P:{{ $item['masuk_ix']['p'] }}</span>
+                                    </div>
+                                </td>
+                                <td class="px-2 py-3 text-center border-r bg-blue-50">
+                                    <span class="text-blue-800 px-2 py-0.5 rounded text-sm font-bold">
                                         {{ $item['masuk'] }}
                                     </span>
                                 </td>
 
                                 <!-- Keluar per Kelas -->
-                                <td class="px-2 py-3 text-center text-xs">{{ $item['keluar_vii'] ?: '-' }}</td>
-                                <td class="px-2 py-3 text-center text-xs">{{ $item['keluar_viii'] ?: '-' }}</td>
-                                <td class="px-2 py-3 text-center text-xs">{{ $item['keluar_ix'] ?: '-' }}</td>
                                 <td class="px-2 py-3 text-center border-r">
-                                    <span class="bg-orange-100 text-orange-800 px-2 py-0.5 rounded text-xs font-semibold">
+                                    <div class="font-bold text-gray-900">{{ $item['keluar_vii']['t'] }}</div>
+                                    <div class="text-[10px] text-gray-500 flex justify-center gap-1">
+                                        <span class="text-blue-600">L:{{ $item['keluar_vii']['l'] }}</span>
+                                        <span class="text-pink-600">P:{{ $item['keluar_vii']['p'] }}</span>
+                                    </div>
+                                </td>
+                                <td class="px-2 py-3 text-center border-r">
+                                    <div class="font-bold text-gray-900">{{ $item['keluar_viii']['t'] }}</div>
+                                    <div class="text-[10px] text-gray-500 flex justify-center gap-1">
+                                        <span class="text-blue-600">L:{{ $item['keluar_viii']['l'] }}</span>
+                                        <span class="text-pink-600">P:{{ $item['keluar_viii']['p'] }}</span>
+                                    </div>
+                                </td>
+                                <td class="px-2 py-3 text-center border-r">
+                                    <div class="font-bold text-gray-900">{{ $item['keluar_ix']['t'] }}</div>
+                                    <div class="text-[10px] text-gray-500 flex justify-center gap-1">
+                                        <span class="text-blue-600">L:{{ $item['keluar_ix']['l'] }}</span>
+                                        <span class="text-pink-600">P:{{ $item['keluar_ix']['p'] }}</span>
+                                    </div>
+                                </td>
+                                <td class="px-2 py-3 text-center border-r bg-orange-50">
+                                    <span class="text-orange-800 px-2 py-0.5 rounded text-sm font-bold">
                                         {{ $item['keluar'] }}
                                     </span>
                                 </td>

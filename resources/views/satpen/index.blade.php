@@ -212,8 +212,10 @@
                         <tr>
                             <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">NPSN</th>
                             <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Nama Sekolah</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Kepala Sekolah</th>
                             <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Bentuk</th>
                             <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Status</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Siswa</th>
                             <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Kota</th>
                             <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Sumber</th>
                             <th class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Aksi</th>
@@ -227,11 +229,28 @@
                                     <div class="font-medium text-gray-900">{{ $satpen->nama }}</div>
                                     <div class="text-xs text-gray-500 truncate max-w-xs">{{ $satpen->alamat_lengkap ?? '-' }}</div>
                                 </td>
+                                <td class="px-4 py-3">
+                                    <div class="text-sm text-gray-900 font-medium">{{ $satpen->kepala_sekolah_nama ?? '-' }}</div>
+                                    <div class="text-xs text-gray-500 font-mono">{{ $satpen->kepala_sekolah_nip ?? '-' }}</div>
+                                </td>
                                 <td class="px-4 py-3 text-sm">{{ $satpen->bentuk_pendidikan ?? 'SMP' }}</td>
                                 <td class="px-4 py-3">
                                     <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full {{ $satpen->status_sp == 'Negeri' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700' }}">
                                         {{ $satpen->status_sp ?? 'Swasta' }}
                                     </span>
+                                </td>
+                                <td class="px-4 py-3">
+                                    @php
+                                        // Calculate Totals since accessors might need refreshing or manual calculation here
+                                        $total = ($satpen->jumlah_siswa_awal_7 ?? 0) + ($satpen->jumlah_siswa_awal_8 ?? 0) + ($satpen->jumlah_siswa_awal_9 ?? 0);
+                                        $totalL = ($satpen->jumlah_siswa_7_l ?? 0) + ($satpen->jumlah_siswa_8_l ?? 0) + ($satpen->jumlah_siswa_9_l ?? 0);
+                                        $totalP = ($satpen->jumlah_siswa_7_p ?? 0) + ($satpen->jumlah_siswa_8_p ?? 0) + ($satpen->jumlah_siswa_9_p ?? 0);
+                                    @endphp
+                                    <div class="font-bold text-gray-900">{{ $total }}</div>
+                                    <div class="text-xs text-gray-500 flex gap-2">
+                                        <span class="text-blue-600" title="Laki-laki"><i class="bi bi-gender-male"></i> {{ $totalL }}</span>
+                                        <span class="text-pink-600" title="Perempuan"><i class="bi bi-gender-female"></i> {{ $totalP }}</span>
+                                    </div>
                                 </td>
                                 <td class="px-4 py-3 text-sm">{{ $satpen->kota ?? '-' }}</td>
                                 <td class="px-4 py-3">

@@ -29,10 +29,40 @@ class SatuanPendidikan extends Model
         'kop_surat_path',
         'kepala_sekolah_nama',
         'kepala_sekolah_nip',
+        // Total (Backward Compatibility / Calculated)
         'jumlah_siswa_awal_7',
         'jumlah_siswa_awal_8',
         'jumlah_siswa_awal_9',
+        // Gender Breakdown
+        'jumlah_siswa_7_l',
+        'jumlah_siswa_7_p',
+        'jumlah_siswa_8_l',
+        'jumlah_siswa_8_p',
+        'jumlah_siswa_9_l',
+        'jumlah_siswa_9_p',
     ];
+
+    /**
+     * Boot model to auto-calculate totals on save
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::saving(function ($model) {
+            // Auto-update totals based on L+P if they are modified
+            // This ensures backward compatibility for code that reads 'jumlah_siswa_awal_*'
+            if ($model->isDirty(['jumlah_siswa_7_l', 'jumlah_siswa_7_p'])) {
+                $model->jumlah_siswa_awal_7 = ($model->jumlah_siswa_7_l ?? 0) + ($model->jumlah_siswa_7_p ?? 0);
+            }
+            if ($model->isDirty(['jumlah_siswa_8_l', 'jumlah_siswa_8_p'])) {
+                $model->jumlah_siswa_awal_8 = ($model->jumlah_siswa_8_l ?? 0) + ($model->jumlah_siswa_8_p ?? 0);
+            }
+            if ($model->isDirty(['jumlah_siswa_9_l', 'jumlah_siswa_9_p'])) {
+                $model->jumlah_siswa_awal_9 = ($model->jumlah_siswa_9_l ?? 0) + ($model->jumlah_siswa_9_p ?? 0);
+            }
+        });
+    }
 
     protected $casts = [
         'is_local' => 'boolean',

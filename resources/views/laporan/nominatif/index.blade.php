@@ -10,7 +10,8 @@
                 <h1 class="text-2xl font-bold text-gray-900">Laporan Daftar Nominatif</h1>
                 <p class="text-gray-500 mt-1">Daftar detail siswa mutasi periode
                     {{ \Carbon\Carbon::parse($start_date)->translatedFormat('d M Y') }} -
-                    {{ \Carbon\Carbon::parse($end_date)->translatedFormat('d M Y') }}.</p>
+                    {{ \Carbon\Carbon::parse($end_date)->translatedFormat('d M Y') }}.
+                </p>
             </div>
 
             <div class="flex items-center gap-2">
@@ -73,6 +74,9 @@
                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Tanggal</th>
                             <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                L/P</th>
+                            <th scope="col"
                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Siswa
                             </th>
                             <th scope="col"
@@ -93,6 +97,9 @@
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                 {{ \Carbon\Carbon::parse($item->tanggal)->format('d/m/Y') }}
                                             </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium text-gray-900">
+                                                {{ $item->jenis_kelamin }}
+                                            </td>
                                             <td class="px-6 py-4 whitespace-nowrap">
                                                 <div class="text-sm font-medium text-gray-900">{{ $item->nama_siswa }}</div>
                                                 <div class="text-xs text-gray-500">NISN: {{ $item->nisn }} | Kelas: {{ $item->kelas }}</div>
@@ -106,7 +113,7 @@
                                             <td class="px-6 py-4 whitespace-nowrap text-center">
                                                 <span
                                                     class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                                            {{ $item->status == 'Selesai' ? 'bg-green-100 text-green-800' :
+                                                                                {{ $item->status == 'Selesai' ? 'bg-green-100 text-green-800' :
                             ($item->status == 'Ditolak' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800') }}">
                                                     {{ $item->status }}
                                                 </span>
@@ -127,4 +134,4 @@
                 Total Data: {{ count($data) }}
             </div>
         </div>
-    </div>@endsection
+</div>@endsection

@@ -132,7 +132,7 @@
             <thead>
                 <tr>
                     <th rowspan="2" width="20">No</th>
-                    <th rowspan="2">{{ in_array($user->role, ['Dinas', 'SuperAdmin']) ? 'Nama Sekolah' : 'Bulan' }}</th>
+                    <th rowspan="2" width="130">{{ in_array($user->role, ['Dinas', 'SuperAdmin']) ? 'Nama Sekolah' : 'Bulan' }}</th>
                     <th colspan="4" style="background-color: #cbd5e1;">Data Siswa Awal</th>
                     <th colspan="4" style="background-color: #e0f2fe;">Mutasi Masuk</th>
                     <th colspan="4" style="background-color: #fff7ed;">Mutasi Keluar</th>
@@ -151,46 +151,126 @@
             </thead>
             <tbody>
                 @php 
-                    $tMasuk=0; $tKeluar=0; $tAwal=0; $tAkhir=0; 
+                    $tAwalVII_L=0; $tAwalVII_P=0;
+                    $tAwalVIII_L=0; $tAwalVIII_P=0;
+                    $tAwalIX_L=0; $tAwalIX_P=0;
+                    $tAwalTotal=0;
+
+                    $tMasukVII_L=0; $tMasukVII_P=0; 
+                    $tMasukVIII_L=0; $tMasukVIII_P=0;
+                    $tMasukIX_L=0; $tMasukIX_P=0;
+                    $tMasukTotal=0;
+
+                    $tKeluarVII_L=0; $tKeluarVII_P=0;
+                    $tKeluarVIII_L=0; $tKeluarVIII_P=0;
+                    $tKeluarIX_L=0; $tKeluarIX_P=0;
+                    $tKeluarTotal=0;
+
+                    $tAkhirVII_L=0; $tAkhirVII_P=0;
+                    $tAkhirVIII_L=0; $tAkhirVIII_P=0;
+                    $tAkhirIX_L=0; $tAkhirIX_P=0;
+                    $tAkhirTotal=0;
                 @endphp
                 @forelse($rekapData as $index => $row)
                     @php 
-                        $nm = $row['masuk'] ?? 0;
-                        $nk = $row['keluar'] ?? 0;
-                        $na = $row['awal'] ?? 0;
-                        $nak = $row['akhir'] ?? 0;
-                        
-                        $tMasuk += $nm;
-                        $tKeluar += $nk;
-                        $tAwal += $na;
-                        $tAkhir += $nak;
+                        // Accumulate Totals - Awal
+                        $tAwalVII_L += $row['awal_vii']['l'] ?? 0;
+                        $tAwalVII_P += $row['awal_vii']['p'] ?? 0;
+                        $tAwalVIII_L += $row['awal_viii']['l'] ?? 0;
+                        $tAwalVIII_P += $row['awal_viii']['p'] ?? 0;
+                        $tAwalIX_L += $row['awal_ix']['l'] ?? 0;
+                        $tAwalIX_P += $row['awal_ix']['p'] ?? 0;
+                        $tAwalTotal += $row['awal'];
+
+                        // Accumulate Totals - Masuk
+                        $tMasukVII_L += $row['masuk_vii']['l'] ?? 0;
+                        $tMasukVII_P += $row['masuk_vii']['p'] ?? 0;
+                        $tMasukVIII_L += $row['masuk_viii']['l'] ?? 0;
+                        $tMasukVIII_P += $row['masuk_viii']['p'] ?? 0;
+                        $tMasukIX_L += $row['masuk_ix']['l'] ?? 0;
+                        $tMasukIX_P += $row['masuk_ix']['p'] ?? 0;
+                        $tMasukTotal += $row['masuk'];
+
+                        // Accumulate Totals - Keluar
+                        $tKeluarVII_L += $row['keluar_vii']['l'] ?? 0;
+                        $tKeluarVII_P += $row['keluar_vii']['p'] ?? 0;
+                        $tKeluarVIII_L += $row['keluar_viii']['l'] ?? 0;
+                        $tKeluarVIII_P += $row['keluar_viii']['p'] ?? 0;
+                        $tKeluarIX_L += $row['keluar_ix']['l'] ?? 0;
+                        $tKeluarIX_P += $row['keluar_ix']['p'] ?? 0;
+                        $tKeluarTotal += $row['keluar'];
+
+                        // Accumulate Totals - Akhir
+                        $tAkhirVII_L += $row['akhir_vii']['l'] ?? 0;
+                        $tAkhirVII_P += $row['akhir_vii']['p'] ?? 0;
+                        $tAkhirVIII_L += $row['akhir_viii']['l'] ?? 0;
+                        $tAkhirVIII_P += $row['akhir_viii']['p'] ?? 0;
+                        $tAkhirIX_L += $row['akhir_ix']['l'] ?? 0;
+                        $tAkhirIX_P += $row['akhir_ix']['p'] ?? 0;
+                        $tAkhirTotal += $row['akhir'];
                     @endphp
                     <tr>
                         <td class="center">{{ $index + 1 }}</td>
                         <td>{{ $row['nama_sekolah'] ?? $row['periode'] ?? '-' }}</td>
                         
                         {{-- Awal --}}
-                        <td class="center bg-slate-50">{{ $row['awal_vii'] ?? 0 }}</td>
-                        <td class="center bg-slate-50">{{ $row['awal_viii'] ?? 0 }}</td>
-                        <td class="center bg-slate-50">{{ $row['awal_ix'] ?? 0 }}</td>
+                        <td class="center bg-slate-50">
+                            <div>{{ $row['awal_vii']['t'] ?? 0 }}</div>
+                            <div style="font-size: 7pt; color: #666;">L:{{ $row['awal_vii']['l'] ?? 0 }} P:{{ $row['awal_vii']['p'] ?? 0 }}</div>
+                        </td>
+                        <td class="center bg-slate-50">
+                            <div>{{ $row['awal_viii']['t'] ?? 0 }}</div>
+                            <div style="font-size: 7pt; color: #666;">L:{{ $row['awal_viii']['l'] ?? 0 }} P:{{ $row['awal_viii']['p'] ?? 0 }}</div>
+                        </td>
+                        <td class="center bg-slate-50">
+                            <div>{{ $row['awal_ix']['t'] ?? 0 }}</div>
+                            <div style="font-size: 7pt; color: #666;">L:{{ $row['awal_ix']['l'] ?? 0 }} P:{{ $row['awal_ix']['p'] ?? 0 }}</div>
+                        </td>
                         <td class="center bold bg-slate-200">{{ $row['awal'] ?? 0 }}</td>
 
                         {{-- Masuk --}}
-                        <td class="center bg-blue-50">{{ $row['masuk_vii'] }}</td>
-                        <td class="center bg-blue-50">{{ $row['masuk_viii'] }}</td>
-                        <td class="center bg-blue-50">{{ $row['masuk_ix'] }}</td>
+                        <td class="center bg-blue-50">
+                            <div>{{ $row['masuk_vii']['t'] }}</div>
+                            <div style="font-size: 7pt; color: #666;">L:{{ $row['masuk_vii']['l'] }} P:{{ $row['masuk_vii']['p'] }}</div>
+                        </td>
+                        <td class="center bg-blue-50">
+                            <div>{{ $row['masuk_viii']['t'] }}</div>
+                            <div style="font-size: 7pt; color: #666;">L:{{ $row['masuk_viii']['l'] }} P:{{ $row['masuk_viii']['p'] }}</div>
+                        </td>
+                        <td class="center bg-blue-50">
+                            <div>{{ $row['masuk_ix']['t'] }}</div>
+                            <div style="font-size: 7pt; color: #666;">L:{{ $row['masuk_ix']['l'] }} P:{{ $row['masuk_ix']['p'] }}</div>
+                        </td>
                         <td class="center bold bg-blue-100">{{ $row['masuk'] }}</td>
                         
                         {{-- Keluar --}}
-                        <td class="center bg-orange-50">{{ $row['keluar_vii'] }}</td>
-                        <td class="center bg-orange-50">{{ $row['keluar_viii'] }}</td>
-                        <td class="center bg-orange-50">{{ $row['keluar_ix'] }}</td>
+                        <td class="center bg-orange-50">
+                            <div>{{ $row['keluar_vii']['t'] }}</div>
+                            <div style="font-size: 7pt; color: #666;">L:{{ $row['keluar_vii']['l'] }} P:{{ $row['keluar_vii']['p'] }}</div>
+                        </td>
+                        <td class="center bg-orange-50">
+                            <div>{{ $row['keluar_viii']['t'] }}</div>
+                            <div style="font-size: 7pt; color: #666;">L:{{ $row['keluar_viii']['l'] }} P:{{ $row['keluar_viii']['p'] }}</div>
+                        </td>
+                        <td class="center bg-orange-50">
+                            <div>{{ $row['keluar_ix']['t'] }}</div>
+                            <div style="font-size: 7pt; color: #666;">L:{{ $row['keluar_ix']['l'] }} P:{{ $row['keluar_ix']['p'] }}</div>
+                        </td>
                         <td class="center bold bg-orange-100">{{ $row['keluar'] }}</td>
 
                         {{-- Akhir --}}
-                        <td class="center bg-green-50">{{ $row['akhir_vii'] ?? 0 }}</td>
-                        <td class="center bg-green-50">{{ $row['akhir_viii'] ?? 0 }}</td>
-                        <td class="center bg-green-50">{{ $row['akhir_ix'] ?? 0 }}</td>
+                        <td class="center bg-green-50">
+                            <div>{{ $row['akhir_vii']['t'] ?? 0 }}</div>
+                            <div style="font-size: 7pt; color: #666;">L:{{ $row['akhir_vii']['l'] ?? 0 }} P:{{ $row['akhir_vii']['p'] ?? 0 }}</div>
+                        </td>
+                        <td class="center bg-green-50">
+                            <div>{{ $row['akhir_viii']['t'] ?? 0 }}</div>
+                            <div style="font-size: 7pt; color: #666;">L:{{ $row['akhir_viii']['l'] ?? 0 }} P:{{ $row['akhir_viii']['p'] ?? 0 }}</div>
+                        </td>
+                        <td class="center bg-green-50">
+                            <div>{{ $row['akhir_ix']['t'] ?? 0 }}</div>
+                            <div style="font-size: 7pt; color: #666;">L:{{ $row['akhir_ix']['l'] ?? 0 }} P:{{ $row['akhir_ix']['p'] ?? 0 }}</div>
+                        </td>
                         <td class="center bold bg-green-100">{{ $row['akhir'] ?? 0 }}</td>
                     </tr>
                 @empty
@@ -198,10 +278,66 @@
                 @endforelse
                 <tr style="background-color: #f3f4f6; font-weight: bold;">
                     <td colspan="2" class="center">TOTAL</td>
-                    <td colspan="3"></td><td class="center">{{ $tAwal }}</td>
-                    <td colspan="3"></td><td class="center">{{ $tMasuk }}</td>
-                    <td colspan="3"></td><td class="center">{{ $tKeluar }}</td>
-                    <td colspan="3"></td><td class="center">{{ $tAkhir }}</td>
+                    
+                    {{-- Awal Totals --}}
+                    <td class="center">
+                        <div>{{ $tAwalVII_L + $tAwalVII_P }}</div>
+                        <div style="font-size: 7pt; font-weight: normal;">L:{{ $tAwalVII_L }} P:{{ $tAwalVII_P }}</div>
+                    </td>
+                    <td class="center">
+                        <div>{{ $tAwalVIII_L + $tAwalVIII_P }}</div>
+                        <div style="font-size: 7pt; font-weight: normal;">L:{{ $tAwalVIII_L }} P:{{ $tAwalVIII_P }}</div>
+                    </td>
+                    <td class="center">
+                        <div>{{ $tAwalIX_L + $tAwalIX_P }}</div>
+                        <div style="font-size: 7pt; font-weight: normal;">L:{{ $tAwalIX_L }} P:{{ $tAwalIX_P }}</div>
+                    </td>
+                    <td class="center bg-slate-200">{{ $tAwalTotal }}</td>
+                    
+                    {{-- Masuk Totals --}}
+                    <td class="center">
+                        <div>{{ $tMasukVII_L + $tMasukVII_P }}</div>
+                        <div style="font-size: 7pt; font-weight: normal;">L:{{ $tMasukVII_L }} P:{{ $tMasukVII_P }}</div>
+                    </td>
+                    <td class="center">
+                        <div>{{ $tMasukVIII_L + $tMasukVIII_P }}</div>
+                        <div style="font-size: 7pt; font-weight: normal;">L:{{ $tMasukVIII_L }} P:{{ $tMasukVIII_P }}</div>
+                    </td>
+                    <td class="center">
+                        <div>{{ $tMasukIX_L + $tMasukIX_P }}</div>
+                        <div style="font-size: 7pt; font-weight: normal;">L:{{ $tMasukIX_L }} P:{{ $tMasukIX_P }}</div>
+                    </td>
+                    <td class="center bg-blue-100">{{ $tMasukTotal }}</td>
+
+                    {{-- Keluar Totals --}}
+                    <td class="center">
+                        <div>{{ $tKeluarVII_L + $tKeluarVII_P }}</div>
+                        <div style="font-size: 7pt; font-weight: normal;">L:{{ $tKeluarVII_L }} P:{{ $tKeluarVII_P }}</div>
+                    </td>
+                    <td class="center">
+                        <div>{{ $tKeluarVIII_L + $tKeluarVIII_P }}</div>
+                        <div style="font-size: 7pt; font-weight: normal;">L:{{ $tKeluarVIII_L }} P:{{ $tKeluarVIII_P }}</div>
+                    </td>
+                    <td class="center">
+                        <div>{{ $tKeluarIX_L + $tKeluarIX_P }}</div>
+                        <div style="font-size: 7pt; font-weight: normal;">L:{{ $tKeluarIX_L }} P:{{ $tKeluarIX_P }}</div>
+                    </td>
+                    <td class="center bg-orange-100">{{ $tKeluarTotal }}</td>
+
+                    {{-- Akhir Totals --}}
+                    <td class="center">
+                        <div>{{ $tAkhirVII_L + $tAkhirVII_P }}</div>
+                        <div style="font-size: 7pt; font-weight: normal;">L:{{ $tAkhirVII_L }} P:{{ $tAkhirVII_P }}</div>
+                    </td>
+                    <td class="center">
+                        <div>{{ $tAkhirVIII_L + $tAkhirVIII_P }}</div>
+                        <div style="font-size: 7pt; font-weight: normal;">L:{{ $tAkhirVIII_L }} P:{{ $tAkhirVIII_P }}</div>
+                    </td>
+                    <td class="center">
+                        <div>{{ $tAkhirIX_L + $tAkhirIX_P }}</div>
+                        <div style="font-size: 7pt; font-weight: normal;">L:{{ $tAkhirIX_L }} P:{{ $tAkhirIX_P }}</div>
+                    </td>
+                    <td class="center bg-green-100">{{ $tAkhirTotal }}</td>
                 </tr>
             </tbody>
         </table>
@@ -271,12 +407,12 @@
             <div class="col-50">
                 <h4>Top 10 Asal Sekolah (Mutasi Masuk)</h4>
                 <table>
-                    <thead><tr><th>No</th><th>Nama Sekolah Asal</th><th>Jumlah</th></tr></thead>
+                    <thead><tr><th width="30">No</th><th>Nama Sekolah Asal</th><th width="70">NPSN</th><th width="50">Jumlah</th></tr></thead>
                     <tbody>
                         @forelse($distribusiData['top_asal'] as $ix => $row)
-                            <tr><td class="center">{{$ix+1}}</td><td>{{ $row->nama_sekolah_asal }}</td><td class="center bold">{{ $row->total }}</td></tr>
+                            <tr><td class="center">{{$ix+1}}</td><td>{{ $row->nama_sekolah_asal }}</td><td class="center">{{ $row->npsn ?? '-' }}</td><td class="center bold">{{ $row->total }}</td></tr>
                         @empty
-                            <tr><td colspan="3" class="center">Data Kosong</td></tr>
+                            <tr><td colspan="4" class="center">Data Kosong</td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -285,12 +421,12 @@
             <div class="col-50">
                 <h4>Top 10 Tujuan Sekolah (Mutasi Keluar)</h4>
                 <table>
-                    <thead><tr><th>No</th><th>Nama Sekolah Tujuan</th><th>Jumlah</th></tr></thead>
+                    <thead><tr><th width="30">No</th><th>Nama Sekolah Tujuan</th><th width="70">NPSN</th><th width="50">Jumlah</th></tr></thead>
                     <tbody>
                         @forelse($distribusiData['top_tujuan'] as $ix => $row)
-                            <tr><td class="center">{{$ix+1}}</td><td>{{ $row->nama_sekolah_tujuan }}</td><td class="center bold">{{ $row->total }}</td></tr>
+                            <tr><td class="center">{{$ix+1}}</td><td>{{ $row->nama_sekolah_tujuan }}</td><td class="center">{{ $row->npsn ?? '-' }}</td><td class="center bold">{{ $row->total }}</td></tr>
                         @empty
-                             <tr><td colspan="3" class="center">Data Kosong</td></tr>
+                             <tr><td colspan="4" class="center">Data Kosong</td></tr>
                         @endforelse
                     </tbody>
                 </table>

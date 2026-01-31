@@ -127,19 +127,32 @@
         </thead>
         <tbody>
             @php 
-                $totalMasukVII = 0; $totalMasukVIII = 0; $totalMasukIX = 0; $totalMasukAll = 0;
-                $totalKeluarVII = 0; $totalKeluarVIII = 0; $totalKeluarIX = 0; $totalKeluarAll = 0;
+                $totalMasukVII_L = 0; $totalMasukVII_P = 0;
+                $totalMasukVIII_L = 0; $totalMasukVIII_P = 0;
+                $totalMasukIX_L = 0; $totalMasukIX_P = 0; 
+                $totalMasukAll = 0;
+
+                $totalKeluarVII_L = 0; $totalKeluarVII_P = 0;
+                $totalKeluarVIII_L = 0; $totalKeluarVIII_P = 0;
+                $totalKeluarIX_L = 0; $totalKeluarIX_P = 0; 
+                $totalKeluarAll = 0;
             @endphp
             @forelse($data as $index => $item)
                 @php
-                    $totalMasukVII += $item['masuk_vii'];
-                    $totalMasukVIII += $item['masuk_viii'];
-                    $totalMasukIX += $item['masuk_ix'];
+                    $totalMasukVII_L += $item['masuk_vii']['l'];
+                    $totalMasukVII_P += $item['masuk_vii']['p'];
+                    $totalMasukVIII_L += $item['masuk_viii']['l'];
+                    $totalMasukVIII_P += $item['masuk_viii']['p'];
+                    $totalMasukIX_L += $item['masuk_ix']['l'];
+                    $totalMasukIX_P += $item['masuk_ix']['p'];
                     $totalMasukAll += $item['masuk'];
                     
-                    $totalKeluarVII += $item['keluar_vii'];
-                    $totalKeluarVIII += $item['keluar_viii'];
-                    $totalKeluarIX += $item['keluar_ix'];
+                    $totalKeluarVII_L += $item['keluar_vii']['l'];
+                    $totalKeluarVII_P += $item['keluar_vii']['p'];
+                    $totalKeluarVIII_L += $item['keluar_viii']['l'];
+                    $totalKeluarVIII_P += $item['keluar_viii']['p'];
+                    $totalKeluarIX_L += $item['keluar_ix']['l'];
+                    $totalKeluarIX_P += $item['keluar_ix']['p'];
                     $totalKeluarAll += $item['keluar'];
                 @endphp
                 <tr>
@@ -151,15 +164,33 @@
                     @endif
                     
                     <!-- Masuk -->
-                    <td class="text-center">{{ $item['masuk_vii'] ?: '-' }}</td>
-                    <td class="text-center">{{ $item['masuk_viii'] ?: '-' }}</td>
-                    <td class="text-center">{{ $item['masuk_ix'] ?: '-' }}</td>
+                    <td class="text-center">
+                        <div style="font-weight: bold">{{ $item['masuk_vii']['t'] }}</div>
+                        <div style="font-size: 8pt; color: #555;">L:{{ $item['masuk_vii']['l'] }} P:{{ $item['masuk_vii']['p'] }}</div>
+                    </td>
+                    <td class="text-center">
+                        <div style="font-weight: bold">{{ $item['masuk_viii']['t'] }}</div>
+                        <div style="font-size: 8pt; color: #555;">L:{{ $item['masuk_viii']['l'] }} P:{{ $item['masuk_viii']['p'] }}</div>
+                    </td>
+                    <td class="text-center">
+                        <div style="font-weight: bold">{{ $item['masuk_ix']['t'] }}</div>
+                        <div style="font-size: 8pt; color: #555;">L:{{ $item['masuk_ix']['l'] }} P:{{ $item['masuk_ix']['p'] }}</div>
+                    </td>
                     <td class="text-center bg-blue"><strong>{{ $item['masuk'] }}</strong></td>
                     
                     <!-- Keluar -->
-                    <td class="text-center">{{ $item['keluar_vii'] ?: '-' }}</td>
-                    <td class="text-center">{{ $item['keluar_viii'] ?: '-' }}</td>
-                    <td class="text-center">{{ $item['keluar_ix'] ?: '-' }}</td>
+                    <td class="text-center">
+                        <div style="font-weight: bold">{{ $item['keluar_vii']['t'] }}</div>
+                        <div style="font-size: 8pt; color: #555;">L:{{ $item['keluar_vii']['l'] }} P:{{ $item['keluar_vii']['p'] }}</div>
+                    </td>
+                    <td class="text-center">
+                        <div style="font-weight: bold">{{ $item['keluar_viii']['t'] }}</div>
+                        <div style="font-size: 8pt; color: #555;">L:{{ $item['keluar_viii']['l'] }} P:{{ $item['keluar_viii']['p'] }}</div>
+                    </td>
+                    <td class="text-center">
+                        <div style="font-weight: bold">{{ $item['keluar_ix']['t'] }}</div>
+                        <div style="font-size: 8pt; color: #555;">L:{{ $item['keluar_ix']['l'] }} P:{{ $item['keluar_ix']['p'] }}</div>
+                    </td>
                     <td class="text-center bg-orange"><strong>{{ $item['keluar'] }}</strong></td>
 
                     @if(!in_array($user->role, ['Sekolah', 'Operator']))
@@ -180,14 +211,32 @@
             <tr style="background-color: #f9f9f9; font-weight: bold;">
                 <td colspan="2" class="text-right">TOTAL</td>
                 <!-- Masuk Totals -->
-                <td class="text-center">{{ $totalMasukVII }}</td>
-                <td class="text-center">{{ $totalMasukVIII }}</td>
-                <td class="text-center">{{ $totalMasukIX }}</td>
+                <td class="text-center">
+                    <div>{{ $totalMasukVII_L + $totalMasukVII_P }}</div>
+                    <div style="font-size: 7pt; font-weight: normal;">L:{{ $totalMasukVII_L }} P:{{ $totalMasukVII_P }}</div>
+                </td>
+                <td class="text-center">
+                    <div>{{ $totalMasukVIII_L + $totalMasukVIII_P }}</div>
+                    <div style="font-size: 7pt; font-weight: normal;">L:{{ $totalMasukVIII_L }} P:{{ $totalMasukVIII_P }}</div>
+                </td>
+                <td class="text-center">
+                    <div>{{ $totalMasukIX_L + $totalMasukIX_P }}</div>
+                    <div style="font-size: 7pt; font-weight: normal;">L:{{ $totalMasukIX_L }} P:{{ $totalMasukIX_P }}</div>
+                </td>
                 <td class="text-center bg-blue">{{ $totalMasukAll }}</td>
                 <!-- Keluar Totals -->
-                <td class="text-center">{{ $totalKeluarVII }}</td>
-                <td class="text-center">{{ $totalKeluarVIII }}</td>
-                <td class="text-center">{{ $totalKeluarIX }}</td>
+                <td class="text-center">
+                    <div>{{ $totalKeluarVII_L + $totalKeluarVII_P }}</div>
+                    <div style="font-size: 7pt; font-weight: normal;">L:{{ $totalKeluarVII_L }} P:{{ $totalKeluarVII_P }}</div>
+                </td>
+                <td class="text-center">
+                    <div>{{ $totalKeluarVIII_L + $totalKeluarVIII_P }}</div>
+                    <div style="font-size: 7pt; font-weight: normal;">L:{{ $totalKeluarVIII_L }} P:{{ $totalKeluarVIII_P }}</div>
+                </td>
+                <td class="text-center">
+                    <div>{{ $totalKeluarIX_L + $totalKeluarIX_P }}</div>
+                    <div style="font-size: 7pt; font-weight: normal;">L:{{ $totalKeluarIX_L }} P:{{ $totalKeluarIX_P }}</div>
+                </td>
                 <td class="text-center bg-orange">{{ $totalKeluarAll }}</td>
                 
                 @if(!in_array($user->role, ['Sekolah', 'Operator']))

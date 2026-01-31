@@ -480,21 +480,32 @@ class SatuanPendidikanController extends Controller
         }
 
         $request->validate([
-            'kop_surat' => 'nullable|image|mimes:jpg,jpeg|max:2048', // Max 2MB, JPG Only due to Vercel/Dompdf GD limit
+            'kop_surat' => 'nullable|image|mimes:jpg,jpeg|max:2048', // Max 2MB
             'kepala_sekolah_nama' => 'nullable|string|max:150',
             'kepala_sekolah_nip' => 'nullable|string|max:50',
-            'jumlah_siswa_awal_7' => 'nullable|integer|min:0',
-            'jumlah_siswa_awal_8' => 'nullable|integer|min:0',
-            'jumlah_siswa_awal_9' => 'nullable|integer|min:0',
+            // Update Validation for Gender Breakdown
+            'jumlah_siswa_7_l' => 'nullable|integer|min:0',
+            'jumlah_siswa_7_p' => 'nullable|integer|min:0',
+            'jumlah_siswa_8_l' => 'nullable|integer|min:0',
+            'jumlah_siswa_8_p' => 'nullable|integer|min:0',
+            'jumlah_siswa_9_l' => 'nullable|integer|min:0',
+            'jumlah_siswa_9_p' => 'nullable|integer|min:0',
         ]);
 
         try {
             $updateData = [
                 'kepala_sekolah_nama' => $request->kepala_sekolah_nama,
                 'kepala_sekolah_nip' => $request->kepala_sekolah_nip,
-                'jumlah_siswa_awal_7' => $request->jumlah_siswa_awal_7 ?? 0,
-                'jumlah_siswa_awal_8' => $request->jumlah_siswa_awal_8 ?? 0,
-                'jumlah_siswa_awal_9' => $request->jumlah_siswa_awal_9 ?? 0,
+
+                // Map inputs directly
+                'jumlah_siswa_7_l' => $request->jumlah_siswa_7_l ?? 0,
+                'jumlah_siswa_7_p' => $request->jumlah_siswa_7_p ?? 0,
+                'jumlah_siswa_8_l' => $request->jumlah_siswa_8_l ?? 0,
+                'jumlah_siswa_8_p' => $request->jumlah_siswa_8_p ?? 0,
+                'jumlah_siswa_9_l' => $request->jumlah_siswa_9_l ?? 0,
+                'jumlah_siswa_9_p' => $request->jumlah_siswa_9_p ?? 0,
+
+                // Note: 'jumlah_siswa_awal_7/8/9' are auto-calculated by Model Observer/Boot method
                 'updated_at' => now(),
             ];
 
@@ -511,11 +522,17 @@ class SatuanPendidikanController extends Controller
                 $updateData['kop_surat_path'] = $path;
             }
 
-            // Update Database using Eloquent or DB
-            // Using DB directly to be consistent with other methods in this controller
-            \DB::table('satuan_pendidikan')->where('id', $satpen->id)->update($updateData);
+            // Using Eloquent update to trigger Model events (boot/saving)
+            // Use find() then update() to ensure model events fire
+            $satpenModel = \App\Models\SatuanPendidikan::find($satpen->id);
+            if ($satpenModel) {
+                $satpenModel->update($updateData);
+            } else {
+                // Fallback if somehow not found by ID (unlikely)
+                \DB::table('satuan_pendidikan')->where('id', $satpen->id)->update($updateData);
+            }
 
-            return back()->with('success', 'Profil sekolah berhasil diperbarui.');
+            return back()->with('success', 'Profil sekolah dan data siswa berhasil diperbarui.');
 
         } catch (\Exception $e) {
             \Log::error('Update Profile Failed: ' . $e->getMessage());

@@ -90,36 +90,68 @@
                             </div>
 
                             <!-- Inputs -->
-                            <div class="grid grid-cols-3 gap-6">
+                            <div class="space-y-6">
+                                <!-- Headers -->
+                                <div
+                                    class="grid grid-cols-12 gap-4 border-b border-blue-100 pb-2 text-center text-sm font-bold text-blue-900 uppercase">
+                                    <div class="col-span-2 text-left pl-2">Kelas</div>
+                                    <div class="col-span-5 bg-blue-100 rounded-lg py-1">Laki-laki</div>
+                                    <div class="col-span-5 bg-pink-100 text-pink-700 rounded-lg py-1">Perempuan</div>
+                                </div>
+
                                 <!-- Kelas 7 -->
-                                <div>
-                                    <label class="block text-sm font-bold text-slate-700 mb-2 text-center uppercase">Kelas
-                                        7</label>
-                                    <input type="number" name="jumlah_siswa_awal_7" min="0" required
-                                        value="{{ old('jumlah_siswa_awal_7', $satpen->jumlah_siswa_awal_7 ?? 0) }}"
-                                        class="w-full border-2 border-slate-300 bg-white focus:border-blue-500 focus:bg-blue-50 rounded-xl px-2 py-4 text-center text-2xl font-black text-slate-800 transition-all shadow-sm">
+                                <div class="grid grid-cols-12 gap-4 items-center">
+                                    <div class="col-span-2 font-black text-slate-700 text-xl pl-2">VII</div>
+                                    <div class="col-span-5">
+                                        <input type="number" name="jumlah_siswa_7_l" min="0" required
+                                            value="{{ old('jumlah_siswa_7_l', $satpen->jumlah_siswa_7_l ?? 0) }}"
+                                            class="w-full border-2 border-slate-300 bg-white focus:border-blue-500 focus:bg-blue-50 rounded-xl px-2 py-3 text-center text-lg font-bold text-slate-800 transition-all shadow-sm"
+                                            placeholder="L">
+                                    </div>
+                                    <div class="col-span-5">
+                                        <input type="number" name="jumlah_siswa_7_p" min="0" required
+                                            value="{{ old('jumlah_siswa_7_p', $satpen->jumlah_siswa_7_p ?? 0) }}"
+                                            class="w-full border-2 border-slate-300 bg-white focus:border-pink-500 focus:bg-pink-50 rounded-xl px-2 py-3 text-center text-lg font-bold text-slate-800 transition-all shadow-sm"
+                                            placeholder="P">
+                                    </div>
                                 </div>
 
                                 <!-- Kelas 8 -->
-                                <div class="relative">
-                                    <label class="block text-sm font-bold text-slate-700 mb-2 text-center uppercase">Kelas
-                                        8</label>
-                                    <input type="number" name="jumlah_siswa_awal_8" min="0" required
-                                        :readonly="academicYear === '2026/2027'"
-                                        :class="academicYear === '2026/2027' ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed' : 'bg-white border-slate-300 text-slate-800 focus:border-blue-500 focus:bg-blue-50'"
-                                        value="{{ old('jumlah_siswa_awal_8', $satpen->jumlah_siswa_awal_8 ?? 0) }}"
-                                        class="w-full border-2 rounded-xl px-2 py-4 text-center text-2xl font-black transition-all shadow-sm">
+                                <div class="grid grid-cols-12 gap-4 items-center">
+                                    <div class="col-span-2 font-black text-slate-700 text-xl pl-2">VIII</div>
+                                    <div class="col-span-5 relative">
+                                        <input type="number" name="jumlah_siswa_8_l" min="0" required
+                                            :readonly="academicYear === '2026/2027'"
+                                            :class="academicYear === '2026/2027' ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed' : 'bg-white border-slate-300 text-slate-800 focus:border-blue-500 focus:bg-blue-50'"
+                                            value="{{ old('jumlah_siswa_8_l', $satpen->jumlah_siswa_8_l ?? 0) }}"
+                                            class="w-full border-2 rounded-xl px-2 py-3 text-center text-lg font-bold transition-all shadow-sm">
+                                    </div>
+                                    <div class="col-span-5 relative">
+                                        <input type="number" name="jumlah_siswa_8_p" min="0" required
+                                            :readonly="academicYear === '2026/2027'"
+                                            :class="academicYear === '2026/2027' ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed' : 'bg-white border-slate-300 text-slate-800 focus:border-pink-500 focus:bg-pink-50'"
+                                            value="{{ old('jumlah_siswa_8_p', $satpen->jumlah_siswa_8_p ?? 0) }}"
+                                            class="w-full border-2 rounded-xl px-2 py-3 text-center text-lg font-bold transition-all shadow-sm">
+                                    </div>
                                 </div>
 
                                 <!-- Kelas 9 -->
-                                <div class="relative">
-                                    <label class="block text-sm font-bold text-slate-700 mb-2 text-center uppercase">Kelas
-                                        9</label>
-                                    <input type="number" name="jumlah_siswa_awal_9" min="0" required
-                                        :readonly="academicYear === '2026/2027'"
-                                        :class="academicYear === '2026/2027' ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed' : 'bg-white border-slate-300 text-slate-800 focus:border-blue-500 focus:bg-blue-50'"
-                                        value="{{ old('jumlah_siswa_awal_9', $satpen->jumlah_siswa_awal_9 ?? 0) }}"
-                                        class="w-full border-2 rounded-xl px-2 py-4 text-center text-2xl font-black transition-all shadow-sm">
+                                <div class="grid grid-cols-12 gap-4 items-center">
+                                    <div class="col-span-2 font-black text-slate-700 text-xl pl-2">IX</div>
+                                    <div class="col-span-5 relative">
+                                        <input type="number" name="jumlah_siswa_9_l" min="0" required
+                                            :readonly="academicYear === '2026/2027'"
+                                            :class="academicYear === '2026/2027' ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed' : 'bg-white border-slate-300 text-slate-800 focus:border-blue-500 focus:bg-blue-50'"
+                                            value="{{ old('jumlah_siswa_9_l', $satpen->jumlah_siswa_9_l ?? 0) }}"
+                                            class="w-full border-2 rounded-xl px-2 py-3 text-center text-lg font-bold transition-all shadow-sm">
+                                    </div>
+                                    <div class="col-span-5 relative">
+                                        <input type="number" name="jumlah_siswa_9_p" min="0" required
+                                            :readonly="academicYear === '2026/2027'"
+                                            :class="academicYear === '2026/2027' ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed' : 'bg-white border-slate-300 text-slate-800 focus:border-pink-500 focus:bg-pink-50'"
+                                            value="{{ old('jumlah_siswa_9_p', $satpen->jumlah_siswa_9_p ?? 0) }}"
+                                            class="w-full border-2 rounded-xl px-2 py-3 text-center text-lg font-bold transition-all shadow-sm">
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -204,12 +236,12 @@
                                 <label class="block text-sm font-bold text-rose-900 uppercase mb-2">Upload File Baru</label>
                                 <input type="file" name="kop_surat" accept="image/*"
                                     class="block w-full text-sm text-slate-500
-                                                        file:mr-4 file:py-3 file:px-6
-                                                        file:rounded-xl file:border-0
-                                                        file:text-sm file:font-bold
-                                                        file:bg-rose-50 file:text-rose-700
-                                                        hover:file:bg-rose-100
-                                                        cursor-pointer border-2 border-dashed border-rose-200 rounded-xl p-2 h-20 leading-10">
+                                                            file:mr-4 file:py-3 file:px-6
+                                                            file:rounded-xl file:border-0
+                                                            file:text-sm file:font-bold
+                                                            file:bg-rose-50 file:text-rose-700
+                                                            hover:file:bg-rose-100
+                                                            cursor-pointer border-2 border-dashed border-rose-200 rounded-xl p-2 h-20 leading-10">
                             </div>
 
                             @if($satpen->kop_surat_path)
