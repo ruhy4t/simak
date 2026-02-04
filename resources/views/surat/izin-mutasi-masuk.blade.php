@@ -273,7 +273,7 @@
         }
 
         .spacer-ttd {
-            height: 60px;
+            height: 40px;
         }
 
         .officer-name {
@@ -282,14 +282,14 @@
 
         /* --- LAMPIRAN TABLES --- */
         .lampiran-header {
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
 
         .lampiran-title {
             text-align: center;
             font-weight: bold;
             text-transform: uppercase;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
 
         .table-siswa {
@@ -301,7 +301,7 @@
         .table-siswa th,
         .table-siswa td {
             border: 1px solid #000;
-            padding: 5px;
+            padding: 3px;
             vertical-align: middle;
         }
 
@@ -516,55 +516,22 @@
             // To prevent this, we force the last legitimate item page to share 1 item with the TTD page.
             // Basically we reduce the items on the second-to-last page by 1.
 
-            $chunks = [];
+            $chunks = array_chunk($items, $ITEMS_PER_PAGE);
 
-            if ($totalItems <= $ITEMS_PER_PAGE) {
-                // Scenario 1: Only 1 page of data.
-                // If it's effectively full (8 items), TTD might need a new page.
-                // But in landscape 8 items usually leaves room. Let's stick to standard unless user complains specific count.
-                // User said: "jika ternyata di halaman terakhir hanya tanda tangan berarti harus ada 1 baris yang dipindahkan"
-                // Assuming 8 fits comfortably with TTD. If 8 is TIGHT, we might need 7+1.
-                // Let's implement dynamic check only if > 8 to avoid complexity on single page.
-                $chunks[] = $items;
-            } else {
-                // Scenario 2: Multiple pages.
+            // Check the last chunk to ensure TTD fits
+            $lastChunkIndex = count($chunks) - 1;
+            $lastChunk = $chunks[$lastChunkIndex];
 
-                // Calculate expected last page count
-                $remainder = $totalItems % $ITEMS_PER_PAGE;
+            // THRESHOLD TO PREVENT CRAMPED TTD:
+            // If the last page has > 6 items (7 or 8), the TTD might be cut off or cramped.
+            // In that case, we move the VERY LAST item to a new page.
+            // REVERTED to > 6 per user request (wants 6 to fit) + CSS COMPACTING
+            if (count($lastChunk) > 6) {
+                // Remove the last item from the current last chunk
+                $lastItem = array_pop($chunks[$lastChunkIndex]);
 
-                // If remainder is 0 (Full Page) -> TTD likely orphaned on new page.
-                // OR if remainder is very small/large?
-                // The issue is simply: If we finish with a FULL table, do we have space for TTD?
-                // If yes, fine. If no, we get a blank page with TTD.
-                // In HTML-to-PDF, it's safer to assume a full table (8 rows) MIGHT crowd the TTD.
-                // So if ($totalItems % $ITEMS_PER_PAGE == 0), we split the last chunk.
-                // Example: 16 items. Normal: [8, 8]. If Pg2 is full, Pg3 is TTD.
-                // Fix: [8, 7, 1]. Pg2 has 7, Pg3 has 1 + TTD.
-
-                if ($remainder == 0) {
-                    // Manual chunking
-                    // Take all full pages EXCEPT the last one
-                    $fullPageCount = floor($totalItems / $ITEMS_PER_PAGE);
-                    $offset = 0;
-
-                    // Process all pages up to the second to last
-                    for ($i = 0; $i < $fullPageCount - 1; $i++) {
-                        $chunks[] = array_slice($items, $offset, $ITEMS_PER_PAGE);
-                        $offset += $ITEMS_PER_PAGE;
-                    }
-
-                    // The last "full" set of items (8 items). 
-                    // Split into $ITEMS_PER_PAGE - 1 (7) and 1.
-                    $chunks[] = array_slice($items, $offset, $ITEMS_PER_PAGE - 1);
-                    $offset += ($ITEMS_PER_PAGE - 1);
-
-                    $chunks[] = array_slice($items, $offset, 1);
-
-                } else {
-                    // Normal chunking works because we have a remainder (e.g. 17 items -> 8, 8, 1).
-                    // The last page has 1 item + TTD. Perfect.
-                    $chunks = array_chunk($items, $ITEMS_PER_PAGE);
-                }
+                // create a new chunk with just that item
+                $chunks[] = [$lastItem];
             }
         @endphp
 
@@ -572,7 +539,7 @@
         @php $globalCounter = 1; @endphp
 
         @foreach($chunks as $pageIndex => $chunk)
-            <div class="page page-landscape" style="padding-bottom: 2cm;"> {{-- Add padding to protect footer --}}
+            <div class="page page-landscape" style="padding-bottom: 3cm;"> {{-- Add padding to protect footer --}}
 
                 {{-- Header LAMPIRAN dan Judul hanya di halaman pertama lampiran --}}
                 @if($pageIndex === 0)
