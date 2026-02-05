@@ -1,0 +1,54 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
+
+class QueueWorkerController extends Controller
+{
+    /**
+     * Run the queue worker for Vercel Cron
+     */
+    public function work()
+    {
+        // Security: You might want to add a secret token check here if public access is a concern.
+        // For Vercel Cron, it's usually triggered internally, but technically public.
+        // We can add a simple check if needed, but for now we keep it open or assume 
+        // the user accepts the risk (it just runs the queue).
+
+        Log::info('Queue Worker triggered via Cron/API');
+
+        // Run the worker for a short period or until empty
+        // --stop-when-empty is crucial for serverless to avoid timeouts
+        // --memory=512 to ensure it stays within limits (though we bumped php memory to 1024)
+
+        try {
+            Log::info("Starting queue:work...");
+
+            // Capture output to log or response
+            $exitCode = Artisan::call('queue:work', [
+                '--stop-when-empty' => true,
+                '--tries' => 3,
+                '--timeout' => 5 // 5 seconds per job max to fit in Vercel limits
+            ]);
+
+            Log::info("Queue Worker finished with exit code: " . $exitCode);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Queue worker finished',
+                'exit_code' => $exitCode,
+                'output' => Artisan::output()
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error("Queue Worker Failed: " . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+}

@@ -3,9 +3,17 @@
     "framework": null,
     "functions": {
         "api/*.php": {
-            "runtime": "vercel-php@0.7.1"
+            "runtime": "vercel-php@0.7.1",
+            "memory": 1024,
+            "maxDuration": 10
         }
     },
+    "crons": [
+        {
+            "path": "/api/queue/work",
+            "schedule": "* * * * *"
+        }
+    ],
     "rewrites": [
         {
             "source": "/build/(.*)",
@@ -53,6 +61,7 @@
         "VIEW_COMPILED_PATH": "/tmp/views",
         "CACHE_DRIVER": "array",
         "LOG_CHANNEL": "stderr",
-        "SESSION_DRIVER": "cookie"
+        "SESSION_DRIVER": "cookie",
+        "QUEUE_CONNECTION": "database"
     }
 }

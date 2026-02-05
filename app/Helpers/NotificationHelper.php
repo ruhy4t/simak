@@ -30,6 +30,17 @@ class NotificationHelper
      */
     public static function sendTelegram(string $chatId, string $message): bool
     {
+        // OPTIMIZATION: Dispatch to Queue (Async)
+        try {
+            \App\Jobs\SendTelegramJob::dispatch($chatId, $message);
+            return true; // Assume success for the caller
+        } catch (\Exception $e) {
+            Log::error("Failed to dispatch Telegram Job: " . $e->getMessage());
+            return false;
+        }
+
+        // OLD SYNCHRONOUS LOGIC (Disabled)
+        /*
         $botToken = config('services.telegram.bot_token');
 
         if (empty($botToken) || empty($chatId)) {
@@ -37,30 +48,8 @@ class NotificationHelper
             return false;
         }
 
-        $postData = [
-            'chat_id' => $chatId,
-            'text' => $message,
-            'parse_mode' => 'HTML',
-        ];
-
-        // Strategy 1: Standard Domain (Preferred)
-        $urlDomain = "https://api.telegram.org/bot{$botToken}/sendMessage";
-
-        // Strategy 2: Direct IP (Fallback for DNS blocking)
-        $urlIp = "https://149.154.167.220/bot{$botToken}/sendMessage";
-
-        if (self::executeCurl($urlDomain, $postData)) {
-            return true;
-        }
-
-        Log::warning("Telegram: Domain connection failed, trying Direct IP fallback...");
-
-        if (self::executeCurl($urlIp, $postData, ['Host: api.telegram.org'])) {
-            return true;
-        }
-
-        Log::error("Telegram: All connection strategies failed.");
-        return false;
+        // ... (Remaining logic moved to Job)
+        */
     }
 
     /**

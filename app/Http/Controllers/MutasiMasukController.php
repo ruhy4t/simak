@@ -671,7 +671,9 @@ class MutasiMasukController extends Controller
                             $tempPath = $tempDir . '/' . $tempFilename;
 
                             if ($useWebP) {
-                                $conversionSuccess = $this->imageService->convertToWebP($file, $tempPath);
+                                // OPTIMIZATION: Disable Server-side WebP conversion for Vercel Performance
+                                // $conversionSuccess = $this->imageService->convertToWebP($file, $tempPath);
+                                $conversionSuccess = false; // Force skip conversion
                             }
 
                             if ($conversionSuccess && file_exists($tempPath)) {
