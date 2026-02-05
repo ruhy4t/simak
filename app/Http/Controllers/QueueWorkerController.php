@@ -24,8 +24,18 @@ class QueueWorkerController extends Controller
         }
 
         if ($requestToken !== $validToken) {
-            Log::warning('Queue Worker: Unauthorized access attempt. IP: ' . request()->ip());
-            return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 403);
+            Log::warning('Queue Worker: Unauthorized access attempt.');
+            Log::warning('IP: ' . request()->ip());
+            Log::warning('Received Token: ' . $requestToken);
+            Log::warning('Expected Token: ' . $validToken); // Caution: This will log the secret to Vercel logs basically.
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Unauthorized',
+                'debug' => [
+                    'received' => $requestToken,
+                    'expected_configured' => !empty($validToken) ? 'YES' : 'NO'
+                ]
+            ], 403);
         }
 
         Log::info('Queue Worker triggered via Cron/API');

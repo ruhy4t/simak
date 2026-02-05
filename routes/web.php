@@ -152,16 +152,16 @@ Route::middleware(['auth', \App\Http\Middleware\EnsurePasswordChanged::class])->
     // Dinas only routes
     Route::middleware('role:Dinas,SuperAdmin')->group(function () {
         // Verification
-        Route::post('/mutasi-keluar/{id}/verify', [MutasiController::class, 'verify'])->name('mutasi.keluar.verify');
-        Route::post('/mutasi-keluar/{id}/issue-letter', [MutasiController::class, 'issueLetter'])->name('mutasi.keluar.issue-letter');
-        Route::post('/mutasi-keluar/{id}/complete-letter', [MutasiController::class, 'completeLetter'])->name('mutasi.keluar.complete-letter');
+        Route::post('/mutasi-keluar/{id}/verify', [MutasiController::class, 'verify'])->middleware('workday')->name('mutasi.keluar.verify');
+        Route::post('/mutasi-keluar/{id}/issue-letter', [MutasiController::class, 'issueLetter'])->middleware('workday')->name('mutasi.keluar.issue-letter');
+        Route::post('/mutasi-keluar/{id}/complete-letter', [MutasiController::class, 'completeLetter'])->middleware('workday')->name('mutasi.keluar.complete-letter');
         Route::get('/mutasi-keluar/{id}/print-letter', [MutasiController::class, 'printLetter'])->name('mutasi.keluar.print-letter');
         Route::get('/mutasi-keluar/{id}/edit', [MutasiController::class, 'edit'])->name('mutasi.keluar.edit');
         Route::put('/mutasi-keluar/{id}', [MutasiController::class, 'update'])->name('mutasi.keluar.update');
 
-        Route::post('/mutasi-masuk/{id}/verify', [MutasiMasukController::class, 'verify'])->name('mutasi.masuk.verify');
-        Route::post('/mutasi-masuk/{id}/issue-letter', [MutasiMasukController::class, 'issueLetter'])->name('mutasi.masuk.issue-letter');
-        Route::post('/mutasi-masuk/{id}/complete-letter', [MutasiMasukController::class, 'completeLetter'])->name('mutasi.masuk.complete-letter');
+        Route::post('/mutasi-masuk/{id}/verify', [MutasiMasukController::class, 'verify'])->middleware('workday')->name('mutasi.masuk.verify');
+        Route::post('/mutasi-masuk/{id}/issue-letter', [MutasiMasukController::class, 'issueLetter'])->middleware('workday')->name('mutasi.masuk.issue-letter');
+        Route::post('/mutasi-masuk/{id}/complete-letter', [MutasiMasukController::class, 'completeLetter'])->middleware('workday')->name('mutasi.masuk.complete-letter');
         Route::get('/mutasi-masuk/{id}/print-letter', [MutasiMasukController::class, 'printLetter'])->name('mutasi.masuk.print-letter');
         Route::get('/mutasi-masuk/{id}/edit', [MutasiMasukController::class, 'edit'])->name('mutasi.masuk.edit');
         Route::put('/mutasi-masuk/{id}', [MutasiMasukController::class, 'update'])->name('mutasi.masuk.update');
