@@ -488,139 +488,140 @@
 
 @push('scripts')
     <script>
-         window.MUTASI_CONFIG = {
-                routes: {
-                    index: '{{ route('mutasi.keluar.index') }}',
-                    apiNpsn: '{{ route('mutasi.keluar.api.npsn', ['npsn' => ':npsn']) }}',
-                    // Use the SAME working endpoint for Sekolah Asal
-                    apiSatpen: '{{ route('mutasi.keluar.api.npsn', ['npsn' => ':npsn']) }}', 
-                    apiProvinces: '{{ route('mutasi.keluar.api.provinces') }}',
-                    apiRegencies: '{{ route('mutasi.keluar.api.regencies', ['provinceId' => ':provinceId']) }}',
-                    saveDraft: '{{ route('mutasi.keluar.draft.save') }}'
-                },
-                draftId: @json(isset($draft) ? $draft->id_mutasi : null)
-            };
-        </script>
-        <script src="{{ asset('js/mutasi-keluar.js') }}?v={{ time() }}"></script>
+        window.MUTASI_CONFIG = {
+            routes: {
+                index: '{{ route('mutasi.keluar.index') }}',
+                apiNpsn: '{{ route('mutasi.keluar.api.npsn', ['npsn' => ':npsn']) }}',
+                // Use the SAME working endpoint for Sekolah Asal
+                apiSatpen: '{{ route('mutasi.keluar.api.npsn', ['npsn' => ':npsn']) }}',
+                apiProvinces: '{{ route('mutasi.keluar.api.provinces') }}',
+                apiRegencies: '{{ route('mutasi.keluar.api.regencies', ['provinceId' => ':provinceId']) }}',
+                saveDraft: '{{ route('mutasi.keluar.draft.save') }}'
+            },
+            draftId: @json(isset($draft) ? $draft->id_mutasi : null)
+        };
+    </script>
+    <script src="{{ asset('js/mutasi-keluar.js') }}?v={{ time() }}"></script>
 
-            // Populate draft values if resuming
-            @if(isset($draft) && $draft)
-                document.addEventListener('DOMContentLoaded', function() {
-                    console.log('=== DRAFT RESUME MODE ===');
-                    const draft = @json($draft);
-                    console.log('Draft data from DB:', draft);
+    <script>
+        // Populate draft values if resuming
+        @if(isset($draft) && $draft)
+            document.addEventListener('DOMContentLoaded', function () {
+                console.log('=== DRAFT RESUME MODE ===');
+                const draft = @json($draft);
+                console.log('Draft data from DB:', draft);
 
-                    // Force populate ALL form fields from draft
-                    const fieldMappings = {
-                        'nama_murid': draft.nama_murid,
-                        'nisn': draft.nisn,
-                        'nis': draft.nis,
-                        'kelas': draft.kelas,
-                        'tempat_lahir': draft.tempat_lahir,
-                        'tanggal_lahir': draft.tanggal_lahir,
-                        'jenis_kelamin': draft.jenis_kelamin,
-                        'npsn_sekolah_tujuan': draft.npsn_sekolah_tujuan,
-                        'nama_sekolah_tujuan': draft.nama_sekolah_tujuan,
-                        'alamat_sekolah_tujuan': draft.alamat_sekolah_tujuan,
-                        'alasan_pindah': draft.alasan_pindah,
-                        'nomor_surat_sekolah': draft.nomor_surat_sekolah,
-                        'tanggal_surat_sekolah': draft.tanggal_surat_sekolah
-                    };
+                // Force populate ALL form fields from draft
+                const fieldMappings = {
+                    'nama_murid': draft.nama_murid,
+                    'nisn': draft.nisn,
+                    'nis': draft.nis,
+                    'kelas': draft.kelas,
+                    'tempat_lahir': draft.tempat_lahir,
+                    'tanggal_lahir': draft.tanggal_lahir,
+                    'jenis_kelamin': draft.jenis_kelamin,
+                    'npsn_sekolah_tujuan': draft.npsn_sekolah_tujuan,
+                    'nama_sekolah_tujuan': draft.nama_sekolah_tujuan,
+                    'alamat_sekolah_tujuan': draft.alamat_sekolah_tujuan,
+                    'alasan_pindah': draft.alasan_pindah,
+                    'nomor_surat_sekolah': draft.nomor_surat_sekolah,
+                    'tanggal_surat_sekolah': draft.tanggal_surat_sekolah
+                };
 
-                    Object.entries(fieldMappings).forEach(([fieldName, value]) => {
-                        if (value !== null && value !== undefined && value !== '') {
-                            const input = document.querySelector(`[name="${fieldName}"]`);
-                            if (input) {
-                                input.value = value;
-                                console.log(`✓ Set ${fieldName} = "${value}"`);
-                            }
-                        }
-                    });
-
-                    // Handle Luar Negeri Checkbox
-                    if (draft.tujuan_luar_negeri == 1 || draft.tujuan_luar_negeri === '1') {
-                        const lnCheckbox = document.getElementById('tujuan_luar_negeri');
-                        if (lnCheckbox) {
-                            lnCheckbox.checked = true;
-                            // Trigger the toggle function to update UI (hide NPSN requirement, etc.)
-                            // Use setTimeout to ensure function is defined/available
-                            setTimeout(() => {
-                                if (typeof toggleTujuanLuarNegeri === 'function') {
-                                    toggleTujuanLuarNegeri();
-                                } else {
-                                    // Fallback if function not yet loaded (though it should be)
-                                    const npsnInput = document.getElementById('npsn_sekolah_tujuan');
-                                     if (npsnInput) {
-                                        npsnInput.removeAttribute('required');
-                                        npsnInput.placeholder = 'Kosongkan jika tidak ada';
-                                     }
-                                     const hiddenFlag = document.getElementById('tujuan_luar_negeri_hidden');
-                                     if (hiddenFlag) hiddenFlag.value = '1';
-                                }
-                            }, 100);
-                            console.log('✓ Set tujuan_luar_negeri = true');
+                Object.entries(fieldMappings).forEach(([fieldName, value]) => {
+                    if (value !== null && value !== undefined && value !== '') {
+                        const input = document.querySelector(`[name="${fieldName}"]`);
+                        if (input) {
+                            input.value = value;
+                            console.log(`✓ Set ${fieldName} = "${value}"`);
                         }
                     }
-
-                    // Handle Dinas Checkboxes (if applicable)
-                    const dinasCheckboxes = {
-                        'has_suket_keluar': draft.ceklis_surat_sekolah,
-                        'has_suket_dapo': draft.ceklis_berkas_dapodik,
-                        'has_suket_diterima': draft.ceklis_sekolah_tujuan,
-                        'has_rapor': draft.ceklis_rapor
-                    };
-
-                    Object.entries(dinasCheckboxes).forEach(([inputName, value]) => {
-                        if (value == 1 || value === '1' || value === true) {
-                            const cb = document.querySelector(`[name="${inputName}"]`);
-                            if (cb) {
-                                cb.checked = true;
-                                console.log(`✓ Checked ${inputName}`);
-                            }
-                        }
-                    });
-
-                    // Handle hidden inputs for province/city
-                    if (draft.provinsi_tujuan) {
-                        const provHidden = document.getElementById('provinsi_tujuan');
-                        if (provHidden) {
-                            provHidden.value = draft.provinsi_tujuan;
-                            console.log('✓ Set provinsi_tujuan =', draft.provinsi_tujuan);
-                        }
-                    }
-                    if (draft.kabupaten_kota_tujuan) {
-                        const kabHidden = document.getElementById('kabupaten_kota_tujuan');
-                        if (kabHidden) {
-                            kabHidden.value = draft.kabupaten_kota_tujuan;
-                            console.log('✓ Set kabupaten_kota_tujuan =', draft.kabupaten_kota_tujuan);
-                        }
-                    }
-
-                    console.log('=== DRAFT POPULATION COMPLETE ===');
                 });
-            @else
-                console.log('No draft detected - new submission mode');
-            @endif
 
-            /**
-             * Save current form as Draft
-             */
-            function saveDraftKeluar() {
-                const form = document.getElementById('formMutasiKeluar');
-                if (!form) return;
+                // Handle Luar Negeri Checkbox
+                if (draft.tujuan_luar_negeri == 1 || draft.tujuan_luar_negeri === '1') {
+                    const lnCheckbox = document.getElementById('tujuan_luar_negeri');
+                    if (lnCheckbox) {
+                        lnCheckbox.checked = true;
+                        // Trigger the toggle function to update UI (hide NPSN requirement, etc.)
+                        // Use setTimeout to ensure function is defined/available
+                        setTimeout(() => {
+                            if (typeof toggleTujuanLuarNegeri === 'function') {
+                                toggleTujuanLuarNegeri();
+                            } else {
+                                // Fallback if function not yet loaded (though it should be)
+                                const npsnInput = document.getElementById('npsn_sekolah_tujuan');
+                                if (npsnInput) {
+                                    npsnInput.removeAttribute('required');
+                                    npsnInput.placeholder = 'Kosongkan jika tidak ada';
+                                }
+                                const hiddenFlag = document.getElementById('tujuan_luar_negeri_hidden');
+                                if (hiddenFlag) hiddenFlag.value = '1';
+                            }
+                        }, 100);
+                        console.log('✓ Set tujuan_luar_negeri = true');
+                    }
+                }
 
-                // Change form action to draft route
-                const originalAction = form.action;
-                form.action = '{{ route('mutasi.keluar.draft.save') }}';
+                // Handle Dinas Checkboxes (if applicable)
+                const dinasCheckboxes = {
+                    'has_suket_keluar': draft.ceklis_surat_sekolah,
+                    'has_suket_dapo': draft.ceklis_berkas_dapodik,
+                    'has_suket_diterima': draft.ceklis_sekolah_tujuan,
+                    'has_rapor': draft.ceklis_rapor
+                };
 
-                // Show saving indicator
-                const btn = document.getElementById('btnSaveDraft');
-                const originalText = btn.innerHTML;
-                btn.innerHTML = '<i class="bi bi-hourglass-split animate-spin mr-2"></i> Menyimpan...';
-                btn.disabled = true;
+                Object.entries(dinasCheckboxes).forEach(([inputName, value]) => {
+                    if (value == 1 || value === '1' || value === true) {
+                        const cb = document.querySelector(`[name="${inputName}"]`);
+                        if (cb) {
+                            cb.checked = true;
+                            console.log(`✓ Checked ${inputName}`);
+                        }
+                    }
+                });
 
-                // Submit form
-                form.submit();
-            }
-        </script>
+                // Handle hidden inputs for province/city
+                if (draft.provinsi_tujuan) {
+                    const provHidden = document.getElementById('provinsi_tujuan');
+                    if (provHidden) {
+                        provHidden.value = draft.provinsi_tujuan;
+                        console.log('✓ Set provinsi_tujuan =', draft.provinsi_tujuan);
+                    }
+                }
+                if (draft.kabupaten_kota_tujuan) {
+                    const kabHidden = document.getElementById('kabupaten_kota_tujuan');
+                    if (kabHidden) {
+                        kabHidden.value = draft.kabupaten_kota_tujuan;
+                        console.log('✓ Set kabupaten_kota_tujuan =', draft.kabupaten_kota_tujuan);
+                    }
+                }
+
+                console.log('=== DRAFT POPULATION COMPLETE ===');
+            });
+        @else
+            console.log('No draft detected - new submission mode');
+        @endif
+
+        /**
+         * Save current form as Draft
+         */
+        function saveDraftKeluar() {
+            const form = document.getElementById('formMutasiKeluar');
+            if (!form) return;
+
+            // Change form action to draft route
+            const originalAction = form.action;
+            form.action = '{{ route('mutasi.keluar.draft.save') }}';
+
+            // Show saving indicator
+            const btn = document.getElementById('btnSaveDraft');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="bi bi-hourglass-split animate-spin mr-2"></i> Menyimpan...';
+            btn.disabled = true;
+
+            // Submit form
+            form.submit();
+        }
+    </script>
 @endpush
