@@ -3,10 +3,8 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('api')->group(function () {
-    // Cron trigger for Vercel
-    Route::get('/queue/work', [\App\Http\Controllers\QueueWorkerController::class, 'work']);
-});
+// Cron trigger for Vercel
+Route::get('/queue/work', [\App\Http\Controllers\QueueWorkerController::class, 'work']);
 
 // Telegram Bot Webhook (no CSRF, no auth - Telegram needs direct access)
 Route::prefix('telegram')->group(function () {
