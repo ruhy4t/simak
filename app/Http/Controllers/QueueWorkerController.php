@@ -13,10 +13,20 @@ class QueueWorkerController extends Controller
      */
     public function work()
     {
-        // Security: You might want to add a secret token check here if public access is a concern.
-        // For Vercel Cron, it's usually triggered internally, but technically public.
-        // We can add a simple check if needed, but for now we keep it open or assume 
-        // the user accepts the risk (it just runs the queue).
+        // Security: Validate Cron Token
+        $requestToken = request()->query('token');
+        $validToken = config('services.cron.token');
+
+        if (empty($validToken)) {
+            Log::warning('Queue Worker: CRON_SECRET_TOKEN is not set in environment variables.');
+            // Optional: Fail safe to 403 or allow if you want insecure by default (not recommended)
+            // return abort(403, 'Server configuration error');
+        }
+
+        if ($requestToken !== $validToken) {
+            Log::warning('Queue Worker: Unauthorized access attempt. IP: ' . request()->ip());
+            return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 403);
+        }
 
         Log::info('Queue Worker triggered via Cron/API');
 

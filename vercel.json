@@ -11,7 +11,7 @@
     "crons": [
         {
             "path": "/api/queue/work",
-            "schedule": "* * * * *"
+            "schedule": "0 0 * * *"
         }
     ],
     "rewrites": [
