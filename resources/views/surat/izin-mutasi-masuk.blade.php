@@ -581,13 +581,13 @@
                     <thead>
                         <tr>
                             <th width="25">No</th>
-                            <th width="150">Nama Siswa</th>
+                            <th width="170">Nama Siswa</th>
                             <th width="90">NISN</th>
                             <th width="25">L/P</th>
                             <th width="140">Tempat, Tanggal Lahir</th>
                             <th width="35">Kelas</th>
-                            <th>Sekolah Asal</th>
-                            <th width="95">Tgl Diterima</th>
+                            <th width="180">Sekolah Asal</th>
+                            <th width="105">Tgl Diterima</th>
                         </tr>
                     </thead>
                     <tbody>
