@@ -101,6 +101,7 @@ class MutasiMasukController extends Controller
             // Use Eloquent Model for relationships
             $query = \App\Models\MutasiMasuk::query()
                 ->with('siswa') // Load all siswa columns to prevent missing attribute errors
+                ->where('status', '!=', 'Dibatalkan') // Never show cancelled records
                 ->orderBy('tanggal_pengajuan', 'desc');
 
             // Role-based filtering
@@ -252,8 +253,8 @@ class MutasiMasukController extends Controller
                 abort(403);
             }
 
-            // 3. Strict Status Check
-            if ($mutasi->status !== 'Menunggu Verifikasi Dinas') {
+            // 3. Status Check - Allow cancel for pending or already-cancelled records
+            if (!in_array($mutasi->status, ['Menunggu Verifikasi Dinas', 'Dibatalkan'])) {
                 return back()->with('error', 'Gagal menghapus! Status usulan telah berubah (sedang diproses oleh Dinas). Silakan refresh halaman.');
             }
 
