@@ -604,7 +604,14 @@
                                     {{ isset($siswa['tanggal_lahir']) ? \Carbon\Carbon::parse($siswa['tanggal_lahir'])->translatedFormat('j F Y') : '-' }}
                                 </td>
                                 <td class="center">{{ $siswa['kelas'] ?? '-' }}</td>
-                                <td>{!! html_entity_decode($siswa['sekolah_asal'] ?? $siswa['nama_sekolah_asal'] ?? '-') !!}</td>
+                                <td>
+                                    {!! html_entity_decode($siswa['sekolah_asal'] ?? $siswa['nama_sekolah_asal'] ?? '-') !!}<br>
+                                    <span style="font-size: 9pt;">
+                                        {{ str_replace('Kabupaten', 'Kab.', $siswa['kabupaten_kota_asal'] ?? '') }}
+                                        {{ isset($siswa['kabupaten_kota_asal']) && isset($siswa['provinsi_asal']) ? ' - ' : '' }}
+                                        {{ $siswa['provinsi_asal'] ?? '' }}
+                                    </span>
+                                </td>
                                 <td class="center">{{ $siswa['npsn_asal'] ?? $siswa['npsn_sekolah_asal'] ?? '-' }}</td>
                                 <td class="center">
                                     {{ isset($siswa['tanggal_diterima']) ? \Carbon\Carbon::parse($siswa['tanggal_diterima'])->translatedFormat('j F Y') : '-' }}
