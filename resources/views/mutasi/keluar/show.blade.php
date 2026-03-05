@@ -355,10 +355,25 @@
                                                 <i class="bi bi-file-earmark-check"></i> Lihat Arsip Surat
                                             </a>
                                         @else
-                                            <a href="{{ route('mutasi.keluar.print-letter', $mutasi->id_mutasi) }}" target="_blank"
-                                                class="w-full py-2 bg-emerald-600 text-white rounded-lg font-bold hover:bg-emerald-700 flex items-center justify-center gap-2">
-                                                <i class="bi bi-printer"></i> Cetak Surat
-                                            </a>
+                                            <div x-data="{ openPrint: false }" class="relative">
+                                                <button @click="openPrint = !openPrint" @click.outside="openPrint = false"
+                                                    class="w-full py-2 bg-emerald-600 text-white rounded-lg font-bold hover:bg-emerald-700 flex items-center justify-center gap-2">
+                                                    <i class="bi bi-printer"></i> Cetak Surat <i class="bi bi-chevron-down text-xs"></i>
+                                                </button>
+                                                <div x-show="openPrint" x-transition
+                                                    class="absolute right-0 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-xl z-10 overflow-hidden">
+                                                    <a href="{{ route('mutasi.keluar.print-letter', $mutasi->id_mutasi) }}?mode=tnd"
+                                                        target="_blank"
+                                                        class="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition">
+                                                        <i class="bi bi-pen text-indigo-500"></i> Cetak TND
+                                                    </a>
+                                                    <a href="{{ route('mutasi.keluar.print-letter', $mutasi->id_mutasi) }}?mode=manual"
+                                                        target="_blank"
+                                                        class="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition border-t border-slate-100">
+                                                        <i class="bi bi-pencil-square text-blue-500"></i> Cetak Manual
+                                                    </a>
+                                                </div>
+                                            </div>
                                         @endif
                                     </div>
                                 @endif

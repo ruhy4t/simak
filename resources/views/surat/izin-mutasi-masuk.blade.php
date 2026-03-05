@@ -447,7 +447,7 @@
 
         <p class="closing-text">Demikian surat ini kami buat untuk dipergunakan sebagaimana mestinya.</p>
 
-        @if(optional($penandatangan)->gambar_ttd)
+        @if(($mode ?? 'manual') === 'tnd' && optional($penandatangan)->gambar_ttd)
             {{-- SIGNATURE IMAGE: Right-aligned, proportional (~1/3 page width) --}}
             <div class="ttd-container" style="margin-top: 30px;">
                 <div class="ttd-box" style="width: 300px;">
@@ -488,6 +488,18 @@
                             <td>NIP. {!! html_entity_decode($penandatangan?->nip ?? '-') !!}</td>
                         </tr>
                     </table>
+                </div>
+            </div>
+
+            {{-- FOOTER WITH 3-COLUMN LAYOUT (QR Left, Text Center, Empty Right) --}}
+            <div class="page-footer">
+                <div class="footer-content">
+                    <div class="footer-left footer-qr">{!! $qrCodeHtml !!}</div>
+                    <div class="footer-center">
+                        <span class="quote">"dinu kiwari ngancik nu bihari, seja ayeuna sampeureun jaga"</span>
+                        <span class="tagline">Bogor Beres, Bogor Cerdas</span>
+                    </div>
+                    <div class="footer-right"></div>
                 </div>
             </div>
         @endif
@@ -604,7 +616,7 @@
 
                 {{-- TTD only on the very last chunk --}}
                 @if($loop->last)
-                    @if(optional($penandatangan)->gambar_ttd)
+                    @if(($mode ?? 'manual') === 'tnd' && optional($penandatangan)->gambar_ttd)
                         {{-- SIGNATURE IMAGE: Right-aligned, proportional (~1/3 page width) --}}
                         <div class="ttd-container">
                             <div class="ttd-box" style="width: 300px;">
@@ -644,6 +656,18 @@
                                         <td>NIP. {!! html_entity_decode($penandatangan?->nip ?? '-') !!}</td>
                                     </tr>
                                 </table>
+                            </div>
+                        </div>
+
+                        {{-- FOOTER WITH 3-COLUMN LAYOUT (QR Left, Text Center, Empty Right) --}}
+                        <div class="page-footer">
+                            <div class="footer-content">
+                                <div class="footer-left footer-qr">{!! $qrCodeHtml !!}</div>
+                                <div class="footer-center">
+                                    <span class="quote">"dinu kiwari ngancik nu bihari, seja ayeuna sampeureun jaga"</span>
+                                    <span class="tagline">Bogor Beres, Bogor Cerdas</span>
+                                </div>
+                                <div class="footer-right"></div>
                             </div>
                         </div>
                     @endif

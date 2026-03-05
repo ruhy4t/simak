@@ -707,8 +707,8 @@
                                             @if($doc['file'])
                                                 <button @click="activeDoc = activeDoc === '{{ $doc['key'] }}' ? null : '{{ $doc['key'] }}'"
                                                     :class="activeDoc === '{{ $doc['key'] }}' 
-                                                                                                                                                                                                                            ? 'ring-2 ring-{{ $doc['color'] }}-500 bg-{{ $doc['color'] }}-50' 
-                                                                                                                                                                                                                            : 'bg-white hover:bg-slate-50 border-slate-200'"
+                                                                                                                                                                                                                                                ? 'ring-2 ring-{{ $doc['color'] }}-500 bg-{{ $doc['color'] }}-50' 
+                                                                                                                                                                                                                                                : 'bg-white hover:bg-slate-50 border-slate-200'"
                                                     class="flex items-center gap-4 p-4 rounded-xl border transition group text-left w-full shadow-sm hover:shadow-md">
 
                                                     <div
@@ -814,18 +814,33 @@
                                         <i class="bi bi-file-earmark-check mr-2"></i> Lihat Arsip Surat
                                     </a>
                                 @else
-                                    <a href="{{ route('mutasi.masuk.print-letter', $mutasi->id_mutasi) }}" target="_blank"
-                                        class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition shadow-sm">
-                                        <i class="bi bi-printer mr-2"></i> Cetak Surat Izin
-                                    </a>
+                                    <div x-data="{ openPrint: false }" class="relative inline-block">
+                                        <button @click="openPrint = !openPrint" @click.outside="openPrint = false"
+                                            class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition shadow-sm flex items-center gap-2">
+                                            <i class="bi bi-printer"></i> Cetak Surat Izin <i class="bi bi-chevron-down text-xs"></i>
+                                        </button>
+                                        <div x-show="openPrint" x-transition
+                                            class="absolute right-0 mt-1 w-48 bg-white border border-slate-200 rounded-lg shadow-xl z-10 overflow-hidden">
+                                            <a href="{{ route('mutasi.masuk.print-letter', $mutasi->id_mutasi) }}?mode=tnd"
+                                                target="_blank"
+                                                class="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition">
+                                                <i class="bi bi-pen text-indigo-500"></i> Cetak TND
+                                            </a>
+                                            <a href="{{ route('mutasi.masuk.print-letter', $mutasi->id_mutasi) }}?mode=manual"
+                                                target="_blank"
+                                                class="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition border-t border-slate-100">
+                                                <i class="bi bi-pencil-square text-blue-500"></i> Cetak Manual
+                                            </a>
+                                        </div>
+                                    </div>
                                 @endif
                             @endif
                             <!-- Route missing/not implemented
-                                                                                                        <a href="{{-- route('mutasi.masuk.print-keterangan', $mutasi->id_mutasi) --}}" target="_blank"
-                                                                                                            class="px-4 py-2 bg-white text-emerald-700 border border-emerald-200 hover:bg-emerald-50 rounded-lg font-medium transition shadow-sm">
-                                                                                                            <i class="bi bi-printer mr-2"></i> Cetak Surat Keterangan
-                                                                                                        </a>
-                                                                                                        -->
+                                                                                                                <a href="{{-- route('mutasi.masuk.print-keterangan', $mutasi->id_mutasi) --}}" target="_blank"
+                                                                                                                    class="px-4 py-2 bg-white text-emerald-700 border border-emerald-200 hover:bg-emerald-50 rounded-lg font-medium transition shadow-sm">
+                                                                                                                    <i class="bi bi-printer mr-2"></i> Cetak Surat Keterangan
+                                                                                                                </a>
+                                                                                                                -->
                         </div>
                     </div>
                 </div>
@@ -959,7 +974,7 @@
                             {{ $mutasi->status === 'Dibatalkan'
                         ? 'Usulan ini telah dibatalkan. Anda dapat mengedit dan mengirim ulang data ini (semua berkas wajib diupload ulang).'
                         : 'Data mutasi Anda perlu diperbaiki. Silakan review dan kirim ulang.' 
-                                                                                                                                                                                                                                                                                                                                                                        }}
+                                                                                                                                                                                                                                                                                                                                                                                    }}
                         </p>
                         <a href="{{ route('mutasi.masuk.revision', $mutasi->id_mutasi) }}"
                             class="inline-flex items-center px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition font-medium">
@@ -968,4 +983,4 @@
                     </div>
                 @endif
             @endif
-        </div>@endsection
+</div>@endsection

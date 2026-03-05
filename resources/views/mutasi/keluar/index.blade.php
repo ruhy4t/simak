@@ -179,11 +179,26 @@
                                                             <i class="bi bi-file-earmark-check"></i>
                                                         </a>
                                                     @else
-                                                        <a href="{{ route('mutasi.keluar.print-letter', $mutasi->id_mutasi) }}" target="_blank"
-                                                            class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 shadow-md shadow-emerald-500/20 transition-all hover:-translate-y-0.5"
-                                                            title="Cetak Surat">
-                                                            <i class="bi bi-printer"></i>
-                                                        </a>
+                                                        <div x-data="{ openPrint: false }" class="relative inline-block">
+                                                            <button @click="openPrint = !openPrint" @click.outside="openPrint = false"
+                                                                class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 shadow-md shadow-emerald-500/20 transition-all hover:-translate-y-0.5"
+                                                                title="Cetak Surat">
+                                                                <i class="bi bi-printer"></i>
+                                                            </button>
+                                                            <div x-show="openPrint" x-transition
+                                                                class="absolute right-0 mt-1 w-40 bg-white border border-slate-200 rounded-lg shadow-xl z-10 overflow-hidden">
+                                                                <a href="{{ route('mutasi.keluar.print-letter', $mutasi->id_mutasi) }}?mode=tnd"
+                                                                    target="_blank"
+                                                                    class="flex items-center gap-2 px-3 py-2 text-xs text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition">
+                                                                    <i class="bi bi-pen text-indigo-500"></i> Cetak TND
+                                                                </a>
+                                                                <a href="{{ route('mutasi.keluar.print-letter', $mutasi->id_mutasi) }}?mode=manual"
+                                                                    target="_blank"
+                                                                    class="flex items-center gap-2 px-3 py-2 text-xs text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition border-t border-slate-100">
+                                                                    <i class="bi bi-pencil-square text-blue-500"></i> Cetak Manual
+                                                                </a>
+                                                            </div>
+                                                        </div>
                                                     @endif
                                                 @endif
                                             @endif

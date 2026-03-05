@@ -740,7 +740,7 @@
 
         {{-- TTD SECTION (kanan) --}}
 
-        @if(optional($penandatangan)->gambar_ttd)
+        @if(($mode ?? 'manual') === 'tnd' && optional($penandatangan)->gambar_ttd)
             {{-- SIGNATURE IMAGE: Right-aligned, proportional (~1/3 page width) --}}
             <div class="ttd-section">
                 <div class="ttd-area" style="width: 60%;">
@@ -832,6 +832,33 @@
 
                 </div>
 
+            </div>
+
+            {{-- FOOTER WITH 3-COLUMN LAYOUT (QR Left, Text Center, Empty Right) --}}
+            <div class="footer-fixed">
+                <div class="footer-content">
+                    <div class="footer-left footer-qr">
+                        @php
+                            $idMutasi = $mutasi->id_mutasi ?? '-';
+                            $tglUsulan = isset($mutasi->tanggal_pengajuan)
+                                ? \Carbon\Carbon::parse($mutasi->tanggal_pengajuan)->format('d/m/Y')
+                                : '-';
+                            $namaSiswa = $mutasi->nama_siswa ?? $mutasi->nama_murid ?? '-';
+                            $tglTtd = isset($mutasi->tanggal_surat_izin)
+                                ? \Carbon\Carbon::parse($mutasi->tanggal_surat_izin)->format('d/m/Y')
+                                : now()->format('d/m/Y');
+                            $namaPejabat = optional($penandatangan)->nama ?? '-';
+                            $qrContent = "{$idMutasi}|{$tglUsulan}|{$namaSiswa}|TTD:{$tglTtd}|{$namaPejabat}";
+                            $qrLogo = null; 
+                        @endphp
+                        {!! \App\Helpers\QrCodeHelper::generateWithLogo($qrContent, 80, $qrLogo) !!}
+                    </div>
+                    <div class="footer-center">
+                        <span class="quote">"dinu kiwari ngancik nu bihari, seja ayeuna sampeureun jaga"</span>
+                        <span class="tagline">Bogor Beres, Bogor Cerdas</span>
+                    </div>
+                    <div class="footer-right"></div>
+                </div>
             </div>
         @endif
 

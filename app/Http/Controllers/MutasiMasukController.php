@@ -1036,7 +1036,7 @@ class MutasiMasukController extends Controller
         return redirect()->route('mutasi.masuk.show', $id)->with('success', $successMessage);
     }
 
-    public function printLetter(string $id)
+    public function printLetter(Request $request, string $id)
     {
         $user = Auth::user();
 
@@ -1060,10 +1060,14 @@ class MutasiMasukController extends Controller
         $siswaList = $this->pdfService->getMutasiMasukSiswaList($id);
         $penandatangan = $this->pdfService->getActivePenandatangan();
 
+        // Print mode: 'tnd' = digital signature image, 'manual' = name/NIP block for wet signature
+        $mode = $request->query('mode', 'manual');
+
         return view('surat.izin-mutasi-masuk', [
             'mutasi' => $mutasiData,
             'siswaList' => $siswaList,
             'penandatangan' => $penandatangan,
+            'mode' => $mode,
         ]);
     }
 

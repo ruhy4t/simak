@@ -985,7 +985,7 @@ class MutasiController extends Controller
     /**
      * Print letter - display printable view of Surat Keterangan Mutasi Keluar
      */
-    public function printLetter(string $id)
+    public function printLetter(Request $request, string $id)
     {
         $user = Auth::user();
 
@@ -1009,9 +1009,13 @@ class MutasiController extends Controller
         $mutasiData = $pdfService->prepareMutasiKeluarData($mutasi);
         $penandatangan = $pdfService->getActivePenandatangan();
 
+        // Print mode: 'tnd' = digital signature image, 'manual' = name/NIP block for wet signature
+        $mode = $request->query('mode', 'manual');
+
         return view('surat.keterangan-mutasi-keluar', [
             'mutasi' => $mutasiData,
             'penandatangan' => $penandatangan,
+            'mode' => $mode,
         ]);
     }
 
