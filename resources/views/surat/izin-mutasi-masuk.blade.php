@@ -580,21 +580,20 @@
                 <table class="table-siswa">
                     <thead>
                         <tr>
-                            <th width="30">No</th>
-                            <th>Nama Siswa</th>
-                            <th width="100">NISN</th>
-                            <th width="30">L/P</th>
-                            <th width="150">Tempat, Tanggal Lahir</th>
-                            <th width="40">Kelas</th>
+                            <th width="25">No</th>
+                            <th width="150">Nama Siswa</th>
+                            <th width="90">NISN</th>
+                            <th width="25">L/P</th>
+                            <th width="140">Tempat, Tanggal Lahir</th>
+                            <th width="35">Kelas</th>
                             <th>Sekolah Asal</th>
-                            <th width="80">NPSN Asal</th>
-                            <th width="100">Tgl Diterima</th>
+                            <th width="95">Tgl Diterima</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach($chunk as $siswa)
                             <tr>
-                                <td class="center">{{ $globalCounter++ }}</td> {{-- Use simple incrementing counter --}}
+                                <td class="center">{{ $globalCounter++ }}</td>
                                 <td><strong>{!! html_entity_decode($siswa['nama_siswa'] ?? $siswa['nama_murid'] ?? '-') !!}</strong>
                                 </td>
                                 <td class="center">{{ $siswa['nisn'] ?? '-' }}</td>
@@ -605,14 +604,13 @@
                                 </td>
                                 <td class="center">{{ $siswa['kelas'] ?? '-' }}</td>
                                 <td>
+                                    <span style="font-size: 9pt;">NPSN:
+                                        {{ $siswa['npsn_asal'] ?? $siswa['npsn_sekolah_asal'] ?? '-' }}</span><br>
                                     {!! html_entity_decode($siswa['sekolah_asal'] ?? $siswa['nama_sekolah_asal'] ?? '-') !!}<br>
                                     <span style="font-size: 9pt;">
-                                        {{ str_replace('Kabupaten', 'Kab.', $siswa['kabupaten_kota_asal'] ?? '') }}
-                                        {{ isset($siswa['kabupaten_kota_asal']) && isset($siswa['provinsi_asal']) ? ' - ' : '' }}
-                                        {{ $siswa['provinsi_asal'] ?? '' }}
+                                        {{ str_replace('Kabupaten', 'Kab.', $siswa['kabupaten_kota_asal'] ?? '') }}{{ isset($siswa['kabupaten_kota_asal']) && isset($siswa['provinsi_asal']) ? ' - ' : '' }}{{ $siswa['provinsi_asal'] ?? '' }}
                                     </span>
                                 </td>
-                                <td class="center">{{ $siswa['npsn_asal'] ?? $siswa['npsn_sekolah_asal'] ?? '-' }}</td>
                                 <td class="center">
                                     {{ isset($siswa['tanggal_diterima']) ? \Carbon\Carbon::parse($siswa['tanggal_diterima'])->translatedFormat('j F Y') : '-' }}
                                 </td>
