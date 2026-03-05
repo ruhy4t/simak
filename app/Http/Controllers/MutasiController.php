@@ -54,6 +54,7 @@ class MutasiController extends Controller
         try {
             $query = DB::table('mutasi_keluar')
                 ->whereNull('deleted_at') // HIDE SOFT DELETED
+                ->where('status', '!=', 'Dibatalkan') // HIDE CANCELLED
                 ->orderBy('tanggal_pengajuan', 'desc');
 
             // Role-based filtering
@@ -183,7 +184,7 @@ class MutasiController extends Controller
 
     /**
      * Cancel and Permanently Delete Submission
-     * Only allowed if status is 'Menunggu Verifikasi Dinas'
+     * Only allowed if status is 'Menunggu Verifikasi Dinas' or 'Perlu Perbaikan'
      */
     public function cancel(Request $request, string $id)
     {
@@ -222,8 +223,8 @@ class MutasiController extends Controller
             }
 
             // 3. Strict Status Check
-            if ($mutasi->status !== 'Menunggu Verifikasi Dinas') {
-                return back()->with('error', 'Gagal menghapus! Status usulan telah berubah (sedang diproses oleh Dinas). Silakan refresh halaman.');
+            if (!in_array($mutasi->status, ['Menunggu Verifikasi Dinas', 'Perlu Perbaikan'])) {
+                return back()->with('error', 'Gagal menghapus! Status usulan tidak mengizinkan pembatalan. Silakan refresh halaman.');
             }
 
             // 4. Delete Files Physically (from dokumen_rahasia, not public/storage)
@@ -244,13 +245,6 @@ class MutasiController extends Controller
 
             // 5. Permanent Delete Database Record
             DB::table('mutasi_keluar')->where('id_mutasi', $id)->delete();
-
-            // 6. Notify Dinas about cancellation
-            try {
-                \App\Helpers\NotificationHelper::notifyDinasCancelledSubmission($mutasi, 'keluar', 'Dibatalkan oleh pengusul');
-            } catch (\Exception $e) {
-                Log::error("Telegram notification failed on cancel: " . $e->getMessage());
-            }
 
             return redirect()->route('mutasi.keluar.index')
                 ->with('success', 'Usulan berhasil dihapus permanen.');

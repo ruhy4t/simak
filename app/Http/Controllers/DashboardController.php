@@ -51,7 +51,9 @@ class DashboardController extends Controller
     private function getStatsMutasiKeluar($user): array
     {
         try {
-            $query = DB::table('mutasi_keluar')->whereNull('deleted_at'); // Filter Deleted
+            $query = DB::table('mutasi_keluar')
+                ->whereNull('deleted_at') // Filter Deleted
+                ->where('status', '!=', 'Dibatalkan'); // Exclude cancelled
 
             if ($user->role === 'Operator') {
                 $query->where('pengusul', $user->username)
@@ -86,7 +88,9 @@ class DashboardController extends Controller
     private function getStatsMutasiMasuk($user): array
     {
         try {
-            $query = DB::table('mutasi_masuk')->whereNull('deleted_at'); // Filter Deleted
+            $query = DB::table('mutasi_masuk')
+                ->whereNull('deleted_at') // Filter Deleted
+                ->where('status', '!=', 'Dibatalkan'); // Exclude cancelled
 
             if ($user->role === 'Operator') {
                 $query->where('pengusul', $user->username);

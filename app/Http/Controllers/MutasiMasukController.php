@@ -101,7 +101,6 @@ class MutasiMasukController extends Controller
             // Use Eloquent Model for relationships
             $query = \App\Models\MutasiMasuk::query()
                 ->with('siswa') // Load all siswa columns to prevent missing attribute errors
-                ->where('status', '!=', 'Dibatalkan') // Never show cancelled records
                 ->orderBy('tanggal_pengajuan', 'desc');
 
             // Role-based filtering
@@ -221,7 +220,7 @@ class MutasiMasukController extends Controller
 
     /**
      * Cancel and Permanently Delete Submission
-     * Only allowed if status is 'Menunggu Verifikasi Dinas'
+     * Only allowed if status is 'Menunggu Verifikasi Dinas' or 'Perlu Perbaikan'
      */
     public function cancel(Request $request, string $id)
     {
@@ -253,9 +252,9 @@ class MutasiMasukController extends Controller
                 abort(403);
             }
 
-            // 3. Status Check - Allow cancel for pending or already-cancelled records
-            if (!in_array($mutasi->status, ['Menunggu Verifikasi Dinas', 'Dibatalkan'])) {
-                return back()->with('error', 'Gagal menghapus! Status usulan telah berubah (sedang diproses oleh Dinas). Silakan refresh halaman.');
+            // 3. Status Check - Allow cancel for pending or revision records
+            if (!in_array($mutasi->status, ['Menunggu Verifikasi Dinas', 'Perlu Perbaikan'])) {
+                return back()->with('error', 'Gagal menghapus! Status usulan tidak mengizinkan pembatalan. Silakan refresh halaman.');
             }
 
             // 4. Delete Header Files (from dokumen_rahasia, not public/storage)
@@ -322,13 +321,6 @@ class MutasiMasukController extends Controller
 
             // 7. Delete Header Record
             DB::table('mutasi_masuk')->where('id_mutasi', $id)->delete();
-
-            // 8. Notify Dinas about cancellation
-            try {
-                \App\Helpers\NotificationHelper::notifyDinasCancelledSubmission($mutasi, 'masuk', 'Dibatalkan oleh pengusul');
-            } catch (\Exception $e) {
-                Log::error("Telegram notification failed on cancel: " . $e->getMessage());
-            }
 
             return redirect()->route('mutasi.masuk.index')
                 ->with('success', 'Usulan mutasi masuk dan data siswa berhasil dihapus permanen.');
