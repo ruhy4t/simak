@@ -217,9 +217,6 @@ class DailyTasksMiddleware
             try {
                 DB::beginTransaction();
 
-                // Notify pengusul about cancellation
-                $this->notifyCancellation($mutasi, $type);
-
                 // Delete associated files
                 $this->deleteFilesForMutation($mutasi, $type);
 
@@ -250,28 +247,6 @@ class DailyTasksMiddleware
         return $cancelledCount;
     }
 
-    private function notifyCancellation(object $mutasi, string $type): void
-    {
-        $pengusul = DB::table('users')
-            ->where('username', $mutasi->pengusul)
-            ->whereNotNull('telegram_chat_id')
-            ->where('telegram_chat_id', '!=', '')
-            ->first();
-
-        if ($pengusul) {
-            $typeLabel = $type === 'masuk' ? 'Masuk' : 'Keluar';
-            $message = "❌ <b>MUTASI DIBATALKAN OTOMATIS</b>\n\n"
-                . "📋 Mutasi {$typeLabel}: <code>{$mutasi->id_mutasi}</code>\n\n"
-                . "⚠️ Data ini telah dibatalkan dan dihapus karena tidak ada perbaikan dalam 30 hari.\n\n"
-                . "📝 Jika masih diperlukan, silakan ajukan ulang.";
-
-            try {
-                NotificationHelper::sendTelegram($pengusul->telegram_chat_id, $message);
-            } catch (\Exception $e) {
-                Log::error("Failed to notify cancellation: " . $e->getMessage());
-            }
-        }
-    }
 
     private function deleteFilesForMutation(object $mutasi, string $type): void
     {
