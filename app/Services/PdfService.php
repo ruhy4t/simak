@@ -100,7 +100,7 @@ class PdfService
                     'kelas' => $siswa->kelas,
                     'sekolah_asal' => $siswa->nama_sekolah_asal,
                     'npsn_asal' => $siswa->npsn_sekolah_asal,
-                    'kota_asal' => $siswa->kabupaten_kota_asal,
+                    'kabupaten_kota_asal' => $siswa->kabupaten_kota_asal,
                     'provinsi_asal' => $siswa->provinsi_asal,
                     'tanggal_diterima' => $siswa->tanggal_diterima,
                 ];
