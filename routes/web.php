@@ -188,6 +188,7 @@ Route::middleware(['auth', \App\Http\Middleware\EnsurePasswordChanged::class])->
         Route::post('penandatangan/{id}/restore', [App\Http\Controllers\PenandatanganController::class, 'restore'])->name('penandatangan.restore');
         Route::post('penandatangan/{id}/toggle', [App\Http\Controllers\PenandatanganController::class, 'toggleStatus'])->name('penandatangan.toggle');
         Route::put('/penandatangan/{id}', [PenandatanganController::class, 'update'])->name('penandatangan.update');
+        Route::delete('penandatangan/{id}/signature', [PenandatanganController::class, 'deleteSignature'])->name('penandatangan.delete-signature');
 
 
 
@@ -298,4 +299,3 @@ Route::get('/sys-admin/fix-cors', function () {
         return response()->json(['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()], 500);
     }
 });
-

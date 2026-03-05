@@ -447,53 +447,52 @@
 
         <p class="closing-text">Demikian surat ini kami buat untuk dipergunakan sebagaimana mestinya.</p>
 
-        {{-- TTD PEJABAT --}}
-        <div class="ttd-container" style="margin-top: 30px;">
-            <div class="ttd-box">
-                <table>
-                    <tr>
-                        <td style="width: 30px;">a.n.</td>
-                        <td>Kepala,</td>
-                    </tr>
-                    <tr>
-                        <td></td>
-                        <td>Sekretaris</td>
-                    </tr>
-                    <tr>
-                        <td>u.b.</td>
-                        <td>Kepala Bidang SMP</td>
-                    </tr>
-                    <tr>
-                        <td colspan="2" class="spacer-ttd"></td>
-                    </tr>
-                    <tr>
-                        <td></td>
-                        <td class="officer-name">{!! html_entity_decode($penandatangan?->nama ?? '-') !!}</td>
-                    </tr>
-                    <tr>
-                        <td></td>
-                        <td>{!! html_entity_decode($penandatangan?->pangkat_golongan ?? '-') !!}</td>
-                    </tr>
-                    <tr>
-                        <td></td>
-                        <td>NIP. {!! html_entity_decode($penandatangan?->nip ?? '-') !!}</td>
-                    </tr>
-                </table>
-            </div>
-        </div>
-
-        {{-- FOOTER WITH 3-COLUMN LAYOUT (QR Left, Text Center, Empty Right) --}}
-        <div class="page-footer">
-            {{-- Line removed per user request --}}
-            <div class="footer-content">
-                <div class="footer-left footer-qr">{!! $qrCodeHtml !!}</div>
-                <div class="footer-center">
-                    <span class="quote">"dinu kiwari ngancik nu bihari, seja ayeuna sampeureun jaga"</span>
-                    <span class="tagline">Bogor Beres, Bogor Cerdas</span>
+        @if(optional($penandatangan)->gambar_ttd)
+            {{-- SIGNATURE IMAGE: Right-aligned, proportional (~1/3 page width) --}}
+            <div class="ttd-container" style="margin-top: 30px;">
+                <div class="ttd-box" style="width: 300px;">
+                    <img src="{{ url('dokumen/lihat/' . $penandatangan->gambar_ttd) }}" alt="Tanda Tangan"
+                        style="width: 100%; height: auto; display: block;" onerror="this.style.display='none'">
                 </div>
-                <div class="footer-right"></div>
             </div>
-        </div>
+        @else
+            {{-- TTD PEJABAT --}}
+            <div class="ttd-container" style="margin-top: 30px;">
+                <div class="ttd-box">
+                    <table>
+                        <tr>
+                            <td style="width: 30px;">a.n.</td>
+                            <td>Kepala,</td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td>Sekretaris</td>
+                        </tr>
+                        <tr>
+                            <td>u.b.</td>
+                            <td>Kepala Bidang SMP</td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" class="spacer-ttd"></td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td class="officer-name">{!! html_entity_decode($penandatangan?->nama ?? '-') !!}</td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td>{!! html_entity_decode($penandatangan?->pangkat_golongan ?? '-') !!}</td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td>NIP. {!! html_entity_decode($penandatangan?->nip ?? '-') !!}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        @endif
+
+
     </div>
     {{-- END PAGE 1 --}}
 
@@ -605,53 +604,52 @@
 
                 {{-- TTD only on the very last chunk --}}
                 @if($loop->last)
-                    <div class="ttd-container">
-                        <div class="ttd-box">
-                            <table>
-                                <tr>
-                                    <td style="width: 30px;">a.n.</td>
-                                    <td>Kepala,</td>
-                                </tr>
-                                <tr>
-                                    <td></td>
-                                    <td>Sekretaris</td>
-                                </tr>
-                                <tr>
-                                    <td>u.b.</td>
-                                    <td>Kepala Bidang SMP</td>
-                                </tr>
-                                <tr>
-                                    <td colspan="2" class="spacer-ttd"></td>
-                                </tr>
-                                <tr>
-                                    <td></td>
-                                    <td class="officer-name">{!! html_entity_decode($penandatangan?->nama ?? '-') !!}</td>
-                                </tr>
-                                <tr>
-                                    <td></td>
-                                    <td>{!! html_entity_decode($penandatangan?->pangkat_golongan ?? '-') !!}</td>
-                                </tr>
-                                <tr>
-                                    <td></td>
-                                    <td>NIP. {!! html_entity_decode($penandatangan?->nip ?? '-') !!}</td>
-                                </tr>
-                            </table>
+                    @if(optional($penandatangan)->gambar_ttd)
+                        {{-- SIGNATURE IMAGE: Right-aligned, proportional (~1/3 page width) --}}
+                        <div class="ttd-container">
+                            <div class="ttd-box" style="width: 300px;">
+                                <img src="{{ url('dokumen/lihat/' . $penandatangan->gambar_ttd) }}" alt="Tanda Tangan"
+                                    style="width: 100%; height: auto; display: block;" onerror="this.style.display='none'">
+                            </div>
                         </div>
-                    </div>
-                @endif
+                    @else
+                        <div class="ttd-container">
+                            <div class="ttd-box">
+                                <table>
+                                    <tr>
+                                        <td style="width: 30px;">a.n.</td>
+                                        <td>Kepala,</td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td>Sekretaris</td>
+                                    </tr>
+                                    <tr>
+                                        <td>u.b.</td>
+                                        <td>Kepala Bidang SMP</td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="2" class="spacer-ttd"></td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td class="officer-name">{!! html_entity_decode($penandatangan?->nama ?? '-') !!}</td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td>{!! html_entity_decode($penandatangan?->pangkat_golongan ?? '-') !!}</td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td>NIP. {!! html_entity_decode($penandatangan?->nip ?? '-') !!}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    @endif
 
-                {{-- FOOTER WITH 3-COLUMN LAYOUT (QR Left, Text Center, Empty Right) --}}
-                <div class="page-footer">
-                    {{-- Line removed per user request --}}
-                    <div class="footer-content">
-                        <div class="footer-left footer-qr">{!! $qrCodeHtml !!}</div>
-                        <div class="footer-center">
-                            <span class="quote">"dinu kiwari ngancik nu bihari, seja ayeuna sampeureun jaga"</span>
-                            <span class="tagline">Bogor Beres, Bogor Cerdas</span>
-                        </div>
-                        <div class="footer-right"></div>
-                    </div>
-                </div>
+
+                @endif
 
             </div>
         @endforeach

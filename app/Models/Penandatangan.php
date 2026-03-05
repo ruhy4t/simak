@@ -17,6 +17,7 @@ class Penandatangan extends Model
         'nip',
         'jabatan',
         'pangkat_golongan',
+        'gambar_ttd',
         'is_active',
         'alasan_penghapusan',
     ];

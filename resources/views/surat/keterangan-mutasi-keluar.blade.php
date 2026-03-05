@@ -740,127 +740,104 @@
 
         {{-- TTD SECTION (kanan) --}}
 
-        <div class="ttd-section">
+        @if(optional($penandatangan)->gambar_ttd)
+            {{-- SIGNATURE IMAGE: Right-aligned, proportional (~1/3 page width) --}}
+            <div class="ttd-section">
+                <div class="ttd-area" style="width: 60%;">
+                    <p style="margin-bottom: 20px; text-align: center;">Bogor,
+                        {{ isset($mutasi->tanggal_surat_izin) ? \Carbon\Carbon::parse($mutasi->tanggal_surat_izin)->translatedFormat('j F Y') : now()->translatedFormat('j F Y') }}
+                    </p>
+                    <img src="{{ url('dokumen/lihat/' . $penandatangan->gambar_ttd) }}" alt="Tanda Tangan"
+                        style="width: 100%; height: auto; display: block;" onerror="this.style.display='none'">
+                </div>
+            </div>
+        @else
+            {{-- ORIGINAL TTD (manual signature area) --}}
+            <div class="ttd-section">
 
-            <div class="ttd-area">
+                <div class="ttd-area">
 
-                <table class="tbl-ttd">
+                    <table class="tbl-ttd">
 
-                    <tr><br>
+                        <tr><br>
 
-                        <td colspan="2">Bogor,
+                            <td colspan="2">Bogor,
 
-                            {{ isset($mutasi->tanggal_surat_izin) ? \Carbon\Carbon::parse($mutasi->tanggal_surat_izin)->translatedFormat('j F Y') : now()->translatedFormat('j F Y') }}
+                                {{ isset($mutasi->tanggal_surat_izin) ? \Carbon\Carbon::parse($mutasi->tanggal_surat_izin)->translatedFormat('j F Y') : now()->translatedFormat('j F Y') }}
 
-                        </td>
+                            </td>
 
-                    </tr>
+                        </tr>
 
-                    <tr>
+                        <tr>
 
-                        <td class="col-an">a.n.</td>
+                            <td class="col-an">a.n.</td>
 
-                        <td class="col-jabatan">Kepala,</td>
+                            <td class="col-jabatan">Kepala,</td>
 
-                    </tr>
+                        </tr>
 
-                    <tr>
+                        <tr>
 
-                        <td></td>
+                            <td></td>
 
-                        <td class="col-jabatan">Sekretaris</td>
+                            <td class="col-jabatan">Sekretaris</td>
 
-                    </tr>
+                        </tr>
 
-                    <tr>
+                        <tr>
 
-                        <td class="col-an">u.b.</td>
+                            <td class="col-an">u.b.</td>
 
-                        <td class="col-jabatan">Kepala Bidang SMP</td>
+                            <td class="col-jabatan">Kepala Bidang SMP</td>
 
-                    </tr>
+                        </tr>
 
-                    <tr>
+                        <tr>
 
-                        <td colspan="2" class="spacer-ttd"></td>
+                            <td colspan="2" class="spacer-ttd"></td>
 
-                    </tr>
+                        </tr>
 
-                    <tr>
+                        <tr>
 
-                        <td></td>
+                            <td></td>
 
-                        <td class="col-jabatan nama">
-                            {!! html_entity_decode(optional($penandatangan)->nama ?? 'Nama Pejabat') !!}
-                        </td>
+                            <td class="col-jabatan nama">
+                                {!! html_entity_decode(optional($penandatangan)->nama ?? 'Nama Pejabat') !!}
+                            </td>
 
-                    </tr>
+                        </tr>
 
-                    <tr>
+                        <tr>
 
-                        <td></td>
+                            <td></td>
 
-                        <td class="col-jabatan">
-                            {!! html_entity_decode(optional($penandatangan)->pangkat_golongan ?? 'Pangkat') !!}
-                        </td>
+                            <td class="col-jabatan">
+                                {!! html_entity_decode(optional($penandatangan)->pangkat_golongan ?? 'Pangkat') !!}
+                            </td>
 
-                    </tr>
+                        </tr>
 
-                    <tr>
+                        <tr>
 
-                        <td></td>
+                            <td></td>
 
-                        <td class="col-jabatan">NIP. {!! html_entity_decode(optional($penandatangan)->nip ?? '-') !!}
-                        </td>
+                            <td class="col-jabatan">NIP. {!! html_entity_decode(optional($penandatangan)->nip ?? '-') !!}
+                            </td>
 
-                    </tr>
+                        </tr>
 
-                </table>
+                    </table>
+
+                </div>
 
             </div>
-
-        </div>
-
+        @endif
 
 
-        {{-- FOOTER WITH 3-COLUMN LAYOUT (QR Left, Text Center, Empty Right) --}}
 
-        <div class="footer-fixed">
-            {{-- Line removed --}}
-            <div class="footer-content">
-                <div class="footer-left footer-qr">
-                    @php
-                        // 1. Prepare Variables Safely
-                        $idMutasi = $mutasi->id_mutasi ?? '-';
 
-                        $tglUsulan = isset($mutasi->tanggal_pengajuan)
-                            ? \Carbon\Carbon::parse($mutasi->tanggal_pengajuan)->format('d/m/Y')
-                            : '-';
-
-                        // Mapped property from PdfService is 'nama_siswa', fallback to 'nama_murid' just in case
-                        $namaSiswa = $mutasi->nama_siswa ?? $mutasi->nama_murid ?? '-';
-
-                        $tglTtd = isset($mutasi->tanggal_surat_izin)
-                            ? \Carbon\Carbon::parse($mutasi->tanggal_surat_izin)->format('d/m/Y')
-                            : now()->format('d/m/Y');
-
-                        $namaPejabat = optional($penandatangan)->nama ?? '-';
-
-                        // 2. Construct Data (Original Format: ID|TglUsulan|NamaSiswa|TTD:Tgl|Pejabat)
-                        $qrContent = "{$idMutasi}|{$tglUsulan}|{$namaSiswa}|TTD:{$tglTtd}|{$namaPejabat}";
-
-                        // 3. Logo Configuration (Null = No Logo, Safer for printing)
-                        $qrLogo = null; 
-                    @endphp
-                    {!! \App\Helpers\QrCodeHelper::generateWithLogo($qrContent, 80, $qrLogo) !!}
-                </div>
-                <div class="footer-center">
-                    <span class="quote">"dinu kiwari ngancik nu bihari, seja ayeuna sampeureun jaga"</span>
-                    <span class="tagline">Bogor Beres, Bogor Cerdas</span>
-                </div>
-                <div class="footer-right"></div>
-            </div>
-        </div>
 
     </div>
 

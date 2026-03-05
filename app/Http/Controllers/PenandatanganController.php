@@ -7,7 +7,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use App\Services\FileUploadService;
 
 class PenandatanganController extends Controller
 {
@@ -64,9 +66,10 @@ class PenandatanganController extends Controller
             'nip' => 'nullable|string|max:30',
             'jabatan' => 'required|string|max:100',
             'pangkat_golongan' => 'nullable|string|max:100',
+            'gambar_ttd' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
-        DB::table('penandatangan')->insert([
+        $data = [
             'nama' => $this->sanitize($request->nama),
             'nip' => $this->sanitize($request->nip),
             'jabatan' => $this->sanitize($request->jabatan),
@@ -74,7 +77,20 @@ class PenandatanganController extends Controller
             'is_active' => true,
             'created_at' => now(),
             'updated_at' => now(),
-        ]);
+        ];
+
+        // Upload signature image if provided
+        if ($request->hasFile('gambar_ttd')) {
+            $uploadService = new FileUploadService();
+            $data['gambar_ttd'] = $uploadService->uploadImage(
+                $request->file('gambar_ttd'),
+                'ttd',
+                Str::slug($request->nama),
+                'penandatangan'
+            );
+        }
+
+        DB::table('penandatangan')->insert($data);
 
         Log::info("Penandatangan {$request->nama} ditambahkan oleh {$user->username}");
         return back()->with('success', "✅ Penandatangan berhasil ditambahkan!");
@@ -92,17 +108,72 @@ class PenandatanganController extends Controller
             'nip' => 'nullable|string|max:30',
             'jabatan' => 'required|string|max:100',
             'pangkat_golongan' => 'nullable|string|max:100',
+            'gambar_ttd' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
-        DB::table('penandatangan')->where('id', intval($id))->update([
+        $penandatangan = DB::table('penandatangan')->where('id', intval($id))->first();
+        if (!$penandatangan) {
+            return back()->with('error', 'Data tidak ditemukan.');
+        }
+
+        $data = [
             'nama' => $this->sanitize($request->nama),
             'nip' => $this->sanitize($request->nip),
             'jabatan' => $this->sanitize($request->jabatan),
             'pangkat_golongan' => $this->sanitize($request->pangkat_golongan),
             'updated_at' => now(),
-        ]);
+        ];
+
+        // Upload new signature image if provided
+        if ($request->hasFile('gambar_ttd')) {
+            // Delete old image if exists
+            if ($penandatangan->gambar_ttd) {
+                $uploadService = new FileUploadService();
+                $uploadService->deleteOldFile($penandatangan->gambar_ttd);
+            }
+
+            $uploadService = $uploadService ?? new FileUploadService();
+            $data['gambar_ttd'] = $uploadService->uploadImage(
+                $request->file('gambar_ttd'),
+                'ttd',
+                Str::slug($request->nama),
+                'penandatangan'
+            );
+        }
+
+        DB::table('penandatangan')->where('id', intval($id))->update($data);
 
         return back()->with('success', "✅ Data penandatangan berhasil diperbarui.");
+    }
+
+    /**
+     * Delete signature image only (without deleting the penandatangan record)
+     */
+    public function deleteSignature($id)
+    {
+        $user = Auth::user();
+        if (!in_array($user->role, ['Dinas', 'SuperAdmin'])) {
+            abort(403);
+        }
+
+        $penandatangan = DB::table('penandatangan')->where('id', intval($id))->first();
+        if (!$penandatangan) {
+            return back()->with('error', 'Data tidak ditemukan.');
+        }
+
+        if ($penandatangan->gambar_ttd) {
+            $uploadService = new FileUploadService();
+            $uploadService->deleteOldFile($penandatangan->gambar_ttd);
+
+            DB::table('penandatangan')->where('id', $id)->update([
+                'gambar_ttd' => null,
+                'updated_at' => now(),
+            ]);
+
+            return back()->with('success', "✅ Gambar tanda tangan berhasil dihapus.");
+        }
+
+        return back()->with('info', 'Tidak ada gambar tanda tangan untuk dihapus.');
     }
 
     public function toggleStatus($id)
