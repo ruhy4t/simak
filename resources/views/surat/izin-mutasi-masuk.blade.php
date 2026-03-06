@@ -449,7 +449,7 @@
 
         @if(($mode ?? 'manual') === 'tnd' && optional($penandatangan)->gambar_ttd)
             {{-- SIGNATURE IMAGE: Right-aligned, proportional (~1/3 page width) --}}
-            <div class="ttd-container" style="margin-top: 30px;">
+            <div class="ttd-container" style="margin-top: 30px; margin-bottom: 30px;">
                 <div class="ttd-box" style="width: 300px;">
                     <img src="{{ url('dokumen/lihat/' . $penandatangan->gambar_ttd) }}" alt="Tanda Tangan"
                         style="width: 100%; height: auto; display: block;" onerror="this.style.display='none'">
@@ -623,7 +623,7 @@
                 @if($loop->last)
                     @if(($mode ?? 'manual') === 'tnd' && optional($penandatangan)->gambar_ttd)
                         {{-- SIGNATURE IMAGE: Right-aligned, proportional (~1/3 page width) --}}
-                        <div class="ttd-container">
+                        <div class="ttd-container" style="margin-top: 20px; margin-bottom: 40px;">
                             <div class="ttd-box" style="width: 300px;">
                                 <img src="{{ url('dokumen/lihat/' . $penandatangan->gambar_ttd) }}" alt="Tanda Tangan"
                                     style="width: 100%; height: auto; display: block;" onerror="this.style.display='none'">
@@ -663,21 +663,22 @@
                                 </table>
                             </div>
                         </div>
-
-                        {{-- FOOTER WITH 3-COLUMN LAYOUT (QR Left, Text Center, Empty Right) --}}
-                        <div class="page-footer">
-                            <div class="footer-content">
-                                <div class="footer-left footer-qr">{!! $qrCodeHtml !!}</div>
-                                <div class="footer-center">
-                                    <span class="quote">"dinu kiwari ngancik nu bihari, seja ayeuna sampeureun jaga"</span>
-                                    <span class="tagline">Bogor Beres, Bogor Cerdas</span>
-                                </div>
-                                <div class="footer-right"></div>
-                            </div>
-                        </div>
                     @endif
+                @endif
 
-
+                {{-- FOOTER ON EVERY PAGE FOR MANUAL MODE --}}
+                @if(($mode ?? 'manual') !== 'tnd' || !optional($penandatangan)->gambar_ttd)
+                    {{-- FOOTER WITH 3-COLUMN LAYOUT (QR Left, Text Center, Empty Right) --}}
+                    <div class="page-footer">
+                        <div class="footer-content">
+                            <div class="footer-left footer-qr">{!! $qrCodeHtml !!}</div>
+                            <div class="footer-center">
+                                <span class="quote">"dinu kiwari ngancik nu bihari, seja ayeuna sampeureun jaga"</span>
+                                <span class="tagline">Bogor Beres, Bogor Cerdas</span>
+                            </div>
+                            <div class="footer-right"></div>
+                        </div>
+                    </div>
                 @endif
 
             </div>
