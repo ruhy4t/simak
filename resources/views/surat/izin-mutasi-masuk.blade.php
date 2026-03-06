@@ -518,12 +518,20 @@
     @if($jumlahSiswa > 0)
         @php
             // CONFIGURATION
+            $isTnd = (($mode ?? 'manual') === 'tnd' && optional($penandatangan)->gambar_ttd);
             $items = $siswaListArr;
             $totalItems = count($items);
 
-            // CUSTOM CHUNKING LOGIC: 5 items for first page (header takes space), 6 for subsequent
-            $firstPageMax = 5;
-            $otherPageMax = 6;
+            // CUSTOM CHUNKING LOGIC per mode:
+            // TND: no footer, so 7 items fit per page (first & subsequent)
+            // Manual: footer takes space, so 5 first page (has header), 6 subsequent
+            if ($isTnd) {
+                $firstPageMax = 7;
+                $otherPageMax = 7;
+            } else {
+                $firstPageMax = 5;
+                $otherPageMax = 6;
+            }
 
             $chunks = [];
             $itemsCopy = $items;
