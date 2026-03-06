@@ -561,8 +561,7 @@
         @php $globalCounter = 1; @endphp
 
         @foreach($chunks as $pageIndex => $chunk)
-            <div class="page page-landscape" style="padding-bottom: {{ $isTnd ? '1.5cm' : '3cm' }};"> {{-- TND: margin only,
-                Manual: reserve space for footer --}}
+            <div class="page page-landscape" style="padding-bottom: 3cm;"> {{-- 3cm bottom padding for both modes --}}
 
                 {{-- Header LAMPIRAN dan Judul hanya di halaman pertama lampiran --}}
                 @if($pageIndex === 0)
