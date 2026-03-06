@@ -518,29 +518,32 @@
     @if($jumlahSiswa > 0)
         @php
             // CONFIGURATION
-            $ITEMS_PER_PAGE = 8;
             $items = $siswaListArr;
             $totalItems = count($items);
 
-            // SMART CHUNKING LOGIC:
-            // If the last page is full (remainder == 0), the TTD will be pushed to a new empty page (Orphaned TTD).
-            // To prevent this, we force the last legitimate item page to share 1 item with the TTD page.
-            // Basically we reduce the items on the second-to-last page by 1.
+            // CUSTOM CHUNKING LOGIC: 5 items for first page (header takes space), 6 for subsequent
+            $firstPageMax = 5;
+            $otherPageMax = 6;
 
-            $chunks = array_chunk($items, $ITEMS_PER_PAGE);
+            $chunks = [];
+            $itemsCopy = $items;
+
+            if (count($itemsCopy) > 0) {
+                $chunks[] = array_splice($itemsCopy, 0, $firstPageMax);
+            }
+            while (count($itemsCopy) > 0) {
+                $chunks[] = array_splice($itemsCopy, 0, $otherPageMax);
+            }
 
             // Check the last chunk to ensure TTD fits
             $lastChunkIndex = count($chunks) - 1;
-            $lastChunk = $chunks[$lastChunkIndex];
+            $maxOfLastPage = ($lastChunkIndex === 0) ? $firstPageMax : $otherPageMax;
 
             // THRESHOLD TO PREVENT CRAMPED TTD:
-            // If the last page has > 6 items (7 or 8), the TTD might be cut off or cramped.
-            // In that case, we move the VERY LAST item to a new page.
-            // REVERTED to > 6 per user request (wants 6 to fit) + CSS COMPACTING
-            if (count($lastChunk) > 6) {
+            // Ensure there's a margin of at least 2 slots for the TTD.
+            if (count($chunks[$lastChunkIndex]) > $maxOfLastPage - 2) {
                 // Remove the last item from the current last chunk
                 $lastItem = array_pop($chunks[$lastChunkIndex]);
-
                 // create a new chunk with just that item
                 $chunks[] = [$lastItem];
             }
