@@ -527,8 +527,8 @@
             // TND subsequent: 7 (no QR footer)
             // Manual subsequent: 6 (QR footer takes space)
             if ($isTnd) {
-                $firstPageMax = 5;
-                $otherPageMax = 7;
+                $firstPageMax = 6;
+                $otherPageMax = 8;
             } else {
                 $firstPageMax = 5;
                 $otherPageMax = 6;
