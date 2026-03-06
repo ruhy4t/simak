@@ -523,10 +523,11 @@
             $totalItems = count($items);
 
             // CUSTOM CHUNKING LOGIC per mode:
-            // TND: no footer, so 7 items fit per page (first & subsequent)
-            // Manual: footer takes space, so 5 first page (has header), 6 subsequent
+            // First page always max 5 (lampiran header/title takes space)
+            // TND subsequent: 7 (no QR footer)
+            // Manual subsequent: 6 (QR footer takes space)
             if ($isTnd) {
-                $firstPageMax = 7;
+                $firstPageMax = 5;
                 $otherPageMax = 7;
             } else {
                 $firstPageMax = 5;
