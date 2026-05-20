@@ -913,7 +913,7 @@ class MutasiMasukController extends Controller
         }
 
         $request->validate([
-            'nomor_surat_izin' => 'required|string|max:50',
+            'nomor_surat_izin' => 'nullable|string|max:50',
             'tanggal_surat_izin' => 'required|date',
         ]);
 
@@ -929,7 +929,7 @@ class MutasiMasukController extends Controller
         }
 
         DB::table('mutasi_masuk')->where('id_mutasi', $id)->update([
-            'nomor_surat_izin' => $this->sanitize($request->nomor_surat_izin),
+            'nomor_surat_izin' => $request->filled('nomor_surat_izin') ? $this->sanitize($request->nomor_surat_izin) : null,
             'tanggal_surat_izin' => $request->tanggal_surat_izin,
             'status' => 'Proses TTD',
             'updated_at' => now(),
@@ -947,10 +947,10 @@ class MutasiMasukController extends Controller
 
         // Auto-save logic moved to completeLetter
 
-        Log::info("Surat Izin Mutasi Masuk {$id} siap TTD oleh {$user->username}: {$request->nomor_surat_izin}");
+        Log::info("Surat Izin Mutasi Masuk {$id} siap TTD oleh {$user->username}");
 
         return redirect()->route('mutasi.masuk.show', $id)
-            ->with('success', "📝 Surat Izin siap dicetak dan ditandatangani!\n\n📄 Nomor: {$request->nomor_surat_izin}\n📅 Tanggal: " . \Carbon\Carbon::parse($request->tanggal_surat_izin)->translatedFormat('d F Y') . "\n\n⏳ Status: Proses TTD");
+            ->with('success', 'Surat izin siap dicetak dan ditandatangani. Nomor surat dapat diisi setelah tanda tangan selesai.');
     }
 
     /**
@@ -965,6 +965,7 @@ class MutasiMasukController extends Controller
         }
 
         $request->validate([
+            'nomor_surat_izin' => 'required|string|max:50',
             'tanggal_selesai' => 'required|date',
         ]);
 
@@ -980,10 +981,14 @@ class MutasiMasukController extends Controller
         }
 
         DB::table('mutasi_masuk')->where('id_mutasi', $id)->update([
+            'nomor_surat_izin' => $this->sanitize($request->nomor_surat_izin),
             'tanggal_selesai' => $request->tanggal_selesai,
             'status' => 'Selesai',
             'updated_at' => now(),
         ]);
+        $mutasi->nomor_surat_izin = $this->sanitize($request->nomor_surat_izin);
+        $mutasi->tanggal_selesai = $request->tanggal_selesai;
+        $mutasi->status = 'Selesai';
 
         // Get pengusul phone for notification
         $pengusul = DB::table('users')->where('username', $mutasi->pengusul)->first();
@@ -1019,7 +1024,7 @@ class MutasiMasukController extends Controller
 
         Log::info("Surat Izin Mutasi Masuk {$id} selesai oleh {$user->username}");
 
-        $successMessage = "🎉 Surat Izin Mutasi Masuk selesai!\n\n📄 Nomor: {$mutasi->nomor_surat_izin}\n📅 Tanggal Selesai: " . \Carbon\Carbon::parse($request->tanggal_selesai)->translatedFormat('d F Y');
+        $successMessage = "Surat Izin Mutasi Masuk selesai.\n\nNomor: {$request->nomor_surat_izin}\nTanggal Selesai: " . \Carbon\Carbon::parse($request->tanggal_selesai)->translatedFormat('d F Y');
 
         if ($whatsappLink) {
             session()->flash('whatsapp_link', $whatsappLink);
@@ -1053,15 +1058,25 @@ class MutasiMasukController extends Controller
         $siswaList = $this->pdfService->getMutasiMasukSiswaList($id);
         $penandatangan = $this->pdfService->getActivePenandatangan();
 
-        // Print mode: 'tnd' = digital signature image, 'manual' = name/NIP block for wet signature
-        $mode = $request->query('mode', 'manual');
-
-        return view('surat.izin-mutasi-masuk', [
+        $mode = 'manual';
+        $view = view('surat.izin-mutasi-masuk', [
             'mutasi' => $mutasiData,
             'siswaList' => $siswaList,
             'penandatangan' => $penandatangan,
             'mode' => $mode,
         ]);
+
+        if ($request->query('format') === 'word') {
+            $filename = 'surat-mutasi-masuk-' . preg_replace('/[^A-Za-z0-9_-]/', '-', $id) . '.doc';
+
+            return response($view->render(), 200, [
+                'Content-Type' => 'application/msword; charset=UTF-8',
+                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+                'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+            ]);
+        }
+
+        return $view;
     }
 
     /**

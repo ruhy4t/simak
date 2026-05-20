@@ -764,7 +764,7 @@
             @endif
 
             <!-- Form Surat Izin -->
-            @if(in_array(auth()->user()->role, ['Dinas', 'SuperAdmin']) && $mutasi->status === 'Disetujui Dinas' && !($mutasi->nomor_surat_izin ?? null))
+            @if(in_array(auth()->user()->role, ['Dinas', 'SuperAdmin']) && $mutasi->status === 'Disetujui Dinas')
                 <div class="bg-blue-50 border border-blue-200 rounded-xl p-6">
                     <h2 class="text-lg font-semibold text-blue-900 mb-4"><i
                             class="bi bi-file-earmark-text text-blue-600 mr-2"></i>Terbitkan Surat Izin</h2>
@@ -773,8 +773,9 @@
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-blue-900 mb-1">Nomor Surat Izin</label>
-                                <input type="text" name="nomor_surat_izin" required
+                                <input type="text" name="nomor_surat_izin"
                                     class="w-full rounded-lg border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+                                    value="{{ old('nomor_surat_izin', $mutasi->nomor_surat_izin ?? '') }}"
                                     placeholder="Contoh: 421.3/123/Disdik">
                             </div>
                             <div>
@@ -785,22 +786,22 @@
                         </div>
                         <button type="submit"
                             class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition shadow-sm">
-                            <i class="bi bi-send-check mr-2"></i> Terbitkan Surat
+                            <i class="bi bi-send-check mr-2"></i> Siapkan Cetak
                         </button>
                     </form>
                 </div>
             @endif
 
             <!-- Info Surat Izin -->
-            @if($mutasi->nomor_surat_izin && in_array(auth()->user()->role, ['Dinas', 'SuperAdmin']))
+            @if(in_array($mutasi->status, ['Proses TTD', 'Selesai']) && in_array(auth()->user()->role, ['Dinas', 'SuperAdmin']))
                 <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-6">
                     <div class="grid grid-cols-2 gap-8 items-center">
                         <div>
                             <h3 class="text-lg font-semibold text-emerald-900 mb-2">
-                                <i class="bi bi-check-circle-fill text-emerald-600 mr-2"></i> Surat Izin Terbit
+                                <i class="bi bi-check-circle-fill text-emerald-600 mr-2"></i> Surat Izin Siap Cetak
                             </h3>
                             <p class="text-emerald-700">Nomor: <span
-                                    class="font-mono font-bold">{{ $mutasi->nomor_surat_izin }}</span>
+                                    class="font-mono font-bold">{{ $mutasi->nomor_surat_izin ?: 'Nomor diisi setelah TTD' }}</span>
                             </p>
                             <p class="text-sm text-emerald-600 mt-1">Diterbitkan pada:
                                 {{ \Carbon\Carbon::parse($mutasi->tanggal_surat_izin)->translatedFormat('j F Y') }}
@@ -821,15 +822,15 @@
                                         </button>
                                         <div x-show="openPrint" x-transition
                                             class="absolute right-0 mt-1 w-48 bg-white border border-slate-200 rounded-lg shadow-xl z-10 overflow-hidden">
-                                            <a href="{{ route('mutasi.masuk.print-letter', $mutasi->id_mutasi) }}?mode=tnd"
-                                                target="_blank"
-                                                class="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition">
-                                                <i class="bi bi-pen text-indigo-500"></i> Cetak TND
-                                            </a>
                                             <a href="{{ route('mutasi.masuk.print-letter', $mutasi->id_mutasi) }}?mode=manual"
                                                 target="_blank"
+                                                class="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition">
+                                                <i class="bi bi-printer text-emerald-500"></i> Cetak
+                                            </a>
+                                            <a href="{{ route('mutasi.masuk.print-letter', $mutasi->id_mutasi) }}?format=word"
+                                                target="_blank"
                                                 class="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition border-t border-slate-100">
-                                                <i class="bi bi-pencil-square text-blue-500"></i> Cetak Manual
+                                                <i class="bi bi-file-earmark-word text-blue-500"></i> Unduh Word
                                             </a>
                                         </div>
                                     </div>
@@ -852,12 +853,19 @@
                     <h2 class="text-lg font-semibold text-indigo-900 mb-4"><i
                             class="bi bi-pen-fill text-indigo-600 mr-2"></i>Konfirmasi Tanda Tangan</h2>
                     <form action="{{ route('mutasi.masuk.complete-letter', $mutasi->id_mutasi) }}" method="POST"
-                        class="flex gap-4 items-end">
+                        class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                         @csrf
+                        <div>
+                            <label class="block text-sm font-medium text-indigo-900 mb-1">Nomor Surat Izin</label>
+                            <input type="text" name="nomor_surat_izin"
+                                value="{{ old('nomor_surat_izin', $mutasi->nomor_surat_izin ?? '') }}"
+                                class="w-full rounded-lg border-indigo-200 focus:border-indigo-500 focus:ring-indigo-500"
+                                required>
+                        </div>
                         <div class="flex-1">
                             <label class="block text-sm font-medium text-indigo-900 mb-1">Tanggal Selesai</label>
                             <input type="date" name="tanggal_selesai" value="{{ date('Y-m-d') }}"
-                                class="w-full rounded-lg border-indigo-200 focus:border-indigo-500 focus:ring-indigo-500">
+                                class="w-full rounded-lg border-indigo-200 focus:border-indigo-500 focus:ring-indigo-500" required>
                         </div>
                         <button type="submit"
                             class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition shadow-sm">
