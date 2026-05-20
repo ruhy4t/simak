@@ -3,6 +3,9 @@
 namespace App\Helpers;
 
 use chillerlan\QRCode\QRCode;
+use chillerlan\QRCode\Common\EccLevel;
+use chillerlan\QRCode\Common\Version;
+use chillerlan\QRCode\Output\QRGdImagePNG;
 use chillerlan\QRCode\QROptions;
 
 /**
@@ -22,11 +25,11 @@ class QrCodeHelper
         try {
             // 1. Generate Base QR Code (Clean, High ECC)
             $options = new QROptions([
-                'version' => QRCode::VERSION_AUTO,
-                'outputType' => QRCode::OUTPUT_IMAGE_PNG,
-                'eccLevel' => QRCode::ECC_H, // High ECC allows covering 30% of QR
+                'version' => Version::AUTO,
+                'outputInterface' => QRGdImagePNG::class,
+                'eccLevel' => EccLevel::H, // High ECC allows covering 30% of QR
                 'scale' => 10, // Increased scale for sharper image
-                'imageBase64' => true,
+                'outputBase64' => true,
             ]);
 
             $qrcode = new QRCode($options);
