@@ -523,6 +523,7 @@
                 <!-- Footer -->
                 <footer class="mt-auto py-6 text-center text-xs text-slate-400">
                     <p>&copy; {{ date('Y') }} Kurikulum SMP - Dinas Pendidikan Kota Bogor</p>
+                    <p class="mt-1">SIMAK v{{ config('app.version') }}</p>
                 </footer>
 
             </div>

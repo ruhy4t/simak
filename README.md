@@ -1,25 +1,111 @@
 # SIMAK
-Aplikasi Mutasi Murid Masuk dan Keluar untuk Dinas Pendidikan
 
-Based on Laravel 11 framework.
+SIMAK adalah aplikasi Sistem Informasi Mutasi Masuk dan Keluar siswa untuk Dinas Pendidikan Kota Bogor.
 
-## About Laravel
+## Versi Aplikasi
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Versi saat ini: **2.0.0**
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Perubahan utama versi 2.0.0:
+- Upgrade ke Laravel 12.
+- Upgrade frontend build stack ke Tailwind CSS 4 dan Vite 8.
+- Menambahkan baseline test suite.
+- Menghapus QRCode generator karena belum dibutuhkan.
+- Menyesuaikan konfigurasi Vercel Preview agar asset mengikuti domain deployment aktif.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Versi aplikasi dikontrol lewat environment variable:
 
-## License
+```env
+APP_VERSION=2.0.0
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Jika tidak diisi, aplikasi memakai default dari `config/app.php`.
 
-## Deployment Status
-Last updated for Vercel deploy trigger: 2026-02-05
+## Stack Utama
+
+- PHP: `^8.2` tested dengan PHP `8.3.x`
+- Laravel: `^12.0`
+- Node.js: `22.x`
+- Vite: `^8.0.13`
+- Tailwind CSS: `^4.3.0`
+- PHPUnit: `^12.0`
+- Database: MySQL compatible, termasuk Aiven MySQL
+- Storage: local atau Backblaze B2 melalui S3-compatible driver
+- Deploy target: Vercel dengan `vercel-php@0.7.4`
+
+## Setup Lokal
+
+```bash
+composer install
+npm install
+cp .env.example .env
+php artisan key:generate
+```
+
+Sesuaikan konfigurasi database dan storage di `.env`, lalu jalankan:
+
+```bash
+php artisan migrate
+npm run build
+php artisan serve
+```
+
+## Verifikasi
+
+Sebelum deploy atau merge perubahan besar, jalankan:
+
+```bash
+php artisan test
+php artisan route:list
+composer validate --no-check-publish
+composer audit
+npm audit
+npm run build
+```
+
+## Deploy Vercel
+
+Project ini memakai `vercel.json` dengan:
+
+- Build command: `npm run build`
+- Output directory: `public`
+- PHP runtime: `vercel-php@0.7.4`
+
+Untuk Preview Deployment, jangan hardcode `APP_URL` atau `ASSET_URL` di `vercel.json`. Entry point `api/index.php` akan mengatur URL aplikasi dan asset berdasarkan domain Vercel yang sedang aktif.
+
+Environment variable penting di Vercel:
+
+```env
+APP_NAME=SIMAK
+APP_VERSION=2.0.0
+APP_ENV=production
+APP_DEBUG=false
+APP_KEY=base64:...
+
+DB_CONNECTION=mysql
+DB_HOST=
+DB_PORT=3306
+DB_DATABASE=
+DB_USERNAME=
+DB_PASSWORD=
+
+FILESYSTEM_DISK=b2
+B2_ACCESS_KEY_ID=
+B2_SECRET_ACCESS_KEY=
+B2_REGION=
+B2_BUCKET=
+B2_ENDPOINT=
+```
+
+## Backup Stabil
+
+Backup point sebelum rangkaian upgrade besar:
+
+- Tag: `stable-before-upgrade-2026-05-20`
+- Branch: `backup/stable-before-upgrade-2026-05-20`
+
+## Catatan
+
+Branch upgrade saat ini: `upgrade/laravel-12`.
+
+Sebelum merge ke `main`, gunakan Preview Deployment Vercel untuk mengecek login, dashboard, mutasi masuk/keluar, laporan, upload arsip B2, dan tampilan utama.
