@@ -30,11 +30,22 @@ class TelegramController extends Controller
      */
     public function webhook(Request $request)
     {
+        $webhookSecret = config('services.telegram.webhook_secret');
+        if (!empty($webhookSecret)) {
+            $receivedSecret = (string) $request->header('X-Telegram-Bot-Api-Secret-Token');
+            if (!hash_equals($webhookSecret, $receivedSecret)) {
+                Log::warning('Telegram webhook rejected: invalid secret token');
+                abort(403, 'Unauthorized');
+            }
+        }
+
         try {
             $update = $request->all();
 
-            // Log incoming webhook for debugging
-            Log::info('Telegram webhook received', $update);
+            Log::info('Telegram webhook received', [
+                'update_id' => $update['update_id'] ?? null,
+                'message_id' => $update['message']['message_id'] ?? null,
+            ]);
 
             // Process the webhook
             $result = NotificationHelper::processWebhook($update);
@@ -85,11 +96,18 @@ class TelegramController extends Controller
             // Direct IP workaround for ByetHost DNS blocking
             $url = "https://149.154.167.220/bot{$botToken}/setWebhook";
 
+            $payload = [
+                'url' => $webhookUrl,
+            ];
+
+            $webhookSecret = config('services.telegram.webhook_secret');
+            if (!empty($webhookSecret)) {
+                $payload['secret_token'] = $webhookSecret;
+            }
+
             $response = \Illuminate\Support\Facades\Http::withoutVerifying()
                 ->withHeaders(['Host' => 'api.telegram.org'])
-                ->post($url, [
-                    'url' => $webhookUrl,
-                ]);
+                ->post($url, $payload);
 
             $result = $response->json();
 

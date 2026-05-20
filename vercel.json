@@ -10,6 +10,17 @@
             "maxDuration": 10
         }
     },
+    "headers": [
+        {
+            "source": "/build/assets/(.*)",
+            "headers": [
+                {
+                    "key": "Cache-Control",
+                    "value": "public, max-age=31536000, immutable"
+                }
+            ]
+        }
+    ],
     "crons": [
         {
             "path": "/api/queue/work",
@@ -62,6 +73,8 @@
         "CACHE_DRIVER": "array",
         "LOG_CHANNEL": "stderr",
         "SESSION_DRIVER": "cookie",
+        "SESSION_SECURE_COOKIE": "true",
+        "SESSION_ENCRYPT": "true",
         "QUEUE_CONNECTION": "database"
     }
 }

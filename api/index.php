@@ -11,6 +11,9 @@ use Illuminate\Http\Request;
 
 define('LARAVEL_START', microtime(true));
 
+ini_set('expose_php', '0');
+header_remove('X-Powered-By');
+
 // Vercel preview deployments use unique hostnames. Keep generated URLs on the
 // active request host instead of a hardcoded production deployment domain.
 $vercelHost = $_SERVER['HTTP_X_FORWARDED_HOST'] ?? $_SERVER['HTTP_HOST'] ?? $_SERVER['VERCEL_URL'] ?? null;
