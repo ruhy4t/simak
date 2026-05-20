@@ -25,11 +25,11 @@ class SecurityHeaders
         // 2. CSP (Content Security Policy) - "Super High Security"
         // Whitelist trusted sources only. No unsafe-inline for scripts (except what we extracted).
         $csp = "default-src 'self'; " .
-            "script-src 'self' https://cdn.jsdelivr.net https://cdn.tailwindcss.com 'unsafe-eval' 'unsafe-inline'; " . // unsafe-inline REQUIRED for Alpine
+            "script-src 'self' https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://vercel.live 'unsafe-eval' 'unsafe-inline'; " . // unsafe-inline REQUIRED for Alpine
             "style-src 'self' 'unsafe-inline' https://fonts.bunny.net https://cdn.jsdelivr.net https://cdn.tailwindcss.com; " .
             "font-src 'self' https://fonts.bunny.net https://cdn.jsdelivr.net; " .
             "img-src 'self' data: https://images.unsplash.com https://www.transparenttextures.com https://*.backblazeb2.com; " .
-            "connect-src 'self' https://emsifa.github.io https://*.backblazeb2.com https://*.s3.us-east-005.backblazeb2.com; " . // Allow B2 Uploads
+            "connect-src 'self' https://emsifa.github.io https://vercel.live https://*.backblazeb2.com https://*.s3.us-east-005.backblazeb2.com; " . // Allow B2 Uploads
             "frame-ancestors 'self'; " . // Prevent clickjacking
             "form-action 'self'; " .
             "base-uri 'self'; " .

@@ -11,6 +11,19 @@ use Illuminate\Http\Request;
 
 define('LARAVEL_START', microtime(true));
 
+// Vercel preview deployments use unique hostnames. Keep generated URLs on the
+// active request host instead of a hardcoded production deployment domain.
+$vercelHost = $_SERVER['HTTP_X_FORWARDED_HOST'] ?? $_SERVER['HTTP_HOST'] ?? $_SERVER['VERCEL_URL'] ?? null;
+if ($vercelHost) {
+    $vercelAppUrl = 'https://' . $vercelHost;
+    $_ENV['APP_URL'] = $vercelAppUrl;
+    $_SERVER['APP_URL'] = $vercelAppUrl;
+    $_ENV['ASSET_URL'] = $vercelAppUrl;
+    $_SERVER['ASSET_URL'] = $vercelAppUrl;
+    putenv('APP_URL=' . $vercelAppUrl);
+    putenv('ASSET_URL=' . $vercelAppUrl);
+}
+
 // Determine if maintenance mode
 if (file_exists($maintenance = __DIR__ . '/../storage/framework/maintenance.php')) {
     require $maintenance;
