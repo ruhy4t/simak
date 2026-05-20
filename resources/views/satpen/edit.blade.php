@@ -16,7 +16,7 @@
         </div>
 
         <!-- Form -->
-        <div class="bg-white rounded-xl shadow-sm border p-6">
+        <div class="bg-white rounded-xl shadow-xs border p-6">
             <form action="{{ route('satpen.update', $satpen->id) }}" method="POST" enctype="multipart/form-data" class="space-y-6">
                 @csrf
                 @method('PUT')
@@ -28,7 +28,7 @@
                                 class="text-red-500">*</span></label>
                         <input type="text" name="npsn" required maxlength="8" pattern="[0-9A-Za-z]{8}"
                             value="{{ old('npsn', $satpen->npsn) }}"
-                            class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none @error('npsn') border-red-500 @enderror"
+                            class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden @error('npsn') border-red-500 @enderror"
                             placeholder="8 digit NPSN">
                         @error('npsn')
                             <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
@@ -40,7 +40,7 @@
                         <label class="block text-sm font-medium text-gray-700 mb-1">Nama Sekolah <span
                                 class="text-red-500">*</span></label>
                         <input type="text" name="nama" required maxlength="150" value="{{ old('nama', $satpen->nama) }}"
-                            class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none @error('nama') border-red-500 @enderror"
+                            class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden @error('nama') border-red-500 @enderror"
                             placeholder="contoh: SMP Negeri 1 Bogor">
                         @error('nama')
                             <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
@@ -52,7 +52,7 @@
                         <label class="block text-sm font-medium text-gray-700 mb-1">Bentuk Pendidikan <span
                                 class="text-red-500">*</span></label>
                         <select name="bentuk_pendidikan" required
-                            class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none">
+                            class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden">
                             <option value="SMP" {{ old('bentuk_pendidikan', $satpen->bentuk_pendidikan) == 'SMP' ? 'selected' : '' }}>SMP</option>
                             <option value="SMP SPK" {{ old('bentuk_pendidikan', $satpen->bentuk_pendidikan) == 'SMP SPK' ? 'selected' : '' }}>SMP SPK</option>
                             <option value="SMP Terbuka" {{ old('bentuk_pendidikan', $satpen->bentuk_pendidikan) == 'SMP Terbuka' ? 'selected' : '' }}>SMP Terbuka</option>
@@ -64,7 +64,7 @@
                         <label class="block text-sm font-medium text-gray-700 mb-1">Status <span
                                 class="text-red-500">*</span></label>
                         <select name="status_sp" required
-                            class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none">
+                            class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden">
                             <option value="Negeri" {{ old('status_sp', $satpen->status_sp) == 'Negeri' ? 'selected' : '' }}>
                                 Negeri</option>
                             <option value="Swasta" {{ old('status_sp', $satpen->status_sp) == 'Swasta' ? 'selected' : '' }}>
@@ -82,7 +82,7 @@
                         <div class="md:col-span-2">
                             <label class="block text-sm font-medium text-gray-700 mb-1">Alamat Jalan</label>
                             <textarea name="alamat_jalan" rows="2"
-                                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none"
+                                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden"
                                 placeholder="Jalan, nomor, RT/RW">{{ old('alamat_jalan', $satpen->alamat_jalan) }}</textarea>
                         </div>
 
@@ -91,7 +91,7 @@
                             <label class="block text-sm font-medium text-gray-700 mb-1">Kelurahan</label>
                             <input type="text" name="kelurahan" maxlength="50"
                                 value="{{ old('kelurahan', $satpen->kelurahan) }}"
-                                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none"
+                                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden"
                                 placeholder="contoh: Paledang">
                         </div>
 
@@ -100,7 +100,7 @@
                             <label class="block text-sm font-medium text-gray-700 mb-1">Kecamatan</label>
                             <input type="text" name="kecamatan" maxlength="50"
                                 value="{{ old('kecamatan', $satpen->kecamatan) }}"
-                                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none"
+                                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden"
                                 placeholder="contoh: Bogor Tengah">
                         </div>
 
@@ -109,7 +109,7 @@
                             <label class="block text-sm font-medium text-gray-700 mb-1">Kota <span
                                     class="text-red-500">*</span></label>
                             <input type="text" name="kota" required maxlength="50" value="{{ old('kota', $satpen->kota) }}"
-                                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none @error('kota') border-red-500 @enderror">
+                                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden @error('kota') border-red-500 @enderror">
                             @error('kota')
                                 <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
                             @enderror
@@ -121,7 +121,7 @@
                                     class="text-red-500">*</span></label>
                             <input type="text" name="provinsi" required maxlength="50"
                                 value="{{ old('provinsi', $satpen->provinsi) }}"
-                                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none @error('provinsi') border-red-500 @enderror">
+                                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden @error('provinsi') border-red-500 @enderror">
                             @error('provinsi')
                                 <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
                             @enderror
@@ -162,14 +162,14 @@
                             <label class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap & Gelar</label>
                             <input type="text" name="kepala_sekolah_nama"
                                 value="{{ old('kepala_sekolah_nama', $satpen->kepala_sekolah_nama ?? '') }}"
-                                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none"
+                                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden"
                                 placeholder="contoh: Dr. H. Budi Santoso, M.Pd.">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">NIP</label>
                             <input type="text" name="kepala_sekolah_nip"
                                 value="{{ old('kepala_sekolah_nip', $satpen->kepala_sekolah_nip ?? '') }}"
-                                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none font-mono"
+                                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden font-mono"
                                 placeholder="Isi (-) jika Non-ASN">
                         </div>
                     </div>
@@ -192,13 +192,13 @@
                                     <label class="block text-xs text-gray-500 mb-1 text-center">L</label>
                                     <input type="number" name="jumlah_siswa_7_l" min="0"
                                         value="{{ old('jumlah_siswa_7_l', $satpen->jumlah_siswa_7_l ?? 0) }}"
-                                        class="w-full px-2 py-2 border rounded-lg text-center focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none">
+                                        class="w-full px-2 py-2 border rounded-lg text-center focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-hidden">
                                 </div>
                                 <div>
                                     <label class="block text-xs text-gray-500 mb-1 text-center">P</label>
                                     <input type="number" name="jumlah_siswa_7_p" min="0"
                                         value="{{ old('jumlah_siswa_7_p', $satpen->jumlah_siswa_7_p ?? 0) }}"
-                                        class="w-full px-2 py-2 border rounded-lg text-center focus:ring-2 focus:ring-pink-100 focus:border-pink-500 outline-none">
+                                        class="w-full px-2 py-2 border rounded-lg text-center focus:ring-2 focus:ring-pink-100 focus:border-pink-500 outline-hidden">
                                 </div>
                             </div>
                         </div>
@@ -210,13 +210,13 @@
                                     <label class="block text-xs text-gray-500 mb-1 text-center">L</label>
                                     <input type="number" name="jumlah_siswa_8_l" min="0"
                                         value="{{ old('jumlah_siswa_8_l', $satpen->jumlah_siswa_8_l ?? 0) }}"
-                                        class="w-full px-2 py-2 border rounded-lg text-center focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none">
+                                        class="w-full px-2 py-2 border rounded-lg text-center focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-hidden">
                                 </div>
                                 <div>
                                     <label class="block text-xs text-gray-500 mb-1 text-center">P</label>
                                     <input type="number" name="jumlah_siswa_8_p" min="0"
                                         value="{{ old('jumlah_siswa_8_p', $satpen->jumlah_siswa_8_p ?? 0) }}"
-                                        class="w-full px-2 py-2 border rounded-lg text-center focus:ring-2 focus:ring-pink-100 focus:border-pink-500 outline-none">
+                                        class="w-full px-2 py-2 border rounded-lg text-center focus:ring-2 focus:ring-pink-100 focus:border-pink-500 outline-hidden">
                                 </div>
                             </div>
                         </div>
@@ -228,13 +228,13 @@
                                     <label class="block text-xs text-gray-500 mb-1 text-center">L</label>
                                     <input type="number" name="jumlah_siswa_9_l" min="0"
                                         value="{{ old('jumlah_siswa_9_l', $satpen->jumlah_siswa_9_l ?? 0) }}"
-                                        class="w-full px-2 py-2 border rounded-lg text-center focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none">
+                                        class="w-full px-2 py-2 border rounded-lg text-center focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-hidden">
                                 </div>
                                 <div>
                                     <label class="block text-xs text-gray-500 mb-1 text-center">P</label>
                                     <input type="number" name="jumlah_siswa_9_p" min="0"
                                         value="{{ old('jumlah_siswa_9_p', $satpen->jumlah_siswa_9_p ?? 0) }}"
-                                        class="w-full px-2 py-2 border rounded-lg text-center focus:ring-2 focus:ring-pink-100 focus:border-pink-500 outline-none">
+                                        class="w-full px-2 py-2 border rounded-lg text-center focus:ring-2 focus:ring-pink-100 focus:border-pink-500 outline-hidden">
                                 </div>
                             </div>
                         </div>
@@ -263,7 +263,7 @@
                             @if($satpen->kop_surat_path ?? false)
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Preview Terpasang</label>
                                 <img src="{{ Storage::url($satpen->kop_surat_path) }}" alt="Kop Surat"
-                                    class="w-full h-auto rounded-lg shadow-sm border">
+                                    class="w-full h-auto rounded-lg shadow-xs border">
                             @else
                                 <div class="flex items-center justify-center h-full bg-gray-50 rounded-lg border border-dashed border-gray-300">
                                     <p class="text-sm text-gray-400"><i class="bi bi-image mr-1"></i> Belum ada kop surat</p>

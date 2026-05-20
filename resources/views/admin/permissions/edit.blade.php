@@ -42,7 +42,7 @@
 
         <div class="space-y-6">
             @foreach($permissions as $group => $groupPermissions)
-                <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+                <div class="bg-white rounded-xl shadow-xs border overflow-hidden">
                     <div class="bg-gray-50 px-6 py-3 border-b">
                         <h3 class="font-semibold text-gray-900">{{ $group }}</h3>
                     </div>
@@ -65,7 +65,7 @@
                                 <div>
                                     <div class="font-medium text-gray-900">{{ $permission->display_name }}</div>
                                     <div class="text-sm text-gray-500">
-                                        <code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs">{{ $permission->name }}</code>
+                                        <code class="bg-gray-100 px-1.5 py-0.5 rounded-sm text-xs">{{ $permission->name }}</code>
                                         @if($isRoleDefault)
                                             <span class="ml-2 text-green-600">
                                                 <i class="bi bi-check-circle-fill"></i> Default untuk {{ $user->role }}

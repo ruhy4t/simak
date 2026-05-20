@@ -217,7 +217,7 @@
                 <div class="p-8 pb-6">
                     <div class="flex items-center gap-4">
                         <div
-                            class="w-12 h-12 bg-gradient-to-br from-white/10 to-white/5 rounded-2xl border border-white/10 flex items-center justify-center shadow-inner">
+                            class="w-12 h-12 bg-linear-to-br from-white/10 to-white/5 rounded-2xl border border-white/10 flex items-center justify-center shadow-inner">
                             <i class="bi bi-building text-2xl text-sky-400"></i>
                         </div>
                         <div>
@@ -247,7 +247,7 @@
                         <button @click="open = !open"
                             class="w-full flex items-center justify-between px-4 py-3.5 rounded-xl transition-all duration-200 group {{ request()->routeIs('mutasi.*') ? 'bg-white/5 text-white' : 'nav-item-inactive' }}">
                             <div class="flex items-center gap-3">
-                                <div class="p-1 rounded bg-white/5 group-hover:bg-sky-500/20 transition-colors">
+                                <div class="p-1 rounded-sm bg-white/5 group-hover:bg-sky-500/20 transition-colors">
                                     <i class="bi bi-arrow-left-right text-sky-400"></i>
                                 </div>
                                 <span class="text-sm font-medium">Mutasi Siswa</span>
@@ -348,7 +348,7 @@
                     <a href="{{ route('profile.index') }}"
                         class="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors group">
                         <div
-                            class="w-9 h-9 rounded-full bg-gradient-to-tr from-sky-400 to-blue-600 flex items-center justify-center text-white font-bold shadow-lg shadow-sky-500/20 ring-2 ring-white/10">
+                            class="w-9 h-9 rounded-full bg-linear-to-tr from-sky-400 to-blue-600 flex items-center justify-center text-white font-bold shadow-lg shadow-sky-500/20 ring-2 ring-white/10">
                             {{ substr(Auth::user()->username, 0, 1) }}
                         </div>
                         <div class="flex-1 overflow-hidden">
@@ -397,13 +397,13 @@
                     @if(session('success'))
                         <div x-data="{ show: true }" x-show="show" style="display: none;"
                             class="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 sm:px-0">
-                            <div class="fixed inset-0 transition-opacity bg-slate-900/60 backdrop-blur-sm"
+                            <div class="fixed inset-0 transition-opacity bg-slate-900/60 backdrop-blur-xs"
                                 @click="show = false"></div>
                             <div
                                 class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:w-full sm:max-w-md border border-slate-100 ring-1 ring-black/5 animate-bounce-short">
-                                <div class="bg-gradient-to-r from-emerald-50 to-white px-6 py-6 flex items-start gap-4">
+                                <div class="bg-linear-to-r from-emerald-50 to-white px-6 py-6 flex items-start gap-4">
                                     <div
-                                        class="flex-shrink-0 w-12 h-12 rounded-full bg-emerald-100/50 flex items-center justify-center shadow-sm">
+                                        class="shrink-0 w-12 h-12 rounded-full bg-emerald-100/50 flex items-center justify-center shadow-xs">
                                         <i class="bi bi-check-lg text-emerald-600 text-2xl"></i>
                                     </div>
                                     <div>
@@ -427,13 +427,13 @@
                     @if(session('working_hours'))
                         <div x-data="{ show: true }" x-show="show" style="display: none;"
                             class="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 sm:px-0">
-                            <div class="fixed inset-0 transition-opacity bg-slate-900/60 backdrop-blur-sm"
+                            <div class="fixed inset-0 transition-opacity bg-slate-900/60 backdrop-blur-xs"
                                 @click="show = false"></div>
                             <div
                                 class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:w-full sm:max-w-md border border-slate-100 ring-1 ring-black/5 animate-bounce-short">
-                                <div class="bg-gradient-to-r from-indigo-50 to-white px-6 py-6 flex items-start gap-4">
+                                <div class="bg-linear-to-r from-indigo-50 to-white px-6 py-6 flex items-start gap-4">
                                     <div
-                                        class="flex-shrink-0 w-12 h-12 rounded-full bg-indigo-100/50 flex items-center justify-center shadow-sm">
+                                        class="shrink-0 w-12 h-12 rounded-full bg-indigo-100/50 flex items-center justify-center shadow-xs">
                                         <i class="bi bi-shop-window text-indigo-600 text-2xl"></i>
                                     </div>
                                     <div>
@@ -456,13 +456,13 @@
                     @if(session('error'))
                         <div x-data="{ show: true }" x-show="show" style="display: none;"
                             class="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 sm:px-0">
-                            <div class="fixed inset-0 transition-opacity bg-slate-900/60 backdrop-blur-sm"
+                            <div class="fixed inset-0 transition-opacity bg-slate-900/60 backdrop-blur-xs"
                                 @click="show = false"></div>
                             <div
                                 class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:w-full sm:max-w-md border border-slate-100 ring-1 ring-black/5 animate-shake">
-                                <div class="bg-gradient-to-r from-rose-50 to-white px-6 py-6 flex items-start gap-4">
+                                <div class="bg-linear-to-r from-rose-50 to-white px-6 py-6 flex items-start gap-4">
                                     <div
-                                        class="flex-shrink-0 w-12 h-12 rounded-full bg-rose-100/50 flex items-center justify-center shadow-sm">
+                                        class="shrink-0 w-12 h-12 rounded-full bg-rose-100/50 flex items-center justify-center shadow-xs">
                                         <i class="bi bi-x-lg text-rose-600 text-2xl"></i>
                                     </div>
                                     <div>
@@ -486,13 +486,13 @@
                     @if($errors->any())
                         <div x-data="{ show: true }" x-show="show" style="display: none;"
                             class="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 sm:px-0">
-                            <div class="fixed inset-0 transition-opacity bg-slate-900/60 backdrop-blur-sm"
+                            <div class="fixed inset-0 transition-opacity bg-slate-900/60 backdrop-blur-xs"
                                 @click="show = false"></div>
                             <div
                                 class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:w-full sm:max-w-md border border-slate-100 ring-1 ring-black/5 animate-shake">
-                                <div class="bg-gradient-to-r from-orange-50 to-white px-6 py-6 flex items-start gap-4">
+                                <div class="bg-linear-to-r from-orange-50 to-white px-6 py-6 flex items-start gap-4">
                                     <div
-                                        class="flex-shrink-0 w-12 h-12 rounded-full bg-orange-100/50 flex items-center justify-center shadow-sm">
+                                        class="shrink-0 w-12 h-12 rounded-full bg-orange-100/50 flex items-center justify-center shadow-xs">
                                         <i class="bi bi-exclamation-triangle text-orange-600 text-2xl"></i>
                                     </div>
                                     <div>
@@ -533,7 +533,7 @@
                 x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200"
                 x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
 
-                <div class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" @click="sidebarOpen = false"></div>
+                <div class="absolute inset-0 bg-slate-900/80 backdrop-blur-xs" @click="sidebarOpen = false"></div>
 
                 <aside class="absolute left-0 top-0 bottom-0 w-72 glass-sidebar text-white shadow-2xl"
                     x-transition:enter="transition ease-out duration-300" x-transition:enter-start="-translate-x-full"

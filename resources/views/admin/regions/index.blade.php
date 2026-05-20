@@ -27,7 +27,7 @@
         </div>
 
         <!-- Search & Filter -->
-        <div class="bg-white p-4 rounded-xl shadow-sm border">
+        <div class="bg-white p-4 rounded-xl shadow-xs border">
             <form action="{{ route('admin.regions.index') }}" method="GET" class="flex gap-2">
                 <div class="relative flex-1">
                     <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
@@ -47,7 +47,7 @@
             </form>
         </div>
 
-        <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+        <div class="bg-white rounded-xl shadow-xs border overflow-hidden">
             <div class="p-4 border-b bg-gray-50 flex justify-between items-center">
                 <h3 class="font-semibold text-gray-900">Daftar Provinsi</h3>
                 <span class="text-xs text-gray-500">Total: {{ $provinces->total() }} Data</span>
@@ -110,7 +110,7 @@
             <div x-show="show" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0"
                 x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200"
                 x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-                class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm transition-opacity" aria-hidden="true"
+                class="fixed inset-0 bg-gray-900/50 backdrop-blur-xs transition-opacity" aria-hidden="true"
                 @click="show = false">
             </div>
 
@@ -133,7 +133,7 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Tingkat Wilayah</label>
                                 <select name="type" x-model="type"
-                                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                                    class="mt-1 block w-full border-gray-300 rounded-md shadow-xs focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
                                     <option value="provinsi">Provinsi</option>
                                     <option value="kabupaten">Kabupaten/Kota</option>
                                     <option value="kecamatan">Kecamatan</option>
@@ -145,7 +145,7 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Kode Wilayah (ID)</label>
                                 <input type="number" name="id" required
-                                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                                    class="mt-1 block w-full border-gray-300 rounded-md shadow-xs focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
                                     placeholder="Contoh: 32 (Jabar), 3271 (Bogor)">
                                 <p class="text-xs text-gray-500 mt-1">Gunakan kode resmi Kemendagri (Angka).</p>
                             </div>
@@ -154,7 +154,7 @@
                             <div x-show="type !== 'provinsi'">
                                 <label class="block text-sm font-medium text-gray-700">Kode Induk (Parent ID)</label>
                                 <input type="number" name="parent_id" :required="type !== 'provinsi'"
-                                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                                    class="mt-1 block w-full border-gray-300 rounded-md shadow-xs focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
                                     placeholder="Contoh: 32 (Jika input Kab/Kota)">
                             </div>
 
@@ -162,18 +162,18 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Nama Wilayah</label>
                                 <input type="text" name="nama" required
-                                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                                    class="mt-1 block w-full border-gray-300 rounded-md shadow-xs focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
                                     placeholder="Contoh: Jawa Barat">
                             </div>
                         </div>
                     </div>
                     <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                         <button type="submit"
-                            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary-600 text-base font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:ml-3 sm:w-auto sm:text-sm">
+                            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-xs px-4 py-2 bg-primary-600 text-base font-medium text-white hover:bg-primary-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:ml-3 sm:w-auto sm:text-sm">
                             Simpan
                         </button>
                         <button type="button" @click="show = false"
-                            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-xs px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
                             Batal
                         </button>
                     </div>

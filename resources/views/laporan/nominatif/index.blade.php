@@ -20,41 +20,41 @@
                     Kembali
                 </a>
                 <a href="{{ route('laporan.nominatif.print', request()->all()) }}" target="_blank"
-                    class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 shadow-sm flex items-center gap-2">
+                    class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 shadow-xs flex items-center gap-2">
                     <i class="bi bi-file-pdf"></i> PDF
                 </a>
                 <a href="{{ route('laporan.nominatif.excel', request()->all()) }}"
-                    class="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 shadow-sm flex items-center gap-2">
+                    class="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 shadow-xs flex items-center gap-2">
                     <i class="bi bi-file-excel"></i> Excel
                 </a>
             </div>
         </div>
 
         <!-- Filter -->
-        <div class="bg-white rounded-xl shadow-sm border p-4">
+        <div class="bg-white rounded-xl shadow-xs border p-4">
             <form action="{{ route('laporan.nominatif') }}" method="GET"
                 class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                 <div>
                     <label for="start_date" class="block text-sm font-medium text-gray-700 mb-1">Tanggal Mulai</label>
                     <input type="date" name="start_date" id="start_date" value="{{ $start_date }}"
-                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        class="w-full rounded-lg border-gray-300 shadow-xs focus:border-blue-500 focus:ring-blue-500">
                 </div>
                 <div>
                     <label for="end_date" class="block text-sm font-medium text-gray-700 mb-1">Tanggal Akhir</label>
                     <input type="date" name="end_date" id="end_date" value="{{ $end_date }}"
-                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        class="w-full rounded-lg border-gray-300 shadow-xs focus:border-blue-500 focus:ring-blue-500">
                 </div>
                 <div>
                     <label for="type" class="block text-sm font-medium text-gray-700 mb-1">Jenis Mutasi</label>
                     <select name="type" id="type"
-                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        class="w-full rounded-lg border-gray-300 shadow-xs focus:border-blue-500 focus:ring-blue-500">
                         <option value="masuk" {{ $type == 'masuk' ? 'selected' : '' }}>Mutasi Masuk</option>
                         <option value="keluar" {{ $type == 'keluar' ? 'selected' : '' }}>Mutasi Keluar</option>
                     </select>
                 </div>
                 <div>
                     <button type="submit"
-                        class="w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-sm">
+                        class="w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-xs">
                         Tampilkan Data
                     </button>
                 </div>
@@ -62,7 +62,7 @@
         </div>
 
         <!-- Table -->
-        <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+        <div class="bg-white rounded-xl shadow-xs border overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">

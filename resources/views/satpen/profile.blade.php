@@ -28,9 +28,9 @@
                 <div class="left-column" style="min-width: 0;">
 
                     <!-- 1. Identitas Sekolah (Read Only) -->
-                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="bg-white rounded-xl shadow-xs border border-slate-200 overflow-hidden">
                         <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center gap-3">
-                            <div class="bg-white p-2 rounded border border-slate-200 text-slate-500">
+                            <div class="bg-white p-2 rounded-sm border border-slate-200 text-slate-500">
                                 <i class="bi bi-building"></i>
                             </div>
                             <h2 class="font-bold text-slate-800 text-lg uppercase">Identitas Sekolah</h2>
@@ -80,7 +80,7 @@
                             <div class="bg-blue-50 border border-blue-100 rounded-lg p-5">
                                 <label class="block text-sm font-bold text-blue-900 mb-2">Tahun Pelajaran</label>
                                 <select x-model="academicYear"
-                                    class="w-full border-2 border-blue-300 bg-white text-blue-900 font-bold rounded-lg px-4 py-3 focus:outline-none focus:ring-4 focus:ring-blue-500/20 cursor-pointer text-lg">
+                                    class="w-full border-2 border-blue-300 bg-white text-blue-900 font-bold rounded-lg px-4 py-3 focus:outline-hidden focus:ring-4 focus:ring-blue-500/20 cursor-pointer text-lg">
                                     <option value="2025/2026">2025/2026 (Aktif)</option>
                                     <option value="2026/2027">2026/2027 (Mendatang)</option>
                                 </select>
@@ -105,13 +105,13 @@
                                     <div class="col-span-5">
                                         <input type="number" name="jumlah_siswa_7_l" min="0" required
                                             value="{{ old('jumlah_siswa_7_l', $satpen->jumlah_siswa_7_l ?? 0) }}"
-                                            class="w-full border-2 border-slate-300 bg-white focus:border-blue-500 focus:bg-blue-50 rounded-xl px-2 py-3 text-center text-lg font-bold text-slate-800 transition-all shadow-sm"
+                                            class="w-full border-2 border-slate-300 bg-white focus:border-blue-500 focus:bg-blue-50 rounded-xl px-2 py-3 text-center text-lg font-bold text-slate-800 transition-all shadow-xs"
                                             placeholder="L">
                                     </div>
                                     <div class="col-span-5">
                                         <input type="number" name="jumlah_siswa_7_p" min="0" required
                                             value="{{ old('jumlah_siswa_7_p', $satpen->jumlah_siswa_7_p ?? 0) }}"
-                                            class="w-full border-2 border-slate-300 bg-white focus:border-pink-500 focus:bg-pink-50 rounded-xl px-2 py-3 text-center text-lg font-bold text-slate-800 transition-all shadow-sm"
+                                            class="w-full border-2 border-slate-300 bg-white focus:border-pink-500 focus:bg-pink-50 rounded-xl px-2 py-3 text-center text-lg font-bold text-slate-800 transition-all shadow-xs"
                                             placeholder="P">
                                     </div>
                                 </div>
@@ -124,14 +124,14 @@
                                             :readonly="academicYear === '2026/2027'"
                                             :class="academicYear === '2026/2027' ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed' : 'bg-white border-slate-300 text-slate-800 focus:border-blue-500 focus:bg-blue-50'"
                                             value="{{ old('jumlah_siswa_8_l', $satpen->jumlah_siswa_8_l ?? 0) }}"
-                                            class="w-full border-2 rounded-xl px-2 py-3 text-center text-lg font-bold transition-all shadow-sm">
+                                            class="w-full border-2 rounded-xl px-2 py-3 text-center text-lg font-bold transition-all shadow-xs">
                                     </div>
                                     <div class="col-span-5 relative">
                                         <input type="number" name="jumlah_siswa_8_p" min="0" required
                                             :readonly="academicYear === '2026/2027'"
                                             :class="academicYear === '2026/2027' ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed' : 'bg-white border-slate-300 text-slate-800 focus:border-pink-500 focus:bg-pink-50'"
                                             value="{{ old('jumlah_siswa_8_p', $satpen->jumlah_siswa_8_p ?? 0) }}"
-                                            class="w-full border-2 rounded-xl px-2 py-3 text-center text-lg font-bold transition-all shadow-sm">
+                                            class="w-full border-2 rounded-xl px-2 py-3 text-center text-lg font-bold transition-all shadow-xs">
                                     </div>
                                 </div>
 
@@ -143,14 +143,14 @@
                                             :readonly="academicYear === '2026/2027'"
                                             :class="academicYear === '2026/2027' ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed' : 'bg-white border-slate-300 text-slate-800 focus:border-blue-500 focus:bg-blue-50'"
                                             value="{{ old('jumlah_siswa_9_l', $satpen->jumlah_siswa_9_l ?? 0) }}"
-                                            class="w-full border-2 rounded-xl px-2 py-3 text-center text-lg font-bold transition-all shadow-sm">
+                                            class="w-full border-2 rounded-xl px-2 py-3 text-center text-lg font-bold transition-all shadow-xs">
                                     </div>
                                     <div class="col-span-5 relative">
                                         <input type="number" name="jumlah_siswa_9_p" min="0" required
                                             :readonly="academicYear === '2026/2027'"
                                             :class="academicYear === '2026/2027' ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed' : 'bg-white border-slate-300 text-slate-800 focus:border-pink-500 focus:bg-pink-50'"
                                             value="{{ old('jumlah_siswa_9_p', $satpen->jumlah_siswa_9_p ?? 0) }}"
-                                            class="w-full border-2 rounded-xl px-2 py-3 text-center text-lg font-bold transition-all shadow-sm">
+                                            class="w-full border-2 rounded-xl px-2 py-3 text-center text-lg font-bold transition-all shadow-xs">
                                     </div>
                                 </div>
                             </div>
@@ -250,7 +250,7 @@
                                         Preview
                                         Terpasang</p>
                                     <img src="{{ Storage::url($satpen->kop_surat_path) }}" alt="Preview"
-                                        class="w-full h-auto rounded-lg shadow-sm border border-slate-200">
+                                        class="w-full h-auto rounded-lg shadow-xs border border-slate-200">
                                 </div>
                             @endif
                         </div>

@@ -7,13 +7,13 @@
         <!-- Header -->
         <div class="flex items-center gap-4">
             <a href="{{ route('mutasi.masuk.index') }}"
-                class="w-10 h-10 flex items-center justify-center bg-white border border-slate-200 rounded-xl text-slate-500 hover:text-sky-600 hover:border-sky-200 transition shadow-sm">
+                class="w-10 h-10 flex items-center justify-center bg-white border border-slate-200 rounded-xl text-slate-500 hover:text-sky-600 hover:border-sky-200 transition shadow-xs">
                 <i class="bi bi-arrow-left text-xl"></i>
             </a>
             <div class="flex-1">
                 <h1 class="text-2xl font-bold text-slate-900">Detail Mutasi Masuk</h1>
                 <div class="flex items-center gap-2 mt-1 text-sm text-slate-500">
-                    <span class="px-2 py-0.5 bg-slate-100 rounded text-slate-600 font-mono">#{{ $mutasi->id_mutasi }}</span>
+                    <span class="px-2 py-0.5 bg-slate-100 rounded-sm text-slate-600 font-mono">#{{ $mutasi->id_mutasi }}</span>
                     <span>•</span>
                     <span>{{ $mutasi->jumlah_siswa }} Siswa</span>
                 </div>
@@ -34,7 +34,7 @@
                     @csrf
                     @method('PUT')
                     <button type="submit"
-                        class="px-4 py-2 bg-white border border-rose-200 text-rose-600 hover:bg-rose-50 rounded-xl text-sm font-medium transition flex items-center gap-2 shadow-sm">
+                        class="px-4 py-2 bg-white border border-rose-200 text-rose-600 hover:bg-rose-50 rounded-xl text-sm font-medium transition flex items-center gap-2 shadow-xs">
                         <i class="bi bi-trash"></i> Batalkan & Hapus
                     </button>
                 </form>
@@ -57,7 +57,7 @@
         </div>
 
         <!-- Info Surat -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 sm:p-8">
+        <div class="bg-white rounded-2xl shadow-xs border border-slate-100 p-6 sm:p-8">
             <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
                 <div>
                     <p class="text-sm font-medium text-slate-500 mb-1">Tanggal Pengajuan</p>
@@ -100,10 +100,10 @@
 
             @if($canReviseMasuk)
                 <div
-                    class="bg-gradient-to-r from-amber-50 via-orange-50 to-red-50 border-2 border-amber-300 rounded-2xl p-6 sm:p-8 shadow-lg">
+                    class="bg-linear-to-r from-amber-50 via-orange-50 to-red-50 border-2 border-amber-300 rounded-2xl p-6 sm:p-8 shadow-lg">
                     <div class="flex flex-col lg:flex-row items-center gap-6">
                         <div
-                            class="w-20 h-20 rounded-full bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center shrink-0 ring-4 ring-amber-200/50">
+                            class="w-20 h-20 rounded-full bg-linear-to-br from-amber-100 to-orange-100 flex items-center justify-center shrink-0 ring-4 ring-amber-200/50">
                             <i class="bi bi-exclamation-triangle-fill text-amber-600 text-4xl"></i>
                         </div>
                         <div class="flex-1 text-center lg:text-left">
@@ -112,7 +112,7 @@
                             </h3>
 
                             @if($mutasi->catatan_berkas ?? null)
-                                <div class="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-amber-200 mb-5 text-left">
+                                <div class="bg-white/80 backdrop-blur-xs rounded-xl p-4 border border-amber-200 mb-5 text-left">
                                     <p class="font-bold text-amber-900 text-sm mb-1 flex items-center gap-2">
                                         <i class="bi bi-chat-left-text-fill text-amber-600"></i> Catatan dari Dinas:
                                     </p>
@@ -130,7 +130,7 @@
 
                             <div class="flex justify-center lg:justify-start">
                                 <a href="{{ route('mutasi.masuk.revision', $mutasi->id_mutasi) }}"
-                                    class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl transition-all font-bold shadow-xl shadow-amber-500/30 hover:-translate-y-1 text-lg">
+                                    class="inline-flex items-center px-8 py-4 bg-linear-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl transition-all font-bold shadow-xl shadow-amber-500/30 hover:-translate-y-1 text-lg">
                                     <i class="bi bi-pencil-square mr-3 text-xl"></i> Perbaiki & Kirim Ulang Sekarang
                                 </a>
                             </div>
@@ -143,7 +143,7 @@
             <!-- Layout Split untuk Verifikasi Dinas -->
             @if(in_array(auth()->user()->role, ['Operator', 'Sekolah']) && $mutasi->status === 'Selesai' && $mutasi->file_arsip_scan)
                 <div x-data="{ showDoc: false }"
-                    class="bg-white rounded-xl shadow-sm border border-slate-100 p-8 text-center max-w-4xl mx-auto my-12 animate-fade-in-up">
+                    class="bg-white rounded-xl shadow-xs border border-slate-100 p-8 text-center max-w-4xl mx-auto my-12 animate-fade-in-up">
                     <div
                         class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 ring-8 ring-green-50">
                         <i class="bi bi-file-earmark-check-fill text-4xl text-green-600"></i>
@@ -177,7 +177,7 @@
                     <!-- Kiri: Data Siswa & Preview Dokumen -->
                     <div class="space-y-4">
                         {{-- Sekolah Tujuan Info Card --}}
-                        <div class="bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 rounded-xl p-4">
+                        <div class="bg-linear-to-r from-emerald-50 to-green-50 border border-emerald-200 rounded-xl p-4">
                             <h4 class="text-xs font-semibold text-emerald-800 mb-2 flex items-center gap-1">
                                 <i class="bi bi-geo-alt-fill text-emerald-600"></i> Sekolah Tujuan (Penerima Mutasi)
                             </h4>
@@ -190,7 +190,7 @@
                                 <div class="flex justify-between items-center gap-2">
                                     <span class="text-emerald-700/70">NPSN</span>
                                     <span
-                                        class="font-mono text-emerald-900 bg-white/50 px-1.5 py-0.5 rounded border border-emerald-200">{{ $mutasi->npsn_sekolah_tujuan }}</span>
+                                        class="font-mono text-emerald-900 bg-white/50 px-1.5 py-0.5 rounded-sm border border-emerald-200">{{ $mutasi->npsn_sekolah_tujuan }}</span>
                                 </div>
                                 <div class="flex justify-between items-start gap-2">
                                     <span class="text-emerald-700/70 shrink-0">Alamat</span>
@@ -202,7 +202,7 @@
 
                         {{-- Surat Permohonan Card - Prominent for Verifier --}}
                         @if($mutasi->file_surat_permohonan)
-                            <div class="bg-gradient-to-r from-sky-50 to-blue-50 border border-sky-200 rounded-xl p-4">
+                            <div class="bg-linear-to-r from-sky-50 to-blue-50 border border-sky-200 rounded-xl p-4">
                                 <div class="flex items-center justify-between gap-3">
                                     <div class="flex items-center gap-3">
                                         <div
@@ -217,7 +217,7 @@
                                     <button type="button"
                                         @click="loadedDocs['surat_permohonan'] = true; activeDoc = activeDoc === 'surat_permohonan' ? null : 'surat_permohonan'"
                                         :style="activeDoc === 'surat_permohonan' ? 'background-color: #0284c7 !important; color: white !important;' : ''"
-                                        :class="activeDoc === 'surat_permohonan' ? '!bg-sky-600 !text-white ring-2 ring-offset-1 ring-sky-500 font-bold shadow-md' : 'bg-white text-sky-700 hover:bg-sky-100 border border-sky-300'"
+                                        :class="activeDoc === 'surat_permohonan' ? 'bg-sky-600! text-white! ring-2 ring-offset-1 ring-sky-500 font-bold shadow-md' : 'bg-white text-sky-700 hover:bg-sky-100 border border-sky-300'"
                                         class="px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">
                                         <i class="bi bi-eye"></i> Lihat Surat
                                     </button>
@@ -232,7 +232,7 @@
                         @endif
 
                         <!-- Tab Siswa -->
-                        <div class="bg-white rounded-xl shadow-sm border p-4">
+                        <div class="bg-white rounded-xl shadow-xs border p-4">
                             <div class="flex flex-wrap gap-2 mb-4">
                                 @foreach($siswaList as $idx => $siswa)
                                     <button type="button" @click="activeTab = {{ $idx }}; activeDoc = null"
@@ -250,7 +250,7 @@
                                 @endphp
                                 <div x-show="activeTab === {{ $idx }}" x-transition class="space-y-3">
                                     {{-- Header Siswa --}}
-                                    <div class="flex items-start gap-3 bg-gradient-to-r from-blue-50 to-slate-50 rounded-lg p-3">
+                                    <div class="flex items-start gap-3 bg-linear-to-r from-blue-50 to-slate-50 rounded-lg p-3">
                                         <div
                                             class="w-11 h-11 bg-blue-600 rounded-lg flex items-center justify-center shadow-md shadow-blue-200 shrink-0">
                                             <i class="bi bi-person-fill text-white text-lg"></i>
@@ -259,7 +259,7 @@
                                             <h4 class="font-bold text-gray-900 truncate">{{ $siswa->nama_murid }}</h4>
                                             <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mt-0.5 text-xs">
                                                 <span
-                                                    class="inline-flex items-center gap-1 text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded font-mono">
+                                                    class="inline-flex items-center gap-1 text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded-sm font-mono">
                                                     <i class="bi bi-hash"></i>{{ $siswa->nisn }}
                                                 </span>
                                                 <span class="text-gray-400">•</span>
@@ -298,7 +298,7 @@
                                     </div>
 
                                     {{-- Sekolah Asal Compact --}}
-                                    <div class="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-3">
+                                    <div class="bg-linear-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-3">
                                         <h5 class="text-xs font-semibold text-amber-800 mb-2 flex items-center gap-1">
                                             <i class="bi bi-building text-amber-600"></i> Sekolah Asal
                                         </h5>
@@ -311,7 +311,7 @@
                                             <div class="flex justify-between items-center gap-2">
                                                 <span class="text-amber-700/70">NPSN</span>
                                                 <span
-                                                    class="font-mono text-amber-900 bg-white/50 px-1.5 py-0.5 rounded border border-amber-200">{{ $siswa->npsn_sekolah_asal ?? '-' }}</span>
+                                                    class="font-mono text-amber-900 bg-white/50 px-1.5 py-0.5 rounded-sm border border-amber-200">{{ $siswa->npsn_sekolah_asal ?? '-' }}</span>
                                             </div>
                                             <div class="flex justify-between items-start gap-2">
                                                 <span class="text-amber-700/70 shrink-0">Lokasi</span>
@@ -370,7 +370,7 @@
                     </div>
 
                     <!-- Kanan: Form Verifikasi -->
-                    <div class="bg-white rounded-xl shadow-sm border p-6 h-fit sticky top-4">
+                    <div class="bg-white rounded-xl shadow-xs border p-6 h-fit sticky top-4">
                         <h2 class="text-lg font-semibold text-gray-900 mb-4">
                             <i class="bi bi-clipboard-check text-primary-600 mr-2"></i>
                             Verifikasi Berkas
@@ -385,9 +385,9 @@
                                     <i class="bi bi-file-earmark-text text-sky-600"></i>
                                     Dokumen Permohonan
                                 </h4>
-                                <label class="flex items-center p-2 rounded hover:bg-sky-100 cursor-pointer">
+                                <label class="flex items-center p-2 rounded-sm hover:bg-sky-100 cursor-pointer">
                                     <input type="checkbox" name="verifikasi_surat_permohonan" value="1"
-                                        class="rounded text-primary-600 focus:ring-primary-500 mr-3" {{ $mutasi->file_surat_permohonan ? 'checked' : 'disabled' }}
+                                        class="rounded-sm text-primary-600 focus:ring-primary-500 mr-3" {{ $mutasi->file_surat_permohonan ? 'checked' : 'disabled' }}
                                         @change="updateNote($el.checked, 'Surat Permohonan Izin Mutasi')">
                                     <span class="text-sm text-gray-700">Surat Permohonan Izin Mutasi</span>
                                     @if(!$mutasi->file_surat_permohonan)
@@ -415,9 +415,9 @@
                                     @endphp
                                     <div class="grid grid-cols-1 gap-2">
                                         @foreach($siswaDocList as $doc)
-                                            <label class="flex items-center p-2 rounded hover:bg-gray-50 cursor-pointer">
+                                            <label class="flex items-center p-2 rounded-sm hover:bg-gray-50 cursor-pointer">
                                                 <input type="checkbox" name="verifikasi[{{ $siswa->id }}][{{ $doc['key'] }}]" value="1"
-                                                    class="rounded text-primary-600 focus:ring-primary-500 mr-3" {{ $doc['file'] ? 'checked' : 'disabled' }}
+                                                    class="rounded-sm text-primary-600 focus:ring-primary-500 mr-3" {{ $doc['file'] ? 'checked' : 'disabled' }}
                                                     @change="updateNote($el.checked, '{{ $doc['label'] }} ({{ $siswa->nama_murid }})')">
                                                 <span class="text-sm text-gray-700">{{ $doc['label'] }}</span>
                                                 @if(!$doc['file'])
@@ -432,17 +432,17 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Catatan (Opsional)</label>
                                 <textarea name="catatan_berkas" rows="3" x-model="catatan"
-                                    class="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm"
+                                    class="w-full rounded-lg border-gray-300 shadow-xs focus:border-primary-500 focus:ring-primary-500 text-sm"
                                     placeholder="Tambahkan catatan jika perlu perbaikan..."></textarea>
                             </div>
 
                             <div class="flex flex-col gap-2 pt-2">
                                 <button type="submit" name="action" value="approve"
-                                    class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition shadow-sm">
+                                    class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition shadow-xs">
                                     <i class="bi bi-check-lg mr-2"></i> Setujui Berkas
                                 </button>
                                 <button type="submit" name="action" value="revision"
-                                    class="w-full py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-medium transition shadow-sm">
+                                    class="w-full py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-medium transition shadow-xs">
                                     <i class="bi bi-x-lg mr-2"></i> Minta Perbaikan
                                 </button>
                             </div>
@@ -512,7 +512,7 @@
                     {{-- Surat Permohonan Card (Always Visible if Exists) --}}
                     @if($mutasi->file_surat_permohonan)
                         <div
-                            class="bg-gradient-to-r from-sky-50 to-blue-50 border border-sky-200 rounded-xl p-4 flex items-center justify-between gap-4">
+                            class="bg-linear-to-r from-sky-50 to-blue-50 border border-sky-200 rounded-xl p-4 flex items-center justify-between gap-4">
                             <div class="flex items-center gap-3">
                                 <div
                                     class="w-10 h-10 bg-sky-600 rounded-lg flex items-center justify-center shadow-md shadow-sky-200">
@@ -526,7 +526,7 @@
                             <button type="button"
                                 @click="activeDoc = activeDoc === 'surat_permohonan_normal' ? null : 'surat_permohonan_normal'"
                                 :style="activeDoc === 'surat_permohonan_normal' ? 'background-color: #0284c7 !important; color: white !important;' : ''"
-                                :class="activeDoc === 'surat_permohonan_normal' ? '!bg-sky-600 !text-white ring-2 ring-offset-1 ring-sky-500 font-bold shadow-md' : 'bg-white text-sky-700 hover:bg-sky-100 border border-sky-300'"
+                                :class="activeDoc === 'surat_permohonan_normal' ? 'bg-sky-600! text-white! ring-2 ring-offset-1 ring-sky-500 font-bold shadow-md' : 'bg-white text-sky-700 hover:bg-sky-100 border border-sky-300'"
                                 class="px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">
                                 <i class="bi bi-eye"></i> Lihat Surat
                             </button>
@@ -538,7 +538,7 @@
                     @endif
 
                     <!-- Data Siswa dengan Tab -->
-                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 sm:p-6">
+                    <div class="bg-white rounded-2xl shadow-xs border border-slate-100 p-4 sm:p-6">
                         <h2 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-3">
                             <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
                                 <i class="bi bi-people-fill text-blue-600 text-xl"></i>
@@ -561,14 +561,14 @@
                         {{-- Alert Perlu Perbaikan --}}
                         @if($mutasi->status === 'Perlu Perbaikan')
                             <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3 mb-6">
-                                <i class="bi bi-exclamation-triangle-fill text-amber-500 text-xl flex-shrink-0"></i>
+                                <i class="bi bi-exclamation-triangle-fill text-amber-500 text-xl shrink-0"></i>
                                 <div>
                                     <h4 class="font-bold text-amber-800 text-sm">Perlu Perbaikan</h4>
                                     <p class="text-sm text-amber-700 mt-1">Mohon perbaiki data atau dokumen sesuai catatan dari
                                         verifikator. Cek catatan pada setiap siswa atau dokumen.</p>
                                     @if($mutasi->catatan_berkas)
                                         <div
-                                            class="mt-2 bg-white/60 p-2 rounded text-xs font-mono text-amber-900 border border-amber-100">
+                                            class="mt-2 bg-white/60 p-2 rounded-sm text-xs font-mono text-amber-900 border border-amber-100">
                                             {{ $mutasi->catatan_berkas }}
                                         </div>
                                     @endif
@@ -584,7 +584,7 @@
                             <div x-show="activeTab === {{ $idx }}" x-transition class="space-y-6">
 
                                 {{-- Card Data Siswa (High Clarity) --}}
-                                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-xs">
 
                                     {{-- Header: Identitas --}}
                                     <div class="p-6 bg-slate-50 border-b border-slate-200 flex items-start gap-5">
@@ -661,7 +661,7 @@
                                                     </div>
                                                     <div class="mt-1 flex items-center gap-2">
                                                         <span
-                                                            class="text-sm font-bold font-mono text-slate-700 bg-white/50 px-2 py-0.5 rounded border border-amber-100">NPSN:
+                                                            class="text-sm font-bold font-mono text-slate-700 bg-white/50 px-2 py-0.5 rounded-sm border border-amber-100">NPSN:
                                                             {{ $siswa->npsn_sekolah_asal ?? '-' }}</span>
                                                     </div>
                                                 </div>
@@ -685,7 +685,7 @@
                                 </div>
 
                                 {{-- Card Dokumen (Grid Button Besar) --}}
-                                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm p-6">
+                                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-xs p-6">
                                     <h4
                                         class="font-bold text-slate-900 border-b border-slate-200 pb-3 mb-4 flex items-center gap-2">
                                         <i class="bi bi-files text-blue-600"></i> Dokumen Lampiran
@@ -709,7 +709,7 @@
                                                     :class="activeDoc === '{{ $doc['key'] }}' 
                                                                                                                                                                                                                                                                     ? 'ring-2 ring-{{ $doc['color'] }}-500 bg-{{ $doc['color'] }}-50' 
                                                                                                                                                                                                                                                                     : 'bg-white hover:bg-slate-50 border-slate-200'"
-                                                    class="flex items-center gap-4 p-4 rounded-xl border transition group text-left w-full shadow-sm hover:shadow-md">
+                                                    class="flex items-center gap-4 p-4 rounded-xl border transition group text-left w-full shadow-xs hover:shadow-md">
 
                                                     <div
                                                         class="w-12 h-12 rounded-lg bg-{{ $doc['color'] }}-100 text-{{ $doc['color'] }}-600 flex items-center justify-center shrink-0">
@@ -785,7 +785,7 @@
                             </div>
                         </div>
                         <button type="submit"
-                            class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition shadow-sm">
+                            class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition shadow-xs">
                             <i class="bi bi-send-check mr-2"></i> Siapkan Cetak
                         </button>
                     </form>
@@ -811,13 +811,13 @@
                             @if(in_array(auth()->user()->role, ['Dinas', 'SuperAdmin']))
                                 @if($mutasi->file_arsip_scan)
                                     <a href="{{ route('dokumen.view', ['path' => $mutasi->file_arsip_scan]) }}" target="_blank"
-                                        class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition shadow-sm">
+                                        class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition shadow-xs">
                                         <i class="bi bi-file-earmark-check mr-2"></i> Lihat Arsip Surat
                                     </a>
                                 @else
                                     <div x-data="{ openPrint: false }" class="relative inline-block">
                                         <button @click="openPrint = !openPrint" @click.outside="openPrint = false"
-                                            class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition shadow-sm flex items-center gap-2">
+                                            class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition shadow-xs flex items-center gap-2">
                                             <i class="bi bi-printer"></i> Cetak Surat Izin <i class="bi bi-chevron-down text-xs"></i>
                                         </button>
                                         <div x-show="openPrint" x-transition
@@ -838,7 +838,7 @@
                             @endif
                             <!-- Route missing/not implemented
                                                                                                                         <a href="{{-- route('mutasi.masuk.print-keterangan', $mutasi->id_mutasi) --}}" target="_blank"
-                                                                                                                            class="px-4 py-2 bg-white text-emerald-700 border border-emerald-200 hover:bg-emerald-50 rounded-lg font-medium transition shadow-sm">
+                                                                                                                            class="px-4 py-2 bg-white text-emerald-700 border border-emerald-200 hover:bg-emerald-50 rounded-lg font-medium transition shadow-xs">
                                                                                                                             <i class="bi bi-printer mr-2"></i> Cetak Surat Keterangan
                                                                                                                         </a>
                                                                                                                         -->
@@ -868,7 +868,7 @@
                                 class="w-full rounded-lg border-indigo-200 focus:border-indigo-500 focus:ring-indigo-500" required>
                         </div>
                         <button type="submit"
-                            class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition shadow-sm">
+                            class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition shadow-xs">
                             <i class="bi bi-check-circle-fill mr-2"></i> Selesai Tanda Tangan
                         </button>
                     </form>
@@ -896,8 +896,8 @@
                             </div>
                             <button type="button" @click="activeDoc = activeDoc === 'arsip_scan' ? null : 'arsip_scan'"
                                 :style="activeDoc === 'arsip_scan' ? 'background-color: #15803d !important; color: white !important;' : ''"
-                                :class="activeDoc === 'arsip_scan' ? '!bg-green-700 !text-white ring-2 ring-offset-1 ring-green-600 font-bold shadow-md' : 'bg-green-600 text-white hover:bg-green-700 border border-green-700'"
-                                class="px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm">
+                                :class="activeDoc === 'arsip_scan' ? 'bg-green-700! text-white! ring-2 ring-offset-1 ring-green-600 font-bold shadow-md' : 'bg-green-600 text-white hover:bg-green-700 border border-green-700'"
+                                class="px-4 py-2 rounded-lg text-sm font-medium transition shadow-xs">
                                 <i class="bi bi-file-earmark-pdf mr-1"></i> Lihat Dokumen
                             </button>
                         </div>

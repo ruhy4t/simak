@@ -7,13 +7,13 @@
         <!-- Header -->
         <div class="flex items-center gap-4">
             <a href="{{ route('mutasi.keluar.show', $mutasi->id_mutasi) }}"
-                class="w-10 h-10 flex items-center justify-center bg-white border border-slate-200 rounded-xl text-slate-500 hover:text-sky-600 hover:border-sky-200 transition shadow-sm">
+                class="w-10 h-10 flex items-center justify-center bg-white border border-slate-200 rounded-xl text-slate-500 hover:text-sky-600 hover:border-sky-200 transition shadow-xs">
                 <i class="bi bi-arrow-left text-xl"></i>
             </a>
             <div>
                 <h1 class="text-2xl font-bold text-slate-900">Edit Mutasi Keluar</h1>
                 <div class="flex items-center gap-2 mt-1 text-sm text-slate-500">
-                    <span class="px-2 py-0.5 bg-slate-100 rounded text-slate-600 font-mono">#{{ $mutasi->id_mutasi }}</span>
+                    <span class="px-2 py-0.5 bg-slate-100 rounded-sm text-slate-600 font-mono">#{{ $mutasi->id_mutasi }}</span>
                 </div>
             </div>
         </div>
@@ -21,7 +21,7 @@
         <!-- Warning -->
         <div class="bg-amber-50 border border-amber-100 rounded-2xl p-4 sm:p-6">
             <div class="flex items-start gap-4">
-                <div class="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
+                <div class="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center shrink-0">
                     <i class="bi bi-exclamation-triangle-fill text-amber-600 text-xl"></i>
                 </div>
                 <div>
@@ -39,7 +39,7 @@
             @method('PUT')
 
             <!-- Data Siswa -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 sm:p-8">
+            <div class="bg-white rounded-2xl shadow-xs border border-slate-100 p-6 sm:p-8">
                 <h2 class="text-lg font-bold text-slate-900 mb-6 flex items-center gap-3">
                     <div class="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
                         <i class="bi bi-person-fill text-blue-600"></i>
@@ -109,7 +109,7 @@
             </div>
 
             <!-- Sekolah Asal -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 sm:p-8">
+            <div class="bg-white rounded-2xl shadow-xs border border-slate-100 p-6 sm:p-8">
                 <h2 class="text-lg font-bold text-slate-900 mb-6 flex items-center gap-3">
                     <div class="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center">
                         <i class="bi bi-building-fill text-orange-600"></i>
@@ -156,7 +156,7 @@
             </div>
 
             <!-- Sekolah Tujuan -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 sm:p-8">
+            <div class="bg-white rounded-2xl shadow-xs border border-slate-100 p-6 sm:p-8">
                 <h2 class="text-lg font-bold text-slate-900 mb-6 flex items-center gap-3">
                     <div class="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center">
                         <i class="bi bi-geo-alt-fill text-emerald-600"></i>
@@ -214,7 +214,7 @@
                         <label
                             class="flex items-center gap-3 cursor-pointer p-3 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-100">
                             <input type="checkbox" name="tujuan_luar_negeri" id="tujuan_luar_negeri" value="1"
-                                class="w-5 h-5 rounded text-sky-600 focus:ring-sky-500" {{ old('tujuan_luar_negeri_flag', $mutasi->tujuan_luar_negeri ?? 0) ? 'checked' : '' }} onchange="toggleTujuanLuarNegeri()">
+                                class="w-5 h-5 rounded-sm text-sky-600 focus:ring-sky-500" {{ old('tujuan_luar_negeri_flag', $mutasi->tujuan_luar_negeri ?? 0) ? 'checked' : '' }} onchange="toggleTujuanLuarNegeri()">
                             <span class="text-sm font-medium text-slate-700">Sekolah Tujuan di Luar Negeri</span>
                         </label>
                         <input type="hidden" id="tujuan_luar_negeri_hidden" name="tujuan_luar_negeri_flag"
@@ -224,7 +224,7 @@
             </div>
 
             <!-- Alasan Pindah -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 sm:p-8">
+            <div class="bg-white rounded-2xl shadow-xs border border-slate-100 p-6 sm:p-8">
                 <h2 class="text-lg font-bold text-slate-900 mb-6 flex items-center gap-3">
                     <div class="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center">
                         <i class="bi bi-chat-left-text-fill text-indigo-600"></i>
@@ -242,7 +242,7 @@
             <div class="flex items-center justify-end gap-4 sticky bottom-6 z-10 p-2">
                 <div class="flex gap-4 bg-white/80 backdrop-blur-md p-2 rounded-2xl shadow-xl border border-slate-200/50">
                     <a href="{{ route('mutasi.keluar.show', $mutasi->id_mutasi) }}"
-                        class="px-6 py-3 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-xl transition font-medium shadow-sm">
+                        class="px-6 py-3 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-xl transition font-medium shadow-xs">
                         Batal
                     </a>
                     <button type="submit"

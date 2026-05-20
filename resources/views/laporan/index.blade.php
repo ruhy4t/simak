@@ -19,7 +19,7 @@
                     class="group flex flex-1 items-center bg-blue-50/80 rounded-2xl border-2 border-blue-100 p-8 transition hover:bg-blue-100/80 hover:border-blue-300 hover:shadow-lg hover:-translate-y-1">
                     <div class="flex items-center gap-6">
                         <div
-                            class="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-blue-600 shadow-sm group-hover:scale-110 transition-transform">
+                            class="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-blue-600 shadow-xs group-hover:scale-110 transition-transform">
                             <i class="bi bi-bar-chart-line text-3xl"></i>
                         </div>
                         <div>
@@ -35,7 +35,7 @@
                     class="group flex flex-1 items-center bg-indigo-50/80 rounded-2xl border-2 border-indigo-100 p-8 transition hover:bg-indigo-100/80 hover:border-indigo-300 hover:shadow-lg hover:-translate-y-1">
                     <div class="flex items-center gap-6">
                         <div
-                            class="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-indigo-600 shadow-sm group-hover:scale-110 transition-transform">
+                            class="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-indigo-600 shadow-xs group-hover:scale-110 transition-transform">
                             <i class="bi bi-graph-up text-3xl"></i>
                         </div>
                         <div>
@@ -51,7 +51,7 @@
                     class="group flex flex-1 items-center bg-orange-50/80 rounded-2xl border-2 border-orange-100 p-8 transition hover:bg-orange-100/80 hover:border-orange-300 hover:shadow-lg hover:-translate-y-1">
                     <div class="flex items-center gap-6">
                         <div
-                            class="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-orange-600 shadow-sm group-hover:scale-110 transition-transform">
+                            class="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-orange-600 shadow-xs group-hover:scale-110 transition-transform">
                             <i class="bi bi-table text-3xl"></i>
                         </div>
                         <div>
@@ -70,7 +70,7 @@
 
                     <div class="relative z-10 space-y-8">
                         <div class="flex items-start gap-5">
-                            <div class="p-4 bg-white rounded-2xl shadow-sm border border-emerald-100/50">
+                            <div class="p-4 bg-white rounded-2xl shadow-xs border border-emerald-100/50">
                                 <i class="bi bi-printer-fill text-4xl text-emerald-600"></i>
                             </div>
                             <div>
@@ -80,7 +80,7 @@
                             </div>
                         </div>
 
-                        <div class="bg-white rounded-2xl p-8 border border-emerald-100 shadow-sm">
+                        <div class="bg-white rounded-2xl p-8 border border-emerald-100 shadow-xs">
                             <form action="{{ route('laporan.cetak-komprehensif') }}" method="GET" target="_blank"
                                 class="space-y-6">
 

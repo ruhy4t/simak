@@ -18,7 +18,7 @@
         </div>
 
         <!-- Filters -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-1.5">
+        <div class="bg-white rounded-2xl shadow-xs border border-slate-100 p-1.5">
             <form method="GET" id="filterForm" class="flex flex-col sm:flex-row gap-2">
                 <div class="relative flex-1">
                     <i class="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
@@ -61,7 +61,7 @@
         </div>
 
         <!-- Table -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <div class="bg-white rounded-2xl shadow-xs border border-slate-100 overflow-hidden">
             @if(count($mutasiList) > 0)
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm">
@@ -124,20 +124,20 @@
                                     <td class="px-6 py-4">
                                         @php
                                             $statusMap = [
-                                                'Draft' => ['bg' => 'bg-gray-100', 'text' => 'text-gray-700', 'ring' => 'ring-gray-500/20', 'icon' => 'bi-pencil-square'],
-                                                'Menunggu Verifikasi Dinas' => ['bg' => 'bg-amber-100', 'text' => 'text-amber-800', 'ring' => 'ring-amber-600/20', 'icon' => 'bi-hourglass-split'],
-                                                'Proses' => ['bg' => 'bg-blue-100', 'text' => 'text-blue-800', 'ring' => 'ring-blue-600/20', 'icon' => 'bi-arrow-repeat'],
-                                                'Proses TTD' => ['bg' => 'bg-indigo-100', 'text' => 'text-indigo-800', 'ring' => 'ring-indigo-600/20', 'icon' => 'bi-pen'],
-                                                'Disetujui Dinas' => ['bg' => 'bg-emerald-100', 'text' => 'text-emerald-800', 'ring' => 'ring-emerald-600/20', 'icon' => 'bi-check-circle'],
-                                                'Selesai' => ['bg' => 'bg-sky-100', 'text' => 'text-sky-800', 'ring' => 'ring-sky-600/20', 'icon' => 'bi-check-all'],
-                                                'Perlu Perbaikan' => ['bg' => 'bg-rose-100', 'text' => 'text-rose-800', 'ring' => 'ring-rose-600/20', 'icon' => 'bi-exclamation-circle'],
-                                                'Dibatalkan' => ['bg' => 'bg-slate-200', 'text' => 'text-slate-600', 'ring' => 'ring-slate-500/20', 'icon' => 'bi-x-circle'],
+                                                'Draft' => ['bg' => 'bg-gray-100', 'text' => 'text-gray-700', 'ring-3' => 'ring-gray-500/20', 'icon' => 'bi-pencil-square'],
+                                                'Menunggu Verifikasi Dinas' => ['bg' => 'bg-amber-100', 'text' => 'text-amber-800', 'ring-3' => 'ring-amber-600/20', 'icon' => 'bi-hourglass-split'],
+                                                'Proses' => ['bg' => 'bg-blue-100', 'text' => 'text-blue-800', 'ring-3' => 'ring-blue-600/20', 'icon' => 'bi-arrow-repeat'],
+                                                'Proses TTD' => ['bg' => 'bg-indigo-100', 'text' => 'text-indigo-800', 'ring-3' => 'ring-indigo-600/20', 'icon' => 'bi-pen'],
+                                                'Disetujui Dinas' => ['bg' => 'bg-emerald-100', 'text' => 'text-emerald-800', 'ring-3' => 'ring-emerald-600/20', 'icon' => 'bi-check-circle'],
+                                                'Selesai' => ['bg' => 'bg-sky-100', 'text' => 'text-sky-800', 'ring-3' => 'ring-sky-600/20', 'icon' => 'bi-check-all'],
+                                                'Perlu Perbaikan' => ['bg' => 'bg-rose-100', 'text' => 'text-rose-800', 'ring-3' => 'ring-rose-600/20', 'icon' => 'bi-exclamation-circle'],
+                                                'Dibatalkan' => ['bg' => 'bg-slate-200', 'text' => 'text-slate-600', 'ring-3' => 'ring-slate-500/20', 'icon' => 'bi-x-circle'],
                                             ];
-                                            $defaultStatus = ['bg' => 'bg-slate-100', 'text' => 'text-slate-700', 'ring' => 'ring-slate-600/20', 'icon' => 'bi-circle'];
+                                            $defaultStatus = ['bg' => 'bg-slate-100', 'text' => 'text-slate-700', 'ring-3' => 'ring-slate-600/20', 'icon' => 'bi-circle'];
                                             $statusConfig = $statusMap[$mutasi->status] ?? $defaultStatus;
                                         @endphp
                                         <span
-                                            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium {{ $statusConfig['bg'] }} {{ $statusConfig['text'] }} ring-1 ring-inset {{ $statusConfig['ring'] }}">
+                                            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium {{ $statusConfig['bg'] }} {{ $statusConfig['text'] }} ring-1 ring-inset {{ $statusConfig['ring-3'] }}">
                                             <i class="bi {{ $statusConfig['icon'] }}"></i>
                                             {{ $mutasi->status }}
                                         </span>
@@ -235,7 +235,7 @@
 
     {{-- Schedule Block Modal --}}
     @if(session('schedule_block'))
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm"
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs"
             x-data="{ show: true }" x-show="show" x-transition.opacity>
             <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden transform transition-all scale-100">
                 <div class="p-8 text-center">

@@ -20,7 +20,7 @@
         </div>
 
         <!-- Filters -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-1.5">
+        <div class="bg-white rounded-2xl shadow-xs border border-slate-100 p-1.5">
             <form action="{{ route('mutasi.masuk.index') }}" method="GET" id="filterForm"
                 class="flex flex-col sm:flex-row gap-2">
                 <div class="relative flex-1">
@@ -53,7 +53,7 @@
         </div>
 
         <!-- Table -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden" x-data="{ 
+        <div class="bg-white rounded-2xl shadow-xs border border-slate-100 overflow-hidden" x-data="{ 
                                  showModal: false, 
                                  modalTitle: '', 
                                  siswaList: []
@@ -192,19 +192,19 @@
                                 <td class="px-6 py-4">
                                     @php
                                         $statusMap = [
-                                            'Draft' => ['bg' => 'bg-gray-100', 'text' => 'text-gray-700', 'ring' => 'ring-gray-500/20', 'icon' => 'bi-pencil-square'],
-                                            'Menunggu Verifikasi Dinas' => ['bg' => 'bg-amber-100', 'text' => 'text-amber-800', 'ring' => 'ring-amber-600/20', 'icon' => 'bi-hourglass-split'],
-                                            'Disetujui Dinas' => ['bg' => 'bg-emerald-100', 'text' => 'text-emerald-800', 'ring' => 'ring-emerald-600/20', 'icon' => 'bi-check-circle'],
-                                            'Proses TTD' => ['bg' => 'bg-indigo-100', 'text' => 'text-indigo-800', 'ring' => 'ring-indigo-600/20', 'icon' => 'bi-pen'],
-                                            'Selesai' => ['bg' => 'bg-sky-100', 'text' => 'text-sky-800', 'ring' => 'ring-sky-600/20', 'icon' => 'bi-check-all'],
-                                            'Perlu Perbaikan' => ['bg' => 'bg-rose-100', 'text' => 'text-rose-800', 'ring' => 'ring-rose-600/20', 'icon' => 'bi-exclamation-circle'],
-                                            'Dibatalkan' => ['bg' => 'bg-slate-200', 'text' => 'text-slate-600', 'ring' => 'ring-slate-500/20', 'icon' => 'bi-x-circle'],
+                                            'Draft' => ['bg' => 'bg-gray-100', 'text' => 'text-gray-700', 'ring-3' => 'ring-gray-500/20', 'icon' => 'bi-pencil-square'],
+                                            'Menunggu Verifikasi Dinas' => ['bg' => 'bg-amber-100', 'text' => 'text-amber-800', 'ring-3' => 'ring-amber-600/20', 'icon' => 'bi-hourglass-split'],
+                                            'Disetujui Dinas' => ['bg' => 'bg-emerald-100', 'text' => 'text-emerald-800', 'ring-3' => 'ring-emerald-600/20', 'icon' => 'bi-check-circle'],
+                                            'Proses TTD' => ['bg' => 'bg-indigo-100', 'text' => 'text-indigo-800', 'ring-3' => 'ring-indigo-600/20', 'icon' => 'bi-pen'],
+                                            'Selesai' => ['bg' => 'bg-sky-100', 'text' => 'text-sky-800', 'ring-3' => 'ring-sky-600/20', 'icon' => 'bi-check-all'],
+                                            'Perlu Perbaikan' => ['bg' => 'bg-rose-100', 'text' => 'text-rose-800', 'ring-3' => 'ring-rose-600/20', 'icon' => 'bi-exclamation-circle'],
+                                            'Dibatalkan' => ['bg' => 'bg-slate-200', 'text' => 'text-slate-600', 'ring-3' => 'ring-slate-500/20', 'icon' => 'bi-x-circle'],
                                         ];
-                                        $defaultStatus = ['bg' => 'bg-slate-100', 'text' => 'text-slate-700', 'ring' => 'ring-slate-600/20', 'icon' => 'bi-circle'];
+                                        $defaultStatus = ['bg' => 'bg-slate-100', 'text' => 'text-slate-700', 'ring-3' => 'ring-slate-600/20', 'icon' => 'bi-circle'];
                                         $statusConfig = $statusMap[$mutasi->status] ?? $defaultStatus;
                                     @endphp
                                     <span
-                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium {{ $statusConfig['bg'] }} {{ $statusConfig['text'] }} ring-1 ring-inset {{ $statusConfig['ring'] }}">
+                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium {{ $statusConfig['bg'] }} {{ $statusConfig['text'] }} ring-1 ring-inset {{ $statusConfig['ring-3'] }}">
                                         <i class="bi {{ $statusConfig['icon'] }}"></i>
                                         {{ $mutasi->status }}
                                     </span>
@@ -224,7 +224,7 @@
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit"
-                                                    class="inline-flex items-center justify-center w-8 h-8 rounded-lg !bg-red-500 !text-white hover:bg-red-600 shadow-md shadow-red-500/20 transition-all hover:-translate-y-0.5 text-sm font-medium gap-1"
+                                                    class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-red-500! text-white! hover:bg-red-600 shadow-md shadow-red-500/20 transition-all hover:-translate-y-0.5 text-sm font-medium gap-1"
                                                     title="Hapus Draft">
                                                     <i class="bi bi-trash-fill"></i>
                                                 </button>
@@ -295,13 +295,13 @@
 
             {{-- CENTERED MODAL FOR STUDENTS --}}
             <div x-show="showModal" style="display: none;"
-                class="fixed inset-0 z-[60] flex items-center justify-center px-4"
+                class="fixed inset-0 z-60 flex items-center justify-center px-4"
                 x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0"
                 x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150"
                 x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
 
                 {{-- Backdrop --}}
-                <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" @click="showModal = false"></div>
+                <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs" @click="showModal = false"></div>
 
                 {{-- Modal Content --}}
                 <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[80vh] flex flex-col overflow-hidden"
@@ -345,7 +345,7 @@
                             <template x-for="(siswa, index) in siswaList" :key="index">
                                 <div class="flex items-start gap-4 p-4 rounded-xl border border-slate-200 hover:border-indigo-300 hover:shadow-lg transition-all duration-200"
                                     style="background: linear-gradient(to right, #f8fafc, #ffffff);">
-                                    <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm"
+                                    <div class="shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm"
                                         style="background: linear-gradient(135deg, #6366f1, #a855f7); box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);"
                                         x-text="index + 1"></div>
                                     <div class="flex-1 min-w-0">
@@ -381,7 +381,7 @@
 
     {{-- Schedule Block Modal --}}
     @if(session('schedule_block'))
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm"
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs"
             x-data="{ show: true }" x-show="show" x-transition.opacity>
             <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden transform transition-all scale-100">
                 <div class="p-8 text-center">

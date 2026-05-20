@@ -19,7 +19,7 @@
 
         <!-- Stats per Role -->
         <div class="grid grid-cols-1 md:grid-cols-{{ count($availableRoles ?? ['Sekolah', 'Operator']) + 1 }} gap-4">
-            <div class="bg-white rounded-xl shadow-sm border p-4">
+            <div class="bg-white rounded-xl shadow-xs border p-4">
                 <div class="flex items-center gap-3">
                     <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
                         <i class="bi bi-people text-gray-600 text-xl"></i>
@@ -65,18 +65,18 @@
         </div>
 
         <!-- Search & Filter -->
-        <div class="bg-white rounded-xl shadow-sm border p-4">
+        <div class="bg-white rounded-xl shadow-xs border p-4">
             <form action="{{ route('dinas.users') }}" method="GET" class="flex flex-col md:flex-row gap-3">
                 <div class="flex-1">
                     <div class="relative">
                         <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
                         <input type="text" name="search" value="{{ request('search') }}" 
-                            class="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none"
+                            class="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden"
                             placeholder="Cari NPSN, username, nama, atau sekolah...">
                     </div>
                 </div>
                 <div class="w-full md:w-48">
-                    <select name="role" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none">
+                    <select name="role" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden">
                         <option value="">Semua Role</option>
                         @foreach($availableRoles ?? ['Sekolah', 'Operator'] as $role)
                             <option value="{{ $role }}" {{ request('role') == $role ? 'selected' : '' }}>{{ $role }}</option>
@@ -95,7 +95,7 @@
         </div>
 
         <!-- Table -->
-        <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+        <div class="bg-white rounded-xl shadow-xs border overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full">
                     <thead class="bg-gray-50 border-b">
@@ -123,7 +123,7 @@
                                             'Operator' => 'bg-green-100 text-green-800',
                                         ];
                                     @endphp
-                                    <span class="inline-flex px-2 py-0.5 rounded text-xs font-medium {{ $roleColors[$u->role] ?? 'bg-gray-100 text-gray-800' }}">
+                                    <span class="inline-flex px-2 py-0.5 rounded-sm text-xs font-medium {{ $roleColors[$u->role] ?? 'bg-gray-100 text-gray-800' }}">
                                         {{ $u->role }}
                                     </span>
                                 </td>
@@ -143,7 +143,7 @@
                                     @endif
 
                                     @if($u->isLocked())
-                                        <span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-red-50 text-red-600 border border-red-200" title="Terkunci: Salah password berkali-kali">
+                                        <span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded-sm text-xs font-medium bg-red-50 text-red-600 border border-red-200" title="Terkunci: Salah password berkali-kali">
                                             <i class="bi bi-shield-lock-fill mr-1"></i> Locked
                                         </span>
                                     @endif
@@ -152,20 +152,20 @@
                                     <div class="flex items-center justify-center gap-2">
                                         {{-- 1. Edit --}}
                                         <a href="{{ route('dinas.users.edit', $u->id) }}" 
-                                            class="p-1.5 text-blue-600 hover:text-blue-800 rounded hover:bg-blue-50 transition" title="Edit Data">
+                                            class="p-1.5 text-blue-600 hover:text-blue-800 rounded-sm hover:bg-blue-50 transition" title="Edit Data">
                                             <i class="bi bi-pencil-square text-lg"></i>
                                         </a>
 
                                         {{-- 2. Kelola Permission --}}
                                         <a href="{{ route('permissions.edit', $u->id) }}" 
-                                            class="p-1.5 text-purple-600 hover:text-purple-800 rounded hover:bg-purple-50 transition" title="Kelola Permission">
+                                            class="p-1.5 text-purple-600 hover:text-purple-800 rounded-sm hover:bg-purple-50 transition" title="Kelola Permission">
                                             <i class="bi bi-shield-lock text-lg"></i>
                                         </a>
 
                                         {{-- 3. Toggle Status (Active/Inactive) --}}
                                         <form action="{{ route('dinas.users.toggle', $u->id) }}" method="POST" class="inline">
                                             @csrf
-                                            <button type="submit" class="p-1.5 rounded hover:bg-gray-100 transition" 
+                                            <button type="submit" class="p-1.5 rounded-sm hover:bg-gray-100 transition" 
                                                 title="{{ $u->is_active ? 'Nonaktifkan Akun' : 'Aktifkan Akun' }}">
                                                 <i class="bi {{ $u->is_active ? 'bi-toggle-on text-green-600' : 'bi-toggle-off text-gray-400' }} text-2xl align-middle"></i>
                                             </button>
@@ -175,7 +175,7 @@
                                         @if($u->isLocked())
                                             <form action="{{ route('dinas.users.unlock', $u->id) }}" method="POST" class="inline" onsubmit="return confirm('Buka blokir akun {{ $u->nama_pengguna }}? User akan bisa login lagi.')">
                                                 @csrf
-                                                <button type="submit" class="p-1.5 text-orange-500 hover:text-orange-700 rounded hover:bg-orange-50 transition" title="Buka Blokir (Unlock)">
+                                                <button type="submit" class="p-1.5 text-orange-500 hover:text-orange-700 rounded-sm hover:bg-orange-50 transition" title="Buka Blokir (Unlock)">
                                                     <i class="bi bi-unlock-fill text-lg"></i>
                                                 </button>
                                             </form>
@@ -184,7 +184,7 @@
                                         {{-- 4. Reset Password --}}
                                         <form action="{{ route('dinas.users.reset', $u->id) }}" method="POST" class="inline" onsubmit="return confirm('Reset password untuk {{ $u->nama_pengguna }}? Password baru akan digenerate.')">
                                             @csrf
-                                            <button type="submit" class="p-1.5 text-yellow-600 hover:text-yellow-800 rounded hover:bg-yellow-50 transition" title="Reset Password">
+                                            <button type="submit" class="p-1.5 text-yellow-600 hover:text-yellow-800 rounded-sm hover:bg-yellow-50 transition" title="Reset Password">
                                                 <i class="bi bi-key-fill text-lg"></i>
                                             </button>
                                         </form>
@@ -228,7 +228,7 @@
                     @csrf
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Role *</label>
-                        <select name="role" x-model="role" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none">
+                        <select name="role" x-model="role" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden">
                             <option value="Operator">Operator</option>
                             <option value="Sekolah">Sekolah</option>
                             @if(auth()->user()->role === 'SuperAdmin')
@@ -238,11 +238,11 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Username *</label>
-                        <input type="text" name="username" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none">
+                        <input type="text" name="username" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap *</label>
-                        <input type="text" name="nama_pengguna" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none">
+                        <input type="text" name="nama_pengguna" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden">
                     </div>
                     
                     <!-- NPSN & Nama Sekolah hanya untuk Sekolah/Operator -->
@@ -252,7 +252,7 @@
                                 <label class="block text-sm font-medium text-gray-700 mb-1">NPSN *</label>
                                 <div class="relative">
                                     <input type="text" name="npsn" id="npsnInput" maxlength="8" 
-                                        class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none"
+                                        class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden"
                                         oninput="lookupNpsn(this.value)">
                                     <span id="npsnStatus" class="absolute right-3 top-1/2 -translate-y-1/2 text-sm"></span>
                                 </div>
@@ -260,7 +260,7 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Nama Sekolah *</label>
                                 <input type="text" name="nama_sekolah" id="namaSekolahInput"
-                                    class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none">
+                                    class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden">
                             </div>
                         </div>
                     </template>

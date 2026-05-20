@@ -72,7 +72,7 @@
             modal = document.createElement('div');
             modal.id = 'idle-timeout-modal';
             modal.innerHTML = `
-                <div class="fixed inset-0 bg-black/50 z-[9999] flex items-center justify-center p-4">
+                <div class="fixed inset-0 bg-black/50 z-9999 flex items-center justify-center p-4">
                     <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 text-center">
                         <div class="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
                             <svg class="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

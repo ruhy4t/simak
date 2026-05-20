@@ -6,7 +6,7 @@
     {{-- Header --}}
     <div class="mb-8">
         <div class="flex items-center gap-4 mb-2">
-            <div class="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl flex items-center justify-center shadow-lg">
+            <div class="w-14 h-14 bg-linear-to-br from-primary-500 to-primary-700 rounded-2xl flex items-center justify-center shadow-lg">
                 <i class="bi bi-calendar-check text-white text-2xl"></i>
             </div>
             <div>
@@ -15,7 +15,7 @@
             </div>
             <div class="ml-auto">
                 {{-- Link to System Status --}}
-                <a href="{{ route('system.status') }}" class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm">
+                <a href="{{ route('system.status') }}" class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-xs">
                     <i class="bi bi-hdd-network text-indigo-500"></i> Status Sistem
                 </a>
             </div>
@@ -38,10 +38,10 @@
                 @csrf
                 <div class="space-y-6">
                     {{-- Hari yang Diperbolehkan --}}
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                        <div class="px-6 py-4 bg-gradient-to-r from-blue-50 to-white border-b border-gray-100">
+                    <div class="bg-white rounded-2xl shadow-xs border border-gray-100 overflow-hidden">
+                        <div class="px-6 py-4 bg-linear-to-r from-blue-50 to-white border-b border-gray-100">
                             <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow">
+                                <div class="w-10 h-10 bg-linear-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-sm">
                                     <i class="bi bi-calendar-week text-white"></i>
                                 </div>
                                 <div>
@@ -76,7 +76,7 @@
                                             <span class="hidden peer-checked:inline"><i class="bi bi-check-circle-fill"></i> Aktif</span>
                                         </div>
                                     </div>
-                                    <div class="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary-500 text-white flex items-center justify-center text-xs opacity-0 peer-checked:opacity-100 transition-opacity shadow">
+                                    <div class="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary-500 text-white flex items-center justify-center text-xs opacity-0 peer-checked:opacity-100 transition-opacity shadow-sm">
                                         <i class="bi bi-check"></i>
                                     </div>
                                 </label>
@@ -86,10 +86,10 @@
                     </div>
 
                     {{-- Jam Operasional --}}
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                        <div class="px-6 py-4 bg-gradient-to-r from-amber-50 to-white border-b border-gray-100">
+                    <div class="bg-white rounded-2xl shadow-xs border border-gray-100 overflow-hidden">
+                        <div class="px-6 py-4 bg-linear-to-r from-amber-50 to-white border-b border-gray-100">
                             <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl flex items-center justify-center shadow">
+                                <div class="w-10 h-10 bg-linear-to-br from-amber-500 to-amber-600 rounded-xl flex items-center justify-center shadow-sm">
                                     <i class="bi bi-clock text-white"></i>
                                 </div>
                                 <div>
@@ -115,7 +115,7 @@
                                            id="toggleHours">
                                     <div class="w-14 h-7 bg-gray-300 peer-focus:ring-4 peer-focus:ring-amber-100 rounded-full peer 
                                                 peer-checked:after:translate-x-full peer-checked:after:border-white 
-                                                after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all 
+                                                after:content-[''] after:absolute after:top-0.5 after:inset-s-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all 
                                                 peer-checked:bg-amber-500 shadow-inner"></div>
                                 </label>
                             </div>
@@ -154,7 +154,7 @@
 
                     {{-- Save Button --}}
                     <div class="flex justify-end">
-                        <button type="submit" class="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all text-lg w-full sm:w-auto justify-center">
+                        <button type="submit" class="inline-flex items-center gap-3 px-8 py-4 bg-linear-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all text-lg w-full sm:w-auto justify-center">
                             <i class="bi bi-check2-circle text-xl"></i>
                             Simpan Pengaturan
                         </button>
@@ -166,10 +166,10 @@
             {{-- RIGHT COLUMN: Holidays --}}
         <div x-data="{ showAddModal: false }">
             {{-- Hari Libur Section --}}
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden sticky top-6">
-                <div class="px-6 py-4 bg-gradient-to-r from-red-50 to-white border-b border-gray-100 flex items-center justify-between">
+            <div class="bg-white rounded-2xl shadow-xs border border-gray-100 overflow-hidden sticky top-6">
+                <div class="px-6 py-4 bg-linear-to-r from-red-50 to-white border-b border-gray-100 flex items-center justify-between">
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center shadow">
+                        <div class="w-10 h-10 bg-linear-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center shadow-sm">
                             <i class="bi bi-calendar-x text-white"></i>
                         </div>
                         <div>
@@ -177,7 +177,7 @@
                             <p class="text-sm text-gray-500">Daftar hari libur nasional</p>
                         </div>
                     </div>
-                    <button @click="showAddModal = true" class="flex items-center gap-2 px-3 py-1.5 bg-white border border-red-100 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 transition shadow-sm">
+                    <button @click="showAddModal = true" class="flex items-center gap-2 px-3 py-1.5 bg-white border border-red-100 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 transition shadow-xs">
                         <i class="bi bi-plus-lg"></i> Tambah
                     </button>
                 </div>
@@ -210,7 +210,7 @@
                                             </div>
                                         </template>
                                         <template x-if="editing">
-                                            <input type="date" form="edit_holiday_{{ $holiday->id }}" name="date" value="{{ $holiday->date->format('Y-m-d') }}" required class="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-red-500 outline-none">
+                                            <input type="date" form="edit_holiday_{{ $holiday->id }}" name="date" value="{{ $holiday->date->format('Y-m-d') }}" required class="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-red-500 outline-hidden">
                                         </template>
                                     </td>
                                     <td class="px-4 py-3 align-top">
@@ -218,7 +218,7 @@
                                             <span class="text-sm text-gray-600 leading-relaxed block">{{ $holiday->description }}</span>
                                         </template>
                                         <template x-if="editing">
-                                            <input type="text" form="edit_holiday_{{ $holiday->id }}" name="description" value="{{ $holiday->description }}" required class="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-red-500 outline-none">
+                                            <input type="text" form="edit_holiday_{{ $holiday->id }}" name="description" value="{{ $holiday->description }}" required class="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-red-500 outline-hidden">
                                         </template>
                                     </td>
                                     <td class="px-4 py-3 align-top text-right">
@@ -265,7 +265,7 @@
 
             {{-- Add Holiday Modal --}}
             <div x-show="showAddModal" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 sm:px-0">
-                <div class="fixed inset-0 transition-opacity bg-gray-900/60 backdrop-blur-sm" @click="showAddModal = false"
+                <div class="fixed inset-0 transition-opacity bg-gray-900/60 backdrop-blur-xs" @click="showAddModal = false"
                      x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
                      x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"></div>
                 
@@ -273,7 +273,7 @@
                      x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
                      x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
                     
-                    <div class="px-6 py-4 bg-gradient-to-r from-red-50 to-white border-b border-gray-100 flex items-center justify-between">
+                    <div class="px-6 py-4 bg-linear-to-r from-red-50 to-white border-b border-gray-100 flex items-center justify-between">
                         <h3 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
                             <i class="bi bi-calendar-plus text-red-500"></i> Tambah Hari Libur
                         </h3>

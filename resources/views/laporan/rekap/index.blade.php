@@ -19,7 +19,7 @@
         </div>
 
         <!-- Filter Card -->
-        <div class="bg-white rounded-xl shadow-sm border p-6">
+        <div class="bg-white rounded-xl shadow-xs border p-6">
             <form action="{{ route('laporan.rekap') }}" method="GET"
                 class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                 <div>
@@ -55,7 +55,7 @@
         </div>
 
         <!-- Data Table -->
-        <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+        <div class="bg-white rounded-xl shadow-xs border overflow-hidden">
             <div class="p-6 border-b flex justify-between items-center">
                 <h3 class="font-semibold text-gray-900">Preview Data</h3>
                 <span class="text-sm text-gray-500">{{ count($data) }} data</span>
@@ -127,7 +127,7 @@
                                     </div>
                                 </td>
                                 <td class="px-2 py-3 text-center border-r bg-blue-50">
-                                    <span class="text-blue-800 px-2 py-0.5 rounded text-sm font-bold">
+                                    <span class="text-blue-800 px-2 py-0.5 rounded-sm text-sm font-bold">
                                         {{ $item['masuk'] }}
                                     </span>
                                 </td>
@@ -155,7 +155,7 @@
                                     </div>
                                 </td>
                                 <td class="px-2 py-3 text-center border-r bg-orange-50">
-                                    <span class="text-orange-800 px-2 py-0.5 rounded text-sm font-bold">
+                                    <span class="text-orange-800 px-2 py-0.5 rounded-sm text-sm font-bold">
                                         {{ $item['keluar'] }}
                                     </span>
                                 </td>

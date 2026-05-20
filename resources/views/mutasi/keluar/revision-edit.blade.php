@@ -7,13 +7,13 @@
         <!-- Header -->
         <div class="flex items-center gap-4">
             <a href="{{ route('mutasi.keluar.show', $mutasi->id_mutasi) }}"
-                class="w-10 h-10 flex items-center justify-center bg-white border border-slate-200 rounded-xl text-slate-500 hover:text-sky-600 hover:border-sky-200 transition shadow-sm">
+                class="w-10 h-10 flex items-center justify-center bg-white border border-slate-200 rounded-xl text-slate-500 hover:text-sky-600 hover:border-sky-200 transition shadow-xs">
                 <i class="bi bi-arrow-left text-xl"></i>
             </a>
             <div class="flex-1">
                 <h1 class="text-2xl font-bold text-slate-900">Perbaiki Data Mutasi Keluar</h1>
                 <div class="flex items-center gap-2 mt-1 text-sm text-slate-500">
-                    <span class="px-2 py-0.5 bg-slate-100 rounded text-slate-600 font-mono">#{{ $mutasi->id_mutasi }}</span>
+                    <span class="px-2 py-0.5 bg-slate-100 rounded-sm text-slate-600 font-mono">#{{ $mutasi->id_mutasi }}</span>
                 </div>
             </div>
             <span
@@ -33,7 +33,7 @@
                         <i class="bi bi-exclamation-triangle-fill text-amber-600"></i>
                         Catatan Perbaikan dari Dinas
                     </h3>
-                    <div class="bg-white/50 backdrop-blur-sm rounded-xl p-4 border border-amber-100/50">
+                    <div class="bg-white/50 backdrop-blur-xs rounded-xl p-4 border border-amber-100/50">
                         <p class="text-amber-900 whitespace-pre-line font-medium leading-relaxed">
                             {{ $mutasiArr['catatan_berkas'] }}</p>
                     </div>
@@ -45,7 +45,7 @@
         <!-- Form Perbaikan -->
         <form action="{{ route('mutasi.keluar.revision.submit', $mutasi->id_mutasi) }}" method="POST"
             enctype="multipart/form-data"
-            class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 sm:p-8 space-y-8">
+            class="bg-white rounded-2xl shadow-xs border border-slate-100 p-6 sm:p-8 space-y-8">
             @csrf
             @method('PUT')
 
@@ -195,7 +195,7 @@
                         <label
                             class="flex items-center gap-3 cursor-pointer p-3 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-100">
                             <input type="checkbox" name="tujuan_luar_negeri" id="tujuan_luar_negeri" value="1"
-                                class="w-5 h-5 rounded text-sky-600 focus:ring-sky-500" {{ old('tujuan_luar_negeri_flag', $mutasi->tujuan_luar_negeri ?? 0) ? 'checked' : '' }} onchange="toggleTujuanLuarNegeri()">
+                                class="w-5 h-5 rounded-sm text-sky-600 focus:ring-sky-500" {{ old('tujuan_luar_negeri_flag', $mutasi->tujuan_luar_negeri ?? 0) ? 'checked' : '' }} onchange="toggleTujuanLuarNegeri()">
                             <span class="text-sm font-medium text-slate-700">Sekolah Tujuan di Luar Negeri</span>
                         </label>
                         <input type="hidden" id="tujuan_luar_negeri_hidden" name="tujuan_luar_negeri_flag"
@@ -286,7 +286,7 @@
                                 $currentFile = $mutasiArr[$field] ?? null;
                             @endphp
                             <div
-                                class="p-4 {{ $isRejected ? 'bg-rose-50 border-rose-200' : 'bg-amber-50 border-amber-200' }} rounded-xl border transition-all hover:shadow-sm">
+                                class="p-4 {{ $isRejected ? 'bg-rose-50 border-rose-200' : 'bg-amber-50 border-amber-200' }} rounded-xl border transition-all hover:shadow-xs">
                                 <label
                                     class="block text-xs font-bold uppercase tracking-wide {{ $isRejected ? 'text-rose-800' : 'text-amber-800' }} mb-2 flex items-center gap-2">
                                     <i class="bi {{ $isRejected ? 'bi-x-circle-fill' : 'bi-exclamation-circle-fill' }} text-lg"></i>
@@ -303,7 +303,7 @@
                                             <i class="bi bi-eye"></i> Lihat file saat ini
                                         </button>
                                         <div x-show="activeDoc === '{{ $field }}'" x-transition
-                                            class="mt-2 border rounded-lg overflow-hidden shadow-sm">
+                                            class="mt-2 border rounded-lg overflow-hidden shadow-xs">
                                             <iframe src="{{ route('dokumen.view', ['path' => $currentFile]) }}"
                                                 class="w-full bg-slate-100 h-64"></iframe>
                                             <a href="{{ route('dokumen.view', ['path' => $currentFile]) }}" target="_blank"
@@ -314,11 +314,11 @@
                                     </div>
                                 @endif
                                 @if($isRejected)
-                                    <p class="mt-2 text-xs font-semibold text-rose-600 bg-white/50 px-2 py-1 rounded inline-block">
+                                    <p class="mt-2 text-xs font-semibold text-rose-600 bg-white/50 px-2 py-1 rounded-sm inline-block">
                                         <i class="bi bi-arrow-up-circle mr-1"></i> Perbaiki sesuai catatan
                                     </p>
                                 @elseif(empty($currentFile) && $info['required'])
-                                    <p class="mt-2 text-xs font-semibold text-amber-600 bg-white/50 px-2 py-1 rounded inline-block">
+                                    <p class="mt-2 text-xs font-semibold text-amber-600 bg-white/50 px-2 py-1 rounded-sm inline-block">
                                         <i class="bi bi-exclamation-circle mr-1"></i> File wajib belum diunggah
                                     </p>
                                 @endif
@@ -339,7 +339,7 @@
             <!-- Tombol Submit -->
             <div class="flex justify-end gap-3 pt-6 border-t border-slate-100">
                 <a href="{{ route('mutasi.keluar.show', $mutasi->id_mutasi) }}"
-                    class="px-6 py-3 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-xl transition font-medium shadow-sm">
+                    class="px-6 py-3 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-xl transition font-medium shadow-xs">
                     Batal
                 </a>
                 <button type="submit"

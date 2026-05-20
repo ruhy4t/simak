@@ -35,7 +35,7 @@
         </div>
 
         <!-- Table -->
-        <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+        <div class="bg-white rounded-xl shadow-xs border overflow-hidden">
             <div class="overflow-x-auto">
                 {{-- TABLE START --}}
                 <table class="w-full">
@@ -66,7 +66,7 @@
                                     @if(!empty($p->gambar_ttd))
                                         <img src="{{ url('dokumen/lihat/' . $p->gambar_ttd) }}" 
                                             alt="Tanda Tangan {{ $p->nama }}" 
-                                            class="mx-auto h-12 object-contain cursor-pointer rounded border hover:shadow-lg transition"
+                                            class="mx-auto h-12 object-contain cursor-pointer rounded-sm border hover:shadow-lg transition"
                                             onclick="showSignaturePreview('{{ url('dokumen/lihat/' . $p->gambar_ttd) }}', '{{ $p->nama }}')"
                                             onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-flex';">
                                         <span class="hidden inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-600">
@@ -166,19 +166,19 @@
                     @csrf
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap *</label>
-                        <input type="text" name="nama" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none">
+                        <input type="text" name="nama" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">NIP</label>
-                        <input type="text" name="nip" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none" placeholder="19700101 199001 1 001">
+                        <input type="text" name="nip" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden" placeholder="19700101 199001 1 001">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Jabatan *</label>
-                        <input type="text" name="jabatan" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none" placeholder="Kepala Dinas Pendidikan">
+                        <input type="text" name="jabatan" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden" placeholder="Kepala Dinas Pendidikan">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Pangkat/Golongan</label>
-                        <input type="text" name="pangkat_golongan" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none" placeholder="Pembina Utama Madya (IV/d)">
+                        <input type="text" name="pangkat_golongan" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden" placeholder="Pembina Utama Madya (IV/d)">
                     </div>
                     
                     {{-- Signature Image Upload --}}
@@ -238,19 +238,19 @@
                     @method('PUT')
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap *</label>
-                        <input type="text" name="nama" id="editNama" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none">
+                        <input type="text" name="nama" id="editNama" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">NIP</label>
-                        <input type="text" name="nip" id="editNip" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none">
+                        <input type="text" name="nip" id="editNip" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Jabatan *</label>
-                        <input type="text" name="jabatan" id="editJabatan" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none">
+                        <input type="text" name="jabatan" id="editJabatan" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Pangkat/Golongan</label>
-                        <input type="text" name="pangkat_golongan" id="editPangkat" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none">
+                        <input type="text" name="pangkat_golongan" id="editPangkat" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden">
                     </div>
                     
                     {{-- Current Signature Display + Upload New --}}
@@ -322,7 +322,7 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Alasan Penghapusan *</label>
                         <textarea name="alasan_penghapusan" required rows="3" 
-                            class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-100 focus:border-red-500 outline-none placeholder:text-sm"
+                            class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-100 focus:border-red-500 outline-hidden placeholder:text-sm"
                             placeholder="Contoh: Sudah pensiun, dimutasi, atau data ganda"></textarea>
                     </div>
 
