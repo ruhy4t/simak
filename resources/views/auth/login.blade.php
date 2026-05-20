@@ -186,7 +186,8 @@
 
                 <!-- Footer Mobile -->
                 <p class="lg:hidden text-center text-xs text-slate-400 mt-8">
-                    &copy; {{ date('Y') }} Kurikulum SMP - Dinas Pendidikan Kota Bogor
+                    &copy; {{ date('Y') }} Kurikulum SMP - Dinas Pendidikan Kota Bogor<br>
+                    SIMAK v{{ config('app.version') }}
                 </p>
             </div>
         </div>
@@ -231,8 +232,9 @@
             </div>
 
             <!-- Absolute Footer -->
-            <div class="absolute bottom-8 text-slate-500 text-xs font-medium tracking-wide">
-                &copy; {{ date('Y') }} Kurikulum SMP - Dinas Pendidikan Kota Bogor
+            <div class="absolute bottom-8 text-slate-500 text-xs font-medium tracking-wide text-center">
+                <div>&copy; {{ date('Y') }} Kurikulum SMP - Dinas Pendidikan Kota Bogor</div>
+                <div class="mt-1">SIMAK v{{ config('app.version') }}</div>
             </div>
         </div>
     </div>
