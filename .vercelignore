@@ -16,8 +16,6 @@
 .git
 .gitignore
 .gitattributes
-composer.lock
-package-lock.json
 phpunit.xml
 README.md
 
