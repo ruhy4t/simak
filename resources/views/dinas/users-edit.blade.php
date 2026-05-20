@@ -16,7 +16,7 @@
         </div>
 
         <!-- Form -->
-        <div class="bg-white rounded-xl shadow-sm border p-6">
+        <div class="bg-white rounded-xl shadow-xs border p-6">
             <form action="{{ route('dinas.users.update', $targetUser->id) }}" method="POST" class="space-y-5"
                 x-data="{ role: '{{ old('role', $targetUser->role) }}' }">
                 @csrf
@@ -34,7 +34,7 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Role *</label>
                     <select name="role" x-model="role" required
-                        class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none @error('role') border-red-500 @enderror">
+                        class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden @error('role') border-red-500 @enderror">
                         @foreach($availableRoles as $role)
                             <option value="{{ $role }}" {{ old('role', $targetUser->role) == $role ? 'selected' : '' }}>
                                 {{ $role }}</option>
@@ -50,7 +50,7 @@
                     <label class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap *</label>
                     <input type="text" name="nama_pengguna" value="{{ old('nama_pengguna', $targetUser->nama_pengguna) }}"
                         required
-                        class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none @error('nama_pengguna') border-red-500 @enderror">
+                        class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden @error('nama_pengguna') border-red-500 @enderror">
                     @error('nama_pengguna')
                         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                     @enderror
@@ -64,7 +64,7 @@
                             <div class="relative">
                                 <input type="text" name="npsn" id="npsnInput" maxlength="8"
                                     value="{{ old('npsn', $targetUser->npsn) }}"
-                                    class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none @error('npsn') border-red-500 @enderror"
+                                    class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden @error('npsn') border-red-500 @enderror"
                                     oninput="lookupNpsn(this.value)">
                                 <span id="npsnStatus" class="absolute right-3 top-1/2 -translate-y-1/2 text-sm"></span>
                             </div>
@@ -76,7 +76,7 @@
                             <label class="block text-sm font-medium text-gray-700 mb-1">Nama Sekolah *</label>
                             <input type="text" name="nama_sekolah" id="namaSekolahInput"
                                 value="{{ old('nama_sekolah', $targetUser->nama_sekolah) }}"
-                                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none @error('nama_sekolah') border-red-500 @enderror">
+                                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden @error('nama_sekolah') border-red-500 @enderror">
                             @error('nama_sekolah')
                                 <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                             @enderror
@@ -89,7 +89,7 @@
                     <label class="block text-sm font-medium text-gray-700 mb-1">Telegram Chat ID</label>
                     <input type="text" name="telegram_chat_id"
                         value="{{ old('telegram_chat_id', $targetUser->telegram_chat_id) }}"
-                        class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none"
+                        class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden"
                         placeholder="Opsional - untuk notifikasi Telegram">
                     <p class="text-xs text-gray-500 mt-1">Bisa diperoleh dengan mengirim /start ke bot Telegram</p>
                 </div>

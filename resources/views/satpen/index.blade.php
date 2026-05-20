@@ -18,7 +18,7 @@
 
         <!-- Statistics Cards -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div class="bg-white rounded-xl shadow-sm border p-4">
+            <div class="bg-white rounded-xl shadow-xs border p-4">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
                         <i class="bi bi-geo-alt text-green-600"></i>
@@ -29,7 +29,7 @@
                     </div>
                 </div>
             </div>
-            <div class="bg-white rounded-xl shadow-sm border p-4">
+            <div class="bg-white rounded-xl shadow-xs border p-4">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
                         <i class="bi bi-globe text-orange-600"></i>
@@ -40,7 +40,7 @@
                     </div>
                 </div>
             </div>
-            <div class="bg-white rounded-xl shadow-sm border p-4">
+            <div class="bg-white rounded-xl shadow-xs border p-4">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                         <i class="bi bi-building text-blue-600"></i>
@@ -51,7 +51,7 @@
                     </div>
                 </div>
             </div>
-            <div class="bg-white rounded-xl shadow-sm border p-4">
+            <div class="bg-white rounded-xl shadow-xs border p-4">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
                         <i class="bi bi-mortarboard text-purple-600"></i>
@@ -67,7 +67,7 @@
         <!-- Charts Section (Pure CSS) -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <!-- Status & Location Chart -->
-            <div class="bg-white rounded-xl shadow-sm border p-4">
+            <div class="bg-white rounded-xl shadow-xs border p-4">
                 <h3 class="text-sm font-semibold text-gray-700 mb-4">Distribusi Status & Lokasi</h3>
                 <div class="space-y-4">
                     @php
@@ -125,12 +125,12 @@
             </div>
 
             <!-- Kecamatan Chart (Horizontal Stacked Bar - Negeri/Swasta) -->
-            <div class="bg-white rounded-xl shadow-sm border p-4">
+            <div class="bg-white rounded-xl shadow-xs border p-4">
                 <h3 class="text-sm font-semibold text-gray-700 mb-2">Per Kecamatan (Kota Bogor)</h3>
                 <!-- Legend -->
                 <div class="flex gap-4 mb-3 text-xs">
-                    <span class="flex items-center gap-1"><span class="w-3 h-3 bg-blue-500 rounded"></span> Negeri</span>
-                    <span class="flex items-center gap-1"><span class="w-3 h-3 bg-purple-500 rounded"></span> Swasta</span>
+                    <span class="flex items-center gap-1"><span class="w-3 h-3 bg-blue-500 rounded-sm"></span> Negeri</span>
+                    <span class="flex items-center gap-1"><span class="w-3 h-3 bg-purple-500 rounded-sm"></span> Swasta</span>
                 </div>
                 <div class="space-y-2 max-h-72 overflow-y-auto pr-2">
                     @php
@@ -143,7 +143,7 @@
                         @endphp
                         <div class="flex items-center gap-2">
                             <span class="text-xs text-gray-600 w-24 truncate" title="{{ $kec->kecamatan }}">{{ $kec->kecamatan }}</span>
-                            <div class="flex-1 h-6 bg-gray-100 rounded overflow-hidden flex">
+                            <div class="flex-1 h-6 bg-gray-100 rounded-sm overflow-hidden flex">
                                 @if($kec->negeri > 0)
                                     <div class="h-full bg-blue-500 flex items-center justify-center transition-all duration-500" 
                                          style="width: {{ $negeriPctLocal }}%"
@@ -169,16 +169,16 @@
         </div>
 
         <!-- Search & Filters -->
-        <div class="bg-white rounded-xl shadow-sm border p-4">
+        <div class="bg-white rounded-xl shadow-xs border p-4">
             <form method="GET" class="flex flex-wrap gap-4">
                 <div class="flex-1 min-w-[200px]">
                     <input type="text" name="search" placeholder="Cari nama atau NPSN..."
                         value="{{ request('search') }}"
-                        class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none">
+                        class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden">
                 </div>
                 <div>
                     <select name="status"
-                        class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none">
+                        class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden">
                         <option value="">Semua Status</option>
                         <option value="Negeri" {{ request('status') == 'Negeri' ? 'selected' : '' }}>Negeri</option>
                         <option value="Swasta" {{ request('status') == 'Swasta' ? 'selected' : '' }}>Swasta</option>
@@ -186,7 +186,7 @@
                 </div>
                 <div>
                     <select name="is_local"
-                        class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none">
+                        class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden">
                         <option value="">Semua Sumber</option>
                         <option value="1" {{ request('is_local') === '1' ? 'selected' : '' }}>Kota Bogor</option>
                         <option value="0" {{ request('is_local') === '0' ? 'selected' : '' }}>Luar Kota Bogor</option>
@@ -205,7 +205,7 @@
         </div>
 
         <!-- Table -->
-        <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+        <div class="bg-white rounded-xl shadow-xs border overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full">
                     <thead class="bg-gray-50 border-b">

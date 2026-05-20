@@ -1,7 +1,7 @@
 {{-- Custom Confirm Modal - Global Component --}}
 {{-- Include this in layouts/app.blade.php --}}
 
-<div id="confirmModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm">
+<div id="confirmModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-xs">
     <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden transform transition-all">
         <!-- Header -->
         <div class="px-6 pt-6 pb-4">

@@ -68,7 +68,7 @@
             @if (session('success'))
                 <div class="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 mb-6">
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                        <div class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
                             <i class="bi bi-check-circle-fill text-emerald-500 text-xl"></i>
                         </div>
                         <div class="flex-1">
@@ -83,7 +83,7 @@
             @if ($errors->any())
                 <div class="bg-rose-50 border border-rose-100 rounded-2xl p-4 animate-shake">
                     <div class="flex items-start gap-3">
-                        <div class="flex-shrink-0">
+                        <div class="shrink-0">
                             <i class="bi bi-exclamation-triangle-fill text-rose-500 text-xl"></i>
                         </div>
                         <div class="flex-1">
@@ -99,7 +99,7 @@
             @endif
 
             <!-- Header Surat -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 sm:p-8">
+            <div class="bg-white rounded-2xl shadow-xs border border-slate-100 p-6 sm:p-8">
                 {{-- IMPORTANT WARNING LIMIT --}}
                 {{-- IMPORTANT WARNING LIMIT --}}
                 <div class="mb-6 bg-blue-50 border border-blue-200 rounded-xl p-4 flex gap-4">
@@ -145,7 +145,7 @@
                             <label
                                 class="flex items-center gap-4 p-4 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors group">
                                 <input type="checkbox" name="has_surat_permohonan" value="1" required
-                                    class="w-5 h-5 text-emerald-500 border-slate-300 rounded focus:ring-emerald-500 transition">
+                                    class="w-5 h-5 text-emerald-500 border-slate-300 rounded-sm focus:ring-emerald-500 transition">
                                 <div>
                                     <span class="font-semibold text-slate-700 group-hover:text-slate-900">Surat Permohonan Izin
                                         Mutasi Masuk</span>
@@ -166,7 +166,7 @@
             </div>
 
             <!-- Sekolah Tujuan -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 sm:p-8">
+            <div class="bg-white rounded-2xl shadow-xs border border-slate-100 p-6 sm:p-8">
                 <h2 class="text-lg font-bold text-slate-900 mb-6 flex items-center gap-3">
                     <div class="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center">
                         <i class="bi bi-geo-alt text-emerald-600"></i>
@@ -191,7 +191,7 @@
                             <div class="relative">
                                 <input type="text" name="npsn_sekolah_tujuan" id="npsn_tujuan_input"
                                     value="{{ $npsnDinasVal }}"
-                                    class="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition duration-200"
+                                    class="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-hidden transition duration-200"
                                     placeholder="Cari NPSN..." oninput="window.lookupNpsnTujuan(this.value)">
                                 <span id="npsn_tujuan_status" class="absolute right-3 top-1/2 -translate-y-1/2"></span>
                             </div>
@@ -200,12 +200,12 @@
                             <label class="block text-sm font-semibold text-slate-700 mb-2">Nama Sekolah Tujuan *</label>
                             <input type="text" name="nama_sekolah_tujuan" id="nama_tujuan_input"
                                 value="{{ $namaDinasVal }}" required
-                                class="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition duration-200">
+                                class="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-hidden transition duration-200">
                         </div>
                         <div class="md:col-span-2">
                             <label class="block text-sm font-semibold text-slate-700 mb-2">Alamat Sekolah Tujuan *</label>
                             <textarea name="alamat_sekolah_tujuan" id="alamat_tujuan_input" rows="2" required
-                                class="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition duration-200 resize-none">{{ $alamatDinasVal }}</textarea>
+                                class="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-hidden transition duration-200 resize-none">{{ $alamatDinasVal }}</textarea>
                         </div>
                     @else
                         {{-- Non-Dinas: Readonly dengan data dari draft atau user --}}
@@ -266,7 +266,7 @@
             </div>
 
             <!-- Tab Navigation untuk Siswa -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+            <div class="bg-white rounded-2xl shadow-xs border border-slate-100 overflow-hidden">
                 <!-- Tab Header -->
                 <div class="border-b border-slate-100 bg-slate-50/50 px-6 py-4">
                     <div class="flex items-center justify-between">
@@ -327,7 +327,7 @@
     </div>
 
     <!-- Loading Modal -->
-    <div id="loadingModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden items-center justify-center">
+    <div id="loadingModal" class="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 hidden items-center justify-center">
         <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md mx-4 text-center animate-fade-in-up">
             <div class="w-16 h-16 bg-sky-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <i class="bi bi-send text-3xl text-sky-600 animate-pulse"></i>

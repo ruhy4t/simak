@@ -34,7 +34,7 @@
             @endif
 
             <!-- Data Siswa -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 sm:p-8">
+            <div class="bg-white rounded-2xl shadow-xs border border-slate-100 p-6 sm:p-8">
                 <h2 class="text-lg font-bold text-slate-900 mb-6 flex items-center gap-3">
                     <div class="w-8 h-8 rounded-lg bg-sky-100 flex items-center justify-center">
                         <i class="bi bi-person-fill text-sky-600"></i>
@@ -111,7 +111,7 @@
             </div>
 
             <!-- Sekolah Asal -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 sm:p-8">
+            <div class="bg-white rounded-2xl shadow-xs border border-slate-100 p-6 sm:p-8">
                 <h2 class="text-lg font-bold text-slate-900 mb-6 flex items-center gap-3">
                     <div class="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center">
                         <i class="bi bi-building text-orange-600"></i>
@@ -128,7 +128,7 @@
                             <input type="text" name="npsn_sekolah_asal" id="npsn_sekolah_asal"
                                 value="{{ old('npsn_sekolah_asal', $npsnSekolahAsal ?? $user->npsn ?? '') }}" required
                                 maxlength="8" {{ $isLocked ? 'readonly' : '' }}
-                                class="w-full px-4 py-2.5 border-0 rounded-xl focus:ring-2 focus:ring-sky-100 transition outline-none {{ $isLocked ? 'bg-slate-100 text-slate-500 cursor-not-allowed font-mono' : 'bg-slate-50 focus:bg-white text-slate-800' }}"
+                                class="w-full px-4 py-2.5 border-0 rounded-xl focus:ring-2 focus:ring-sky-100 transition outline-hidden {{ $isLocked ? 'bg-slate-100 text-slate-500 cursor-not-allowed font-mono' : 'bg-slate-50 focus:bg-white text-slate-800' }}"
                                 oninput="lookupNpsnSekolahAsal(this.value)">
                             <span id="npsn_asal_status" class="absolute right-4 top-1/2 -translate-y-1/2 text-sm"></span>
                         </div>
@@ -138,12 +138,12 @@
                         <input type="text" name="nama_sekolah_asal" id="nama_sekolah_asal"
                             value="{{ old('nama_sekolah_asal', $namaSekolahAsal ?? $user->nama_sekolah ?? '') }}" required
                             {{ $isLocked ? 'readonly' : '' }}
-                            class="w-full px-4 py-2.5 border-0 rounded-xl focus:ring-2 focus:ring-sky-100 transition outline-none {{ $isLocked ? 'bg-slate-100 text-slate-500 cursor-not-allowed' : 'bg-slate-50 focus:bg-white text-slate-800' }}">
+                            class="w-full px-4 py-2.5 border-0 rounded-xl focus:ring-2 focus:ring-sky-100 transition outline-hidden {{ $isLocked ? 'bg-slate-100 text-slate-500 cursor-not-allowed' : 'bg-slate-50 focus:bg-white text-slate-800' }}">
                     </div>
                     <div class="md:col-span-2">
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Alamat Sekolah Asal *</label>
                         <textarea name="alamat_sekolah_asal" id="alamat_sekolah_asal" required rows="2" {{ $isLocked ? 'readonly' : '' }}
-                            class="w-full px-4 py-2.5 border-0 rounded-xl focus:ring-2 focus:ring-sky-100 transition outline-none resize-none @error('alamat_sekolah_asal') ring-2 ring-rose-100 @enderror {{ $isLocked ? 'bg-slate-100 text-slate-500 cursor-not-allowed' : 'bg-slate-50 focus:bg-white text-slate-800' }}">{{ old('alamat_sekolah_asal', $alamatSekolahAsal ?? '') }}</textarea>
+                            class="w-full px-4 py-2.5 border-0 rounded-xl focus:ring-2 focus:ring-sky-100 transition outline-hidden resize-none @error('alamat_sekolah_asal') ring-2 ring-rose-100 @enderror {{ $isLocked ? 'bg-slate-100 text-slate-500 cursor-not-allowed' : 'bg-slate-50 focus:bg-white text-slate-800' }}">{{ old('alamat_sekolah_asal', $alamatSekolahAsal ?? '') }}</textarea>
                         @error('alamat_sekolah_asal')<p class="text-rose-500 text-xs mt-1 font-medium">{{ $message }}</p>
                         @enderror
                     </div>
@@ -175,7 +175,7 @@
             </div>
 
             <!-- Sekolah Tujuan -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 sm:p-8">
+            <div class="bg-white rounded-2xl shadow-xs border border-slate-100 p-6 sm:p-8">
                 <h2 class="text-lg font-bold text-slate-900 mb-6 flex items-center gap-3">
                     <div class="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center">
                         <i class="bi bi-geo-alt-fill text-emerald-600"></i>
@@ -243,7 +243,7 @@
                         <label
                             class="flex items-center gap-3 cursor-pointer p-4 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors">
                             <input type="checkbox" name="tujuan_luar_negeri" id="tujuan_luar_negeri" value="1"
-                                class="w-5 h-5 rounded text-sky-600 focus:ring-sky-500 border-slate-300"
+                                class="w-5 h-5 rounded-sm text-sky-600 focus:ring-sky-500 border-slate-300"
                                 onchange="toggleTujuanLuarNegeri()">
                             <div>
                                 <span class="text-sm font-semibold text-slate-700">Sekolah Tujuan di Luar Negeri</span>
@@ -263,7 +263,7 @@
             </div>
 
             <!-- Alasan Pindah -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 sm:p-8">
+            <div class="bg-white rounded-2xl shadow-xs border border-slate-100 p-6 sm:p-8">
                 <h2 class="text-lg font-bold text-slate-900 mb-6 flex items-center gap-3">
                     <div class="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center">
                         <i class="bi bi-chat-left-text-fill text-purple-600"></i>
@@ -280,7 +280,7 @@
             </div>
 
             <!-- Dokumen -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 sm:p-8">
+            <div class="bg-white rounded-2xl shadow-xs border border-slate-100 p-6 sm:p-8">
                 <h2 class="text-lg font-bold text-slate-900 mb-6 flex items-center gap-3">
                     <div class="w-8 h-8 rounded-lg bg-rose-100 flex items-center justify-center">
                         <i class="bi bi-file-earmark-pdf-fill text-rose-600"></i>
@@ -303,7 +303,7 @@
                         <label
                             class="flex items-center gap-3 p-4 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors group">
                             <input type="checkbox" name="has_suket_keluar" value="1" required
-                                class="w-5 h-5 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500 transition">
+                                class="w-5 h-5 text-emerald-600 border-slate-300 rounded-sm focus:ring-emerald-500 transition">
                             <div>
                                 <span class="font-semibold text-slate-700 group-hover:text-slate-900">Surat Keterangan
                                     Keluar</span>
@@ -313,7 +313,7 @@
                         <label
                             class="flex items-center gap-3 p-4 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors group">
                             <input type="checkbox" name="has_suket_dapo" value="1" required
-                                class="w-5 h-5 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500 transition">
+                                class="w-5 h-5 text-emerald-600 border-slate-300 rounded-sm focus:ring-emerald-500 transition">
                             <div>
                                 <span class="font-semibold text-slate-700 group-hover:text-slate-900">Surat Keterangan
                                     Dapodik</span>
@@ -323,7 +323,7 @@
                         <label
                             class="flex items-center gap-3 p-4 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors group">
                             <input type="checkbox" name="has_suket_diterima" value="1" required
-                                class="w-5 h-5 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500 transition">
+                                class="w-5 h-5 text-emerald-600 border-slate-300 rounded-sm focus:ring-emerald-500 transition">
                             <div>
                                 <span class="font-semibold text-slate-700 group-hover:text-slate-900">Surat Keterangan
                                     Diterima</span>
@@ -333,7 +333,7 @@
                         <label
                             class="flex items-center gap-3 p-4 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors group">
                             <input type="checkbox" name="has_rapor" value="1" required
-                                class="w-5 h-5 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500 transition">
+                                class="w-5 h-5 text-emerald-600 border-slate-300 rounded-sm focus:ring-emerald-500 transition">
                             <div>
                                 <span class="font-semibold text-slate-700 group-hover:text-slate-900">Rapor Lengkap</span>
                                 <p class="text-xs text-slate-500 mt-0.5">Rapor SMP lengkap</p>
@@ -409,7 +409,7 @@
     </div>
 
     <!-- Loading Modal -->
-    <div id="loadingModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden items-center justify-center">
+    <div id="loadingModal" class="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 hidden items-center justify-center">
         <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md mx-4 text-center animate-fade-in-up">
             <div class="w-16 h-16 bg-sky-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <i class="bi bi-send text-3xl text-sky-600 animate-pulse"></i>

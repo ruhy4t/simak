@@ -17,7 +17,7 @@
         </div>
 
         <!-- Mutasi Keluar Stats -->
-        <div class="bg-white rounded-xl shadow-sm border p-6">
+        <div class="bg-white rounded-xl shadow-xs border p-6">
             <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                 <i class="bi bi-box-arrow-right text-orange-600"></i>
                 Statistik Mutasi Keluar
@@ -87,7 +87,7 @@
         </div>
 
         <!-- Mutasi Masuk Stats -->
-        <div class="bg-white rounded-xl shadow-sm border p-6">
+        <div class="bg-white rounded-xl shadow-xs border p-6">
             <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                 <i class="bi bi-box-arrow-in-right text-blue-600"></i>
                 Statistik Mutasi Masuk
@@ -171,7 +171,7 @@
 
         <!-- User Stats (Sekolah / Dinas) -->
         @if($statsUsers)
-            <div class="bg-white rounded-xl shadow-sm border p-6">
+            <div class="bg-white rounded-xl shadow-xs border p-6">
                 <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                     <i class="bi bi-people text-purple-600"></i>
                     Statistik Pengguna
@@ -242,7 +242,7 @@
         @endif
 
         <!-- Statistik Mutasi per Sekolah -->
-        <div class="bg-white rounded-xl shadow-sm border p-6">
+        <div class="bg-white rounded-xl shadow-xs border p-6">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
                 <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
                     <i class="bi bi-building text-primary-600"></i>
@@ -390,7 +390,7 @@
 
         @if(in_array($user->role, ['Dinas', 'SuperAdmin']))
             <!-- Verifikasi - Only for Dinas/SuperAdmin -->
-            <div class="bg-white rounded-xl shadow-sm border p-6">
+            <div class="bg-white rounded-xl shadow-xs border p-6">
                 <h2 class="text-lg font-semibold text-gray-900 mb-4">
                     <i class="bi bi-clipboard-check mr-2 text-yellow-600"></i>
                     Verifikasi Berkas
@@ -421,9 +421,9 @@
         @endif
 
         <!-- Info Card -->
-        <div class="bg-gradient-to-r from-primary-50 to-blue-50 rounded-xl border border-primary-100 p-6">
+        <div class="bg-linear-to-r from-primary-50 to-blue-50 rounded-xl border border-primary-100 p-6">
             <div class="flex items-start gap-4">
-                <div class="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <div class="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center shrink-0">
                     <i class="bi bi-info-circle text-primary-600"></i>
                 </div>
                 <div>

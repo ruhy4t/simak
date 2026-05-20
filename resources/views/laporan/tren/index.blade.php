@@ -19,7 +19,7 @@
                     {{-- Month Filter --}}
                     <label for="month" class="text-sm font-medium text-gray-700">Bulan:</label>
                     <select name="month" id="month" onchange="this.form.submit()"
-                        class="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+                        class="rounded-md border-gray-300 shadow-xs focus:border-blue-500 focus:ring-blue-500 text-sm">
                         <option value="">Semua Bulan</option>
                         @for($m = 1; $m <= 12; $m++)
                             <option value="{{ $m }}" {{ request('month') == $m ? 'selected' : '' }}>
@@ -30,7 +30,7 @@
 
                     <label for="year" class="text-sm font-medium text-gray-700 ml-2">Tahun:</label>
                     <select name="year" id="year" onchange="this.form.submit()"
-                        class="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+                        class="rounded-md border-gray-300 shadow-xs focus:border-blue-500 focus:ring-blue-500 text-sm">
                         @for($y = date('Y'); $y >= 2020; $y--)
                             <option value="{{ $y }}" {{ $year == $y ? 'selected' : '' }}>{{ $y }}</option>
                         @endfor
@@ -40,7 +40,7 @@
 
             <div class="grid grid-cols-1 gap-6">
                 <!-- Tren Mutasi Masuk -->
-                <div class="bg-white rounded-xl shadow-sm border p-6">
+                <div class="bg-white rounded-xl shadow-xs border p-6">
                     <div class="mb-6">
                         <h3 class="text-lg font-bold text-gray-900">Mutasi Masuk</h3>
                     </div>
@@ -50,7 +50,7 @@
                 </div>
 
                 <!-- Tren Mutasi Keluar -->
-                <div class="bg-white rounded-xl shadow-sm border p-6">
+                <div class="bg-white rounded-xl shadow-xs border p-6">
                     <div class="mb-6">
                         <h3 class="text-lg font-bold text-gray-900">Mutasi Keluar</h3>
                     </div>

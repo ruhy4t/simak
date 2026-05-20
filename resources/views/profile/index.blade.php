@@ -12,7 +12,7 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
             <!-- Edit Profile -->
-            <div class="bg-white rounded-xl shadow-sm border p-6">
+            <div class="bg-white rounded-xl shadow-xs border p-6">
                 <h2 class="text-lg font-semibold text-gray-900 mb-4">
                     <i class="bi bi-person-circle mr-2 text-primary-600"></i>
                     Informasi Profil
@@ -40,7 +40,7 @@
                             *</label>
                         <input type="text" id="nama_pengguna" name="nama_pengguna"
                             value="{{ old('nama_pengguna', $user->nama_pengguna) }}" required
-                            class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none @error('nama_pengguna') border-red-500 @enderror">
+                            class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden @error('nama_pengguna') border-red-500 @enderror">
                         @error('nama_pengguna')
                             <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                         @enderror
@@ -50,7 +50,7 @@
                         <label for="no_kontak" class="block text-sm font-medium text-gray-700 mb-1">Nomor HP</label>
                         <input type="text" id="no_kontak" name="no_kontak" value="{{ old('no_kontak', $user->no_kontak) }}"
                             placeholder="08xxxxxxxxxx"
-                            class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none @error('no_kontak') border-red-500 @enderror">
+                            class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden @error('no_kontak') border-red-500 @enderror">
                         @error('no_kontak')
                             <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                         @enderror
@@ -67,7 +67,7 @@
                         <input type="text" id="telegram_chat_id" name="telegram_chat_id"
                             value="{{ old('telegram_chat_id', $user->telegram_chat_id) }}"
                             placeholder="Masukkan Chat ID dari bot Telegram"
-                            class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none @error('telegram_chat_id') border-red-500 @enderror">
+                            class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-hidden @error('telegram_chat_id') border-red-500 @enderror">
                         @error('telegram_chat_id')
                             <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                         @enderror
@@ -82,35 +82,35 @@
                                 class="mt-2 space-y-2 bg-white p-3 rounded-lg border border-blue-100">
                                 <div class="flex items-start gap-2">
                                     <span
-                                        class="flex-shrink-0 w-5 h-5 bg-blue-600 text-white rounded-full text-xs flex items-center justify-center">1</span>
+                                        class="shrink-0 w-5 h-5 bg-blue-600 text-white rounded-full text-xs flex items-center justify-center">1</span>
                                     <span>Buka aplikasi <strong>Telegram</strong> di HP atau Desktop</span>
                                 </div>
                                 <div class="flex items-start gap-2">
                                     <span
-                                        class="flex-shrink-0 w-5 h-5 bg-blue-600 text-white rounded-full text-xs flex items-center justify-center">2</span>
+                                        class="shrink-0 w-5 h-5 bg-blue-600 text-white rounded-full text-xs flex items-center justify-center">2</span>
                                     <span>Buka Telegram, cari bot kami: <code
-                                            class="bg-gray-100 px-1.5 py-0.5 rounded font-bold">@simak_smp_bot</code></span>
+                                            class="bg-gray-100 px-1.5 py-0.5 rounded-sm font-bold">@simak_smp_bot</code></span>
                                 </div>
                                 <div class="flex items-start gap-2">
                                     <span
-                                        class="flex-shrink-0 w-5 h-5 bg-blue-600 text-white rounded-full text-xs flex items-center justify-center">3</span>
+                                        class="shrink-0 w-5 h-5 bg-blue-600 text-white rounded-full text-xs flex items-center justify-center">3</span>
                                     <span>Klik tombol <strong>Start</strong>. Bot akan membalas dengan <strong>Chat
                                             ID</strong>
                                         Anda.</span>
                                 </div>
                                 <div class="flex items-start gap-2">
                                     <span
-                                        class="flex-shrink-0 w-5 h-5 bg-blue-600 text-white rounded-full text-xs flex items-center justify-center">4</span>
+                                        class="shrink-0 w-5 h-5 bg-blue-600 text-white rounded-full text-xs flex items-center justify-center">4</span>
                                     <span>Salin Chat ID tersebut.</span>
                                 </div>
                                 <div class="flex items-start gap-2">
                                     <span
-                                        class="flex-shrink-0 w-5 h-5 bg-blue-600 text-white rounded-full text-xs flex items-center justify-center">5</span>
+                                        class="shrink-0 w-5 h-5 bg-blue-600 text-white rounded-full text-xs flex items-center justify-center">5</span>
                                     <span>Tempel/Paste di kolom di atas lalu klik <strong>Simpan Perubahan</strong>.</span>
                                 </div>
                                 <div class="mt-3 pt-2 border-t border-blue-100">
                                     <a href="https://t.me/simak_smp_bot" target="_blank"
-                                        class="inline-flex items-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-medium transition">
+                                        class="inline-flex items-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-sm text-xs font-medium transition">
                                         <i class="bi bi-telegram mr-1"></i> Buka Bot di Telegram
                                     </a>
                                 </div>
@@ -139,7 +139,7 @@
             </div>
 
             <!-- Change Password -->
-            <div class="bg-white rounded-xl shadow-sm border p-6">
+            <div class="bg-white rounded-xl shadow-xs border p-6">
                 <h2 class="text-lg font-semibold text-gray-900 mb-4">
                     <i class="bi bi-shield-lock mr-2 text-yellow-600"></i>
                     Ubah Password
@@ -155,9 +155,9 @@
                             *</label>
                         <div class="relative">
                             <input :type="show ? 'text' : 'password'" id="current_password" name="current_password" required
-                                class="w-full px-4 py-2 pr-12 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none @error('current_password') border-red-500 @enderror">
+                                class="w-full px-4 py-2 pr-12 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden @error('current_password') border-red-500 @enderror">
                             <button type="button" @click="show = !show"
-                                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none z-10 cursor-pointer transition-colors">
+                                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-hidden z-10 cursor-pointer transition-colors">
                                 <i class="bi" :class="show ? 'bi-eye-slash-fill' : 'bi-eye-fill'"></i>
                             </button>
                         </div>
@@ -171,9 +171,9 @@
                         <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password Baru *</label>
                         <div class="relative">
                             <input :type="show ? 'text' : 'password'" id="password" name="password" required
-                                class="w-full px-4 py-2 pr-12 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none @error('password') border-red-500 @enderror">
+                                class="w-full px-4 py-2 pr-12 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden @error('password') border-red-500 @enderror">
                             <button type="button" @click="show = !show"
-                                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none z-10 cursor-pointer transition-colors">
+                                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-hidden z-10 cursor-pointer transition-colors">
                                 <i class="bi" :class="show ? 'bi-eye-slash-fill' : 'bi-eye-fill'"></i>
                             </button>
                         </div>
@@ -189,9 +189,9 @@
                         <div class="relative">
                             <input :type="show ? 'text' : 'password'" id="password_confirmation"
                                 name="password_confirmation" required
-                                class="w-full px-4 py-2 pr-12 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none">
+                                class="w-full px-4 py-2 pr-12 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden">
                             <button type="button" @click="show = !show"
-                                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none z-10 cursor-pointer transition-colors">
+                                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-hidden z-10 cursor-pointer transition-colors">
                                 <i class="bi" :class="show ? 'bi-eye-slash-fill' : 'bi-eye-fill'"></i>
                             </button>
                         </div>

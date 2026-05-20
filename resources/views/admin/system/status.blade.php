@@ -7,7 +7,7 @@
     <div class="mb-8">
         <div class="flex items-center gap-4 mb-2">
             <div
-                class="w-14 h-14 bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-2xl flex items-center justify-center shadow-lg">
+                class="w-14 h-14 bg-linear-to-br from-indigo-500 to-indigo-700 rounded-2xl flex items-center justify-center shadow-lg">
                 <i class="bi bi-hdd-network text-white text-2xl"></i>
             </div>
             <div>
@@ -35,7 +35,7 @@
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {{-- Database Card --}}
         <div
-            class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 relative overflow-hidden group hover:shadow-md transition-all">
+            class="bg-white rounded-2xl p-6 shadow-xs border border-gray-100 relative overflow-hidden group hover:shadow-md transition-all">
             <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                 <i class="bi bi-database text-6xl text-blue-600"></i>
             </div>
@@ -71,7 +71,7 @@
 
         {{-- B2 Files Card --}}
         <div
-            class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 relative overflow-hidden group hover:shadow-md transition-all">
+            class="bg-white rounded-2xl p-6 shadow-xs border border-gray-100 relative overflow-hidden group hover:shadow-md transition-all">
             <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                 <i class="bi bi-files text-6xl text-red-600"></i>
             </div>
@@ -93,7 +93,7 @@
 
         {{-- B2 Size Card with Progress --}}
         <div
-            class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 relative overflow-hidden group hover:shadow-md transition-all md:col-span-2">
+            class="bg-white rounded-2xl p-6 shadow-xs border border-gray-100 relative overflow-hidden group hover:shadow-md transition-all md:col-span-2">
             <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                 <i class="bi bi-cloud-arrow-up text-6xl text-green-600"></i>
             </div>
@@ -114,7 +114,7 @@
                 {{-- Progress Bar --}}
                 @if(isset($b2Stats['percentage']))
                     <div class="w-full bg-gray-100 rounded-full h-3 mb-2 overflow-hidden">
-                        <div class="bg-gradient-to-r from-green-500 to-green-600 h-3 rounded-full transition-all duration-1000"
+                        <div class="bg-linear-to-r from-green-500 to-green-600 h-3 rounded-full transition-all duration-1000"
                             style="width: {{ min($b2Stats['percentage'], 100) }}%"></div>
                     </div>
                     <div class="flex justify-between text-xs text-gray-500">
@@ -134,12 +134,12 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
         {{-- App Environment --}}
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="bg-white rounded-2xl shadow-xs border border-gray-100 overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
                 <h3 class="font-semibold text-gray-800 flex items-center gap-2">
                     <i class="bi bi-server"></i> Lingkungan Aplikasi
                 </h3>
-                <span class="px-2 py-1 text-xs font-bold text-white bg-slate-800 rounded uppercase tracking-wider">
+                <span class="px-2 py-1 text-xs font-bold text-white bg-slate-800 rounded-sm uppercase tracking-wider">
                     Vercel
                 </span>
             </div>
@@ -180,7 +180,7 @@
         </div>
 
         {{-- Storage Details --}}
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="bg-white rounded-2xl shadow-xs border border-gray-100 overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
                 <h3 class="font-semibold text-gray-800 flex items-center gap-2">
                     <i class="bi bi-hdd-stack"></i> Detail Penyimpanan

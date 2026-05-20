@@ -19,7 +19,7 @@
 
         <!-- Stats Cards -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="bg-white rounded-xl shadow-sm border p-5">
+            <div class="bg-white rounded-xl shadow-xs border p-5">
                 <div class="flex items-center gap-3">
                     <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                         <i class="bi bi-people text-xl text-blue-600"></i>
@@ -30,7 +30,7 @@
                     </div>
                 </div>
             </div>
-            <div class="bg-white rounded-xl shadow-sm border p-5">
+            <div class="bg-white rounded-xl shadow-xs border p-5">
                 <div class="flex items-center gap-3">
                     <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                         <i class="bi bi-person-check text-xl text-green-600"></i>
@@ -41,7 +41,7 @@
                     </div>
                 </div>
             </div>
-            <div class="bg-white rounded-xl shadow-sm border p-5">
+            <div class="bg-white rounded-xl shadow-xs border p-5">
                 <div class="flex items-center gap-3">
                     <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
                         <i class="bi bi-person-x text-xl text-red-600"></i>
@@ -55,7 +55,7 @@
         </div>
 
         <!-- Table -->
-        <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+        <div class="bg-white rounded-xl shadow-xs border overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full">
                     <thead class="bg-gray-50 border-b">
@@ -145,20 +145,20 @@
                     <div>
                         <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Username *</label>
                         <input type="text" id="username" name="username" required
-                            class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none"
+                            class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden"
                             placeholder="contoh: operator1">
                         <p class="text-xs text-gray-400 mt-1">Username akan digunakan untuk login</p>
                     </div>
                     <div>
                         <label for="nama_pengguna" class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap *</label>
                         <input type="text" id="nama_pengguna" name="nama_pengguna" required
-                            class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none"
+                            class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden"
                             placeholder="Nama lengkap operator">
                     </div>
                     <div>
                         <label for="no_kontak" class="block text-sm font-medium text-gray-700 mb-1">Nomor HP</label>
                         <input type="text" id="no_kontak" name="no_kontak"
-                            class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none"
+                            class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden"
                             placeholder="08xxxxxxxxxx">
                     </div>
                     

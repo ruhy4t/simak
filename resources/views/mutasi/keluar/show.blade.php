@@ -7,13 +7,13 @@
         <!-- Header -->
         <div class="flex items-center gap-4">
             <a href="{{ route('mutasi.keluar.index') }}"
-                class="w-10 h-10 flex items-center justify-center bg-white border border-slate-200 rounded-xl text-slate-500 hover:text-sky-600 hover:border-sky-200 transition shadow-sm">
+                class="w-10 h-10 flex items-center justify-center bg-white border border-slate-200 rounded-xl text-slate-500 hover:text-sky-600 hover:border-sky-200 transition shadow-xs">
                 <i class="bi bi-arrow-left text-xl"></i>
             </a>
             <div class="flex-1">
                 <h1 class="text-2xl font-bold text-slate-900">Detail Mutasi Keluar</h1>
                 <div class="flex items-center gap-2 mt-1 text-sm text-slate-500">
-                    <span class="px-2 py-0.5 bg-slate-100 rounded text-slate-600 font-mono">#{{ $mutasi->id_mutasi }}</span>
+                    <span class="px-2 py-0.5 bg-slate-100 rounded-sm text-slate-600 font-mono">#{{ $mutasi->id_mutasi }}</span>
                     <span>•</span>
                     <span>{{ \Carbon\Carbon::parse($mutasi->tanggal_pengajuan)->translatedFormat('j F Y') }}</span>
                 </div>
@@ -34,7 +34,7 @@
                     @csrf
                     @method('PUT')
                     <button type="submit"
-                        class="px-4 py-2 bg-white border border-rose-200 text-rose-600 hover:bg-rose-50 rounded-xl text-sm font-medium transition flex items-center gap-2 shadow-sm">
+                        class="px-4 py-2 bg-white border border-rose-200 text-rose-600 hover:bg-rose-50 rounded-xl text-sm font-medium transition flex items-center gap-2 shadow-xs">
                         <i class="bi bi-trash"></i> Batalkan & Hapus
                     </button>
                 </form>
@@ -81,7 +81,7 @@
         @endphp
 
         @if($canRevise)
-            <div class="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-6 sm:p-8 shadow-sm">
+            <div class="bg-linear-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-6 sm:p-8 shadow-xs">
                 <div class="flex flex-col md:flex-row items-center gap-6 text-center md:text-left">
                     <div class="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
                         <i class="bi bi-exclamation-triangle-fill text-amber-600 text-3xl"></i>
@@ -108,7 +108,7 @@
 
                         <div class="flex justify-center md:justify-start">
                             <a href="{{ route('mutasi.keluar.revision', $mutasi->id_mutasi) }}"
-                                class="inline-flex items-center px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white !text-white rounded-xl transition font-bold shadow-lg shadow-orange-500/20 hover:-translate-y-1">
+                                class="inline-flex items-center px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white text-white! rounded-xl transition font-bold shadow-lg shadow-orange-500/20 hover:-translate-y-1">
                                 <i class="bi bi-pencil-square mr-2"></i> Perbaiki & Kirim Ulang Sekarang
                             </a>
                         </div>
@@ -119,12 +119,12 @@
         {{-- END NOTIFICATION --}}
 
         <!-- Full Width School Info -->
-        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-5">
+        <div class="bg-linear-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-5">
             <h4 class="font-bold text-slate-800 mb-3 border-b border-blue-200 pb-2">Informasi Perpindahan Sekolah</h4>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Asal -->
                 <div class="relative pl-4 border-l-2 border-blue-400">
-                    <span class="absolute -left-[5px] -top-0 w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+                    <span class="absolute left-[-5px] top-0 w-2.5 h-2.5 rounded-full bg-blue-600"></span>
                     <h5 class="text-xs font-bold text-blue-700 uppercase tracking-wider mb-1">Sekolah Asal</h5>
                     <p class="font-bold text-slate-900 text-sm">{{ $mutasi->nama_sekolah_asal }}</p>
                     <div class="text-xs text-slate-600 mt-1 space-y-0.5">
@@ -135,7 +135,7 @@
 
                 <!-- Tujuan -->
                 <div class="relative pl-4 border-l-2 border-indigo-400">
-                    <span class="absolute -left-[5px] -top-0 w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
+                    <span class="absolute left-[-5px] top-0 w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
                     <h5 class="text-xs font-bold text-indigo-700 uppercase tracking-wider mb-1">Sekolah Tujuan</h5>
                     <p class="font-bold text-slate-900 text-sm">{{ $mutasi->nama_sekolah_tujuan }}</p>
                     <div class="text-xs text-slate-600 mt-1 space-y-0.5">
@@ -152,7 +152,7 @@
         <!-- Layout Split untuk Verifikasi Dinas -->
         @if(in_array(auth()->user()->role, ['Operator', 'Sekolah']) && $mutasi->status === 'Selesai' && $mutasi->file_arsip_scan)
             <div x-data="{ showDoc: false }"
-                class="bg-white rounded-xl shadow-sm border border-slate-100 p-8 text-center max-w-4xl mx-auto my-12 animate-fade-in-up">
+                class="bg-white rounded-xl shadow-xs border border-slate-100 p-8 text-center max-w-4xl mx-auto my-12 animate-fade-in-up">
                 <div
                     class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 ring-8 ring-green-50">
                     <i class="bi bi-file-earmark-check-fill text-4xl text-green-600"></i>
@@ -191,11 +191,11 @@
             <!-- Kiri: Student Info & Dokumen Viewer -->
             <div class="space-y-4">
                 <!-- Student Info Detail -->
-                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+                <div class="bg-white rounded-xl shadow-xs border border-slate-200 p-5">
                     <h4 class="font-bold text-slate-800 mb-3 border-b border-slate-200 pb-2">Informasi Siswa</h4>
                     <div class="flex items-start gap-4">
                         <div
-                            class="w-14 h-14 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold shadow-sm shrink-0 text-xl">
+                            class="w-14 h-14 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold shadow-xs shrink-0 text-xl">
                             {{ substr($mutasi->nama_murid ?? '-', 0, 1) }}
                         </div>
                         <div class="flex-1 min-w-0 space-y-2">
@@ -223,7 +223,7 @@
                 </div>
 
                 <!-- Document Tabs + Inline Viewer -->
-                <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+                <div class="bg-white rounded-xl shadow-xs border overflow-hidden">
                     <!-- Tabs: Klik = load & show, klik lagi = hide -->
                     <div class="flex flex-wrap gap-2 p-4 bg-slate-50 border-b border-slate-200">
                         @foreach($docs as $doc)
@@ -257,7 +257,7 @@
                 <div class="space-y-4">
                     <!-- Verifikasi Berkas (Only for Dinas + Menunggu Verifikasi) -->
                     @if($isVerificationMode)
-                        <div class="bg-white rounded-xl shadow-sm border p-6 sticky top-4">
+                        <div class="bg-white rounded-xl shadow-xs border p-6 sticky top-4">
                             <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                                 <i class="bi bi-clipboard-check text-blue-600"></i>
                                 Verifikasi Berkas
@@ -271,10 +271,10 @@
                                                 class="flex items-center p-3 rounded-lg border border-transparent hover:bg-slate-50 hover:border-slate-200 cursor-pointer transition select-none"
                                                 x-data="{ checked: true }">
                                                 <input type="checkbox" name="{{ $doc['key'] }}_ok" value="1"
-                                                    class="rounded text-blue-600 focus:ring-blue-500 mr-3 w-5 h-5" x-model="checked"
+                                                    class="rounded-sm text-blue-600 focus:ring-blue-500 mr-3 w-5 h-5" x-model="checked"
                                                     @change="updateNote(checked, '{{ $doc['label'] }}')">
                                                 <span class="text-sm text-slate-700 font-medium flex-1">{{ $doc['label'] }}</span>
-                                                <span class="text-xs font-bold px-2 py-1 rounded"
+                                                <span class="text-xs font-bold px-2 py-1 rounded-sm"
                                                     :class="checked ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'"
                                                     x-text="checked ? 'Sesuai' : 'Tidak Sesuai'">
                                                 </span>
@@ -286,17 +286,17 @@
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Catatan</label>
                                     <textarea name="catatan_berkas" rows="4" x-model="catatan"
-                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                                        class="w-full rounded-lg border-gray-300 shadow-xs focus:border-blue-500 focus:ring-blue-500 text-sm"
                                         placeholder="Tambahkan catatan..."></textarea>
                                 </div>
 
                                 <div class="flex flex-col gap-2 pt-2">
                                     <button type="submit" name="action" value="approve"
-                                        class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition shadow-sm">
+                                        class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition shadow-xs">
                                         <i class="bi bi-check-lg mr-2"></i> Setujui Berkas
                                     </button>
                                     <button type="submit" name="action" value="revision"
-                                        class="w-full py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-medium transition shadow-sm">
+                                        class="w-full py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-medium transition shadow-xs">
                                         <i class="bi bi-x-lg mr-2"></i> Minta Perbaikan
                                     </button>
                                 </div>
@@ -306,7 +306,7 @@
 
                     <!-- Status Info Panel (For other statuses) -->
                     @if(!$isVerificationMode)
-                        <div class="bg-white rounded-xl shadow-sm border p-6 sticky top-4">
+                        <div class="bg-white rounded-xl shadow-xs border p-6 sticky top-4">
                             <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                                 <i class="bi bi-info-circle text-blue-600"></i>
                                 Status Pengajuan

@@ -11,26 +11,26 @@
                 <p class="text-gray-500 mt-1">Kelola data mutasi siswa</p>
             </div>
             <a href="{{ route('mutasi.create') }}"
-                class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white font-medium px-5 py-2.5 rounded-lg transition shadow-sm">
+                class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white font-medium px-5 py-2.5 rounded-lg transition shadow-xs">
                 <i class="bi bi-plus-lg"></i>
                 Buat Mutasi Baru
             </a>
         </div>
 
         <!-- Filters -->
-        <div class="bg-white rounded-xl shadow-sm border p-4">
+        <div class="bg-white rounded-xl shadow-xs border p-4">
             <form method="GET" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Cari</label>
                     <input type="text" name="search" value="{{ request('search') }}"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none transition"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden transition"
                         placeholder="Nama/NISN/Sekolah...">
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
                     <select name="status"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none transition">
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden transition">
                         <option value="">Semua Status</option>
                         <option value="Menunggu Verifikasi Dinas" {{ request('status') == 'Menunggu Verifikasi Dinas' ? 'selected' : '' }}>Menunggu</option>
                         <option value="Proses" {{ request('status') == 'Proses' ? 'selected' : '' }}>Proses</option>
@@ -43,7 +43,7 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Bulan</label>
                     <input type="month" name="bulan" value="{{ request('bulan') }}"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none transition">
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden transition">
                 </div>
 
                 <div class="flex items-end gap-2">
@@ -60,7 +60,7 @@
         </div>
 
         <!-- Table -->
-        <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+        <div class="bg-white rounded-xl shadow-xs border overflow-hidden">
             @if($mutasiList->count() > 0)
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm">

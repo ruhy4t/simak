@@ -16,7 +16,7 @@
         </div>
 
         <!-- Form -->
-        <div class="bg-white rounded-xl shadow-sm border p-6">
+        <div class="bg-white rounded-xl shadow-xs border p-6">
             <form action="{{ route('satpen.store') }}" method="POST" class="space-y-6">
                 @csrf
 
@@ -27,7 +27,7 @@
                                 class="text-red-500">*</span></label>
                         <input type="text" name="npsn" required maxlength="8" pattern="[0-9A-Za-z]{8}"
                             value="{{ old('npsn') }}"
-                            class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none @error('npsn') border-red-500 @enderror"
+                            class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden @error('npsn') border-red-500 @enderror"
                             placeholder="8 digit NPSN">
                         @error('npsn')
                             <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
@@ -39,7 +39,7 @@
                         <label class="block text-sm font-medium text-gray-700 mb-1">Nama Sekolah <span
                                 class="text-red-500">*</span></label>
                         <input type="text" name="nama" required maxlength="150" value="{{ old('nama') }}"
-                            class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none @error('nama') border-red-500 @enderror"
+                            class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden @error('nama') border-red-500 @enderror"
                             placeholder="contoh: SMP Negeri 1 Bogor">
                         @error('nama')
                             <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
@@ -51,7 +51,7 @@
                         <label class="block text-sm font-medium text-gray-700 mb-1">Bentuk Pendidikan <span
                                 class="text-red-500">*</span></label>
                         <select name="bentuk_pendidikan" required
-                            class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none">
+                            class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden">
                             <option value="SMP" {{ old('bentuk_pendidikan') == 'SMP' ? 'selected' : '' }}>SMP</option>
                             <option value="SMP SPK" {{ old('bentuk_pendidikan') == 'SMP SPK' ? 'selected' : '' }}>SMP SPK
                             </option>
@@ -65,7 +65,7 @@
                         <label class="block text-sm font-medium text-gray-700 mb-1">Status <span
                                 class="text-red-500">*</span></label>
                         <select name="status_sp" required
-                            class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none">
+                            class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden">
                             <option value="Negeri" {{ old('status_sp') == 'Negeri' ? 'selected' : '' }}>Negeri</option>
                             <option value="Swasta" {{ old('status_sp', 'Swasta') == 'Swasta' ? 'selected' : '' }}>Swasta
                             </option>
@@ -82,7 +82,7 @@
                         <div class="md:col-span-2">
                             <label class="block text-sm font-medium text-gray-700 mb-1">Alamat Jalan</label>
                             <textarea name="alamat_jalan" rows="2"
-                                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none"
+                                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden"
                                 placeholder="Jalan, nomor, RT/RW">{{ old('alamat_jalan') }}</textarea>
                         </div>
 
@@ -90,7 +90,7 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Kelurahan</label>
                             <input type="text" name="kelurahan" maxlength="50" value="{{ old('kelurahan') }}"
-                                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none"
+                                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden"
                                 placeholder="contoh: Paledang">
                         </div>
 
@@ -98,7 +98,7 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Kecamatan</label>
                             <input type="text" name="kecamatan" maxlength="50" value="{{ old('kecamatan') }}"
-                                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none"
+                                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden"
                                 placeholder="contoh: Bogor Tengah">
                         </div>
 

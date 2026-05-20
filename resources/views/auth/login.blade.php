@@ -84,7 +84,7 @@
                 <!-- Mobile Logo (visible only on small screens) -->
                 <div class="lg:hidden text-center mb-8">
                     <div
-                        class="w-16 h-16 bg-gradient-to-tr from-sky-500 to-blue-600 rounded-2xl flex items-center justify-center text-white mx-auto shadow-lg shadow-sky-500/30">
+                        class="w-16 h-16 bg-linear-to-tr from-sky-500 to-blue-600 rounded-2xl flex items-center justify-center text-white mx-auto shadow-lg shadow-sky-500/30">
                         <i class="bi bi-building text-3xl"></i>
                     </div>
                 </div>
@@ -98,7 +98,7 @@
                 <!-- Alerts -->
                 @if ($errors->any())
                     <div class="p-4 rounded-xl bg-rose-50 border border-rose-100 flex items-start gap-4 animate-shake">
-                        <div class="flex-shrink-0 w-5 h-5 rounded-full bg-rose-100 flex items-center justify-center mt-0.5">
+                        <div class="shrink-0 w-5 h-5 rounded-full bg-rose-100 flex items-center justify-center mt-0.5">
                             <i class="bi bi-exclamation-circle-fill text-rose-500 text-xs"></i>
                         </div>
                         <div class="flex-1">
@@ -111,7 +111,7 @@
                 @if (session('success'))
                     <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-100 flex items-start gap-4">
                         <div
-                            class="flex-shrink-0 w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center mt-0.5">
+                            class="shrink-0 w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center mt-0.5">
                             <i class="bi bi-check-circle-fill text-emerald-500 text-xs"></i>
                         </div>
                         <div class="flex-1">
@@ -135,7 +135,7 @@
                                 </div>
                                 <input type="text" id="username" name="username" value="{{ old('username') }}" required
                                     autofocus
-                                    class="modern-input block w-full pl-11 pr-4 py-3.5 bg-slate-50 border-gray-200 border rounded-xl text-slate-900 text-sm placeholder:text-slate-400 focus:bg-white focus:outline-none"
+                                    class="modern-input block w-full pl-11 pr-4 py-3.5 bg-slate-50 border-gray-200 border rounded-xl text-slate-900 text-sm placeholder:text-slate-400 focus:bg-white focus:outline-hidden"
                                     placeholder="Masukkan username Anda">
                             </div>
                         </div>
@@ -147,10 +147,10 @@
                                     <i class="bi bi-lock text-slate-400 group-hover:text-sky-500 transition-colors"></i>
                                 </div>
                                 <input :type="show ? 'text' : 'password'" id="password" name="password" required
-                                    class="modern-input block w-full pl-11 pr-12 py-3.5 bg-slate-50 border-gray-200 border rounded-xl text-slate-900 text-sm placeholder:text-slate-400 focus:bg-white focus:outline-none"
+                                    class="modern-input block w-full pl-11 pr-12 py-3.5 bg-slate-50 border-gray-200 border rounded-xl text-slate-900 text-sm placeholder:text-slate-400 focus:bg-white focus:outline-hidden"
                                     placeholder="••••••••">
                                 <button type="button" @click="show = !show"
-                                    class="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-500 hover:text-slate-700 focus:outline-none transition z-10 cursor-pointer">
+                                    class="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-500 hover:text-slate-700 focus:outline-hidden transition z-10 cursor-pointer">
                                     <i class="bi" :class="show ? 'bi-eye-slash-fill' : 'bi-eye-fill'"></i>
                                 </button>
                             </div>
@@ -174,9 +174,9 @@
                     </div>
 
                     <button type="submit"
-                        class="w-full relative group overflow-hidden rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 p-px shadow-lg shadow-sky-500/20 hover:shadow-sky-500/30 transition-all duration-300 hover:scale-[1.01]">
+                        class="w-full relative group overflow-hidden rounded-xl bg-linear-to-r from-sky-500 to-blue-600 p-px shadow-lg shadow-sky-500/20 hover:shadow-sky-500/30 transition-all duration-300 hover:scale-[1.01]">
                         <div
-                            class="relative flex items-center justify-center gap-2 bg-gradient-to-r from-sky-500 to-blue-600 px-6 py-3.5 rounded-xl transition-all group-hover:bg-opacity-90">
+                            class="relative flex items-center justify-center gap-2 bg-linear-to-r from-sky-500 to-blue-600 px-6 py-3.5 rounded-xl transition-all group-hover:bg-opacity-90">
                             <span class="font-semibold text-white tracking-wide">Masuk Aplikasi</span>
                             <i class="bi bi-arrow-right text-white group-hover:translate-x-1 transition-transform"></i>
                         </div>
@@ -197,7 +197,7 @@
             <div
                 class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1620121692029-d088224ddc84?q=80&w=2832&auto=format&fit=crop')] bg-cover bg-center opacity-20 transform scale-110">
             </div>
-            <div class="absolute inset-0 bg-gradient-to-br from-slate-900/95 via-slate-900/80 to-slate-900/40"></div>
+            <div class="absolute inset-0 bg-linear-to-br from-slate-900/95 via-slate-900/80 to-slate-900/40"></div>
 
             <!-- Animated Blobs -->
             <div

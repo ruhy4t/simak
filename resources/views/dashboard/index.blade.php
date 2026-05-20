@@ -10,7 +10,7 @@
                 <h1 class="text-2xl font-bold text-slate-900">Dashboard Overview</h1>
                 <p class="text-slate-500 mt-1">Selamat datang kembali, <span class="font-semibold text-sky-600">{{ $user->nama_pengguna ?? $user->username }}</span>!</p>
             </div>
-            <div class="inline-flex items-center px-4 py-2 bg-white border border-slate-200 rounded-xl shadow-sm text-sm text-slate-500">
+            <div class="inline-flex items-center px-4 py-2 bg-white border border-slate-200 rounded-xl shadow-xs text-sm text-slate-500">
                 <i class="bi bi-calendar3 mr-2 text-slate-400"></i>
                 {{ now()->translatedFormat('l, j F Y') }}
             </div>
@@ -96,7 +96,7 @@
                             ['label' => 'Aktif', 'value' => $statsUsers['active'], 'color' => 'emerald', 'bg' => 'emerald'],
                             ['label' => 'Non-Aktif', 'value' => $statsUsers['inactive'], 'color' => 'rose', 'bg' => 'rose']
                         ] as $uStat)
-                         <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex items-center justify-between group hover:shadow-md transition">
+                         <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-xs flex items-center justify-between group hover:shadow-md transition">
                             <div>
                                 <p class="text-sm text-slate-500 font-medium">{{ $uStat['label'] }}</p>
                                 <p class="text-3xl font-bold text-slate-800 mt-2">{{ number_format($uStat['value']) }}</p>
@@ -109,7 +109,7 @@
                     </div>
                     <div class="flex justify-end">
                         <a href="{{ route('users.manage') }}"
-                            class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-slate-200 text-sm font-medium text-slate-600 hover:text-sky-600 hover:border-sky-200 hover:bg-sky-50 transition-colors shadow-sm">
+                            class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-slate-200 text-sm font-medium text-slate-600 hover:text-sky-600 hover:border-sky-200 hover:bg-sky-50 transition-colors shadow-xs">
                             Kelola Pengguna <i class="bi bi-arrow-right"></i>
                         </a>
                     </div>
@@ -117,7 +117,7 @@
                     <!-- Dinas: Stats Sekolah & Operator -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <!-- Role Sekolah -->
-                        <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition">
+                        <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-xs hover:shadow-md transition">
                             <div class="flex items-center justify-between mb-6">
                                 <div class="flex items-center gap-3">
                                     <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
@@ -130,17 +130,17 @@
                             <div class="space-y-3">
                                 <div class="flex justify-between text-sm items-center">
                                     <span class="text-slate-500">Aktif</span>
-                                    <span class="font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">{{ $statsUsers['sekolah_active'] ?? 0 }}</span>
+                                    <span class="font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-sm">{{ $statsUsers['sekolah_active'] ?? 0 }}</span>
                                 </div>
                                 <div class="flex justify-between text-sm items-center">
                                      <span class="text-slate-500">Non-Aktif</span>
-                                    <span class="font-semibold text-rose-600 bg-rose-50 px-2 py-0.5 rounded">{{ $statsUsers['sekolah_inactive'] ?? 0 }}</span>
+                                    <span class="font-semibold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-sm">{{ $statsUsers['sekolah_inactive'] ?? 0 }}</span>
                                 </div>
                             </div>
                         </div>
 
                          <!-- Role Operator -->
-                        <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition">
+                        <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-xs hover:shadow-md transition">
                             <div class="flex items-center justify-between mb-6">
                                 <div class="flex items-center gap-3">
                                     <div class="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center">
@@ -153,18 +153,18 @@
                             <div class="space-y-3">
                                 <div class="flex justify-between text-sm items-center">
                                     <span class="text-slate-500">Aktif</span>
-                                    <span class="font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">{{ $statsUsers['operator_active'] ?? 0 }}</span>
+                                    <span class="font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-sm">{{ $statsUsers['operator_active'] ?? 0 }}</span>
                                 </div>
                                 <div class="flex justify-between text-sm items-center">
                                      <span class="text-slate-500">Non-Aktif</span>
-                                    <span class="font-semibold text-rose-600 bg-rose-50 px-2 py-0.5 rounded">{{ $statsUsers['operator_inactive'] ?? 0 }}</span>
+                                    <span class="font-semibold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-sm">{{ $statsUsers['operator_inactive'] ?? 0 }}</span>
                                 </div>
                             </div>
                         </div>
                     </div>
                     <div class="flex justify-end">
                         <a href="{{ route('dinas.users') }}"
-                             class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-slate-200 text-sm font-medium text-slate-600 hover:text-sky-600 hover:border-sky-200 hover:bg-sky-50 transition-colors shadow-sm">
+                             class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-slate-200 text-sm font-medium text-slate-600 hover:text-sky-600 hover:border-sky-200 hover:bg-sky-50 transition-colors shadow-xs">
                             Kelola Semua Pengguna <i class="bi bi-arrow-right"></i>
                         </a>
                     </div>
@@ -173,8 +173,8 @@
         @endif
 
         <!-- Statistik Mutasi per Sekolah -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 overflow-hidden relative">
-            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-sky-400 to-blue-500"></div>
+        <div class="bg-white rounded-2xl shadow-xs border border-slate-100 p-6 overflow-hidden relative">
+            <div class="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-sky-400 to-blue-500"></div>
             
             <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
                 <div>
@@ -185,7 +185,7 @@
                 <!-- Filter Form -->
                 <form method="GET" action="{{ route('dashboard') }}" class="flex flex-wrap gap-2 items-center bg-slate-50 p-1.5 rounded-xl border border-slate-200">
                     <select name="month"
-                        class="text-sm bg-white border-0 rounded-lg px-3 py-2 text-slate-600 focus:ring-2 focus:ring-sky-100 placeholder:text-slate-400 shadow-sm cursor-pointer hover:bg-slate-50 transition">
+                        class="text-sm bg-white border-0 rounded-lg px-3 py-2 text-slate-600 focus:ring-2 focus:ring-sky-100 placeholder:text-slate-400 shadow-xs cursor-pointer hover:bg-slate-50 transition">
                         <option value="">Semua Bulan</option>
                         @php
                             $months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
@@ -195,14 +195,14 @@
                         @endforeach
                     </select>
                     <select name="year"
-                        class="text-sm bg-white border-0 rounded-lg px-3 py-2 text-slate-600 focus:ring-2 focus:ring-sky-100 placeholder:text-slate-400 shadow-sm cursor-pointer hover:bg-slate-50 transition">
+                        class="text-sm bg-white border-0 rounded-lg px-3 py-2 text-slate-600 focus:ring-2 focus:ring-sky-100 placeholder:text-slate-400 shadow-xs cursor-pointer hover:bg-slate-50 transition">
                         <option value="">Semua Tahun</option>
                         @foreach($availableYears as $y)
                             <option value="{{ $y }}" {{ $filterYear == $y ? 'selected' : '' }}>{{ $y }}</option>
                         @endforeach
                     </select>
                     <button type="submit"
-                        class="text-sm bg-sky-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-sky-600 transition shadow-sm shadow-sky-200">
+                        class="text-sm bg-sky-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-sky-600 transition shadow-xs shadow-sky-200">
                         Filter
                     </button>
                     @if($filterMonth || $filterYear)
@@ -234,7 +234,7 @@
                          <span class="text-xs font-normal text-slate-400">Top 10</span>
                     </h3>
                     @if(count($schoolStatsMasuk) > 0)
-                        <div class="overflow-hidden rounded-xl border border-slate-100 shadow-sm">
+                        <div class="overflow-hidden rounded-xl border border-slate-100 shadow-xs">
                             <table class="w-full text-sm">
                                 <thead class="bg-slate-50">
                                     <tr>
@@ -279,7 +279,7 @@
                          <span class="text-xs font-normal text-slate-400">Top 10</span>
                     </h3>
                     @if(count($schoolStatsKeluar) > 0)
-                        <div class="overflow-hidden rounded-xl border border-slate-100 shadow-sm">
+                        <div class="overflow-hidden rounded-xl border border-slate-100 shadow-xs">
                             <table class="w-full text-sm">
                                 <thead class="bg-slate-50">
                                     <tr>
@@ -343,8 +343,8 @@
 
                 @foreach($verifyStats as $vStat)
                     <a href="{{ route($vStat['route'], ['status' => 'Menunggu Verifikasi Dinas']) }}"
-                        class="group relative overflow-hidden bg-white rounded-2xl p-6 border border-slate-100 shadow-sm hover:shadow-lg transition-all duration-300">
-                        <div class="absolute right-0 top-0 w-32 h-32 bg-gradient-to-br from-{{ $vStat['color'] }}-100/50 to-transparent rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-150"></div>
+                        class="group relative overflow-hidden bg-white rounded-2xl p-6 border border-slate-100 shadow-xs hover:shadow-lg transition-all duration-300">
+                        <div class="absolute right-0 top-0 w-32 h-32 bg-linear-to-br from-{{ $vStat['color'] }}-100/50 to-transparent rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-150"></div>
                         
                         <div class="relative flex items-center gap-5">
                             <div class="w-14 h-14 rounded-2xl bg-{{ $vStat['color'] }}-50 text-{{ $vStat['color'] }}-500 flex items-center justify-center shadow-inner group-hover:rotate-12 transition-transform">
@@ -364,10 +364,10 @@
         @endif
 
         <!-- Footer Info -->
-        <div class="bg-gradient-to-r from-slate-900 to-slate-800 rounded-2xl p-8 text-white relative overflow-hidden shadow-xl">
+        <div class="bg-linear-to-r from-slate-900 to-slate-800 rounded-2xl p-8 text-white relative overflow-hidden shadow-xl">
              <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
             <div class="relative z-10 flex flex-col md:flex-row items-center gap-6 text-center md:text-left">
-                <div class="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-sm shadow-inner border border-white/10">
+                <div class="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-xs shadow-inner border border-white/10">
                     <i class="bi bi-info-circle text-3xl text-sky-400"></i>
                 </div>
                 <div class="flex-1">
@@ -393,7 +393,7 @@
 
                 {{-- Header --}}
                 <div class="bg-slate-900 px-6 py-6 text-center relative overflow-hidden">
-                    <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-600/20 to-purple-600/20"></div>
+                    <div class="absolute top-0 left-0 w-full h-full bg-linear-to-br from-blue-600/20 to-purple-600/20"></div>
                     <div class="relative z-10">
                         <div class="w-16 h-16 bg-white/10 mx-auto rounded-2xl flex items-center justify-center backdrop-blur-md mb-4 border border-white/10">
                             <i class="bi bi-telegram text-sky-400 text-3xl"></i>
@@ -407,19 +407,19 @@
                 <div class="px-8 py-6 space-y-6">
                     <div class="space-y-4">
                         <div class="flex gap-4">
-                            <span class="flex-shrink-0 w-6 h-6 rounded-full bg-slate-100 text-slate-600 font-bold text-xs flex items-center justify-center mt-0.5">1</span>
+                            <span class="shrink-0 w-6 h-6 rounded-full bg-slate-100 text-slate-600 font-bold text-xs flex items-center justify-center mt-0.5">1</span>
                             <div class="text-sm text-slate-600">
-                                Cari bot <span class="font-mono font-bold text-slate-800 bg-slate-100 px-1 rounded">@userinfobot</span> di Telegram
+                                Cari bot <span class="font-mono font-bold text-slate-800 bg-slate-100 px-1 rounded-sm">@userinfobot</span> di Telegram
                             </div>
                         </div>
                         <div class="flex gap-4">
-                            <span class="flex-shrink-0 w-6 h-6 rounded-full bg-slate-100 text-slate-600 font-bold text-xs flex items-center justify-center mt-0.5">2</span>
+                            <span class="shrink-0 w-6 h-6 rounded-full bg-slate-100 text-slate-600 font-bold text-xs flex items-center justify-center mt-0.5">2</span>
                             <div class="text-sm text-slate-600">
                                 Start bot untuk mendapatkan <strong>ID Telegram</strong> Anda.
                             </div>
                         </div>
                          <div class="flex gap-4">
-                            <span class="flex-shrink-0 w-6 h-6 rounded-full bg-slate-100 text-slate-600 font-bold text-xs flex items-center justify-center mt-0.5">3</span>
+                            <span class="shrink-0 w-6 h-6 rounded-full bg-slate-100 text-slate-600 font-bold text-xs flex items-center justify-center mt-0.5">3</span>
                             <div class="text-sm text-slate-600">
                                 Masukkan ID di Profil SIMAK, lalu chat <span class="font-mono font-bold text-sky-600">@simak_smp_bot</span>.
                             </div>
