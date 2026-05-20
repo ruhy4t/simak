@@ -1013,6 +1013,7 @@ class MutasiController extends Controller
             'mutasi' => $mutasiData,
             'penandatangan' => $penandatangan,
             'mode' => $mode,
+            'format' => $request->query('format'),
         ]);
 
         if ($request->query('format') === 'word') {

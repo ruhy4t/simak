@@ -99,73 +99,30 @@
             }
         }
 
-        /* --- ABSOLUTE FOOTER WITH 3-COLUMN LAYOUT --- */
-        .page-footer {
-            position: absolute;
-            bottom: 1cm;
-            left: 2cm;
-            right: 2cm;
-            height: auto;
-        }
-
-
-
-        .footer-content {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .footer-left {
-            width: 100px;
-            flex-shrink: 0;
-        }
-
-        .footer-center {
-            flex: 1;
-            text-align: center;
-            font-size: 9pt;
-            padding: 0 10px;
-        }
-
-        .footer-right {
-            width: 100px;
-            flex-shrink: 0;
-        }
-
-        .footer-center .quote {
-            font-style: italic;
-            display: block;
-            margin-bottom: 2px;
-        }
-
-        .footer-center .tagline {
-            font-weight: bold;
-            display: block;
-        }
-
-        .footer-qr img {
-            width: 80px;
-            height: auto;
-        }
-
         /* --- KOP SURAT --- */
         .kop-surat {
-            display: flex;
-            align-items: center;
             border-bottom: 3px solid #000;
             padding-bottom: 5px;
             margin-bottom: 15px;
         }
 
+        .kop-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .kop-logo-cell {
+            width: 80px;
+            vertical-align: middle;
+            text-align: left;
+        }
+
         .logo-kop {
             width: 60px;
             height: 75px;
-            margin-right: 15px;
         }
 
         .kop-text {
-            flex: 1;
             text-align: center;
         }
 
@@ -314,6 +271,30 @@
         .center {
             text-align: center;
         }
+
+        @if(($format ?? null) === 'word')
+            body {
+                background: #fff;
+                padding: 0;
+            }
+
+            .page,
+            .page-portrait,
+            .page-landscape {
+                width: 100%;
+                height: auto;
+                min-height: auto;
+                margin: 0;
+                padding: 1cm 1.5cm;
+                box-shadow: none;
+                overflow: visible;
+                page-break-after: always;
+            }
+
+            .kop-table {
+                width: 100%;
+            }
+        @endif
     </style>
 </head>
 
@@ -353,12 +334,6 @@
         $decodedNamaSiswa = html_entity_decode($namaSiswaStr);
         $decodedNamaPejabat = html_entity_decode($namaPejabat);
 
-        // QR String
-        $qrData = "ID:{$idMutasi} | Siswa:{$decodedNamaSiswa} | Tgl:{$tglTtd} | TTD:{$decodedNamaPejabat}";
-        $disdikLogo = null; // DISABLED: Logo removed per user request (stability fix)
-
-        // Generate QR Once (Increased size for readability, slightly reduced per new request)
-        $qrCodeHtml = \App\Helpers\QrCodeHelper::generateWithLogo($qrData, 85, $disdikLogo);
     @endphp
 
     {{-- ========================================================================================= --}}
@@ -368,13 +343,19 @@
 
         {{-- HEADER KOP --}}
         <div class="kop-surat">
-            <img src="{{ asset('images/logo_Kota_Bogor.png') }}" alt="Logo" class="logo-kop">
-            <div class="kop-text">
-                <h1>PEMERINTAH KOTA BOGOR</h1>
-                <h2>DINAS PENDIDIKAN</h2>
-                <p>Jl. Padjajaran No. 125, Bantarjati, Bogor Utara, Kota Bogor, Jawa Barat 16153</p>
-                <p>Telp. 0251-8341101 Faksimile 0251-8341101<br>www.disdik.kotabogor.go.id</p>
-            </div>
+            <table class="kop-table">
+                <tr>
+                    <td class="kop-logo-cell">
+                        <img src="{{ asset('images/logo_Kota_Bogor.png') }}" alt="Logo" class="logo-kop">
+                    </td>
+                    <td class="kop-text">
+                        <h1>PEMERINTAH KOTA BOGOR</h1>
+                        <h2>DINAS PENDIDIKAN</h2>
+                        <p>Jl. Padjajaran No. 125, Bantarjati, Bogor Utara, Kota Bogor, Jawa Barat 16153</p>
+                        <p>Telp. 0251-8341101 Faksimile 0251-8341101<br>www.disdik.kotabogor.go.id</p>
+                    </td>
+                </tr>
+            </table>
         </div>
 
         {{-- INFO --}}
@@ -491,17 +472,6 @@
                 </div>
             </div>
 
-            {{-- FOOTER WITH 3-COLUMN LAYOUT (QR Left, Text Center, Empty Right) --}}
-            <div class="page-footer">
-                <div class="footer-content">
-                    <div class="footer-left footer-qr">{!! $qrCodeHtml !!}</div>
-                    <div class="footer-center">
-                        <span class="quote">"dinu kiwari ngancik nu bihari, seja ayeuna sampeureun jaga"</span>
-                        <span class="tagline">Bogor Beres, Bogor Cerdas</span>
-                    </div>
-                    <div class="footer-right"></div>
-                </div>
-            </div>
         @endif
 
 
@@ -562,7 +532,7 @@
         @php $globalCounter = 1; @endphp
 
         @foreach($chunks as $pageIndex => $chunk)
-            <div class="page page-landscape" style="padding-bottom: 3cm;"> {{-- 3cm bottom padding for both modes --}}
+            <div class="page page-landscape">
 
                 {{-- Header LAMPIRAN dan Judul hanya di halaman pertama lampiran --}}
                 @if($pageIndex === 0)
@@ -676,21 +646,6 @@
                             </div>
                         </div>
                     @endif
-                @endif
-
-                {{-- FOOTER ON EVERY PAGE FOR MANUAL MODE --}}
-                @if(($mode ?? 'manual') !== 'tnd' || !optional($penandatangan)->gambar_ttd)
-                    {{-- FOOTER WITH 3-COLUMN LAYOUT (QR Left, Text Center, Empty Right) --}}
-                    <div class="page-footer">
-                        <div class="footer-content">
-                            <div class="footer-left footer-qr">{!! $qrCodeHtml !!}</div>
-                            <div class="footer-center">
-                                <span class="quote">"dinu kiwari ngancik nu bihari, seja ayeuna sampeureun jaga"</span>
-                                <span class="tagline">Bogor Beres, Bogor Cerdas</span>
-                            </div>
-                            <div class="footer-right"></div>
-                        </div>
-                    </div>
                 @endif
 
             </div>

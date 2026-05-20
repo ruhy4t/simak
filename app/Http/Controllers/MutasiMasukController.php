@@ -1064,6 +1064,7 @@ class MutasiMasukController extends Controller
             'siswaList' => $siswaList,
             'penandatangan' => $penandatangan,
             'mode' => $mode,
+            'format' => $request->query('format'),
         ]);
 
         if ($request->query('format') === 'word') {
