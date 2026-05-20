@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 
@@ -35,6 +36,7 @@ class SecureFileController extends Controller
             abort(400, 'Invalid path.');
         }
 
+        $path = ltrim(str_replace('\\', '/', $path), '/');
         $disk = $this->getDisk();
 
         // Try multiple path variations for backward compatibility
@@ -72,6 +74,8 @@ class SecureFileController extends Controller
             abort(404, 'File tidak ditemukan.');
         }
 
+        $this->authorizeFileAccess($foundPath);
+
         // Get file content and serve
         $content = Storage::disk($disk)->get($foundPath);
         $extension = strtolower(pathinfo($foundPath, PATHINFO_EXTENSION));
@@ -96,6 +100,8 @@ class SecureFileController extends Controller
      */
     protected function serveLocalFile(string $fullPath, string $originalPath)
     {
+        $this->authorizeFileAccess(ltrim(str_replace('\\', '/', $originalPath), '/'));
+
         $extension = strtolower(pathinfo($fullPath, PATHINFO_EXTENSION));
 
         $mimeType = match ($extension) {
@@ -111,5 +117,88 @@ class SecureFileController extends Controller
             'Content-Disposition' => 'inline; filename="' . basename($originalPath) . '"',
             'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
         ]);
+    }
+
+    protected function authorizeFileAccess(string $path): void
+    {
+        $user = Auth::user();
+
+        if (!$user) {
+            abort(403, 'Akses ditolak.');
+        }
+
+        if (in_array($user->role, ['Dinas', 'SuperAdmin'], true)) {
+            return;
+        }
+
+        $paths = array_values(array_unique([
+            $path,
+            ltrim($path, '/'),
+            str_starts_with($path, 'dokumen/') ? substr($path, 8) : 'dokumen/' . ltrim($path, '/'),
+        ]));
+
+        $mutasiKeluar = $this->findByFileColumns('mutasi_keluar', [
+            'file_suket_keluar',
+            'file_suket_dapo',
+            'file_suket_diterima',
+            'file_rapor',
+            'file_arsip_scan',
+        ], $paths);
+
+        if ($mutasiKeluar) {
+            $allowed = $user->role === 'Operator'
+                ? $mutasiKeluar->pengusul === $user->username
+                : $mutasiKeluar->npsn_sekolah_asal === $user->npsn || $mutasiKeluar->pengusul === $user->username;
+
+            abort_unless($allowed, 403, 'Anda tidak berhak mengakses dokumen ini.');
+            return;
+        }
+
+        $mutasiMasuk = $this->findByFileColumns('mutasi_masuk', [
+            'file_surat_permohonan',
+            'file_arsip_scan',
+        ], $paths);
+
+        if ($mutasiMasuk) {
+            $allowed = $user->role === 'Operator'
+                ? $mutasiMasuk->pengusul === $user->username
+                : $mutasiMasuk->npsn_sekolah_tujuan === $user->npsn || $mutasiMasuk->pengusul === $user->username;
+
+            abort_unless($allowed, 403, 'Anda tidak berhak mengakses dokumen ini.');
+            return;
+        }
+
+        $siswa = $this->findByFileColumns('mutasi_masuk_siswa', [
+            'file_surat_pindah',
+            'file_surat_dapodik',
+            'file_rekomendasi',
+            'file_ijazah_sd',
+            'file_rapor',
+            'file_surat_penyaluran',
+        ], $paths);
+
+        if ($siswa) {
+            $parent = DB::table('mutasi_masuk')->where('id_mutasi', $siswa->id_mutasi)->first();
+            $allowed = $parent && ($user->role === 'Operator'
+                ? $parent->pengusul === $user->username
+                : $parent->npsn_sekolah_tujuan === $user->npsn || $parent->pengusul === $user->username);
+
+            abort_unless($allowed, 403, 'Anda tidak berhak mengakses dokumen ini.');
+            return;
+        }
+
+        Log::warning("File access denied because no owner record was found: {$path}");
+        abort(403, 'Anda tidak berhak mengakses dokumen ini.');
+    }
+
+    protected function findByFileColumns(string $table, array $columns, array $paths): ?object
+    {
+        return DB::table($table)
+            ->where(function ($query) use ($columns, $paths) {
+                foreach ($columns as $column) {
+                    $query->orWhereIn($column, $paths);
+                }
+            })
+            ->first();
     }
 }

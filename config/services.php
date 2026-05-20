@@ -19,7 +19,7 @@ return [
     ],
 
     'cron' => [
-        'token' => env('CRON_SECRET_TOKEN'),
+        'token' => env('CRON_SECRET_TOKEN', env('CRON_SECRET')),
     ],
 
 ];

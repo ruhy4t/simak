@@ -3,6 +3,13 @@
 /node_modules
 /public/storage
 /storage/*.key
+/backups
+/public/cek_server.php
+/public/cleaner.php
+/public/debug_*.php
+/public/probe.php
+/public/test_telegram.php
+/public/migration_tools
 .env
 .env.backup
 .env.production

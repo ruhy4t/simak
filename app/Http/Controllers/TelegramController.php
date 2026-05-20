@@ -8,6 +8,20 @@ use Illuminate\Support\Facades\Log;
 
 class TelegramController extends Controller
 {
+    private function ensureAdminAccess(Request $request): void
+    {
+        if ($request->user() && in_array($request->user()->role, ['Dinas', 'SuperAdmin'], true)) {
+            return;
+        }
+
+        $expectedToken = config('services.cron.token');
+        $requestToken = $request->query('token') ?: $request->bearerToken();
+
+        if (empty($expectedToken) || !hash_equals($expectedToken, (string) $requestToken)) {
+            abort(403, 'Unauthorized');
+        }
+    }
+
     /**
      * Handle Telegram webhook for /start command
      * This endpoint receives updates from Telegram when user sends /start to the bot
@@ -47,6 +61,8 @@ class TelegramController extends Controller
      */
     public function setWebhook(Request $request)
     {
+        $this->ensureAdminAccess($request);
+
         $webhookUrl = $request->input('url');
 
         if (empty($webhookUrl)) {
@@ -103,6 +119,8 @@ class TelegramController extends Controller
      */
     public function webhookInfo()
     {
+        $this->ensureAdminAccess(request());
+
         $botToken = config('services.telegram.bot_token');
 
         if (empty($botToken)) {

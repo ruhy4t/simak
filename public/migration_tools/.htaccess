@@ -1,5 +1,0 @@
-<IfModule mod_rewrite.c>
-    RewriteEngine On
-    RewriteCond %{HTTP_HOST} !^simak-xi\.vercel\.app$ [NC]
-    RewriteRule ^(.*)$ https://simak-xi.vercel.app/$1 [R=301,L]
-</IfModule>

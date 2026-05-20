@@ -17,7 +17,7 @@ class TemporaryUploadController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'file' => 'required|file|max:2048', // Max 2MB (covers Rapor)
+            'file' => 'required|file|mimes:pdf,jpg,jpeg,png,webp|max:2048', // Max 2MB
         ]);
 
         if ($request->hasFile('file')) {
@@ -64,12 +64,20 @@ class TemporaryUploadController extends Controller
         // 2. Validate Request
         $request->validate([
             'filename' => 'required|string',
-            'content_type' => 'required|string'
+            'content_type' => 'required|string|in:application/pdf,image/jpeg,image/png,image/webp'
         ]);
 
         $filename = $request->input('filename');
         $contentType = $request->input('content_type');
-        $ext = pathinfo($filename, PATHINFO_EXTENSION);
+        $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+        $allowedExtensions = ['pdf', 'jpg', 'jpeg', 'png', 'webp'];
+
+        if (!in_array($ext, $allowedExtensions, true)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Format file tidak didukung.'
+            ], 422);
+        }
 
         // Check if B2 Bucket and Endpoint are configured
         if (!config('filesystems.disks.b2.bucket') || !config('filesystems.disks.b2.endpoint')) {

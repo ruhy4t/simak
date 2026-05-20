@@ -14,27 +14,23 @@ class QueueWorkerController extends Controller
     public function work()
     {
         // Security: Validate Cron Token
-        $requestToken = request()->query('token');
+        $requestToken = request()->query('token') ?: request()->bearerToken();
         $validToken = config('services.cron.token');
 
         if (empty($validToken)) {
             Log::warning('Queue Worker: CRON_SECRET_TOKEN is not set in environment variables.');
-            // Optional: Fail safe to 403 or allow if you want insecure by default (not recommended)
-            // return abort(403, 'Server configuration error');
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Server configuration error'
+            ], 403);
         }
 
         if ($requestToken !== $validToken) {
             Log::warning('Queue Worker: Unauthorized access attempt.');
             Log::warning('IP: ' . request()->ip());
-            Log::warning('Received Token: ' . $requestToken);
-            Log::warning('Expected Token: ' . $validToken); // Caution: This will log the secret to Vercel logs basically.
             return response()->json([
                 'status' => 'error',
-                'message' => 'Unauthorized',
-                'debug' => [
-                    'received' => $requestToken,
-                    'expected_configured' => !empty($validToken) ? 'YES' : 'NO'
-                ]
+                'message' => 'Unauthorized'
             ], 403);
         }
 

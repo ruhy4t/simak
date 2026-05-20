@@ -2,9 +2,16 @@
 /public/build
 /public/hot
 /public/storage
+/public/cek_server.php
+/public/cleaner.php
+/public/debug_*.php
+/public/probe.php
+/public/test_telegram.php
+/public/migration_tools/
 /storage/*.key
 /vendor
 /storage/framework/views
+/backups/*.zip
 
 .env
 .env.backup
