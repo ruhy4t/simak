@@ -199,18 +199,8 @@ class MutasiService
         // Send Telegram notification
         NotificationHelper::notifyPengusul($mutasi, 'Selesai', 'keluar');
 
-        // Get pengusul for WhatsApp link
-        $pengusul = DB::table('users')->where('username', $mutasi->pengusul)->first();
-        $whatsappLink = null;
-
-        if ($pengusul && !empty($pengusul->no_kontak)) {
-            $message = NotificationHelper::buildCompletionMessage($mutasi, 'keluar');
-            $whatsappLink = NotificationHelper::generateWhatsAppLink($pengusul->no_kontak, $message);
-        }
-
         return [
-            'pengusul' => $pengusul,
-            'whatsapp_link' => $whatsappLink,
+            'pengusul' => DB::table('users')->where('username', $mutasi->pengusul)->first(),
         ];
     }
 
@@ -247,20 +237,10 @@ class MutasiService
         // Send Telegram notification
         NotificationHelper::notifyPengusul($mutasiWithSiswa, 'Selesai', 'masuk');
 
-        // Get pengusul for WhatsApp link
-        $pengusul = DB::table('users')->where('username', $mutasi->pengusul)->first();
-        $whatsappLink = null;
-
-        if ($pengusul && !empty($pengusul->no_kontak)) {
-            $message = NotificationHelper::buildCompletionMessage($mutasiWithSiswa, 'masuk');
-            $whatsappLink = NotificationHelper::generateWhatsAppLink($pengusul->no_kontak, $message);
-        }
-
         Log::info("Surat Izin Mutasi Masuk {$id} selesai");
 
         return [
-            'pengusul' => $pengusul,
-            'whatsapp_link' => $whatsappLink,
+            'pengusul' => DB::table('users')->where('username', $mutasi->pengusul)->first(),
             'siswa_list' => $siswaList,
         ];
     }

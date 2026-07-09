@@ -990,7 +990,6 @@ class MutasiController extends Controller
         $mutasi->tanggal_selesai = $request->tanggal_selesai;
         $mutasi->status = 'Selesai';
 
-        // Get pengusul phone for notification
         // Auto-save New School (User Request) - Save upon completion
         \App\Http\Controllers\SatuanPendidikanController::maybeStoreNewSchool([
             'npsn' => $mutasi->npsn_sekolah_tujuan,
@@ -1007,21 +1006,7 @@ class MutasiController extends Controller
             Log::error("Telegram notification failed: " . $e->getMessage());
         }
 
-        // Get pengusul phone for WhatsApp link
-        $pengusul = DB::table('users')->where('username', $mutasi->pengusul)->first();
-        $whatsappLink = null;
-
-        if ($pengusul && !empty($pengusul->no_kontak)) {
-            $message = \App\Helpers\NotificationHelper::buildCompletionMessage($mutasi, 'keluar');
-            $whatsappLink = \App\Helpers\NotificationHelper::generateWhatsAppLink($pengusul->no_kontak, $message);
-        }
-
         $successMessage = "Surat Keterangan Mutasi Keluar selesai.\n\nNomor: {$request->nomor_surat_izin}\nTanggal Selesai: " . \Carbon\Carbon::parse($request->tanggal_selesai)->translatedFormat('d F Y');
-
-        if ($whatsappLink) {
-            session()->flash('whatsapp_link', $whatsappLink);
-            session()->flash('pengusul_name', $pengusul->nama_pengguna ?? $mutasi->pengusul);
-        }
 
         return redirect()->route('mutasi.keluar.show', $id)->with('success', $successMessage);
     }

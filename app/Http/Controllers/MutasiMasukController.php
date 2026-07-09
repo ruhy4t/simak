@@ -990,10 +990,6 @@ class MutasiMasukController extends Controller
         $mutasi->tanggal_selesai = $request->tanggal_selesai;
         $mutasi->status = 'Selesai';
 
-        // Get pengusul phone for notification
-        $pengusul = DB::table('users')->where('username', $mutasi->pengusul)->first();
-        $whatsappLink = null;
-
         // Build student list for message
         $siswaList = DB::table('mutasi_masuk_siswa')->where('id_mutasi', $id)->get();
         $namaSiswa = $siswaList->pluck('nama_murid')->implode(', ');
@@ -1017,19 +1013,9 @@ class MutasiMasukController extends Controller
             Log::error("Telegram notification failed: " . $e->getMessage());
         }
 
-        if ($pengusul && !empty($pengusul->no_kontak)) {
-            $message = \App\Helpers\NotificationHelper::buildCompletionMessage($mutasiWithSiswa, 'masuk');
-            $whatsappLink = \App\Helpers\NotificationHelper::generateWhatsAppLink($pengusul->no_kontak, $message);
-        }
-
         Log::info("Surat Izin Mutasi Masuk {$id} selesai oleh {$user->username}");
 
         $successMessage = "Surat Izin Mutasi Masuk selesai.\n\nNomor: {$request->nomor_surat_izin}\nTanggal Selesai: " . \Carbon\Carbon::parse($request->tanggal_selesai)->translatedFormat('d F Y');
-
-        if ($whatsappLink) {
-            session()->flash('whatsapp_link', $whatsappLink);
-            session()->flash('pengusul_name', $pengusul->nama_pengguna ?? $mutasi->pengusul);
-        }
 
         return redirect()->route('mutasi.masuk.show', $id)->with('success', $successMessage);
     }

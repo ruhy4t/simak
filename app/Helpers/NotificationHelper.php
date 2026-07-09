@@ -9,20 +9,6 @@ use App\Models\Setting;
 class NotificationHelper
 {
     /**
-     * Generate WhatsApp click-to-chat link (wa.me)
-     * This is FREE and doesn't require API - user clicks link to open WA
-     */
-    public static function generateWhatsAppLink(string $phone, string $message): string
-    {
-        $phone = preg_replace('/\D/', '', $phone);
-        if (str_starts_with($phone, '0')) {
-            $phone = '62' . substr($phone, 1);
-        }
-        $encodedMessage = urlencode($message);
-        return "https://wa.me/{$phone}?text={$encodedMessage}";
-    }
-
-    /**
      * Send Telegram notification via Bot API using cURL (no Guzzle required)
      */
     /**
@@ -208,20 +194,12 @@ class NotificationHelper
                 $nomor = $mutasi->nomor_surat_izin ?? '-';
                 $message .= "\n📄 Nomor Surat: {$nomor}\n"
                     . "\n🎉 Surat sudah selesai!\n"
-                    . "Dapat diambil ke <b>Seksi Kurikulum SMP Bidang SMP Dinas Pendidikan Kota Bogor</b>.";
+                    . "Dapat diambil ke <b>Seksi Kurikulum SMP Bidang SMP Dinas Pendidikan Kota Bogor</b> atau bisa cek berkala di SIMAK untuk unduh/cetak surat.";
                 break;
         }
 
         $message .= "\n\n---\nSIMAK - Sistem Informasi Mutasi";
         return $message;
-    }
-
-    /**
-     * Build completion message (kept for backward compatibility)
-     */
-    public static function buildCompletionMessage(object $mutasi, string $type = 'keluar'): string
-    {
-        return self::buildStatusChangeMessage($mutasi, 'Selesai', $type);
     }
 
     /**
