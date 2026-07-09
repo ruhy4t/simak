@@ -785,7 +785,7 @@ class MutasiMasukController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error("Mutasi Masuk Error: " . $e->getMessage());
-            return back()->with('error', 'Gagal menyimpan data: ' . $e->getMessage());
+            return back()->with('error', $this->safeErrorMessage('Gagal menyimpan data mutasi masuk', $e))->withInput();
         }
     }
 
@@ -1680,10 +1680,7 @@ class MutasiMasukController extends Controller
 
         } catch (\Exception $e) {
             Log::error("Create Draft Error: " . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal membuat draft: ' . $e->getMessage()
-            ], 500);
+            return $this->safeJsonError('Gagal membuat draft', $e);
         }
     }
 
@@ -1761,7 +1758,8 @@ class MutasiMasukController extends Controller
             return response()->json(['success' => true]);
 
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            Log::error("Update Draft Header Error: " . $e->getMessage());
+            return $this->safeJsonError('Gagal memperbarui draft', $e);
         }
     }
 
@@ -2073,10 +2071,7 @@ class MutasiMasukController extends Controller
 
         } catch (\Exception $e) {
             Log::error("Add Student to Draft Error: " . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal menyimpan siswa: ' . $e->getMessage()
-            ], 500);
+            return $this->safeJsonError('Gagal menyimpan siswa', $e);
         }
     }
 
@@ -2211,10 +2206,7 @@ class MutasiMasukController extends Controller
 
         } catch (\Exception $e) {
             Log::error("Finalize Draft Error: " . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal mengirim: ' . $e->getMessage()
-            ], 500);
+            return $this->safeJsonError('Gagal mengirim pengajuan', $e);
         }
     }
 

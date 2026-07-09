@@ -161,8 +161,13 @@ class UserManagementController extends Controller
 
             return back()->with('success', "{$statusEmoji} Akun berhasil {$statusText}!\n\n👤 Nama: {$operator->nama_pengguna}\n📧 Username: @{$operator->username}\n📌 Status: Akun sekarang {$statusColor}.");
         } catch (\Throwable $e) {
-            // Emergency Error Display
-            die("STOP! TERJADI ERROR PROGRAM:<br><br>" . $e->getMessage() . "<br><br>File: " . $e->getFile() . " Baris: " . $e->getLine());
+            Log::error("Operator toggle failed: " . $e->getMessage(), [
+                'operator_id' => $id,
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+
+            return back()->with('error', $this->safeErrorMessage('Gagal mengubah status operator', $e));
         }
     }
 

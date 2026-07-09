@@ -247,7 +247,13 @@ class DinasUserController extends Controller
 
             return back()->with('success', "{$statusEmoji} Akun berhasil {$statusText}!\n\n👤 Nama: {$targetUser->nama_pengguna}\n📧 Username: @{$targetUser->username}\n🏷️ Role: {$targetUser->role}");
         } catch (\Throwable $e) {
-            die("STOP! TERJADI ERROR DINAS:<br><br>" . $e->getMessage() . "<br><br>File: " . $e->getFile() . " Baris: " . $e->getLine());
+            Log::error("Dinas user toggle failed: " . $e->getMessage(), [
+                'user_id' => $id,
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+
+            return back()->with('error', $this->safeErrorMessage('Gagal mengubah status akun', $e));
         }
     }
 

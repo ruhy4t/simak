@@ -38,10 +38,7 @@ class TemporaryUploadController extends Controller
                 ]);
             } catch (\Exception $e) {
                 Log::error("Temp upload failed: " . $e->getMessage());
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Upload gagal: ' . $e->getMessage()
-                ], 500);
+                return $this->safeJsonError('Upload gagal', $e);
             }
         }
         return response()->json(['success' => false, 'message' => 'No file uploaded'], 400);
@@ -134,10 +131,7 @@ class TemporaryUploadController extends Controller
 
         } catch (\Exception $e) {
             Log::error("Failed to generate presigned URL: " . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal membuat URL upload: ' . $e->getMessage()
-            ], 500);
+            return $this->safeJsonError('Gagal membuat URL upload', $e);
         }
     }
 

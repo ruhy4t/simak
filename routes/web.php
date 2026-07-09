@@ -79,7 +79,7 @@ Route::middleware(['auth', \App\Http\Middleware\EnsurePasswordChanged::class])->
             'missing' => $missing,
             'php_version' => phpversion(),
         ]);
-    });
+    })->middleware('role:Dinas,SuperAdmin');
 
     // --- End Maintenance Routes ---
     // ------------------------------------------------------------------
@@ -254,14 +254,21 @@ Route::middleware(['auth', \App\Http\Middleware\EnsurePasswordChanged::class])->
 Route::middleware('auth')->group(function () {
     Route::post('/ajax/upload-temp', [App\Http\Controllers\TemporaryUploadController::class, 'store'])->name('api.upload-temp');
     Route::post('/ajax/upload-temp-url', [App\Http\Controllers\TemporaryUploadController::class, 'generateUploadUrl'])->name('api.upload-temp-url');
-    Route::match(['get', 'post'], '/ajax/debug-connection', fn() => response()->json([
-        'status' => 'ok',
-        'message' => 'Connection successful',
-        'timestamp' => now()->toIso8601String(),
-        'method' => request()->method(),
-        'url' => request()->fullUrl(),
-        'csrf_received' => request()->header('X-CSRF-TOKEN') ? 'yes' : 'no'
-    ]));
+    Route::match(['get', 'post'], '/ajax/debug-connection', function () {
+        $user = request()->user();
+        if (!app()->isLocal() && (!$user || !in_array($user->role, ['Dinas', 'SuperAdmin'], true))) {
+            abort(404);
+        }
+
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'Connection successful',
+            'timestamp' => now()->toIso8601String(),
+            'method' => request()->method(),
+            'url' => app()->isLocal() ? request()->fullUrl() : request()->path(),
+            'csrf_received' => request()->header('X-CSRF-TOKEN') ? 'yes' : 'no'
+        ]);
+    });
     Route::get('/mutasi', fn() => redirect()->route('mutasi.keluar.index'));
     Route::post('/session/alive', fn() => response()->noContent())->name('session.alive');
 });

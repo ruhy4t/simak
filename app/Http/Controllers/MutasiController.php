@@ -314,7 +314,16 @@ class MutasiController extends Controller
         try {
             return view('mutasi.keluar.revision-edit', compact('mutasi'));
         } catch (\Throwable $e) {
-            return response('Error in View Rendering: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+            Log::error("Revision edit view error: " . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+
+            if (config('app.debug')) {
+                return response('Error in View Rendering: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine(), 500);
+            }
+
+            return back()->with('error', 'Gagal membuka halaman perbaikan. Silakan coba lagi atau hubungi administrator.');
         }
     }
 
@@ -804,7 +813,7 @@ class MutasiController extends Controller
             DB::rollBack(); // ROLLBACK on error
             Log::error("CRITICAL ERROR MutasiKeluar: " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine());
             Log::error($e->getTraceAsString());
-            return back()->with('error', 'TERJADI ERROR SISTEM: ' . $e->getMessage())->withInput();
+            return back()->with('error', $this->safeErrorMessage('Gagal menyimpan pengajuan mutasi keluar', $e))->withInput();
         }
     }
 
@@ -1184,9 +1193,10 @@ class MutasiController extends Controller
                 'data' => null
             ]);
         } catch (\Exception $e) {
+            Log::error('Mutasi keluar NPSN lookup error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Error: ' . $e->getMessage(),
+                'message' => config('app.debug') ? 'Error: ' . $e->getMessage() : 'Gagal mencari data NPSN.',
                 'data' => null
             ]);
         }
@@ -1285,7 +1295,7 @@ class MutasiController extends Controller
                 ->with('success', '📝 Draft berhasil disimpan! Anda dapat melanjutkan pengisian nanti.');
         } catch (\Exception $e) {
             Log::error("Failed to save draft mutasi keluar: " . $e->getMessage());
-            return back()->with('error', 'Gagal menyimpan draft: ' . $e->getMessage())->withInput();
+            return back()->with('error', $this->safeErrorMessage('Gagal menyimpan draft', $e))->withInput();
         }
     }
 

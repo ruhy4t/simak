@@ -748,13 +748,25 @@ class LaporanController extends Controller
             return $pdf->stream('Laporan_Komprehensif_Mutasi.pdf');
             */
         } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => $e->getMessage(),
+            \Log::error('Print comprehensive report error: ' . $e->getMessage(), [
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString()
-            ], 500);
+            ]);
+
+            $payload = [
+                'status' => 'error',
+                'message' => config('app.debug')
+                    ? $e->getMessage()
+                    : 'Gagal membuat laporan komprehensif. Silakan coba lagi atau hubungi administrator.',
+            ];
+
+            if (config('app.debug')) {
+                $payload['file'] = $e->getFile();
+                $payload['line'] = $e->getLine();
+                $payload['trace'] = $e->getTraceAsString();
+            }
+
+            return response()->json($payload, 500);
         }
     }
 
