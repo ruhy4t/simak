@@ -105,7 +105,7 @@ Route::middleware(['auth', \App\Http\Middleware\EnsurePasswordChanged::class])->
         Route::get('/api/regencies/{provinceId}', [SatuanPendidikanController::class, 'getRegencies'])->name('api.regencies');
         Route::delete('/{id}', [MutasiController::class, 'destroy'])->name('destroy'); // DELETE ROUTE
         Route::put('/{id}/cancel', [MutasiController::class, 'cancel'])->name('cancel'); // CANCEL ROUTE
-        Route::post('/draft', [MutasiController::class, 'saveDraft'])->middleware('workday')->name('draft.save'); // SAVE DRAFT
+        Route::post('/draft', [MutasiController::class, 'saveDraft'])->name('draft.save'); // SAVE DRAFT
         Route::get('/draft/{id}/resume', [MutasiController::class, 'resumeDraft'])->name('draft.resume'); // RESUME DRAFT
         Route::delete('/draft/{id}', [MutasiController::class, 'deleteDraft'])->name('draft.delete');
         Route::get('/{id}', [MutasiController::class, 'show'])->name('show');

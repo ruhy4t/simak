@@ -95,7 +95,7 @@
                                         #{{ $mutasi->id_mutasi }}
                                     </td>
                                     <td class="px-6 py-4 font-medium text-slate-800">
-                                        {{ $mutasi->nama_murid }}
+                                        {{ $mutasi->nama_murid ?: 'Draft belum diisi' }}
                                     </td>
                                     @if(!in_array(Auth::user()->role, ['Operator', 'Sekolah']))
                                         <td class="px-6 py-4">
@@ -110,9 +110,9 @@
                                     <td class="px-6 py-4">
                                         <div class="flex flex-col">
                                             <span class="font-bold text-slate-900 truncate max-w-[200px]"
-                                                title="{{ $mutasi->nama_sekolah_tujuan }}">{{ $mutasi->nama_sekolah_tujuan }}</span>
+                                                title="{{ $mutasi->nama_sekolah_tujuan ?: 'Draft belum diisi' }}">{{ $mutasi->nama_sekolah_tujuan ?: 'Draft belum diisi' }}</span>
                                             <span
-                                                class="text-xs text-slate-500 font-mono">{{ $mutasi->npsn_sekolah_tujuan ?? '-' }}</span>
+                                                class="text-xs text-slate-500 font-mono">{{ ($mutasi->npsn_sekolah_tujuan ?? '') === '00000000' ? '-' : ($mutasi->npsn_sekolah_tujuan ?? '-') }}</span>
                                             @if($mutasi->kabupaten_kota_tujuan)
                                                 <span class="text-xs text-slate-500 mt-0.5 flex items-center">
                                                     <i

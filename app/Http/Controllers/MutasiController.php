@@ -15,6 +15,10 @@ class MutasiController extends Controller
 {
     protected FileUploadService $fileUploadService;
 
+    private const DRAFT_EMPTY_NISN = '0000000000';
+    private const DRAFT_EMPTY_NPSN = '00000000';
+    private const DRAFT_EMPTY_DATE = '1900-01-02';
+
     public function __construct(FileUploadService $fileUploadService)
     {
         $this->fileUploadService = $fileUploadService;
@@ -528,6 +532,7 @@ class MutasiController extends Controller
     public function store(Request $request)
     {
         $user = Auth::user();
+        $draftId = $request->input('draft_id');
 
         // Check Schedule (Only for non-Dinas/SuperAdmin)
         if (!in_array($user->role, ['Dinas', 'SuperAdmin'])) {
@@ -683,10 +688,30 @@ class MutasiController extends Controller
         try {
             DB::beginTransaction(); // START TRANSACTION
 
+            $draft = null;
+            if ($draftId) {
+                $draft = DB::table('mutasi_keluar')
+                    ->where('id_mutasi', $draftId)
+                    ->where('status', 'Draft')
+                    ->lockForUpdate()
+                    ->first();
+
+                if (!$draft) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'draft_id' => 'Draft tidak ditemukan atau sudah pernah dikirim.'
+                    ]);
+                }
+
+                if (!$this->canAccessDraft($draft, $user)) {
+                    abort(403, 'Anda tidak berhak mengirim draft ini.');
+                }
+            }
+
             $existingMutation = DB::table('mutasi_keluar')
                 ->where('nisn', $request->nisn)
-                ->whereNotIn('status', ['Dibatalkan', 'Ditolak'])
+                ->whereNotIn('status', ['Draft', 'Dibatalkan', 'Ditolak'])
                 ->whereNull('deleted_at')
+                ->when($draftId, fn($query) => $query->where('id_mutasi', '!=', $draftId))
                 ->first();
 
             if ($existingMutation) {
@@ -697,22 +722,24 @@ class MutasiController extends Controller
             }
             // ----------------------------------------
 
-            // Generate ID
-            $count = DB::table('mutasi_keluar')->count() + 1;
-            $idMutasi = 'MK' . date('Ymd') . str_pad($count, 4, '0', STR_PAD_LEFT);
-
-            // Ensure unique ID loop (though locking helps, ID generation might need its own lock or retry, ensuring unique here simply)
-            while (DB::table('mutasi_keluar')->where('id_mutasi', $idMutasi)->exists()) {
-                $count++;
+            if ($draft) {
+                $idMutasi = $draft->id_mutasi;
+            } else {
+                // Generate ID
+                $count = DB::table('mutasi_keluar')->count() + 1;
                 $idMutasi = 'MK' . date('Ymd') . str_pad($count, 4, '0', STR_PAD_LEFT);
+
+                // Ensure unique ID loop (though locking helps, ID generation might need its own lock or retry, ensuring unique here simply)
+                while (DB::table('mutasi_keluar')->where('id_mutasi', $idMutasi)->exists()) {
+                    $count++;
+                    $idMutasi = 'MK' . date('Ymd') . str_pad($count, 4, '0', STR_PAD_LEFT);
+                }
             }
 
             // Upload files using Service (handling date-based folders)
             $filePaths = $this->fileUploadService->uploadMutasiKeluarFiles($request, $idMutasi);
 
-            // Insert record
-            DB::table('mutasi_keluar')->insert([
-                'id_mutasi' => $idMutasi,
+            $mutationData = [
                 'tanggal_pengajuan' => now(),
                 'nama_murid' => $request->nama_murid,
                 'nisn' => $request->nisn,
@@ -739,9 +766,18 @@ class MutasiController extends Controller
                 'file_suket_diterima' => $filePaths['file_suket_diterima'] ?? null,
                 'file_rapor' => $filePaths['file_rapor'] ?? null,
                 'is_dinas_entry' => $request->has('is_dinas_entry') ? 1 : 0,
-                'created_at' => now(),
                 'updated_at' => now(),
-            ]);
+            ];
+
+            if ($draft) {
+                DB::table('mutasi_keluar')
+                    ->where('id_mutasi', $idMutasi)
+                    ->update($mutationData);
+            } else {
+                $mutationData['id_mutasi'] = $idMutasi;
+                $mutationData['created_at'] = now();
+                DB::table('mutasi_keluar')->insert($mutationData);
+            }
 
             // Notify Dinas users about new submission (wrapped in try-catch to not affect save)
             try {
@@ -1168,8 +1204,8 @@ class MutasiController extends Controller
 
         // Basic validation for draft (minimal)
         $validated = $request->validate([
-            'nama_murid' => 'nullable|string|max:255',
-            'nisn' => 'nullable|string|max:20',
+            'nama_murid' => 'nullable|string|max:100',
+            'nisn' => 'nullable|string|max:10',
             'nis' => 'nullable|string|max:20',
             'draft_id' => 'nullable|string|max:50', // For updating existing draft
         ]);
@@ -1178,22 +1214,22 @@ class MutasiController extends Controller
         $existingDraftId = $request->input('draft_id');
 
         $draftData = [
-            'nama_murid' => $request->input('nama_murid'),
-            'nisn' => $request->input('nisn'),
+            'nama_murid' => $request->input('nama_murid') ?: '',
+            'nisn' => $request->input('nisn') ?: self::DRAFT_EMPTY_NISN,
             'nis' => $request->input('nis'),
-            'kelas' => $request->input('kelas'),
-            'jenis_kelamin' => $request->input('jenis_kelamin'),
-            'tempat_lahir' => $request->input('tempat_lahir'),
-            'tanggal_lahir' => $request->input('tanggal_lahir') ?: null,
-            'npsn_sekolah_asal' => $request->input('npsn_sekolah_asal') ?? $user->npsn,
-            'nama_sekolah_asal' => $request->input('nama_sekolah_asal') ?? $user->nama_sekolah,
-            'alamat_sekolah_asal' => $request->input('alamat_sekolah_asal'),
-            'npsn_sekolah_tujuan' => $request->input('npsn_sekolah_tujuan'),
-            'nama_sekolah_tujuan' => $request->input('nama_sekolah_tujuan'),
+            'kelas' => $request->input('kelas') ?: 'VII',
+            'jenis_kelamin' => $request->input('jenis_kelamin') ?: 'L',
+            'tempat_lahir' => $request->input('tempat_lahir') ?: '',
+            'tanggal_lahir' => $request->input('tanggal_lahir') ?: self::DRAFT_EMPTY_DATE,
+            'npsn_sekolah_asal' => $request->input('npsn_sekolah_asal') ?: ($user->npsn ?: self::DRAFT_EMPTY_NPSN),
+            'nama_sekolah_asal' => $request->input('nama_sekolah_asal') ?: ($user->nama_sekolah ?: ''),
+            'alamat_sekolah_asal' => $request->input('alamat_sekolah_asal') ?: ($user->alamat ?: ''),
+            'npsn_sekolah_tujuan' => $request->input('npsn_sekolah_tujuan') ?: self::DRAFT_EMPTY_NPSN,
+            'nama_sekolah_tujuan' => $request->input('nama_sekolah_tujuan') ?: '',
             'alamat_sekolah_tujuan' => $request->input('alamat_sekolah_tujuan'),
-            'provinsi_tujuan' => $request->input('provinsi_tujuan'),
-            'kabupaten_kota_tujuan' => $request->input('kabupaten_kota_tujuan'),
-            'alasan_pindah' => $request->input('alasan_pindah'),
+            'provinsi_tujuan' => $request->input('provinsi_tujuan') ?: '',
+            'kabupaten_kota_tujuan' => $request->input('kabupaten_kota_tujuan') ?: '',
+            'alasan_pindah' => $request->input('alasan_pindah') ?: '',
             'nomor_surat_sekolah' => $request->input('nomor_surat_sekolah'),
             'tanggal_surat_sekolah' => $request->input('tanggal_surat_sekolah') ?: null,
             'tujuan_luar_negeri' => $request->input('tujuan_luar_negeri') ? 1 : 0,
@@ -1214,9 +1250,13 @@ class MutasiController extends Controller
                 $exists = DB::table('mutasi_keluar')
                     ->where('id_mutasi', $existingDraftId)
                     ->where('status', 'Draft')
-                    ->exists();
+                    ->first();
 
                 if ($exists) {
+                    if (!$this->canAccessDraft($exists, $user)) {
+                        abort(403, 'Anda tidak berhak mengubah draft ini.');
+                    }
+
                     DB::table('mutasi_keluar')
                         ->where('id_mutasi', $existingDraftId)
                         ->update($draftData);
@@ -1330,6 +1370,8 @@ class MutasiController extends Controller
             }
         }
 
+        $this->prepareDraftForForm($draft);
+
         // Pass draft data to create view
         $alamatSekolahAsal = $draft->alamat_sekolah_asal ?? '';
         $namaSekolahAsal = $draft->nama_sekolah_asal ?? '';
@@ -1392,5 +1434,38 @@ class MutasiController extends Controller
 
         return redirect()->route('mutasi.keluar.index')
             ->with('success', 'Draft berhasil dihapus.');
+    }
+
+    private function canAccessDraft(object $draft, $user): bool
+    {
+        return ($user->role === 'Operator' && $draft->pengusul === $user->username)
+            || ($user->role === 'Sekolah' && ($draft->npsn_sekolah_asal === $user->npsn || $draft->pengusul === $user->username))
+            || in_array($user->role, ['Dinas', 'SuperAdmin']);
+    }
+
+    private function prepareDraftForForm(object $draft): void
+    {
+        $usesEmptyNisn = $draft->nisn === self::DRAFT_EMPTY_NISN;
+        $usesEmptyBirthDate = $draft->tanggal_lahir === self::DRAFT_EMPTY_DATE;
+
+        if ($usesEmptyNisn) {
+            $draft->nisn = null;
+        }
+
+        if ($draft->npsn_sekolah_tujuan === self::DRAFT_EMPTY_NPSN) {
+            $draft->npsn_sekolah_tujuan = null;
+        }
+
+        if ($usesEmptyBirthDate) {
+            $draft->tanggal_lahir = null;
+        }
+
+        if (empty($draft->kelas) || ($usesEmptyBirthDate && $draft->kelas === 'VII')) {
+            $draft->kelas = null;
+        }
+
+        if (empty($draft->jenis_kelamin) || ($usesEmptyBirthDate && $draft->jenis_kelamin === 'L')) {
+            $draft->jenis_kelamin = null;
+        }
     }
 }
