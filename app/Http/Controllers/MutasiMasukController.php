@@ -134,7 +134,14 @@ class MutasiMasukController extends Controller
 
             if ($request->filled('status')) {
                 // Only allow valid status values
-                $validStatuses = ['Menunggu Verifikasi Dinas', 'Disetujui Dinas', 'Perlu Perbaikan', 'Selesai'];
+                $validStatuses = [
+                    'Draft',
+                    'Menunggu Verifikasi Dinas',
+                    'Disetujui Dinas',
+                    'Perlu Perbaikan',
+                    'Proses TTD',
+                    'Selesai',
+                ];
                 if (in_array($request->status, $validStatuses)) {
                     $query->where('status', $request->status);
                 }
