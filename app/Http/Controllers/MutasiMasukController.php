@@ -100,7 +100,7 @@ class MutasiMasukController extends Controller
         try {
             // Use Eloquent Model for relationships
             $query = \App\Models\MutasiMasuk::query()
-                ->with('siswa') // Load all siswa columns to prevent missing attribute errors
+                ->with('siswa:id,id_mutasi,nama_murid,nisn,npsn_sekolah_asal,nama_sekolah_asal,kabupaten_kota_asal')
                 ->orderBy('tanggal_pengajuan', 'desc');
 
             // Role-based filtering

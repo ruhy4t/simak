@@ -67,9 +67,15 @@ class TemporaryUploadController extends Controller
         $filename = $request->input('filename');
         $contentType = $request->input('content_type');
         $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-        $allowedExtensions = ['pdf', 'jpg', 'jpeg', 'png', 'webp'];
+        $allowedMimeByExtension = [
+            'pdf' => 'application/pdf',
+            'jpg' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'png' => 'image/png',
+            'webp' => 'image/webp',
+        ];
 
-        if (!in_array($ext, $allowedExtensions, true)) {
+        if (!isset($allowedMimeByExtension[$ext]) || $allowedMimeByExtension[$ext] !== $contentType) {
             return response()->json([
                 'success' => false,
                 'message' => 'Format file tidak didukung.'

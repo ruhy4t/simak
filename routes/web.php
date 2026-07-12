@@ -100,9 +100,9 @@ Route::middleware(['auth', \App\Http\Middleware\EnsurePasswordChanged::class])->
         Route::get('/', [MutasiController::class, 'index'])->name('index');
         Route::get('/create', [MutasiController::class, 'create'])->middleware('workday')->name('create');
         Route::post('/', [MutasiController::class, 'store'])->middleware('workday')->name('store');
-        Route::get('/api/npsn/{npsn}', [MutasiController::class, 'lookupNpsn'])->name('api.npsn');
-        Route::get('/api/provinces', [SatuanPendidikanController::class, 'getProvinces'])->name('api.provinces');
-        Route::get('/api/regencies/{provinceId}', [SatuanPendidikanController::class, 'getRegencies'])->name('api.regencies');
+        Route::get('/api/npsn/{npsn}', [MutasiController::class, 'lookupNpsn'])->middleware('throttle:lookups')->name('api.npsn');
+        Route::get('/api/provinces', [SatuanPendidikanController::class, 'getProvinces'])->middleware('throttle:lookups')->name('api.provinces');
+        Route::get('/api/regencies/{provinceId}', [SatuanPendidikanController::class, 'getRegencies'])->middleware('throttle:lookups')->name('api.regencies');
         Route::delete('/{id}', [MutasiController::class, 'destroy'])->name('destroy'); // DELETE ROUTE
         Route::put('/{id}/cancel', [MutasiController::class, 'cancel'])->name('cancel'); // CANCEL ROUTE
         Route::post('/draft', [MutasiController::class, 'saveDraft'])->name('draft.save'); // SAVE DRAFT
@@ -120,10 +120,10 @@ Route::middleware(['auth', \App\Http\Middleware\EnsurePasswordChanged::class])->
         Route::get('/', [MutasiMasukController::class, 'index'])->name('index');
         Route::get('/create', [MutasiMasukController::class, 'create'])->middleware('workday')->name('create');
         Route::post('/', [MutasiMasukController::class, 'store'])->middleware('workday')->name('store');
-        Route::get('/api/npsn/{npsn}', [MutasiMasukController::class, 'lookupNpsn'])->name('api.npsn');
+        Route::get('/api/npsn/{npsn}', [MutasiMasukController::class, 'lookupNpsn'])->middleware('throttle:lookups')->name('api.npsn');
         // Reuse SatuanPendidikanController for consistent region data
-        Route::get('/api/provinces', [SatuanPendidikanController::class, 'getProvinces'])->name('api.provinces');
-        Route::get('/api/regencies/{provinceId}', [SatuanPendidikanController::class, 'getRegencies'])->name('api.regencies');
+        Route::get('/api/provinces', [SatuanPendidikanController::class, 'getProvinces'])->middleware('throttle:lookups')->name('api.provinces');
+        Route::get('/api/regencies/{provinceId}', [SatuanPendidikanController::class, 'getRegencies'])->middleware('throttle:lookups')->name('api.regencies');
         Route::delete('/{id}', [MutasiMasukController::class, 'destroy'])->name('destroy'); // DELETE ROUTE
         Route::put('/{id}/cancel', [MutasiMasukController::class, 'cancel'])->name('cancel'); // CANCEL ROUTE
         Route::get('/{id}', [MutasiMasukController::class, 'show'])->name('show');
@@ -229,14 +229,14 @@ Route::middleware(['auth', \App\Http\Middleware\EnsurePasswordChanged::class])->
     });
 
     // Satuan Pendidikan API (Referensi Sekolah - JSON endpoints)
-    Route::prefix('api/satuan-pendidikan')->name('satpen.api.')->group(function () {
+    Route::prefix('api/satuan-pendidikan')->middleware('throttle:lookups')->name('satpen.api.')->group(function () {
         Route::get('/', [SatuanPendidikanController::class, 'index'])->name('list');
         Route::get('/search', [SatuanPendidikanController::class, 'search'])->name('search');
         Route::get('/npsn/{npsn}', [SatuanPendidikanController::class, 'findByNpsn'])->name('find');
     });
 
     // Wilayah API (emsifa proxy with cache)
-    Route::prefix('wilayah')->name('wilayah.')->group(function () {
+    Route::prefix('wilayah')->middleware('throttle:lookups')->name('wilayah.')->group(function () {
         Route::get('/provinces', [SatuanPendidikanController::class, 'getProvinces'])->name('provinces');
         Route::get('/regencies/{provinceId}', [SatuanPendidikanController::class, 'getRegencies'])->name('regencies');
         Route::get('/districts/{regencyId}', [SatuanPendidikanController::class, 'getDistricts'])->name('districts');
@@ -252,8 +252,8 @@ Route::middleware(['auth', \App\Http\Middleware\EnsurePasswordChanged::class])->
 
 // Keep old route for backward compatibility
 Route::middleware('auth')->group(function () {
-    Route::post('/ajax/upload-temp', [App\Http\Controllers\TemporaryUploadController::class, 'store'])->name('api.upload-temp');
-    Route::post('/ajax/upload-temp-url', [App\Http\Controllers\TemporaryUploadController::class, 'generateUploadUrl'])->name('api.upload-temp-url');
+    Route::post('/ajax/upload-temp', [App\Http\Controllers\TemporaryUploadController::class, 'store'])->middleware('throttle:uploads')->name('api.upload-temp');
+    Route::post('/ajax/upload-temp-url', [App\Http\Controllers\TemporaryUploadController::class, 'generateUploadUrl'])->middleware('throttle:uploads')->name('api.upload-temp-url');
     Route::match(['get', 'post'], '/ajax/debug-connection', function () {
         $user = request()->user();
         if (!app()->isLocal() && (!$user || !in_array($user->role, ['Dinas', 'SuperAdmin'], true))) {

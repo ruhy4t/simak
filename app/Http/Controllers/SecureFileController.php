@@ -32,11 +32,17 @@ class SecureFileController extends Controller
             abort(403, 'Akses ditolak.');
         }
 
-        if (strpos($path, '..') !== false) {
+        if (strpos($path, '..') !== false || preg_match('/[\x00-\x1F\x7F]/', $path)) {
             abort(400, 'Invalid path.');
         }
 
         $path = ltrim(str_replace('\\', '/', $path), '/');
+
+        $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+        if (!in_array($extension, ['pdf', 'webp', 'jpg', 'jpeg', 'png'], true)) {
+            abort(400, 'Format file tidak didukung.');
+        }
+
         $disk = $this->getDisk();
 
         // Try multiple path variations for backward compatibility
@@ -91,7 +97,9 @@ class SecureFileController extends Controller
         return response($content, 200, [
             'Content-Type' => $mimeType,
             'Content-Disposition' => 'inline; filename="' . basename($foundPath) . '"',
-            'Cache-Control' => 'private, max-age=3600',
+            'Cache-Control' => 'private, no-store, no-cache, must-revalidate, max-age=0',
+            'Pragma' => 'no-cache',
+            'X-Content-Type-Options' => 'nosniff',
         ]);
     }
 
@@ -116,6 +124,8 @@ class SecureFileController extends Controller
             'Content-Type' => $mimeType,
             'Content-Disposition' => 'inline; filename="' . basename($originalPath) . '"',
             'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+            'Pragma' => 'no-cache',
+            'X-Content-Type-Options' => 'nosniff',
         ]);
     }
 
@@ -175,6 +185,7 @@ class SecureFileController extends Controller
             'file_ijazah_sd',
             'file_rapor',
             'file_surat_penyaluran',
+            'file_rekam_didik',
         ], $paths);
 
         if ($siswa) {
