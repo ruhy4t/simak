@@ -126,6 +126,23 @@ class User extends Authenticatable
         $this->save();
     }
 
+    public function recordFailedLogin(int $attempts): void
+    {
+        $this->failed_login_attempts = max(1, $attempts);
+
+        if ($this->failed_login_attempts >= 5) {
+            $this->locked_until = now()->addMinutes(5);
+
+            \App\Models\AuditLog::log(
+                'ACCOUNT_LOCKED',
+                $this->username,
+                "Akun dikunci selama 5 menit karena 5x percobaan login gagal. Akan dibuka pada: " . $this->locked_until->format('d/m/Y H:i:s')
+            );
+        }
+
+        $this->save();
+    }
+
     public function resetFailedLogin(): void
     {
         $this->update([

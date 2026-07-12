@@ -79,9 +79,10 @@ class AuthController extends Controller
         // Verify password
         if (!Hash::check($request->password, $user->password)) {
             RateLimiter::hit($key, 300); // 5 minutes
+            $currentFails = RateLimiter::attempts($key);
 
-            // Increment logic is handled intelligently in User model (auto-reset after 5 mins)
-            $user->incrementFailedLogin();
+            // Keep the DB counter in sync with the active 5-minute limiter window.
+            $user->recordFailedLogin($currentFails);
             AuditLog::log('LOGIN_FAILED', $username, 'Wrong password');
 
             // Get fresh count from DB to ensure accuracy

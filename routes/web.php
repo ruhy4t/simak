@@ -27,7 +27,7 @@ Route::get('/cron/work', [\App\Http\Controllers\QueueWorkerController::class, 'w
 Route::middleware('guest')->group(function () {
     Route::get('/', fn() => redirect()->route('login'));
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1'); // 5 attempts per minute
+    Route::post('/login', [AuthController::class, 'login']);
 });
 
 // Authenticated routes
