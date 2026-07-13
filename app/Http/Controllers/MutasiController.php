@@ -59,7 +59,7 @@ class MutasiController extends Controller
             $query = DB::table('mutasi_keluar')
                 ->whereNull('deleted_at') // HIDE SOFT DELETED
                 ->where('status', '!=', 'Dibatalkan') // HIDE CANCELLED
-                ->orderBy('tanggal_pengajuan', 'desc');
+                ->orderBy('id_mutasi', 'desc');
 
             // Role-based filtering
             if ($user->role === 'Operator') {

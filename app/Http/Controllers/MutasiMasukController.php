@@ -101,7 +101,7 @@ class MutasiMasukController extends Controller
             // Use Eloquent Model for relationships
             $query = \App\Models\MutasiMasuk::query()
                 ->with('siswa:id,id_mutasi,nama_murid,nisn,npsn_sekolah_asal,nama_sekolah_asal,kabupaten_kota_asal')
-                ->orderBy('tanggal_pengajuan', 'desc');
+                ->orderBy('id_mutasi', 'desc');
 
             // Role-based filtering
             if ($user->role === 'Operator') {
