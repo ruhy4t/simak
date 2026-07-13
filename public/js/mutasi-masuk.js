@@ -574,7 +574,8 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': token
+                    'X-CSRF-TOKEN': token,
+                    'Accept': 'application/json'
                 },
                 body: JSON.stringify({
                     filename: file.name,
@@ -583,8 +584,8 @@
             });
 
             if (!initResponse.ok) {
-                const txt = await initResponse.text();
-                throw new Error(`Init Failed: ${initResponse.status} - ${txt.substring(0, 100)}`);
+                const errorMessage = await readErrorMessage(initResponse);
+                throw new Error(errorMessage || `Gagal menyiapkan upload (${initResponse.status})`);
             }
 
             const initResult = await initResponse.json();
@@ -643,14 +644,14 @@
 
                 const legacyResponse = await fetch('/ajax/upload-temp', {
                     method: 'POST', // Use POST for server upload
-                    headers: { 'X-CSRF-TOKEN': token },
+                    headers: { 'X-CSRF-TOKEN': token, 'Accept': 'application/json' },
                     body: formData
                 });
 
 
                 if (!legacyResponse.ok) {
-                    const errTxt = await legacyResponse.text();
-                    throw new Error(`Server Upload Failed: ${legacyResponse.status} - ${errTxt.substring(0, 50)}`);
+                    const errorMessage = await readErrorMessage(legacyResponse);
+                    throw new Error(errorMessage || `Upload gagal di server (${legacyResponse.status})`);
                 }
 
                 const legacyResult = await legacyResponse.json();
@@ -704,6 +705,20 @@
         } finally {
             input.classList.remove('opacity-50');
             input.disabled = false;
+        }
+    }
+
+    async function readErrorMessage(response) {
+        try {
+            const contentType = response.headers.get('content-type') || '';
+            if (contentType.includes('application/json')) {
+                const payload = await response.json();
+                return payload.message || (payload.errors ? Object.values(payload.errors).flat()[0] : null);
+            }
+            const text = await response.text();
+            return text.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().substring(0, 180);
+        } catch (e) {
+            return null;
         }
     }
 
@@ -1807,9 +1822,13 @@
 
             const response = await fetch(API.createDraft, {
                 method: 'POST',
-                headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
+                headers: { 'X-CSRF-TOKEN': CSRF_TOKEN, 'Accept': 'application/json' },
                 body: formData
             });
+
+            if (!response.ok) {
+                throw new Error(await readErrorMessage(response) || 'Gagal membuat draft');
+            }
 
             const result = await response.json();
 
@@ -1849,10 +1868,15 @@
                 method: 'POST',
                 headers: {
                     'X-CSRF-TOKEN': CSRF_TOKEN,
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
                 },
                 body: JSON.stringify(data)
             });
+            if (!response.ok) {
+                console.warn('Failed to update draft header:', await readErrorMessage(response));
+                return;
+            }
             const result = await response.json();
             if (!result.success) {
                 console.warn('Failed to update draft header:', result.message);
@@ -2001,9 +2025,13 @@
 
                     const response = await fetch(API.addStudent(draftId), {
                         method: 'POST',
-                        headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
+                        headers: { 'X-CSRF-TOKEN': CSRF_TOKEN, 'Accept': 'application/json' },
                         body: fd
                     });
+
+                    if (!response.ok) {
+                        throw new Error(await readErrorMessage(response) || `Gagal upload file ${fileItem.field}`);
+                    }
 
                     const result = await response.json();
                     if (!result.success) throw new Error(result.message || `Gagal upload file ${fileItem.field}`);
@@ -2019,9 +2047,13 @@
                 // STANDARD UPLOAD (Small Payload)
                 const response = await fetch(API.addStudent(draftId), {
                     method: 'POST',
-                    headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
+                    headers: { 'X-CSRF-TOKEN': CSRF_TOKEN, 'Accept': 'application/json' },
                     body: formData
                 });
+
+                if (!response.ok) {
+                    throw new Error(await readErrorMessage(response) || 'Gagal menyimpan siswa');
+                }
 
                 const result = await response.json();
                 if (result.success) {
@@ -2038,6 +2070,9 @@
             const errorMsg = e.message === 'Failed to save student' ? 'Gagal menyimpan siswa' : e.message;
             showSaveIndicator(errorMsg, 'error');
             alert(`Gagal menyimpan data siswa #${index + 1}:\n${errorMsg}`);
+            if (typeof window.resetMutasiMasukSubmitting === 'function') {
+                window.resetMutasiMasukSubmitting();
+            }
             return false;
         } finally {
             isSaving = false;
@@ -2050,12 +2085,24 @@
     async function finalizeDraftSubmit() {
         if (!draftId) {
             // Fallback to normal form submit
-            form.submit();
+            form.requestSubmit ? form.requestSubmit() : form.submit();
             return;
         }
 
         // First, save current student
-        await saveCurrentStudent(currentSiswa);
+        const saved = await saveCurrentStudent(currentSiswa);
+        if (!saved) {
+            const modal = document.getElementById('loadingModal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+            alert('Pengajuan belum dikirim karena data siswa terakhir gagal disimpan. Mohon perbaiki pesan error yang tampil, lalu klik Kirim Pengajuan lagi.');
+            if (typeof window.resetMutasiMasukSubmitting === 'function') {
+                window.resetMutasiMasukSubmitting();
+            }
+            return;
+        }
 
         const modal = document.getElementById('loadingModal');
         if (modal) {
@@ -2068,10 +2115,15 @@
                 method: 'POST',
                 headers: {
                     'X-CSRF-TOKEN': CSRF_TOKEN,
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
                 },
                 body: JSON.stringify({})
             });
+
+            if (!response.ok) {
+                throw new Error(await readErrorMessage(response) || 'Gagal mengirim pengajuan');
+            }
 
             const result = await response.json();
 
@@ -2090,6 +2142,9 @@
             if (modal) {
                 modal.classList.add('hidden');
                 modal.classList.remove('flex');
+            }
+            if (typeof window.resetMutasiMasukSubmitting === 'function') {
+                window.resetMutasiMasukSubmitting();
             }
         }
     }

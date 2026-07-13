@@ -358,9 +358,24 @@
                         });
 
         let isSubmitting = false;
+        window.resetMutasiMasukSubmitting = function () {
+            isSubmitting = false;
+            const modal = document.getElementById('loadingModal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        };
+
         function showSubmittingModal() {
             if (isSubmitting) return;
             isSubmitting = true;
+
+            const form = document.getElementById('formMutasiMasuk');
+            if (!form.reportValidity()) {
+                isSubmitting = false;
+                return;
+            }
 
             // Show modal
             const modal = document.getElementById('loadingModal');
@@ -369,7 +384,11 @@
 
             // Submit form after showing modal
             setTimeout(() => {
-                document.getElementById('formMutasiMasuk').submit();
+                if (form.requestSubmit) {
+                    form.requestSubmit();
+                } else {
+                    form.submit();
+                }
             }, 100);
         }
     </script>

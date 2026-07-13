@@ -33,6 +33,27 @@
                 <input type="hidden" name="draft_id" value="{{ $draft->id_mutasi }}">
             @endif
 
+            @if ($errors->any() || session('error'))
+                <div class="bg-rose-50 border-2 border-rose-200 rounded-2xl p-5 text-rose-800">
+                    <div class="flex items-start gap-3">
+                        <i class="bi bi-exclamation-triangle-fill text-rose-500 text-xl"></i>
+                        <div>
+                            <h3 class="font-bold mb-2">Pengajuan belum berhasil dikirim</h3>
+                            @if(session('error'))
+                                <p class="text-sm mb-2">{{ session('error') }}</p>
+                            @endif
+                            @if($errors->any())
+                                <ul class="list-disc list-inside text-sm space-y-1">
+                                    @foreach ($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            @endif
+
             <!-- Data Siswa -->
             <div class="bg-white rounded-2xl shadow-xs border border-slate-100 p-6 sm:p-8">
                 <h2 class="text-lg font-bold text-slate-900 mb-6 flex items-center gap-3">
@@ -431,6 +452,12 @@
             if (isSubmitting) return;
             isSubmitting = true;
 
+            const form = document.getElementById('formMutasiKeluar');
+            if (!form.reportValidity()) {
+                isSubmitting = false;
+                return;
+            }
+
             // Calculate total file size
             let totalSize = 0;
             const fileInputs = document.querySelectorAll('input[type="file"]');
@@ -455,9 +482,12 @@
 
             // Submit form after showing modal
             setTimeout(() => {
-                const form = document.getElementById('formMutasiKeluar');
                 if (form) {
-                    form.submit();
+                    if (form.requestSubmit) {
+                        form.requestSubmit();
+                    } else {
+                        form.submit();
+                    }
                 } else {
                     console.error('Form not found!');
                     // Fallback just in case

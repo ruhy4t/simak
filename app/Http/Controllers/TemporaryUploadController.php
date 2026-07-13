@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 class TemporaryUploadController extends Controller
 {
@@ -16,9 +17,22 @@ class TemporaryUploadController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'file' => 'required|file|mimes:pdf,jpg,jpeg,png,webp|max:2048', // Max 2MB
+        ], [
+            'file.required' => 'File wajib dipilih.',
+            'file.file' => 'Berkas yang diunggah tidak valid.',
+            'file.mimes' => 'Format file harus PDF, JPG, PNG, atau WebP.',
+            'file.max' => 'Ukuran file maksimal 2 MB. Silakan kompres file terlebih dahulu.',
         ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first('file'),
+                'errors' => $validator->errors(),
+            ], 422);
+        }
 
         if ($request->hasFile('file')) {
             $file = $request->file('file');
@@ -59,10 +73,22 @@ class TemporaryUploadController extends Controller
         }
 
         // 2. Validate Request
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'filename' => 'required|string',
             'content_type' => 'required|string|in:application/pdf,image/jpeg,image/png,image/webp'
+        ], [
+            'filename.required' => 'Nama file tidak terbaca.',
+            'content_type.required' => 'Tipe file tidak terbaca.',
+            'content_type.in' => 'Format file harus PDF, JPG, PNG, atau WebP.',
         ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first(),
+                'errors' => $validator->errors(),
+            ], 422);
+        }
 
         $filename = $request->input('filename');
         $contentType = $request->input('content_type');
