@@ -1,7 +1,8 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="max-w-full mx-auto space-y-8" x-data="{ academicYear: '2025/2026' }">
+    @php($canEditStudentCounts = !$selectedAcademicYear || !$selectedAcademicYear->isClosed())
+    <div class="max-w-full mx-auto space-y-8">
 
         <!-- Header Page -->
         <div class="flex items-center justify-between border-b-2 border-slate-200 pb-6 mb-8">
@@ -20,6 +21,9 @@
         <form action="{{ route('sekolah.profile.update') }}" method="POST" enctype="multipart/form-data">
             @csrf
             @method('PUT')
+            @if($selectedAcademicYear)
+                <input type="hidden" name="academic_year_id" value="{{ $selectedAcademicYear->id }}">
+            @endif
 
             <!-- Explicit Grid Layout with Inline Styles to Bypass Missing CSS -->
             <div class="grid-container"
@@ -79,13 +83,30 @@
                             <!-- Year Selector -->
                             <div class="bg-blue-50 border border-blue-100 rounded-lg p-5">
                                 <label class="block text-sm font-bold text-blue-900 mb-2">Tahun Pelajaran</label>
-                                <select x-model="academicYear"
+                                <select name="academic_year_selector"
+                                    onchange="window.location.href='{{ route('sekolah.profile') }}?academic_year=' + encodeURIComponent(this.value)"
                                     class="w-full border-2 border-blue-300 bg-white text-blue-900 font-bold rounded-lg px-4 py-3 focus:outline-hidden focus:ring-4 focus:ring-blue-500/20 cursor-pointer text-lg">
-                                    <option value="2025/2026">2025/2026 (Aktif)</option>
-                                    <option value="2026/2027">2026/2027 (Mendatang)</option>
+                                    @forelse($academicYears as $academicYear)
+                                        <option value="{{ $academicYear->name }}" @selected($selectedAcademicYear?->id === $academicYear->id)>
+                                            {{ $academicYear->name }}
+                                            @if($academicYear->is_active)
+                                                (Aktif)
+                                            @elseif($academicYear->status === 'upcoming')
+                                                (Mendatang)
+                                            @else
+                                                (Ditutup)
+                                            @endif
+                                        </option>
+                                    @empty
+                                        <option value="2025/2026">2025/2026 (Data Lama)</option>
+                                    @endforelse
                                 </select>
                                 <p class="text-xs text-blue-600 mt-2 font-medium">
-                                    * Pilih tahun ajaran sebelum mengisi jumlah siswa.
+                                    @if($canEditStudentCounts)
+                                        * Data siswa disimpan terpisah untuk setiap tahun pelajaran.
+                                    @else
+                                        * Tahun pelajaran ini sudah ditutup dan hanya dapat dilihat.
+                                    @endif
                                 </p>
                             </div>
 
@@ -104,13 +125,15 @@
                                     <div class="col-span-2 font-black text-slate-700 text-xl pl-2">VII</div>
                                     <div class="col-span-5">
                                         <input type="number" name="jumlah_siswa_7_l" min="0" required
-                                            value="{{ old('jumlah_siswa_7_l', $satpen->jumlah_siswa_7_l ?? 0) }}"
+                                            value="{{ old('jumlah_siswa_7_l', $studentCounts[7]['male']) }}"
+                                            @readonly(!$canEditStudentCounts)
                                             class="w-full border-2 border-slate-300 bg-white focus:border-blue-500 focus:bg-blue-50 rounded-xl px-2 py-3 text-center text-lg font-bold text-slate-800 transition-all shadow-xs"
                                             placeholder="L">
                                     </div>
                                     <div class="col-span-5">
                                         <input type="number" name="jumlah_siswa_7_p" min="0" required
-                                            value="{{ old('jumlah_siswa_7_p', $satpen->jumlah_siswa_7_p ?? 0) }}"
+                                            value="{{ old('jumlah_siswa_7_p', $studentCounts[7]['female']) }}"
+                                            @readonly(!$canEditStudentCounts)
                                             class="w-full border-2 border-slate-300 bg-white focus:border-pink-500 focus:bg-pink-50 rounded-xl px-2 py-3 text-center text-lg font-bold text-slate-800 transition-all shadow-xs"
                                             placeholder="P">
                                     </div>
@@ -121,16 +144,14 @@
                                     <div class="col-span-2 font-black text-slate-700 text-xl pl-2">VIII</div>
                                     <div class="col-span-5 relative">
                                         <input type="number" name="jumlah_siswa_8_l" min="0" required
-                                            :readonly="academicYear === '2026/2027'"
-                                            :class="academicYear === '2026/2027' ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed' : 'bg-white border-slate-300 text-slate-800 focus:border-blue-500 focus:bg-blue-50'"
-                                            value="{{ old('jumlah_siswa_8_l', $satpen->jumlah_siswa_8_l ?? 0) }}"
+                                            value="{{ old('jumlah_siswa_8_l', $studentCounts[8]['male']) }}"
+                                            @readonly(!$canEditStudentCounts)
                                             class="w-full border-2 rounded-xl px-2 py-3 text-center text-lg font-bold transition-all shadow-xs">
                                     </div>
                                     <div class="col-span-5 relative">
                                         <input type="number" name="jumlah_siswa_8_p" min="0" required
-                                            :readonly="academicYear === '2026/2027'"
-                                            :class="academicYear === '2026/2027' ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed' : 'bg-white border-slate-300 text-slate-800 focus:border-pink-500 focus:bg-pink-50'"
-                                            value="{{ old('jumlah_siswa_8_p', $satpen->jumlah_siswa_8_p ?? 0) }}"
+                                            value="{{ old('jumlah_siswa_8_p', $studentCounts[8]['female']) }}"
+                                            @readonly(!$canEditStudentCounts)
                                             class="w-full border-2 rounded-xl px-2 py-3 text-center text-lg font-bold transition-all shadow-xs">
                                     </div>
                                 </div>
@@ -140,16 +161,14 @@
                                     <div class="col-span-2 font-black text-slate-700 text-xl pl-2">IX</div>
                                     <div class="col-span-5 relative">
                                         <input type="number" name="jumlah_siswa_9_l" min="0" required
-                                            :readonly="academicYear === '2026/2027'"
-                                            :class="academicYear === '2026/2027' ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed' : 'bg-white border-slate-300 text-slate-800 focus:border-blue-500 focus:bg-blue-50'"
-                                            value="{{ old('jumlah_siswa_9_l', $satpen->jumlah_siswa_9_l ?? 0) }}"
+                                            value="{{ old('jumlah_siswa_9_l', $studentCounts[9]['male']) }}"
+                                            @readonly(!$canEditStudentCounts)
                                             class="w-full border-2 rounded-xl px-2 py-3 text-center text-lg font-bold transition-all shadow-xs">
                                     </div>
                                     <div class="col-span-5 relative">
                                         <input type="number" name="jumlah_siswa_9_p" min="0" required
-                                            :readonly="academicYear === '2026/2027'"
-                                            :class="academicYear === '2026/2027' ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed' : 'bg-white border-slate-300 text-slate-800 focus:border-pink-500 focus:bg-pink-50'"
-                                            value="{{ old('jumlah_siswa_9_p', $satpen->jumlah_siswa_9_p ?? 0) }}"
+                                            value="{{ old('jumlah_siswa_9_p', $studentCounts[9]['female']) }}"
+                                            @readonly(!$canEditStudentCounts)
                                             class="w-full border-2 rounded-xl px-2 py-3 text-center text-lg font-bold transition-all shadow-xs">
                                     </div>
                                 </div>

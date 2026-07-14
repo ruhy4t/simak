@@ -31,6 +31,83 @@
     </div>
     @endif
 
+    {{-- Academic Year Settings --}}
+    <div class="mb-8 bg-white rounded-2xl shadow-xs border border-indigo-100 overflow-hidden">
+        <div class="px-6 py-4 bg-linear-to-r from-indigo-50 to-white border-b border-indigo-100 flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-sm">
+                    <i class="bi bi-calendar3 text-white"></i>
+                </div>
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-800">Tahun Pelajaran</h2>
+                    <p class="text-sm text-gray-500">Tahun aktif menentukan data siswa yang dipakai laporan lama.</p>
+                </div>
+            </div>
+            @if($activeAcademicYear)
+                <span class="px-4 py-2 rounded-xl bg-emerald-100 text-emerald-700 font-bold">
+                    Aktif: {{ $activeAcademicYear->name }}
+                </span>
+            @endif
+        </div>
+
+        <div class="p-6">
+            @if($academicYears->isEmpty())
+                <div class="rounded-xl bg-amber-50 border border-amber-200 p-4 text-amber-800">
+                    Migrasi tahun pelajaran belum dijalankan. Aplikasi masih menggunakan data siswa lama.
+                </div>
+            @else
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="font-semibold text-gray-700 mb-3">Daftar Tahun</h3>
+                        <div class="space-y-2">
+                            @foreach($academicYears as $academicYear)
+                                <div class="flex items-center justify-between gap-3 rounded-xl border border-gray-200 p-3">
+                                    <div>
+                                        <div class="font-bold text-gray-800">{{ $academicYear->name }}</div>
+                                        <div class="text-xs text-gray-500">
+                                            {{ $academicYear->starts_on?->format('d/m/Y') }}–{{ $academicYear->ends_on?->format('d/m/Y') }}
+                                        </div>
+                                    </div>
+                                    @if($academicYear->is_active)
+                                        <span class="px-3 py-1 rounded-lg bg-emerald-100 text-emerald-700 text-sm font-semibold">Aktif</span>
+                                    @else
+                                        <form action="{{ route('academic-years.activate', $academicYear->id) }}" method="POST"
+                                            onsubmit="return confirm('Aktifkan {{ $academicYear->name }}? Data siswa tahun ini akan menjadi dasar laporan aktif.')">
+                                            @csrf
+                                            @method('PATCH')
+                                            <button class="px-3 py-2 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-sm font-semibold">
+                                                Jadikan Aktif
+                                            </button>
+                                        </form>
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="font-semibold text-gray-700 mb-3">Tambah Tahun Pelajaran</h3>
+                        <form action="{{ route('academic-years.store') }}" method="POST" class="space-y-3">
+                            @csrf
+                            <input type="text" name="name" value="{{ old('name') }}" placeholder="Contoh: 2026/2027"
+                                pattern="\d{4}/\d{4}" required
+                                class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
+                            @error('name')
+                                <p class="text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                            <button class="w-full px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold">
+                                <i class="bi bi-plus-circle mr-2"></i>Tambah sebagai Tahun Mendatang
+                            </button>
+                            <p class="text-xs text-gray-500">
+                                Tahun baru dapat diisi lebih awal oleh sekolah. Aktivasi akan menutup tahun aktif sebelumnya.
+                            </p>
+                        </form>
+                    </div>
+                </div>
+            @endif
+        </div>
+    </div>
+
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
         {{-- LEFT COLUMN: Main Settings (Hari & Jam) --}}
         <div>

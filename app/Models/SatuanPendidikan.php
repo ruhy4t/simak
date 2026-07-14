@@ -105,6 +105,11 @@ class SatuanPendidikan extends Model
         return $query->where('status_sp', $status);
     }
 
+    public function studentCounts()
+    {
+        return $this->hasMany(SatuanPendidikanStudentCount::class, 'satuan_pendidikan_id');
+    }
+
     // ========== ACCESSORS ==========
 
     /**

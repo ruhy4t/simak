@@ -2,14 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AcademicYear;
 use App\Models\SatuanPendidikan;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Auth;
-
 use App\Services\RegionCacheService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 
 class SatuanPendidikanController extends Controller
 {
@@ -477,7 +479,7 @@ class SatuanPendidikanController extends Controller
     /**
      * Edit School Profile (For Sekolah/Operator Role)
      */
-    public function editProfile()
+    public function editProfile(Request $request)
     {
         $user = Auth::user();
 
@@ -490,9 +492,42 @@ class SatuanPendidikanController extends Controller
             abort(404, 'Data sekolah tidak ditemukan untuk akun ini.');
         }
 
-        return view('satpen.profile', [
-            'satpen' => $user->sekolah
-        ]);
+        $satpen = $user->sekolah;
+        $academicYears = collect();
+        $selectedAcademicYear = null;
+        $studentCounts = $this->legacyStudentCounts($satpen);
+
+        if (Schema::hasTable('academic_years') && Schema::hasTable('satuan_pendidikan_student_counts')) {
+            $academicYears = AcademicYear::query()->orderByDesc('name')->get();
+            $selectedAcademicYear = $academicYears->firstWhere('name', $request->query('academic_year'))
+                ?? $academicYears->firstWhere('is_active', true)
+                ?? $academicYears->first();
+
+            if ($selectedAcademicYear) {
+                $annualCounts = $satpen->studentCounts()
+                    ->where('academic_year_id', $selectedAcademicYear->id)
+                    ->get()
+                    ->keyBy('grade');
+
+                foreach ([7, 8, 9] as $grade) {
+                    if ($annualCounts->has($grade)) {
+                        $studentCounts[$grade] = [
+                            'male' => $annualCounts[$grade]->male_count,
+                            'female' => $annualCounts[$grade]->female_count,
+                        ];
+                    } elseif ($selectedAcademicYear->name !== '2025/2026') {
+                        $studentCounts[$grade] = ['male' => 0, 'female' => 0];
+                    }
+                }
+            }
+        }
+
+        return view('satpen.profile', compact(
+            'satpen',
+            'academicYears',
+            'selectedAcademicYear',
+            'studentCounts'
+        ));
     }
 
     /**
@@ -512,7 +547,10 @@ class SatuanPendidikanController extends Controller
             abort(404);
         }
 
-        $request->validate([
+        $annualTablesReady = Schema::hasTable('academic_years')
+            && Schema::hasTable('satuan_pendidikan_student_counts');
+
+        $rules = [
             'kop_surat' => 'nullable|image|mimes:jpg,jpeg|max:2048', // Max 2MB
             'kepala_sekolah_nama' => 'nullable|string|max:150',
             'kepala_sekolah_nip' => 'nullable|string|max:50',
@@ -523,24 +561,42 @@ class SatuanPendidikanController extends Controller
             'jumlah_siswa_8_p' => 'nullable|integer|min:0',
             'jumlah_siswa_9_l' => 'nullable|integer|min:0',
             'jumlah_siswa_9_p' => 'nullable|integer|min:0',
-        ]);
+        ];
+
+        if ($annualTablesReady) {
+            $rules['academic_year_id'] = 'required|integer|exists:academic_years,id';
+        }
+
+        $request->validate($rules);
 
         try {
+            $studentValues = [];
+            foreach ([7, 8, 9] as $grade) {
+                $studentValues[$grade] = [
+                    'male' => (int) ($request->input("jumlah_siswa_{$grade}_l") ?? 0),
+                    'female' => (int) ($request->input("jumlah_siswa_{$grade}_p") ?? 0),
+                ];
+            }
+
+            $academicYear = $annualTablesReady
+                ? AcademicYear::findOrFail($request->integer('academic_year_id'))
+                : null;
+            $canEditStudentCounts = !$academicYear || !$academicYear->isClosed();
+
             $updateData = [
                 'kepala_sekolah_nama' => $request->kepala_sekolah_nama,
                 'kepala_sekolah_nip' => $request->kepala_sekolah_nip,
-
-                // Map inputs directly
-                'jumlah_siswa_7_l' => $request->jumlah_siswa_7_l ?? 0,
-                'jumlah_siswa_7_p' => $request->jumlah_siswa_7_p ?? 0,
-                'jumlah_siswa_8_l' => $request->jumlah_siswa_8_l ?? 0,
-                'jumlah_siswa_8_p' => $request->jumlah_siswa_8_p ?? 0,
-                'jumlah_siswa_9_l' => $request->jumlah_siswa_9_l ?? 0,
-                'jumlah_siswa_9_p' => $request->jumlah_siswa_9_p ?? 0,
-
-                // Note: 'jumlah_siswa_awal_7/8/9' are auto-calculated by Model Observer/Boot method
                 'updated_at' => now(),
             ];
+
+            // Keep legacy columns synchronized with the active year so existing
+            // reports continue to produce the same shape and values.
+            if ($canEditStudentCounts && (!$academicYear || $academicYear->is_active)) {
+                foreach ([7, 8, 9] as $grade) {
+                    $updateData["jumlah_siswa_{$grade}_l"] = $studentValues[$grade]['male'];
+                    $updateData["jumlah_siswa_{$grade}_p"] = $studentValues[$grade]['female'];
+                }
+            }
 
             // Handle File Upload
             if ($request->hasFile('kop_surat')) {
@@ -559,17 +615,58 @@ class SatuanPendidikanController extends Controller
             // Use find() then update() to ensure model events fire
             $satpenModel = \App\Models\SatuanPendidikan::find($satpen->id);
             if ($satpenModel) {
-                $satpenModel->update($updateData);
+                DB::transaction(function () use (
+                    $satpenModel,
+                    $updateData,
+                    $academicYear,
+                    $canEditStudentCounts,
+                    $studentValues
+                ) {
+                    $satpenModel->update($updateData);
+
+                    if ($academicYear && $canEditStudentCounts) {
+                        foreach ([7, 8, 9] as $grade) {
+                            $satpenModel->studentCounts()->updateOrCreate(
+                                [
+                                    'academic_year_id' => $academicYear->id,
+                                    'grade' => $grade,
+                                ],
+                                [
+                                    'male_count' => $studentValues[$grade]['male'],
+                                    'female_count' => $studentValues[$grade]['female'],
+                                ]
+                            );
+                        }
+                    }
+                });
             } else {
                 // Fallback if somehow not found by ID (unlikely)
                 \DB::table('satuan_pendidikan')->where('id', $satpen->id)->update($updateData);
             }
 
-            return back()->with('success', 'Profil sekolah dan data siswa berhasil diperbarui.');
+            $redirect = $academicYear
+                ? redirect()->route('sekolah.profile', ['academic_year' => $academicYear->name])
+                : back();
+
+            return $redirect->with('success', 'Profil sekolah dan data siswa berhasil diperbarui.');
 
         } catch (\Exception $e) {
             \Log::error('Update Profile Failed: ' . $e->getMessage());
             return back()->with('error', 'Gagal memperbarui profil: ' . $e->getMessage());
         }
+    }
+
+    private function legacyStudentCounts(SatuanPendidikan $satpen): array
+    {
+        $counts = [];
+
+        foreach ([7, 8, 9] as $grade) {
+            $counts[$grade] = [
+                'male' => (int) ($satpen->{"jumlah_siswa_{$grade}_l"} ?? 0),
+                'female' => (int) ($satpen->{"jumlah_siswa_{$grade}_p"} ?? 0),
+            ];
+        }
+
+        return $counts;
     }
 }

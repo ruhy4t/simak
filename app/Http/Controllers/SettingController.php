@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Setting;
+use App\Models\AcademicYear;
 use App\Models\Holiday;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 
 class SettingController extends Controller
 {
@@ -20,6 +22,10 @@ class SettingController extends Controller
         $workingHoursStart = Setting::get('working_hours_start', '08:00');
         $workingHoursEnd = Setting::get('working_hours_end', '16:00');
         $holidays = Holiday::orderBy('date', 'asc')->paginate(10);
+        $academicYears = Schema::hasTable('academic_years')
+            ? AcademicYear::query()->orderByDesc('name')->get()
+            : collect();
+        $activeAcademicYear = $academicYears->firstWhere('is_active', true);
 
         $dayNames = [
             0 => 'Minggu',
@@ -37,7 +43,9 @@ class SettingController extends Controller
             'workingHoursStart',
             'workingHoursEnd',
             'dayNames',
-            'holidays'
+            'holidays',
+            'academicYears',
+            'activeAcademicYear'
         ));
     }
 

@@ -187,7 +187,6 @@ Route::middleware(['auth', \App\Http\Middleware\EnsurePasswordChanged::class])->
         Route::delete('penandatangan/{id}', [App\Http\Controllers\PenandatanganController::class, 'destroy'])->name('penandatangan.destroy');
         Route::post('penandatangan/{id}/restore', [App\Http\Controllers\PenandatanganController::class, 'restore'])->name('penandatangan.restore');
         Route::post('penandatangan/{id}/toggle', [App\Http\Controllers\PenandatanganController::class, 'toggleStatus'])->name('penandatangan.toggle');
-        Route::put('/penandatangan/{id}', [PenandatanganController::class, 'update'])->name('penandatangan.update');
         Route::delete('penandatangan/{id}/signature', [PenandatanganController::class, 'deleteSignature'])->name('penandatangan.delete-signature');
 
 
@@ -208,6 +207,10 @@ Route::middleware(['auth', \App\Http\Middleware\EnsurePasswordChanged::class])->
     Route::middleware('role:Dinas,SuperAdmin')->group(function () {
         Route::get('/pengaturan', [\App\Http\Controllers\SettingController::class, 'index'])->name('settings.index');
         Route::post('/pengaturan', [\App\Http\Controllers\SettingController::class, 'update'])->name('settings.update');
+        Route::post('/pengaturan/tahun-pelajaran', [\App\Http\Controllers\AcademicYearController::class, 'store'])
+            ->name('academic-years.store');
+        Route::patch('/pengaturan/tahun-pelajaran/{academicYearId}/aktifkan', [\App\Http\Controllers\AcademicYearController::class, 'activate'])
+            ->name('academic-years.activate');
 
         // System Status
         Route::get('/system-status', [\App\Http\Controllers\SystemStatusController::class, 'index'])->name('system.status');
