@@ -47,8 +47,8 @@ return new class extends Migration
                 'name' => '2025/2026',
                 'status' => $hasActiveYear ? 'closed' : 'active',
                 'is_active' => !$hasActiveYear,
-                'starts_on' => '2025-07-01',
-                'ends_on' => '2026-06-30',
+                'starts_on' => '2025-07-15',
+                'ends_on' => '2026-07-14',
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);

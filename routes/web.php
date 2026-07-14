@@ -209,6 +209,8 @@ Route::middleware(['auth', \App\Http\Middleware\EnsurePasswordChanged::class])->
         Route::post('/pengaturan', [\App\Http\Controllers\SettingController::class, 'update'])->name('settings.update');
         Route::post('/pengaturan/tahun-pelajaran', [\App\Http\Controllers\AcademicYearController::class, 'store'])
             ->name('academic-years.store');
+        Route::patch('/pengaturan/tahun-pelajaran/{academicYearId}/periode', [\App\Http\Controllers\AcademicYearController::class, 'updateSchedule'])
+            ->name('academic-years.schedule.update');
         Route::patch('/pengaturan/tahun-pelajaran/{academicYearId}/aktifkan', [\App\Http\Controllers\AcademicYearController::class, 'activate'])
             ->name('academic-years.activate');
 

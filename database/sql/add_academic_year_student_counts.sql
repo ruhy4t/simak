@@ -52,13 +52,24 @@ SELECT
             THEN 0
         ELSE 1
     END,
-    '2025-07-01',
-    '2026-06-30',
+    '2025-07-15',
+    '2026-07-14',
     NOW(),
     NOW()
 WHERE NOT EXISTS (
     SELECT 1 FROM `academic_years` WHERE `name` = '2025/2026'
 );
+
+-- Koreksi aman untuk instalasi yang sempat memakai periode lama
+-- 1 Juli-30 Juni. Tanggal yang sudah dikustomisasi Dinas tidak disentuh.
+UPDATE `academic_years`
+SET
+    `starts_on` = '2025-07-15',
+    `ends_on` = '2026-07-14',
+    `updated_at` = NOW()
+WHERE `name` = '2025/2026'
+  AND `starts_on` = '2025-07-01'
+  AND `ends_on` = '2026-06-30';
 
 -- -------------------------------------------------------------
 -- 2. Data siswa per sekolah, tahun pelajaran, dan kelas

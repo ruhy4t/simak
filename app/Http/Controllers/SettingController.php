@@ -26,6 +26,16 @@ class SettingController extends Controller
             ? AcademicYear::query()->orderByDesc('name')->get()
             : collect();
         $activeAcademicYear = $academicYears->firstWhere('is_active', true);
+        $latestAcademicYear = $academicYears->first();
+        $suggestedStartYear = $latestAcademicYear
+            ? (int) explode('/', $latestAcademicYear->name)[1]
+            : (int) now()->format('Y');
+        $suggestedAcademicYearName = $suggestedStartYear . '/' . ($suggestedStartYear + 1);
+        $suggestedStartsOn = "{$suggestedStartYear}-07-15";
+        $suggestedEndsOn = ($suggestedStartYear + 1) . '-07-14';
+        $dueAcademicYear = $academicYears
+            ->where('status', AcademicYear::STATUS_UPCOMING)
+            ->first(fn (AcademicYear $year) => $year->starts_on?->isPast() || $year->starts_on?->isToday());
 
         $dayNames = [
             0 => 'Minggu',
@@ -45,7 +55,11 @@ class SettingController extends Controller
             'dayNames',
             'holidays',
             'academicYears',
-            'activeAcademicYear'
+            'activeAcademicYear',
+            'suggestedAcademicYearName',
+            'suggestedStartsOn',
+            'suggestedEndsOn',
+            'dueAcademicYear'
         ));
     }
 

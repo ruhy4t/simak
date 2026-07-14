@@ -16,9 +16,12 @@ class AcademicYearController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'regex:/^\d{4}\/\d{4}$/', 'unique:academic_years,name'],
+            'starts_on' => ['required', 'date'],
+            'ends_on' => ['required', 'date', 'after:starts_on'],
         ], [
             'name.regex' => 'Format tahun pelajaran harus seperti 2026/2027.',
             'name.unique' => 'Tahun pelajaran tersebut sudah tersedia.',
+            'ends_on.after' => 'Tanggal selesai harus setelah tanggal mulai.',
         ]);
 
         [$startYear, $endYear] = array_map('intval', explode('/', $validated['name']));
@@ -33,11 +36,28 @@ class AcademicYearController extends Controller
             'name' => $validated['name'],
             'status' => AcademicYear::STATUS_UPCOMING,
             'is_active' => false,
-            'starts_on' => "{$startYear}-07-01",
-            'ends_on' => "{$endYear}-06-30",
+            'starts_on' => $validated['starts_on'],
+            'ends_on' => $validated['ends_on'],
         ]);
 
         return back()->with('success', 'Tahun pelajaran berhasil ditambahkan sebagai tahun mendatang.');
+    }
+
+    public function updateSchedule(Request $request, int $academicYearId)
+    {
+        $this->ensureTablesAreReady();
+
+        $academicYear = AcademicYear::findOrFail($academicYearId);
+        $validated = $request->validate([
+            'starts_on' => ['required', 'date'],
+            'ends_on' => ['required', 'date', 'after:starts_on'],
+        ], [
+            'ends_on.after' => 'Tanggal selesai harus setelah tanggal mulai.',
+        ]);
+
+        $academicYear->update($validated);
+
+        return back()->with('success', "Periode tahun pelajaran {$academicYear->name} berhasil diperbarui.");
     }
 
     public function activate(int $academicYearId)

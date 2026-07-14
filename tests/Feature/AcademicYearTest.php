@@ -72,6 +72,8 @@ class AcademicYearTest extends TestCase
 
         $this->assertNotNull($academicYear);
         $this->assertTrue((bool) $academicYear->is_active);
+        $this->assertSame('2025-07-15', $academicYear->starts_on);
+        $this->assertSame('2026-07-14', $academicYear->ends_on);
         $this->assertDatabaseCount('satuan_pendidikan_student_counts', 3);
         $this->assertDatabaseHas('satuan_pendidikan_student_counts', [
             'satuan_pendidikan_id' => $schoolId,
@@ -145,8 +147,8 @@ class AcademicYearTest extends TestCase
             'name' => '2026/2027',
             'status' => AcademicYear::STATUS_UPCOMING,
             'is_active' => false,
-            'starts_on' => '2026-07-01',
-            'ends_on' => '2027-06-30',
+            'starts_on' => '2026-07-15',
+            'ends_on' => '2027-07-14',
         ]);
 
         foreach ([7 => [30, 31], 8 => [32, 33], 9 => [34, 35]] as $grade => [$male, $female]) {
@@ -179,6 +181,33 @@ class AcademicYearTest extends TestCase
             'jumlah_siswa_7_l' => 30,
             'jumlah_siswa_7_p' => 31,
         ]);
+    }
+
+    public function test_dinas_can_define_and_update_the_academic_year_period(): void
+    {
+        $this->insertSchool();
+        $migration = require database_path('migrations/2026_07_14_010000_create_academic_year_student_counts.php');
+        $migration->up();
+
+        $controller = app(AcademicYearController::class);
+        $controller->store(Request::create('/pengaturan/tahun-pelajaran', 'POST', [
+            'name' => '2026/2027',
+            'starts_on' => '2026-07-20',
+            'ends_on' => '2027-07-19',
+        ]));
+
+        $academicYear = AcademicYear::where('name', '2026/2027')->firstOrFail();
+        $this->assertSame('2026-07-20', $academicYear->starts_on->format('Y-m-d'));
+        $this->assertSame('2027-07-19', $academicYear->ends_on->format('Y-m-d'));
+
+        $controller->updateSchedule(Request::create('/periode', 'PATCH', [
+            'starts_on' => '2026-07-15',
+            'ends_on' => '2027-07-14',
+        ]), $academicYear->id);
+
+        $academicYear->refresh();
+        $this->assertSame('2026-07-15', $academicYear->starts_on->format('Y-m-d'));
+        $this->assertSame('2027-07-14', $academicYear->ends_on->format('Y-m-d'));
     }
 
     private function insertSchool(): int

@@ -56,21 +56,31 @@
                     Migrasi tahun pelajaran belum dijalankan. Aplikasi masih menggunakan data siswa lama.
                 </div>
             @else
+                @if($dueAcademicYear)
+                    <div class="mb-6 rounded-xl bg-amber-50 border border-amber-300 p-4 text-amber-900 flex items-start gap-3">
+                        <i class="bi bi-exclamation-triangle-fill text-xl text-amber-600"></i>
+                        <div>
+                            <div class="font-bold">Tahun {{ $dueAcademicYear->name }} sudah mencapai tanggal mulai.</div>
+                            <p class="text-sm mt-1">Periksa kesiapan data sekolah, lalu aktifkan secara manual jika sudah siap.</p>
+                        </div>
+                    </div>
+                @endif
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div>
                         <h3 class="font-semibold text-gray-700 mb-3">Daftar Tahun</h3>
                         <div class="space-y-2">
                             @foreach($academicYears as $academicYear)
-                                <div class="flex items-center justify-between gap-3 rounded-xl border border-gray-200 p-3">
-                                    <div>
+                                <div class="rounded-xl border border-gray-200 p-3">
+                                    <div class="flex items-center justify-between gap-3">
+                                        <div>
                                         <div class="font-bold text-gray-800">{{ $academicYear->name }}</div>
                                         <div class="text-xs text-gray-500">
                                             {{ $academicYear->starts_on?->format('d/m/Y') }}–{{ $academicYear->ends_on?->format('d/m/Y') }}
                                         </div>
-                                    </div>
-                                    @if($academicYear->is_active)
+                                        </div>
+                                        @if($academicYear->is_active)
                                         <span class="px-3 py-1 rounded-lg bg-emerald-100 text-emerald-700 text-sm font-semibold">Aktif</span>
-                                    @else
+                                        @else
                                         <form action="{{ route('academic-years.activate', $academicYear->id) }}" method="POST"
                                             onsubmit="return confirm('Aktifkan {{ $academicYear->name }}? Data siswa tahun ini akan menjadi dasar laporan aktif.')">
                                             @csrf
@@ -79,7 +89,32 @@
                                                 Jadikan Aktif
                                             </button>
                                         </form>
-                                    @endif
+                                        @endif
+                                    </div>
+
+                                    <details class="mt-3 pt-3 border-t border-gray-100">
+                                        <summary class="cursor-pointer text-sm font-medium text-indigo-700">Ubah tanggal periode</summary>
+                                        <form action="{{ route('academic-years.schedule.update', $academicYear->id) }}" method="POST"
+                                            class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+                                            @csrf
+                                            @method('PATCH')
+                                            <label class="text-xs text-gray-600">
+                                                Tanggal mulai
+                                                <input type="date" name="starts_on" required
+                                                    value="{{ $academicYear->starts_on?->format('Y-m-d') }}"
+                                                    class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-200">
+                                            </label>
+                                            <label class="text-xs text-gray-600">
+                                                Tanggal selesai
+                                                <input type="date" name="ends_on" required
+                                                    value="{{ $academicYear->ends_on?->format('Y-m-d') }}"
+                                                    class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-200">
+                                            </label>
+                                            <button class="sm:col-span-2 px-3 py-2 rounded-lg bg-gray-800 text-white text-sm font-semibold">
+                                                Simpan Periode
+                                            </button>
+                                        </form>
+                                    </details>
                                 </div>
                             @endforeach
                         </div>
@@ -89,17 +124,35 @@
                         <h3 class="font-semibold text-gray-700 mb-3">Tambah Tahun Pelajaran</h3>
                         <form action="{{ route('academic-years.store') }}" method="POST" class="space-y-3">
                             @csrf
-                            <input type="text" name="name" value="{{ old('name') }}" placeholder="Contoh: 2026/2027"
+                            <input type="text" name="name" value="{{ old('name', $suggestedAcademicYearName) }}" placeholder="Contoh: 2026/2027"
                                 pattern="\d{4}/\d{4}" required
                                 class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
                             @error('name')
+                                <p class="text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <label class="text-sm text-gray-600">
+                                    Tanggal mulai
+                                    <input type="date" name="starts_on" value="{{ old('starts_on', $suggestedStartsOn) }}" required
+                                        class="mt-1 w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-indigo-500">
+                                </label>
+                                <label class="text-sm text-gray-600">
+                                    Tanggal selesai
+                                    <input type="date" name="ends_on" value="{{ old('ends_on', $suggestedEndsOn) }}" required
+                                        class="mt-1 w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-indigo-500">
+                                </label>
+                            </div>
+                            @error('starts_on')
+                                <p class="text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                            @error('ends_on')
                                 <p class="text-sm text-red-600">{{ $message }}</p>
                             @enderror
                             <button class="w-full px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold">
                                 <i class="bi bi-plus-circle mr-2"></i>Tambah sebagai Tahun Mendatang
                             </button>
                             <p class="text-xs text-gray-500">
-                                Tahun baru dapat diisi lebih awal oleh sekolah. Aktivasi akan menutup tahun aktif sebelumnya.
+                                Nilai bawaan adalah 15 Juli–14 Juli. Dinas menentukan tanggal dan aktivasi secara manual.
                             </p>
                         </form>
                     </div>
