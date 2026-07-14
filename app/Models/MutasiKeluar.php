@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -87,8 +88,10 @@ class MutasiKeluar extends Model
     public function scopeByMonth($query, $yearMonth)
     {
         [$year, $month] = explode('-', $yearMonth);
-        return $query->whereYear('tanggal_pengajuan', $year)
-            ->whereMonth('tanggal_pengajuan', $month);
+        $start = CarbonImmutable::create((int) $year, (int) $month, 1)->startOfDay();
+
+        return $query->where('tanggal_pengajuan', '>=', $start->toDateString())
+            ->where('tanggal_pengajuan', '<', $start->addMonth()->toDateString());
     }
 
     // ========== RELATIONSHIPS ==========

@@ -7,20 +7,33 @@ use Illuminate\Support\Facades\Cache;
 
 class Holiday extends Model
 {
+    private const CACHE_PREFIX = 'holiday.details.';
+
     protected $fillable = ['date', 'description'];
 
     protected $casts = [
         'date' => 'date',
     ];
 
+    protected static function booted(): void
+    {
+        static::saved(function (Holiday $holiday) {
+            static::forgetDateCache($holiday->date->format('Y-m-d'));
+
+            if ($holiday->wasChanged('date')) {
+                static::forgetDateCache($holiday->getPrevious()['date'] ?? null);
+            }
+        });
+
+        static::deleted(fn (Holiday $holiday) => static::forgetDateCache($holiday->date->format('Y-m-d')));
+    }
+
     /**
      * Check if a date is a holiday (cached for 1 hour)
      */
     public static function isHoliday(string $date): bool
     {
-        return Cache::remember("holiday.{$date}", 3600, function () use ($date) {
-            return static::where('date', $date)->exists();
-        });
+        return self::forDate($date) !== null;
     }
 
     /**
@@ -28,7 +41,7 @@ class Holiday extends Model
      */
     public static function getDescription(string $date): ?string
     {
-        return static::where('date', $date)->value('description');
+        return self::forDate($date)?->description;
     }
 
     /**
@@ -48,5 +61,23 @@ class Holiday extends Model
             ->orderBy('date', 'asc')
             ->limit($limit)
             ->get();
+    }
+
+    private static function forDate(string $date): ?self
+    {
+        return Cache::remember(self::CACHE_PREFIX . $date, 3600, function () use ($date) {
+            return static::query()
+                ->select(['id', 'date', 'description'])
+                ->where('date', $date)
+                ->first();
+        });
+    }
+
+    private static function forgetDateCache(?string $date): void
+    {
+        if ($date) {
+            Cache::forget(self::CACHE_PREFIX . $date);
+            Cache::forget("holiday.{$date}");
+        }
     }
 }

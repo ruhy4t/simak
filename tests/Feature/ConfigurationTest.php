@@ -13,6 +13,7 @@ class ConfigurationTest extends TestCase
         $this->assertSame('s3', config('filesystems.disks.b2.driver'));
         $this->assertSame('Asia/Jakarta', config('app.timezone'));
         $this->assertSame('2.0.0', config('app.version'));
+        $this->assertArrayHasKey('database', config('cache.stores'));
     }
 
     public function test_vercel_deployment_configuration_matches_laravel_build(): void

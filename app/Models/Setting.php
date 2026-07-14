@@ -7,22 +7,34 @@ use Illuminate\Support\Facades\Cache;
 
 class Setting extends Model
 {
+    private const CACHE_KEY = 'settings.all';
+
     protected $primaryKey = 'key';
+
     public $incrementing = false;
+
     protected $keyType = 'string';
 
     protected $fillable = ['key', 'value', 'type', 'label', 'description'];
+
+    protected static function booted(): void
+    {
+        static::saved(fn () => static::clearCache());
+        static::deleted(fn () => static::clearCache());
+    }
 
     /**
      * Get a setting value by key
      */
     public static function get(string $key, mixed $default = null): mixed
     {
-        $setting = Cache::remember("setting.{$key}", 3600, function () use ($key) {
-            return static::find($key);
-        });
+        $setting = Cache::remember(self::CACHE_KEY, 3600, function () {
+            return static::query()
+                ->get(['key', 'value', 'type'])
+                ->keyBy('key');
+        })->get($key);
 
-        if (!$setting) {
+        if (! $setting) {
             return $default;
         }
 
@@ -35,25 +47,28 @@ class Setting extends Model
     public static function set(string $key, mixed $value): bool
     {
         $setting = static::find($key);
-        if (!$setting)
+        if (! $setting) {
             return false;
+        }
 
-        if (is_bool($value))
+        if (is_bool($value)) {
             $value = $value ? '1' : '0';
-        if (is_array($value))
+        }
+        if (is_array($value)) {
             $value = implode(',', $value);
+        }
 
         $setting->value = $value;
         $setting->save();
-        Cache::forget("setting.{$key}");
 
         return true;
     }
 
     protected static function castValue(?string $value, string $type): mixed
     {
-        if ($value === null)
+        if ($value === null) {
             return null;
+        }
 
         return match ($type) {
             'boolean' => (bool) (int) $value,
@@ -69,6 +84,7 @@ class Setting extends Model
     public static function getAllowedDays(): array
     {
         $days = self::get('allowed_days', [1, 2, 3, 4, 5, 6]);
+
         return is_array($days) ? array_map('intval', $days) : [];
     }
 
@@ -85,8 +101,6 @@ class Setting extends Model
      */
     public static function clearCache(): void
     {
-        foreach (static::all() as $setting) {
-            Cache::forget("setting.{$setting->key}");
-        }
+        Cache::forget(self::CACHE_KEY);
     }
 }

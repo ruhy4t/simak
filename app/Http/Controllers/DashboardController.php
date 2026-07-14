@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -236,13 +237,7 @@ class DashboardController extends Controller
                 $query->where('npsn_sekolah_asal', $user->npsn);
             }
 
-            // Filter by month/year
-            if ($month) {
-                $query->whereMonth('tanggal_pengajuan', $month);
-            }
-            if ($year) {
-                $query->whereYear('tanggal_pengajuan', $year);
-            }
+            $this->applyDateFilters($query, $month, $year);
 
             return $query->get()->toArray();
         } catch (\Exception $e) {
@@ -271,13 +266,7 @@ class DashboardController extends Controller
                 $query->where('npsn_sekolah_tujuan', $user->npsn);
             }
 
-            // Filter by month/year
-            if ($month) {
-                $query->whereMonth('tanggal_pengajuan', $month);
-            }
-            if ($year) {
-                $query->whereYear('tanggal_pengajuan', $year);
-            }
+            $this->applyDateFilters($query, $month, $year);
 
             return $query->get()->toArray();
         } catch (\Exception $e) {
@@ -291,27 +280,23 @@ class DashboardController extends Controller
     private function getAvailableYears(): array
     {
         try {
-            $years = [];
-
-            // From mutasi_keluar (no schema check - tables always exist in production)
             $keluarYears = DB::table('mutasi_keluar')
-                ->selectRaw('DISTINCT YEAR(tanggal_pengajuan) as year')
-                ->whereNotNull('tanggal_pengajuan')
-                ->pluck('year')
-                ->toArray();
-            $years = array_merge($years, $keluarYears);
+                ->selectRaw('YEAR(tanggal_pengajuan) as year')
+                ->whereNotNull('tanggal_pengajuan');
 
-            // From mutasi_masuk
             $masukYears = DB::table('mutasi_masuk')
-                ->selectRaw('DISTINCT YEAR(tanggal_pengajuan) as year')
-                ->whereNotNull('tanggal_pengajuan')
-                ->pluck('year')
-                ->toArray();
-            $years = array_merge($years, $masukYears);
+                ->selectRaw('YEAR(tanggal_pengajuan) as year')
+                ->whereNotNull('tanggal_pengajuan');
 
-            // Unique and sort descending
-            $years = array_unique(array_filter($years));
-            rsort($years);
+            // One database round-trip instead of querying each table separately.
+            $years = DB::query()
+                ->fromSub($keluarYears->union($masukYears), 'mutation_years')
+                ->whereNotNull('year')
+                ->distinct()
+                ->orderByDesc('year')
+                ->pluck('year')
+                ->map(fn ($year) => (int) $year)
+                ->all();
 
             // Add current year if not exists
             if (!in_array(date('Y'), $years)) {
@@ -321,6 +306,34 @@ class DashboardController extends Controller
             return $years;
         } catch (\Exception $e) {
             return [(int) date('Y')];
+        }
+    }
+
+    /**
+     * Use index-friendly date ranges whenever a year is selected.
+     */
+    private function applyDateFilters($query, $month = null, $year = null): void
+    {
+        $validYear = filter_var($year, FILTER_VALIDATE_INT, [
+            'options' => ['min_range' => 1900, 'max_range' => 2200],
+        ]);
+        $validMonth = filter_var($month, FILTER_VALIDATE_INT, [
+            'options' => ['min_range' => 1, 'max_range' => 12],
+        ]);
+
+        if ($validYear !== false) {
+            $start = CarbonImmutable::create($validYear, $validMonth !== false ? $validMonth : 1, 1)->startOfDay();
+            $end = $validMonth !== false ? $start->addMonth() : $start->addYear();
+
+            $query->where('tanggal_pengajuan', '>=', $start->toDateString())
+                ->where('tanggal_pengajuan', '<', $end->toDateString());
+
+            return;
+        }
+
+        // Preserve the existing cross-year month filter when no year is selected.
+        if ($validMonth !== false) {
+            $query->whereMonth('tanggal_pengajuan', $validMonth);
         }
     }
 }
