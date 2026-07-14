@@ -33,12 +33,19 @@ class SessionTimeout
 
         // Check if session has timed out due to inactivity
         if ($lastActivity && ($currentTime - $lastActivity) > ($this->timeout * 60)) {
+            $rememberCookie = Auth::guard()->getRecallerName();
+            if ($request->cookies->has($rememberCookie)) {
+                $request->session()->put('last_activity', $currentTime);
+
+                return $next($request);
+            }
+
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
             return redirect()->route('login')
-                ->with('error', 'Sesi Anda telah berakhir karena tidak ada aktivitas selama 60 menit. Silakan login kembali.');
+                ->with('error', "Sesi Anda telah berakhir karena tidak ada aktivitas selama {$this->timeout} menit. Silakan login kembali.");
         }
 
         // Update last activity timestamp

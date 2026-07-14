@@ -160,7 +160,7 @@
                     <div class="flex items-center justify-between">
                         <label class="flex items-center gap-3 cursor-pointer group">
                             <div class="relative flex items-center">
-                                <input type="checkbox" name="remember"
+                                <input type="checkbox" name="remember" value="1" {{ old('remember') ? 'checked' : '' }}
                                     class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-slate-300 transition-all checked:border-sky-500 checked:bg-sky-500 hover:border-sky-400 bg-white">
                                 <div
                                     class="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 transition-opacity peer-checked:opacity-100">
