@@ -8,9 +8,13 @@
     <title>Login - SIMAK Kota Bogor</title>
 
     {{-- Preload Fonts --}}
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="{{ asset('assets/css/bootstrap-icons.css') }}">
+    <link rel="preconnect" href="https://fonts.bunny.net" crossorigin>
+    <link rel="preload" href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800&display=swap" as="style"
+        onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+        <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800&display=swap" rel="stylesheet">
+    </noscript>
+    <link rel="stylesheet" href="{{ asset('assets/css/bootstrap-icons.css') }}?v={{ config('app.asset_version') }}">
 
     {{-- Vite --}}
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -73,7 +77,7 @@
 
 <body class="bg-white min-h-screen selection:bg-sky-500 selection:text-white" oncontextmenu="return false;">
 
-    <script src="{{ asset('js/security.js') }}"></script>
+    <script defer src="{{ asset('js/security.js') }}?v={{ config('app.asset_version') }}"></script>
 
     <div class="min-h-screen grid grid-cols-1 lg:grid-cols-2">
 

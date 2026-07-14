@@ -531,7 +531,7 @@
             draftId: @json(isset($draft) ? $draft->id_mutasi : null)
         };
     </script>
-    <script src="{{ asset('js/mutasi-keluar.js') }}?v={{ time() }}"></script>
+    <script src="{{ asset('js/mutasi-keluar.js') }}?v={{ config('app.asset_version') }}"></script>
 
     <script>
         // Populate draft values if resuming

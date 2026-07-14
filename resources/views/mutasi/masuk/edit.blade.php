@@ -175,7 +175,7 @@
     </div>
 
     @push('scripts')
-        <script src="{{ asset('js/mutasi-masuk.js') }}"></script>
+        <script src="{{ asset('js/mutasi-masuk.js') }}?v={{ config('app.asset_version') }}"></script>
         <script>
             window.MUTASI_CONFIG = {
                 routes: {

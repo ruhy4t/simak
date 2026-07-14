@@ -352,7 +352,7 @@
 @endsection
 
 @push('scripts')
-    <script src="{{ asset('js/mutasi-keluar.js') }}"></script>
+    <script src="{{ asset('js/mutasi-keluar.js') }}?v={{ config('app.asset_version') }}"></script>
     <script>
         window.MUTASI_CONFIG = {
             routes: {

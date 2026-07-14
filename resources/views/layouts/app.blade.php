@@ -24,7 +24,7 @@
     </noscript>
 
     {{-- Bootstrap Icons --}}
-    <link rel="stylesheet" href="{{ asset('assets/css/bootstrap-icons.css') }}?v={{ time() }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/bootstrap-icons.css') }}?v={{ config('app.asset_version') }}">
 
     {{-- Vite --}}
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -167,7 +167,7 @@
 
 <body class="bg-slate-50 font-sans antialiased text-slate-800">
 
-    <script src="{{ asset('js/security.js') }}?v={{ time() }}"></script>
+    <script defer src="{{ asset('js/security.js') }}?v={{ config('app.asset_version') }}"></script>
 
     @auth
         <script>
@@ -178,7 +178,7 @@
                 warningMinutes: 2
             };
         </script>
-        <script src="{{ asset('js/session-monitor.js') }}?v={{ time() }}"></script>
+        <script defer src="{{ asset('js/session-monitor.js') }}?v={{ config('app.asset_version') }}"></script>
     @endauth
 
     @auth
@@ -634,7 +634,7 @@
     @include('components.confirm-modal')
 
     {{-- Manual Image Compression helper (Moved up for priority) --}}
-    <script src="{{ asset('js/manual-compression.js') }}?v={{ time() }}"></script>
+    <script defer src="{{ asset('js/manual-compression.js') }}?v={{ config('app.asset_version') }}"></script>
 
     @stack('scripts')
 

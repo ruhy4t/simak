@@ -442,4 +442,4 @@
         console.log('Students data:', window.MUTASI_CONFIG.students);
         @endif
     </script>
-<script src="{{ asset('js/mutasi-masuk.js') }}?v={{ time() }}"></script>@endpush
+<script src="{{ asset('js/mutasi-masuk.js') }}?v={{ config('app.asset_version') }}"></script>@endpush
