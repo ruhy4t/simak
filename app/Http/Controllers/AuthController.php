@@ -11,12 +11,15 @@ use Illuminate\Support\Facades\RateLimiter;
 
 class AuthController extends Controller
 {
-    public function showLogin()
+    public function showLogin(Request $request)
     {
         if (Auth::check()) {
             return redirect()->route('dashboard');
         }
-        return view('auth.login');
+
+        return view('auth.login', [
+            'rememberedUsername' => $request->cookie('remembered_username'),
+        ]);
     }
 
     public function login(Request $request)
@@ -102,7 +105,9 @@ class AuthController extends Controller
         RateLimiter::clear($key);
         $user->resetFailedLogin();
 
-        Auth::login($user, $request->boolean('remember'));
+        // "Ingat saya" only remembers the username for the browser's password
+        // manager. It must never create Laravel's persistent login cookie.
+        Auth::login($user);
         $request->session()->regenerate();
 
         // Store login time for daily tasks middleware
@@ -110,7 +115,23 @@ class AuthController extends Controller
 
         AuditLog::log('LOGIN_SUCCESS', $username);
 
-        return redirect()->intended(route('dashboard'));
+        $response = redirect()->intended(route('dashboard'));
+
+        if ($request->boolean('remember_credentials')) {
+            return $response->withCookie(cookie(
+                'remembered_username',
+                $username,
+                60 * 24 * 30,
+                '/',
+                null,
+                $request->isSecure(),
+                true,
+                false,
+                'lax'
+            ));
+        }
+
+        return $response->withoutCookie('remembered_username');
     }
 
     public function logout(Request $request)

@@ -16,7 +16,11 @@ class ApplicationSmokeTest extends TestCase
     {
         $this->get('/login')
             ->assertOk()
-            ->assertViewIs('auth.login');
+            ->assertViewIs('auth.login')
+            ->assertSee('autocomplete="username"', false)
+            ->assertSee('autocomplete="current-password"', false)
+            ->assertSee('name="remember_credentials"', false)
+            ->assertDontSee('name="remember"', false);
     }
 
     public function test_authenticated_routes_redirect_guests_to_login(): void
