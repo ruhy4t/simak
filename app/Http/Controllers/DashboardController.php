@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
@@ -302,23 +303,31 @@ class DashboardController extends Controller
     private function getAvailableYears(): array
     {
         try {
-            $keluarYears = DB::table('mutasi_keluar')
-                ->selectRaw('YEAR(tanggal_pengajuan) as year')
-                ->whereNotNull('tanggal_pengajuan');
+            $years = Cache::remember('dashboard.available_years', now()->addHour(), function (): array {
+                $yearExpression = match (DB::connection()->getDriverName()) {
+                    'sqlite' => "CAST(strftime('%Y', tanggal_pengajuan) AS INTEGER)",
+                    'pgsql' => 'EXTRACT(YEAR FROM tanggal_pengajuan)',
+                    default => 'YEAR(tanggal_pengajuan)',
+                };
 
-            $masukYears = DB::table('mutasi_masuk')
-                ->selectRaw('YEAR(tanggal_pengajuan) as year')
-                ->whereNotNull('tanggal_pengajuan');
+                $keluarYears = DB::table('mutasi_keluar')
+                    ->selectRaw("{$yearExpression} as year")
+                    ->whereNotNull('tanggal_pengajuan');
 
-            // One database round-trip instead of querying each table separately.
-            $years = DB::query()
-                ->fromSub($keluarYears->union($masukYears), 'mutation_years')
-                ->whereNotNull('year')
-                ->distinct()
-                ->orderByDesc('year')
-                ->pluck('year')
-                ->map(fn ($year) => (int) $year)
-                ->all();
+                $masukYears = DB::table('mutasi_masuk')
+                    ->selectRaw("{$yearExpression} as year")
+                    ->whereNotNull('tanggal_pengajuan');
+
+                // One database round-trip instead of querying each table separately.
+                return DB::query()
+                    ->fromSub($keluarYears->union($masukYears), 'mutation_years')
+                    ->whereNotNull('year')
+                    ->distinct()
+                    ->orderByDesc('year')
+                    ->pluck('year')
+                    ->map(fn ($year) => (int) $year)
+                    ->all();
+            });
 
             // Add current year if not exists
             if (!in_array(date('Y'), $years)) {

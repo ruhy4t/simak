@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Http\Controllers\DashboardController;
 use App\Models\Holiday;
 use App\Models\MutasiKeluar;
 use App\Models\Setting;
@@ -121,5 +122,37 @@ class PerformanceRegressionTest extends TestCase
 
         $this->assertTrue(Schema::hasTable('cache'));
         $this->assertTrue(Schema::hasTable('cache_locks'));
+    }
+
+    public function test_dashboard_available_years_are_reused_from_cache(): void
+    {
+        Schema::create('mutasi_keluar', function (Blueprint $table) {
+            $table->id();
+            $table->date('tanggal_pengajuan')->nullable();
+        });
+        Schema::create('mutasi_masuk', function (Blueprint $table) {
+            $table->id();
+            $table->date('tanggal_pengajuan')->nullable();
+        });
+
+        DB::table('mutasi_keluar')->insert(['tanggal_pengajuan' => '2024-07-01']);
+        DB::table('mutasi_masuk')->insert(['tanggal_pengajuan' => '2025-07-01']);
+
+        $method = new \ReflectionMethod(DashboardController::class, 'getAvailableYears');
+        $controller = app(DashboardController::class);
+
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+
+        $first = $method->invoke($controller);
+        $second = $method->invoke($controller);
+
+        $selects = collect(DB::getQueryLog())
+            ->filter(fn (array $query) => str_contains(strtolower($query['query']), 'select'));
+
+        $this->assertContains(2024, $first);
+        $this->assertContains(2025, $first);
+        $this->assertSame($first, $second);
+        $this->assertCount(1, $selects);
     }
 }

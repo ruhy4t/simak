@@ -27,6 +27,7 @@ class ConfigurationTest extends TestCase
         $this->assertArrayNotHasKey('ASSET_URL', $vercel['env']);
         $this->assertSame('true', $vercel['env']['SESSION_SECURE_COOKIE']);
         $this->assertSame('true', $vercel['env']['SESSION_ENCRYPT']);
+        $this->assertSame('database', $vercel['env']['CACHE_DRIVER']);
         $this->assertSame(
             'public, max-age=31536000, immutable',
             $vercel['headers'][0]['headers'][0]['value']
