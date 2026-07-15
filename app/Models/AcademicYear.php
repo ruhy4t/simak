@@ -18,12 +18,15 @@ class AcademicYear extends Model
         'is_active',
         'starts_on',
         'ends_on',
+        'student_counts_rolled_over_from_id',
+        'student_counts_rolled_over_at',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
         'starts_on' => 'date',
         'ends_on' => 'date',
+        'student_counts_rolled_over_at' => 'datetime',
     ];
 
     public function studentCounts()

@@ -56,12 +56,12 @@ class WordDocumentService
 
         $section->addText('SURAT KETERANGAN', ['bold' => true, 'underline' => 'single'], [
             'alignment' => Jc::CENTER,
-            'spaceBefore' => 240,
+            'spaceBefore' => 0,
             'spaceAfter' => 0,
         ]);
         $section->addText('Nomor : '.$this->text($mutasi->nomor_surat_izin ?? '______'), [], [
             'alignment' => Jc::CENTER,
-            'spaceAfter' => 240,
+            'spaceAfter' => 0,
         ]);
 
         $opening = sprintf(
@@ -70,9 +70,9 @@ class WordDocumentService
             $this->text($mutasi->nomor_surat_keluar ?? '-'),
             $this->date($mutasi->tanggal_surat_keluar ?? null)
         );
-        $section->addText($opening, [], $this->paragraph(['indentation' => ['firstLine' => 709], 'spaceAfter' => 160]));
+        $section->addText($opening, [], $this->paragraph(['indentation' => ['firstLine' => 709]]));
 
-        $section->addText('DATA SISWA :', ['bold' => true], ['indentation' => ['left' => 709], 'spaceAfter' => 40]);
+        $section->addText('DATA SISWA :', ['bold' => true], ['indentation' => ['left' => 709], 'spaceAfter' => 0]);
         $this->addKeyValueTable($section, [
             ['Nama', $mutasi->nama_siswa ?? '-', true],
             ['Tempat, Tanggal Lahir', $this->text($mutasi->tempat_lahir ?? '-').', '.$this->date($mutasi->tanggal_lahir ?? null)],
@@ -87,8 +87,8 @@ class WordDocumentService
             ['Alamat Sekolah', $mutasi->alamat_sekolah_asal ?? '-'],
         ], $contentWidth - 709, 709);
 
-        $section->addText('Bermaksud pindah dan melanjutkan sekolah di ;', [], ['spaceBefore' => 80, 'spaceAfter' => 100]);
-        $section->addText('DATA SEKOLAH TUJUAN :', ['bold' => true], ['indentation' => ['left' => 709], 'spaceAfter' => 40]);
+        $section->addText('Bermaksud pindah dan melanjutkan sekolah di ;', [], ['spaceBefore' => 0, 'spaceAfter' => 0]);
+        $section->addText('DATA SEKOLAH TUJUAN :', ['bold' => true], ['indentation' => ['left' => 709], 'spaceAfter' => 0]);
         $this->addKeyValueTable($section, [
             ['NPSN Sekolah Tujuan', $mutasi->npsn_tujuan ?? '-'],
             ['Nama Sekolah Tujuan', $mutasi->sekolah_tujuan ?? '-'],
@@ -100,7 +100,7 @@ class WordDocumentService
         $section->addText(
             'Demikian Surat Keterangan ini kami buat untuk dipergunakan sebagaimana mestinya.',
             [],
-            $this->paragraph(['indentation' => ['firstLine' => 709], 'spaceBefore' => 140, 'spaceAfter' => 80])
+            $this->paragraph(['indentation' => ['firstLine' => 709]])
         );
         $this->addSignature($section, $penandatangan, 'Bogor, '.$this->date($mutasi->tanggal_surat_izin ?? null), $contentWidth);
 
@@ -130,7 +130,7 @@ class WordDocumentService
         $recipientCell->addText('Kepala '.$this->text($mutasi->sekolah_tujuan ?? '-'), [], ['spaceAfter' => 0]);
         $recipientCell->addText($this->text($mutasi->alamat_sekolah_tujuan ?? '-'), [], ['spaceAfter' => 0]);
         $row->addCell((int) ($portraitWidth * 0.52) - 500);
-        $section->addText('di Bogor', [], ['indentation' => ['left' => 500], 'spaceBefore' => 120, 'spaceAfter' => 240]);
+        $section->addText('di Bogor', [], ['indentation' => ['left' => 500], 'spaceBefore' => 0, 'spaceAfter' => 0]);
 
         $body = sprintf(
             'Berdasarkan surat dari Kepala %s nomor : %s tanggal %s perihal Permohonan Izin Mutasi Masuk, dengan ini memberikan izin untuk menerima siswa mutasi masuk sebagaimana terlampir.',
@@ -138,19 +138,19 @@ class WordDocumentService
             $this->text($mutasi->nomor_surat_permohonan ?? '-'),
             $this->date($mutasi->tanggal_surat_permohonan ?? null)
         );
-        $section->addText($body, [], $this->paragraph(['indentation' => ['firstLine' => 567], 'spaceAfter' => 120]));
-        $section->addText('Dengan catatan :', ['bold' => true], ['spaceAfter' => 40]);
+        $section->addText($body, [], $this->paragraph(['indentation' => ['firstLine' => 567]]));
+        $section->addText('Dengan catatan :', ['bold' => true], ['spaceAfter' => 0]);
         foreach ([
             'proses perpindahan siswa berpedoman kepada ketentuan yang berlaku;',
             'Kuota siswa per rombel tidak melebihi ketentuan yang sudah ditetapkan;',
             'Satuan Pendidikan wajib memperbaharui data di Dapodik.',
         ] as $note) {
-            $section->addListItem($note, 0, [], 'numberedList', ['spaceAfter' => 20]);
+            $section->addListItem($note, 0, [], 'numberedList', ['spaceBefore' => 0, 'spaceAfter' => 0, 'lineHeight' => 1]);
         }
         $section->addText(
             'Demikian surat ini kami buat untuk dipergunakan sebagaimana mestinya.',
             [],
-            $this->paragraph(['indentation' => ['firstLine' => 567], 'spaceBefore' => 100, 'spaceAfter' => 100])
+            $this->paragraph(['indentation' => ['firstLine' => 567]])
         );
         $this->addSignature($section, $penandatangan, null, $portraitWidth);
 
@@ -172,19 +172,19 @@ class WordDocumentService
                 ]);
 
                 if ($pageIndex === 0) {
-                    $landscape->addText('LAMPIRAN', ['bold' => true], ['spaceAfter' => 20]);
+                    $landscape->addText('LAMPIRAN', ['bold' => true], ['spaceAfter' => 0]);
                     $this->addKeyValueTable($landscape, [
                         ['Nomor', $mutasi->nomor_surat_izin ?? '-'],
                         ['Tanggal', $this->date($mutasi->tanggal_surat_izin ?? null)],
                     ], 4500, 0, 1000);
                     $landscape->addText('DAFTAR SISWA MUTASI MASUK', ['bold' => true], [
                         'alignment' => Jc::CENTER,
-                        'spaceBefore' => 100,
+                        'spaceBefore' => 0,
                         'spaceAfter' => 0,
                     ]);
                     $landscape->addText('KE '.$this->text($mutasi->sekolah_tujuan ?? '-'), ['bold' => true], [
                         'alignment' => Jc::CENTER,
-                        'spaceAfter' => 100,
+                        'spaceAfter' => 0,
                     ]);
                 }
 
@@ -204,6 +204,11 @@ class WordDocumentService
         $word = new PhpWord;
         $word->setDefaultFontName(self::FONT);
         $word->setDefaultFontSize(12);
+        $word->addParagraphStyle('Normal', [
+            'spaceBefore' => 0,
+            'spaceAfter' => 0,
+            'lineHeight' => 1,
+        ]);
         $word->getDocInfo()->setTitle($title)->setSubject($title)->setCompany('Dinas Pendidikan Kota Bogor');
         $word->addNumberingStyle('numberedList', [
             'type' => 'multilevel',
@@ -341,7 +346,7 @@ class WordDocumentService
         $row->addCell((int) ($width * 0.53));
         $cell = $row->addCell((int) ($width * 0.47));
         if ($dateLine) {
-            $cell->addText($dateLine, [], ['spaceAfter' => 40]);
+            $cell->addText($dateLine, [], ['spaceAfter' => 0]);
         }
         $signature = $cell->addTable(['width' => (int) ($width * 0.47), 'unit' => TblWidth::TWIP, 'borderSize' => 0]);
         foreach ([
@@ -382,8 +387,9 @@ class WordDocumentService
     {
         return array_replace_recursive([
             'alignment' => Jc::BOTH,
-            'lineHeight' => 1.2,
-            'spaceAfter' => 80,
+            'lineHeight' => 1,
+            'spaceBefore' => 0,
+            'spaceAfter' => 0,
         ], $overrides);
     }
 

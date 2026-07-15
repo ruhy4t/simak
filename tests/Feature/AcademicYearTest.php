@@ -7,6 +7,7 @@ use App\Http\Controllers\SatuanPendidikanController;
 use App\Models\AcademicYear;
 use App\Models\SatuanPendidikan;
 use App\Models\User;
+use App\Services\StudentCountRolloverService;
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\Request;
@@ -29,6 +30,15 @@ class AcademicYearTest extends TestCase
             $table->id();
             $table->string('npsn')->unique();
             $table->string('nama');
+            $table->string('bentuk_pendidikan')->default('SMP');
+            $table->string('status_sp')->default('Negeri');
+            $table->text('alamat_jalan')->nullable();
+            $table->string('kelurahan')->nullable();
+            $table->string('kecamatan')->nullable();
+            $table->string('kota')->default('Kota Bogor');
+            $table->string('provinsi')->default('Jawa Barat');
+            $table->text('alamat_lengkap')->nullable();
+            $table->boolean('is_local')->default(true);
             $table->string('kepala_sekolah_nama')->nullable();
             $table->string('kepala_sekolah_nip')->nullable();
             $table->string('kop_surat_path')->nullable();
@@ -68,6 +78,7 @@ class AcademicYearTest extends TestCase
         $migration = require database_path('migrations/2026_07_14_010000_create_academic_year_student_counts.php');
         $migration->up();
         $migration->up();
+        $this->runRolloverTrackingMigration();
 
         $academicYear = DB::table('academic_years')->where('name', '2025/2026')->first();
 
@@ -88,8 +99,7 @@ class AcademicYearTest extends TestCase
     public function test_profile_reads_and_updates_counts_for_the_selected_academic_year(): void
     {
         $schoolId = $this->insertSchool();
-        $migration = require database_path('migrations/2026_07_14_010000_create_academic_year_student_counts.php');
-        $migration->up();
+        $this->runAcademicYearMigrations();
 
         $academicYear = AcademicYear::where('name', '2025/2026')->firstOrFail();
         $school = SatuanPendidikan::findOrFail($schoolId);
@@ -136,13 +146,19 @@ class AcademicYearTest extends TestCase
             'jumlah_siswa_7_l' => 20,
             'jumlah_siswa_7_p' => 21,
         ]);
+        $this->assertDatabaseHas('satuan_pendidikan_student_counts', [
+            'satuan_pendidikan_id' => $schoolId,
+            'academic_year_id' => $academicYear->id,
+            'grade' => 8,
+            'male_count' => 13,
+            'female_count' => 13,
+        ]);
     }
 
     public function test_activating_a_year_closes_the_previous_year_and_syncs_legacy_totals(): void
     {
         $schoolId = $this->insertSchool();
-        $migration = require database_path('migrations/2026_07_14_010000_create_academic_year_student_counts.php');
-        $migration->up();
+        $this->runAcademicYearMigrations();
 
         $nextYear = AcademicYear::create([
             'name' => '2026/2027',
@@ -184,6 +200,130 @@ class AcademicYearTest extends TestCase
         ]);
     }
 
+    public function test_activation_promotes_final_balances_after_completed_mutations_once(): void
+    {
+        $schoolId = $this->insertSchool();
+        $this->runAcademicYearMigrations();
+        $this->createMutationTables();
+
+        $previousYear = AcademicYear::where('name', '2025/2026')->firstOrFail();
+        $nextYear = AcademicYear::create([
+            'name' => '2026/2027',
+            'status' => AcademicYear::STATUS_UPCOMING,
+            'is_active' => false,
+            'starts_on' => '2026-07-15',
+            'ends_on' => '2027-07-14',
+        ]);
+        DB::table('satuan_pendidikan_student_counts')->insert([
+            'satuan_pendidikan_id' => $schoolId,
+            'academic_year_id' => $nextYear->id,
+            'grade' => 7,
+            'male_count' => 30,
+            'female_count' => 31,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('mutasi_keluar')->insert([
+            [
+                'id_mutasi' => 'MK1', 'tanggal_pengajuan' => '2026-05-01', 'tanggal_selesai' => '2026-06-01',
+                'npsn_sekolah_asal' => '12345678', 'kelas' => 'VII', 'jenis_kelamin' => 'L', 'status' => 'Selesai',
+            ],
+            [
+                'id_mutasi' => 'MK2', 'tanggal_pengajuan' => '2026-05-01', 'tanggal_selesai' => '2026-06-01',
+                'npsn_sekolah_asal' => '12345678', 'kelas' => 'VII', 'jenis_kelamin' => 'P', 'status' => 'Proses TTD',
+            ],
+            [
+                'id_mutasi' => 'MK3', 'tanggal_pengajuan' => '2027-01-01', 'tanggal_selesai' => '2027-01-02',
+                'npsn_sekolah_asal' => '12345678', 'kelas' => 'VII', 'jenis_kelamin' => 'P', 'status' => 'Selesai',
+            ],
+        ]);
+        DB::table('mutasi_masuk')->insert([
+            'id_mutasi' => 'MM1',
+            'tanggal_pengajuan' => '2026-05-01',
+            'tanggal_selesai' => '2026-06-02',
+            'npsn_sekolah_tujuan' => '12345678',
+            'status' => 'Selesai',
+        ]);
+        DB::table('mutasi_masuk_siswa')->insert([
+            ['id_mutasi' => 'MM1', 'kelas' => 'VII', 'jenis_kelamin' => 'P'],
+            ['id_mutasi' => 'MM1', 'kelas' => '8', 'jenis_kelamin' => 'L'],
+        ]);
+
+        app(AcademicYearController::class)->activate($nextYear->id);
+
+        $this->assertDatabaseHas('satuan_pendidikan_student_counts', [
+            'satuan_pendidikan_id' => $schoolId,
+            'academic_year_id' => $nextYear->id,
+            'grade' => 7,
+            'male_count' => 30,
+            'female_count' => 31,
+        ]);
+        $this->assertDatabaseHas('satuan_pendidikan_student_counts', [
+            'satuan_pendidikan_id' => $schoolId,
+            'academic_year_id' => $nextYear->id,
+            'grade' => 8,
+            'male_count' => 9,
+            'female_count' => 13,
+        ]);
+        $this->assertDatabaseHas('satuan_pendidikan_student_counts', [
+            'satuan_pendidikan_id' => $schoolId,
+            'academic_year_id' => $nextYear->id,
+            'grade' => 9,
+            'male_count' => 14,
+            'female_count' => 13,
+        ]);
+        $this->assertDatabaseHas('academic_years', [
+            'id' => $nextYear->id,
+            'student_counts_rolled_over_from_id' => $previousYear->id,
+        ]);
+
+        DB::table('satuan_pendidikan_student_counts')
+            ->where('academic_year_id', $nextYear->id)
+            ->where('grade', 8)
+            ->update(['male_count' => 99]);
+        app(StudentCountRolloverService::class)->rollover($previousYear, $nextYear->fresh());
+        $this->assertSame(99, (int) DB::table('satuan_pendidikan_student_counts')
+            ->where('academic_year_id', $nextYear->id)
+            ->where('grade', 8)
+            ->value('male_count'));
+    }
+
+    public function test_dinas_can_correct_all_active_year_grades(): void
+    {
+        $schoolId = $this->insertSchool();
+        $this->runAcademicYearMigrations();
+        $activeYear = AcademicYear::where('is_active', true)->firstOrFail();
+
+        app(SatuanPendidikanController::class)->update(Request::create('/satuan-pendidikan/'.$schoolId, 'PUT', [
+            'npsn' => '12345678',
+            'nama' => 'SMP Test',
+            'bentuk_pendidikan' => 'SMP',
+            'status_sp' => 'Negeri',
+            'kota' => 'Kota Bogor',
+            'provinsi' => 'Jawa Barat',
+            'academic_year_id' => $activeYear->id,
+            'jumlah_siswa_7_l' => 20,
+            'jumlah_siswa_7_p' => 21,
+            'jumlah_siswa_8_l' => 22,
+            'jumlah_siswa_8_p' => 23,
+            'jumlah_siswa_9_l' => 24,
+            'jumlah_siswa_9_p' => 25,
+        ]), $schoolId);
+
+        $this->assertDatabaseHas('satuan_pendidikan_student_counts', [
+            'satuan_pendidikan_id' => $schoolId,
+            'academic_year_id' => $activeYear->id,
+            'grade' => 8,
+            'male_count' => 22,
+            'female_count' => 23,
+        ]);
+        $this->assertDatabaseHas('satuan_pendidikan', [
+            'id' => $schoolId,
+            'jumlah_siswa_awal_9' => 49,
+        ]);
+    }
+
     public function test_activating_a_year_bulk_updates_all_schools_in_one_query(): void
     {
         for ($schoolNumber = 1; $schoolNumber <= 25; $schoolNumber++) {
@@ -195,8 +335,7 @@ class AcademicYearTest extends TestCase
             ]);
         }
 
-        $migration = require database_path('migrations/2026_07_14_010000_create_academic_year_student_counts.php');
-        $migration->up();
+        $this->runAcademicYearMigrations();
 
         $nextYear = AcademicYear::create([
             'name' => '2026/2027',
@@ -239,8 +378,7 @@ class AcademicYearTest extends TestCase
     public function test_dinas_can_define_and_update_the_academic_year_period(): void
     {
         $this->insertSchool();
-        $migration = require database_path('migrations/2026_07_14_010000_create_academic_year_student_counts.php');
-        $migration->up();
+        $this->runAcademicYearMigrations();
 
         $controller = app(AcademicYearController::class);
         $controller->store(Request::create('/pengaturan/tahun-pelajaran', 'POST', [
@@ -280,5 +418,44 @@ class AcademicYearTest extends TestCase
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+    }
+
+    private function runAcademicYearMigrations(): void
+    {
+        $migration = require database_path('migrations/2026_07_14_010000_create_academic_year_student_counts.php');
+        $migration->up();
+        $this->runRolloverTrackingMigration();
+    }
+
+    private function runRolloverTrackingMigration(): void
+    {
+        $migration = require database_path('migrations/2026_07_15_000000_add_student_count_rollover_tracking_to_academic_years.php');
+        $migration->up();
+    }
+
+    private function createMutationTables(): void
+    {
+        Schema::create('mutasi_keluar', function (Blueprint $table) {
+            $table->string('id_mutasi')->primary();
+            $table->date('tanggal_pengajuan');
+            $table->date('tanggal_selesai')->nullable();
+            $table->string('npsn_sekolah_asal');
+            $table->string('kelas');
+            $table->string('jenis_kelamin');
+            $table->string('status');
+        });
+        Schema::create('mutasi_masuk', function (Blueprint $table) {
+            $table->string('id_mutasi')->primary();
+            $table->date('tanggal_pengajuan');
+            $table->date('tanggal_selesai')->nullable();
+            $table->string('npsn_sekolah_tujuan');
+            $table->string('status');
+        });
+        Schema::create('mutasi_masuk_siswa', function (Blueprint $table) {
+            $table->id();
+            $table->string('id_mutasi');
+            $table->string('kelas');
+            $table->string('jenis_kelamin');
+        });
     }
 }

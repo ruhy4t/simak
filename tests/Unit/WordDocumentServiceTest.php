@@ -38,6 +38,7 @@ class WordDocumentServiceTest extends TestCase
         $path = app(WordDocumentService::class)->createMutasiKeluar($this->outgoingTransfer(), $this->signer());
 
         $document = $this->assertNativeDocx($path, ['SURAT KETERANGAN', 'DATA SISWA', 'Budi Santoso']);
+        $this->assertSingleLineZeroParagraphSpacing($path);
         $this->assertCount(1, $document->getSections());
         $this->assertRequestedMargins($document);
 
@@ -63,6 +64,7 @@ class WordDocumentServiceTest extends TestCase
         $path = app(WordDocumentService::class)->createMutasiMasuk($this->incomingTransfer(), $students, $this->signer());
 
         $document = $this->assertNativeDocx($path, ['Izin Mutasi Siswa', 'DAFTAR SISWA MUTASI MASUK', 'Siti Aminah']);
+        $this->assertSingleLineZeroParagraphSpacing($path);
         $this->assertDocxTablesHaveNoVisibleBorders($path);
         $this->assertCount(2, $document->getSections());
         $this->assertSame('landscape', $document->getSections()[1]->getStyle()->getOrientation());
@@ -102,6 +104,22 @@ class WordDocumentServiceTest extends TestCase
         foreach ($tableBorders[0] as $borderDefinition) {
             $this->assertDoesNotMatchRegularExpression('/w:sz="[1-9][0-9]*"/', $borderDefinition);
         }
+    }
+
+    private function assertSingleLineZeroParagraphSpacing(string $path): void
+    {
+        $zip = new ZipArchive;
+        $this->assertTrue($zip->open($path) === true);
+        $documentXml = (string) $zip->getFromName('word/document.xml');
+        $stylesXml = (string) $zip->getFromName('word/styles.xml');
+        $zip->close();
+
+        $this->assertMatchesRegularExpression(
+            '/<w:style[^>]+w:styleId="Normal".*?<w:spacing[^>]+w:before="0"[^>]+w:after="0"[^>]+w:line="240"/s',
+            $stylesXml
+        );
+        $this->assertDoesNotMatchRegularExpression('/w:(?:before|after)="(?!0")[^"]+"/', $documentXml);
+        $this->assertDoesNotMatchRegularExpression('/w:line="(?!240")[^"]+"/', $documentXml);
     }
 
     private function assertRequestedMargins(PhpWord $document): void

@@ -40,7 +40,7 @@
                 </div>
                 <div>
                     <h2 class="text-lg font-semibold text-gray-800">Tahun Pelajaran</h2>
-                    <p class="text-sm text-gray-500">Tahun aktif menentukan data siswa yang dipakai laporan lama.</p>
+                    <p class="text-sm text-gray-500">Saat tahun baru diaktifkan, saldo akhir kelas VII/VIII naik otomatis ke kelas VIII/IX.</p>
                 </div>
             </div>
             @if($activeAcademicYear)
@@ -82,7 +82,7 @@
                                         <span class="px-3 py-1 rounded-lg bg-emerald-100 text-emerald-700 text-sm font-semibold">Aktif</span>
                                         @else
                                         <form action="{{ route('academic-years.activate', $academicYear->id) }}" method="POST"
-                                            onsubmit="return confirm('Aktifkan {{ $academicYear->name }}? Data siswa tahun ini akan menjadi dasar laporan aktif.')">
+                                            onsubmit="return confirm('Aktifkan {{ $academicYear->name }}? Saldo akhir kelas VII dan VIII dari tahun aktif akan dipindahkan ke kelas VIII dan IX. Proses ini hanya dijalankan satu kali.')">
                                             @csrf
                                             @method('PATCH')
                                             <button class="px-3 py-2 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-sm font-semibold">

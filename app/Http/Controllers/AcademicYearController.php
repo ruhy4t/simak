@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AcademicYear;
+use App\Services\StudentCountRolloverService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -10,6 +11,8 @@ use Illuminate\Validation\ValidationException;
 
 class AcademicYearController extends Controller
 {
+    public function __construct(private readonly StudentCountRolloverService $rolloverService) {}
+
     public function store(Request $request)
     {
         $this->ensureTablesAreReady();
@@ -67,6 +70,19 @@ class AcademicYearController extends Controller
         $academicYear = AcademicYear::findOrFail($academicYearId);
 
         DB::transaction(function () use ($academicYear) {
+            $previousAcademicYear = AcademicYear::query()
+                ->where('is_active', true)
+                ->where('id', '!=', $academicYear->id)
+                ->first();
+
+            $isNewerYear = $previousAcademicYear?->starts_on
+                && $academicYear->starts_on
+                && $academicYear->starts_on->gt($previousAcademicYear->starts_on);
+
+            if ($isNewerYear && ! $academicYear->student_counts_rolled_over_at) {
+                $this->rolloverService->rollover($previousAcademicYear, $academicYear);
+            }
+
             AcademicYear::query()
                 ->where('is_active', true)
                 ->where('id', '!=', $academicYear->id)

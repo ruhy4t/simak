@@ -382,7 +382,25 @@ class SatuanPendidikanController extends Controller
             abort(404);
         }
 
-        return view('satpen.edit', compact('satpen'));
+        $activeAcademicYear = null;
+        if (Schema::hasTable('academic_years') && Schema::hasTable('satuan_pendidikan_student_counts')) {
+            $activeAcademicYear = AcademicYear::query()->where('is_active', true)->first();
+
+            if ($activeAcademicYear) {
+                $annualCounts = DB::table('satuan_pendidikan_student_counts')
+                    ->where('satuan_pendidikan_id', $satpen->id)
+                    ->where('academic_year_id', $activeAcademicYear->id)
+                    ->get()
+                    ->keyBy('grade');
+
+                foreach ([7, 8, 9] as $grade) {
+                    $satpen->{"jumlah_siswa_{$grade}_l"} = (int) ($annualCounts->get($grade)->male_count ?? 0);
+                    $satpen->{"jumlah_siswa_{$grade}_p"} = (int) ($annualCounts->get($grade)->female_count ?? 0);
+                }
+            }
+        }
+
+        return view('satpen.edit', compact('satpen', 'activeAcademicYear'));
     }
 
     /**
@@ -396,7 +414,7 @@ class SatuanPendidikanController extends Controller
             abort(404);
         }
 
-        $request->validate([
+        $rules = [
             'npsn' => "required|string|size:8|unique:satuan_pendidikan,npsn,{$id}",
             'nama' => 'required|string|max:150',
             'bentuk_pendidikan' => 'required|in:SMP,SMP SPK,SMP Terbuka',
@@ -416,7 +434,13 @@ class SatuanPendidikanController extends Controller
             'jumlah_siswa_9_l' => 'nullable|integer|min:0',
             'jumlah_siswa_9_p' => 'nullable|integer|min:0',
             'kop_surat' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-        ], [
+        ];
+
+        if (Schema::hasTable('academic_years')) {
+            $rules['academic_year_id'] = 'nullable|integer|exists:academic_years,id';
+        }
+
+        $request->validate($rules, [
             'npsn.size' => 'NPSN harus 8 digit',
             'npsn.unique' => 'NPSN sudah terdaftar',
         ]);
@@ -453,6 +477,9 @@ class SatuanPendidikanController extends Controller
                 'jumlah_siswa_8_p' => $request->jumlah_siswa_8_p ?? 0,
                 'jumlah_siswa_9_l' => $request->jumlah_siswa_9_l ?? 0,
                 'jumlah_siswa_9_p' => $request->jumlah_siswa_9_p ?? 0,
+                'jumlah_siswa_awal_7' => (int) ($request->jumlah_siswa_7_l ?? 0) + (int) ($request->jumlah_siswa_7_p ?? 0),
+                'jumlah_siswa_awal_8' => (int) ($request->jumlah_siswa_8_l ?? 0) + (int) ($request->jumlah_siswa_8_p ?? 0),
+                'jumlah_siswa_awal_9' => (int) ($request->jumlah_siswa_9_l ?? 0) + (int) ($request->jumlah_siswa_9_p ?? 0),
                 'updated_at' => now(),
             ];
 
@@ -468,7 +495,30 @@ class SatuanPendidikanController extends Controller
                 $updateData['kop_surat_path'] = $path;
             }
 
-            \DB::table('satuan_pendidikan')->where('id', $id)->update($updateData);
+            DB::transaction(function () use ($id, $request, $updateData) {
+                DB::table('satuan_pendidikan')->where('id', $id)->update($updateData);
+
+                if ($request->filled('academic_year_id') && Schema::hasTable('satuan_pendidikan_student_counts')) {
+                    $now = now();
+                    $rows = [];
+                    foreach ([7, 8, 9] as $grade) {
+                        $rows[] = [
+                            'satuan_pendidikan_id' => (int) $id,
+                            'academic_year_id' => $request->integer('academic_year_id'),
+                            'grade' => $grade,
+                            'male_count' => $request->integer("jumlah_siswa_{$grade}_l"),
+                            'female_count' => $request->integer("jumlah_siswa_{$grade}_p"),
+                            'created_at' => $now,
+                            'updated_at' => $now,
+                        ];
+                    }
+                    DB::table('satuan_pendidikan_student_counts')->upsert(
+                        $rows,
+                        ['satuan_pendidikan_id', 'academic_year_id', 'grade'],
+                        ['male_count', 'female_count', 'updated_at']
+                    );
+                }
+            });
 
             return redirect()->route('satpen.index')
                 ->with('success', "Satuan Pendidikan {$request->nama} berhasil diperbarui");
@@ -554,13 +604,10 @@ class SatuanPendidikanController extends Controller
             'kop_surat' => 'nullable|image|mimes:jpg,jpeg|max:2048', // Max 2MB
             'kepala_sekolah_nama' => 'nullable|string|max:150',
             'kepala_sekolah_nip' => 'nullable|string|max:50',
-            // Update Validation for Gender Breakdown
+            // Schools only enter the new grade 7 intake. Grade 8/9 are
+            // promoted automatically and can only be corrected by Dinas.
             'jumlah_siswa_7_l' => 'nullable|integer|min:0',
             'jumlah_siswa_7_p' => 'nullable|integer|min:0',
-            'jumlah_siswa_8_l' => 'nullable|integer|min:0',
-            'jumlah_siswa_8_p' => 'nullable|integer|min:0',
-            'jumlah_siswa_9_l' => 'nullable|integer|min:0',
-            'jumlah_siswa_9_p' => 'nullable|integer|min:0',
         ];
 
         if ($annualTablesReady) {
@@ -571,7 +618,7 @@ class SatuanPendidikanController extends Controller
 
         try {
             $studentValues = [];
-            foreach ([7, 8, 9] as $grade) {
+            foreach ([7] as $grade) {
                 $studentValues[$grade] = [
                     'male' => (int) ($request->input("jumlah_siswa_{$grade}_l") ?? 0),
                     'female' => (int) ($request->input("jumlah_siswa_{$grade}_p") ?? 0),
@@ -592,7 +639,7 @@ class SatuanPendidikanController extends Controller
             // Keep legacy columns synchronized with the active year so existing
             // reports continue to produce the same shape and values.
             if ($canEditStudentCounts && (!$academicYear || $academicYear->is_active)) {
-                foreach ([7, 8, 9] as $grade) {
+                foreach ([7] as $grade) {
                     $updateData["jumlah_siswa_{$grade}_l"] = $studentValues[$grade]['male'];
                     $updateData["jumlah_siswa_{$grade}_p"] = $studentValues[$grade]['female'];
                 }
@@ -625,7 +672,7 @@ class SatuanPendidikanController extends Controller
                     $satpenModel->update($updateData);
 
                     if ($academicYear && $canEditStudentCounts) {
-                        foreach ([7, 8, 9] as $grade) {
+                        foreach ([7] as $grade) {
                             $satpenModel->studentCounts()->updateOrCreate(
                                 [
                                     'academic_year_id' => $academicYear->id,

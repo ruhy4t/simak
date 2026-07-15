@@ -2,6 +2,7 @@
 
 @section('content')
     @php($canEditStudentCounts = !$selectedAcademicYear || !$selectedAcademicYear->isClosed())
+    @php($canEditGrade7 = $canEditStudentCounts)
     <div class="max-w-full mx-auto space-y-8">
 
         <!-- Header Page -->
@@ -103,7 +104,7 @@
                                 </select>
                                 <p class="text-xs text-blue-600 mt-2 font-medium">
                                     @if($canEditStudentCounts)
-                                        * Data siswa disimpan terpisah untuk setiap tahun pelajaran.
+                                        * Sekolah mengisi kelas VII. Kelas VIII dan IX berasal dari kenaikan kelas dan hanya dapat dikoreksi Dinas.
                                     @else
                                         * Tahun pelajaran ini sudah ditutup dan hanya dapat dilihat.
                                     @endif
@@ -126,14 +127,14 @@
                                     <div class="col-span-5">
                                         <input type="number" name="jumlah_siswa_7_l" min="0" required
                                             value="{{ old('jumlah_siswa_7_l', $studentCounts[7]['male']) }}"
-                                            @readonly(!$canEditStudentCounts)
+                                            @readonly(!$canEditGrade7)
                                             class="w-full border-2 border-slate-300 bg-white focus:border-blue-500 focus:bg-blue-50 rounded-xl px-2 py-3 text-center text-lg font-bold text-slate-800 transition-all shadow-xs"
                                             placeholder="L">
                                     </div>
                                     <div class="col-span-5">
                                         <input type="number" name="jumlah_siswa_7_p" min="0" required
                                             value="{{ old('jumlah_siswa_7_p', $studentCounts[7]['female']) }}"
-                                            @readonly(!$canEditStudentCounts)
+                                            @readonly(!$canEditGrade7)
                                             class="w-full border-2 border-slate-300 bg-white focus:border-pink-500 focus:bg-pink-50 rounded-xl px-2 py-3 text-center text-lg font-bold text-slate-800 transition-all shadow-xs"
                                             placeholder="P">
                                     </div>
@@ -145,13 +146,13 @@
                                     <div class="col-span-5 relative">
                                         <input type="number" name="jumlah_siswa_8_l" min="0" required
                                             value="{{ old('jumlah_siswa_8_l', $studentCounts[8]['male']) }}"
-                                            @readonly(!$canEditStudentCounts)
+                                            readonly
                                             class="w-full border-2 rounded-xl px-2 py-3 text-center text-lg font-bold transition-all shadow-xs">
                                     </div>
                                     <div class="col-span-5 relative">
                                         <input type="number" name="jumlah_siswa_8_p" min="0" required
                                             value="{{ old('jumlah_siswa_8_p', $studentCounts[8]['female']) }}"
-                                            @readonly(!$canEditStudentCounts)
+                                            readonly
                                             class="w-full border-2 rounded-xl px-2 py-3 text-center text-lg font-bold transition-all shadow-xs">
                                     </div>
                                 </div>
@@ -162,13 +163,13 @@
                                     <div class="col-span-5 relative">
                                         <input type="number" name="jumlah_siswa_9_l" min="0" required
                                             value="{{ old('jumlah_siswa_9_l', $studentCounts[9]['male']) }}"
-                                            @readonly(!$canEditStudentCounts)
+                                            readonly
                                             class="w-full border-2 rounded-xl px-2 py-3 text-center text-lg font-bold transition-all shadow-xs">
                                     </div>
                                     <div class="col-span-5 relative">
                                         <input type="number" name="jumlah_siswa_9_p" min="0" required
                                             value="{{ old('jumlah_siswa_9_p', $studentCounts[9]['female']) }}"
-                                            @readonly(!$canEditStudentCounts)
+                                            readonly
                                             class="w-full border-2 rounded-xl px-2 py-3 text-center text-lg font-bold transition-all shadow-xs">
                                     </div>
                                 </div>

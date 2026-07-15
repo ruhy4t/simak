@@ -180,8 +180,13 @@
                     <h3 class="text-lg font-medium text-gray-900 mb-4">
                         <i class="bi bi-people text-blue-600 mr-2"></i>Jumlah Siswa Awal
                     </h3>
+                    @if($activeAcademicYear)
+                        <input type="hidden" name="academic_year_id" value="{{ $activeAcademicYear->id }}">
+                    @endif
                     <div class="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-4">
-                        <p class="text-sm text-blue-700"><i class="bi bi-info-circle mr-1"></i> Data siswa awal digunakan sebagai saldo awal laporan mutasi bulanan.</p>
+                        <p class="text-sm text-blue-700"><i class="bi bi-info-circle mr-1"></i>
+                            Koreksi Dinas untuk {{ $activeAcademicYear?->name ?? 'data aktif' }}. Perubahan tersimpan pada data tahunan dan laporan aktif.
+                        </p>
                     </div>
                     <div class="grid grid-cols-3 gap-4">
                         <!-- Kelas 7 -->
