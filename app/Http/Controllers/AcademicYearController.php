@@ -89,33 +89,26 @@ class AcademicYearController extends Controller
 
     private function syncLegacyStudentCounts(AcademicYear $academicYear): void
     {
-        DB::table('satuan_pendidikan')
-            ->select('id')
-            ->orderBy('id')
-            ->chunkById(200, function ($schools) use ($academicYear) {
-                $schoolIds = $schools->pluck('id');
-                $counts = DB::table('satuan_pendidikan_student_counts')
-                    ->where('academic_year_id', $academicYear->id)
-                    ->whereIn('satuan_pendidikan_id', $schoolIds)
-                    ->get()
-                    ->groupBy('satuan_pendidikan_id');
+        $academicYearId = (int) $academicYear->id;
+        $values = ['updated_at' => now()];
 
-                foreach ($schoolIds as $schoolId) {
-                    $schoolCounts = $counts->get($schoolId, collect())->keyBy('grade');
-                    $values = ['updated_at' => now()];
+        foreach ([7, 8, 9] as $grade) {
+            $baseQuery = 'SELECT %s FROM satuan_pendidikan_student_counts '
+                .'WHERE satuan_pendidikan_id = satuan_pendidikan.id '
+                ."AND academic_year_id = {$academicYearId} AND grade = {$grade} LIMIT 1";
 
-                    foreach ([7, 8, 9] as $grade) {
-                        $male = (int) ($schoolCounts->get($grade)->male_count ?? 0);
-                        $female = (int) ($schoolCounts->get($grade)->female_count ?? 0);
+            $values["jumlah_siswa_{$grade}_l"] = DB::raw(
+                'COALESCE(('.sprintf($baseQuery, 'male_count').'), 0)'
+            );
+            $values["jumlah_siswa_{$grade}_p"] = DB::raw(
+                'COALESCE(('.sprintf($baseQuery, 'female_count').'), 0)'
+            );
+            $values["jumlah_siswa_awal_{$grade}"] = DB::raw(
+                'COALESCE(('.sprintf($baseQuery, 'male_count + female_count').'), 0)'
+            );
+        }
 
-                        $values["jumlah_siswa_{$grade}_l"] = $male;
-                        $values["jumlah_siswa_{$grade}_p"] = $female;
-                        $values["jumlah_siswa_awal_{$grade}"] = $male + $female;
-                    }
-
-                    DB::table('satuan_pendidikan')->where('id', $schoolId)->update($values);
-                }
-            });
+        DB::table('satuan_pendidikan')->update($values);
     }
 
     private function ensureTablesAreReady(): void

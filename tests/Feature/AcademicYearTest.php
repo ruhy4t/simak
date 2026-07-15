@@ -7,6 +7,7 @@ use App\Http\Controllers\SatuanPendidikanController;
 use App\Models\AcademicYear;
 use App\Models\SatuanPendidikan;
 use App\Models\User;
+use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -181,6 +182,58 @@ class AcademicYearTest extends TestCase
             'jumlah_siswa_7_l' => 30,
             'jumlah_siswa_7_p' => 31,
         ]);
+    }
+
+    public function test_activating_a_year_bulk_updates_all_schools_in_one_query(): void
+    {
+        for ($schoolNumber = 1; $schoolNumber <= 25; $schoolNumber++) {
+            DB::table('satuan_pendidikan')->insert([
+                'npsn' => str_pad((string) $schoolNumber, 8, '0', STR_PAD_LEFT),
+                'nama' => "SMP Test {$schoolNumber}",
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $migration = require database_path('migrations/2026_07_14_010000_create_academic_year_student_counts.php');
+        $migration->up();
+
+        $nextYear = AcademicYear::create([
+            'name' => '2026/2027',
+            'status' => AcademicYear::STATUS_UPCOMING,
+            'is_active' => false,
+            'starts_on' => '2026-07-15',
+            'ends_on' => '2027-07-14',
+        ]);
+
+        $schoolId = DB::table('satuan_pendidikan')->where('npsn', '00000001')->value('id');
+        DB::table('satuan_pendidikan_student_counts')->insert([
+            'satuan_pendidikan_id' => $schoolId,
+            'academic_year_id' => $nextYear->id,
+            'grade' => 7,
+            'male_count' => 40,
+            'female_count' => 41,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $schoolUpdateQueries = 0;
+        DB::listen(function (QueryExecuted $query) use (&$schoolUpdateQueries) {
+            if (str_starts_with(strtolower($query->sql), 'update "satuan_pendidikan"')) {
+                $schoolUpdateQueries++;
+            }
+        });
+
+        app(AcademicYearController::class)->activate($nextYear->id);
+
+        $this->assertSame(1, $schoolUpdateQueries);
+        $this->assertDatabaseHas('satuan_pendidikan', [
+            'id' => $schoolId,
+            'jumlah_siswa_awal_7' => 81,
+            'jumlah_siswa_7_l' => 40,
+            'jumlah_siswa_7_p' => 41,
+        ]);
+        $this->assertSame(0, DB::table('satuan_pendidikan')->where('npsn', '00000002')->value('jumlah_siswa_awal_7'));
     }
 
     public function test_dinas_can_define_and_update_the_academic_year_period(): void
