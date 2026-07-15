@@ -39,50 +39,6 @@ class NotificationHelper
     }
 
     /**
-     * Execute cURL request
-     */
-    private static function executeCurl(string $url, array $postData, array $headers = []): bool
-    {
-        try {
-            $ch = curl_init();
-            curl_setopt_array($ch, [
-                CURLOPT_URL => $url,
-                CURLOPT_POST => true,
-                CURLOPT_POSTFIELDS => http_build_query($postData),
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_TIMEOUT => 10,
-                CURLOPT_SSL_VERIFYPEER => false,
-                CURLOPT_SSL_VERIFYHOST => false,
-            ]);
-
-            if (!empty($headers)) {
-                curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-            }
-
-            $response = curl_exec($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            $curlError = curl_error($ch);
-            curl_close($ch);
-
-            if ($curlError) {
-                Log::warning("Telegram cURL error ({$url}): {$curlError}");
-                return false;
-            }
-
-            if ($httpCode === 200) {
-                Log::info("Telegram sent successfully via " . parse_url($url, PHP_URL_HOST));
-                return true;
-            } else {
-                Log::error("Telegram failed (HTTP {$httpCode}): {$response}");
-                return false;
-            }
-        } catch (\Exception $e) {
-            Log::error("Telegram exception: " . $e->getMessage());
-            return false;
-        }
-    }
-
-    /**
      * Send notification to all Dinas users about new submission
      * Uses synchronous sending for reliability on shared hosting
      */

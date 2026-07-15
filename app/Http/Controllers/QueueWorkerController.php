@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
 
@@ -13,27 +12,6 @@ class QueueWorkerController extends Controller
      */
     public function work()
     {
-        // Security: Validate Cron Token
-        $requestToken = request()->query('token') ?: request()->bearerToken();
-        $validToken = config('services.cron.token');
-
-        if (empty($validToken)) {
-            Log::warning('Queue Worker: CRON_SECRET_TOKEN is not set in environment variables.');
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Server configuration error'
-            ], 403);
-        }
-
-        if ($requestToken !== $validToken) {
-            Log::warning('Queue Worker: Unauthorized access attempt.');
-            Log::warning('IP: ' . request()->ip());
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Unauthorized'
-            ], 403);
-        }
-
         Log::info('Queue Worker triggered via Cron/API');
 
         // Run the worker for a short period or until empty

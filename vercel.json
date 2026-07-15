@@ -41,6 +41,10 @@
     ],
     "crons": [
         {
+            "path": "/cron/reminder",
+            "schedule": "0 23 * * *"
+        },
+        {
             "path": "/api/queue/work",
             "schedule": "0 0 * * *"
         }

@@ -20,9 +20,8 @@ Route::get('/telegram/set-webhook', [\App\Http\Controllers\TelegramController::c
 Route::get('/telegram/webhook-info', [\App\Http\Controllers\TelegramController::class, 'webhookInfo']);
 
 // Cron Routes (For external cron service like cron-job.org)
-Route::get('/cron/reminder/{token}', [CronController::class, 'revisionReminder']);
-Route::get('/api/queue/work', [\App\Http\Controllers\QueueWorkerController::class, 'work']); // Backup/Legacy
-Route::get('/cron/work', [\App\Http\Controllers\QueueWorkerController::class, 'work']); // Primary
+Route::get('/cron/reminder', [CronController::class, 'revisionReminder'])->middleware('cron.auth');
+Route::get('/cron/work', [\App\Http\Controllers\QueueWorkerController::class, 'work'])->middleware('cron.auth');
 
 Route::middleware('guest')->group(function () {
     Route::get('/', fn() => redirect()->route('login'));

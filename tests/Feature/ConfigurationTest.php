@@ -28,6 +28,10 @@ class ConfigurationTest extends TestCase
         $this->assertSame('true', $vercel['env']['SESSION_SECURE_COOKIE']);
         $this->assertSame('true', $vercel['env']['SESSION_ENCRYPT']);
         $this->assertSame('database', $vercel['env']['CACHE_DRIVER']);
+        $this->assertSame([
+            ['path' => '/cron/reminder', 'schedule' => '0 23 * * *'],
+            ['path' => '/api/queue/work', 'schedule' => '0 0 * * *'],
+        ], $vercel['crons']);
         $this->assertSame(
             'public, max-age=31536000, immutable',
             $vercel['headers'][0]['headers'][0]['value']

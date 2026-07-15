@@ -4,7 +4,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 // Cron trigger for Vercel
-Route::get('/queue/work', [\App\Http\Controllers\QueueWorkerController::class, 'work']);
+Route::get('/queue/work', [\App\Http\Controllers\QueueWorkerController::class, 'work'])
+    ->middleware('cron.auth');
 
 // Telegram Bot Webhook (no CSRF, no auth - Telegram needs direct access)
 Route::prefix('telegram')->group(function () {

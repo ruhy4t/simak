@@ -82,8 +82,6 @@ class SecureFileController extends Controller
 
         $this->authorizeFileAccess($foundPath);
 
-        // Get file content and serve
-        $content = Storage::disk($disk)->get($foundPath);
         $extension = strtolower(pathinfo($foundPath, PATHINFO_EXTENSION));
 
         $mimeType = match ($extension) {
@@ -94,13 +92,12 @@ class SecureFileController extends Controller
             default => 'application/octet-stream',
         };
 
-        return response($content, 200, [
+        return Storage::disk($disk)->response($foundPath, basename($foundPath), [
             'Content-Type' => $mimeType,
-            'Content-Disposition' => 'inline; filename="' . basename($foundPath) . '"',
             'Cache-Control' => 'private, no-store, no-cache, must-revalidate, max-age=0',
             'Pragma' => 'no-cache',
             'X-Content-Type-Options' => 'nosniff',
-        ]);
+        ], 'inline');
     }
 
     /**

@@ -18,19 +18,12 @@ class CronController extends Controller
     /**
      * Send revision reminders to pengusul with 'Perlu Perbaikan' status
      * 
-     * URL: /cron/reminder/{token}
+     * URL: /cron/reminder with Authorization: Bearer <CRON_SECRET>
      * Triggered by external cron service (cron-job.org)
      */
-    public function revisionReminder(string $token)
+    public function revisionReminder()
     {
-        // 1. Validate token
-        $expectedToken = config('services.cron.token');
-        if (empty($expectedToken) || $token !== $expectedToken) {
-            Log::warning("Cron: Invalid token attempt");
-            abort(403, 'Invalid token');
-        }
-
-        // 2. Check if today is a working day
+        // Check if today is a working day
         $today = Carbon::now('Asia/Jakarta');
         $dayOfWeek = $today->dayOfWeek; // 0=Sunday, 1=Monday, etc.
 
@@ -78,13 +71,16 @@ class CronController extends Controller
             ->where('status', 'Perlu Perbaikan')
             ->get();
 
+        $usersByUsername = DB::table('users')
+            ->whereIn('username', $mutations->pluck('pengusul')->filter()->unique())
+            ->whereNotNull('telegram_chat_id')
+            ->where('telegram_chat_id', '!=', '')
+            ->get(['username', 'telegram_chat_id'])
+            ->groupBy('username')
+            ->map->first();
+
         foreach ($mutations as $mutasi) {
-            // Get pengusul's telegram chat ID
-            $pengusul = DB::table('users')
-                ->where('username', $mutasi->pengusul)
-                ->whereNotNull('telegram_chat_id')
-                ->where('telegram_chat_id', '!=', '')
-                ->first();
+            $pengusul = $usersByUsername->get($mutasi->pengusul);
 
             if ($pengusul) {
                 $message = $this->buildReminderMessage($mutasi, $type);

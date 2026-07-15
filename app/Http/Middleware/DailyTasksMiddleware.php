@@ -145,12 +145,16 @@ class DailyTasksMiddleware
             ->where('status', 'Perlu Perbaikan')
             ->get();
 
+        $usersByUsername = DB::table('users')
+            ->whereIn('username', $mutations->pluck('pengusul')->filter()->unique())
+            ->whereNotNull('telegram_chat_id')
+            ->where('telegram_chat_id', '!=', '')
+            ->get(['username', 'telegram_chat_id'])
+            ->groupBy('username')
+            ->map->first();
+
         foreach ($mutations as $mutasi) {
-            $pengusul = DB::table('users')
-                ->where('username', $mutasi->pengusul)
-                ->whereNotNull('telegram_chat_id')
-                ->where('telegram_chat_id', '!=', '')
-                ->first();
+            $pengusul = $usersByUsername->get($mutasi->pengusul);
 
             if ($pengusul) {
                 $message = $this->buildReminderMessage($mutasi, $type);

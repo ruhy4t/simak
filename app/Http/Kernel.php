@@ -44,5 +44,6 @@ class Kernel extends HttpKernel
         'workday' => \App\Http\Middleware\CheckWorkingDay::class,
         'dailytasks' => \App\Http\Middleware\DailyTasksMiddleware::class,
         'cache.control' => \App\Http\Middleware\CacheControlMiddleware::class,
+        'cron.auth' => \App\Http\Middleware\VerifyCronToken::class,
     ];
 }

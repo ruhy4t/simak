@@ -12,8 +12,6 @@ class VerifyCsrfToken extends Middleware
      * @var array<int, string>
      */
     protected $except = [
-        'telegram/*', // Exclude Telegram webhook
-        'api/*',      // Exclude all API routes from CSRF (needed if moved to web.php)
-        'cron/*',     // Exclude cron routes
+        'telegram/webhook',
     ];
 }
