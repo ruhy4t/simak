@@ -17,20 +17,20 @@ class WordDocumentServiceTest extends TestCase
         $service = app(WordDocumentService::class);
 
         $this->assertSame(
-            'MK20260715_Budi Santoso_SMP Negeri 1 Bogor.docx',
+            'MK202607150001_Budi Santoso_SMP Negeri 1 Bogor.docx',
             $service->mutasiKeluarFilename($this->outgoingTransfer())
         );
         $this->assertSame(
-            'MM20260715_SMP Negeri 3 Bogor_4 Murid.docx',
+            'MM202607150001_SMP Negeri 3 Bogor_4 Murid.docx',
             $service->mutasiMasukFilename($this->incomingTransfer(), 4)
         );
 
         $unsafe = (object) [
-            'tanggal_surat_izin' => '2026-07-15',
+            'id_mutasi' => 'MK/2026:002',
             'nama_siswa' => 'Budi / Santoso',
             'sekolah_asal' => 'SMP: Bogor?',
         ];
-        $this->assertSame('MK20260715_Budi - Santoso_SMP- Bogor.docx', $service->mutasiKeluarFilename($unsafe));
+        $this->assertSame('MK-2026-002_Budi - Santoso_SMP- Bogor.docx', $service->mutasiKeluarFilename($unsafe));
     }
 
     public function test_it_creates_native_docx_for_outgoing_transfer_letter(): void
@@ -128,6 +128,7 @@ class WordDocumentServiceTest extends TestCase
     private function outgoingTransfer(): object
     {
         return (object) [
+            'id_mutasi' => 'MK202607150001',
             'nomor_surat_izin' => '400.3/123-SMP',
             'sekolah_asal' => 'SMP Negeri 1 Bogor',
             'nomor_surat_keluar' => '421/10/SMP',
@@ -152,6 +153,7 @@ class WordDocumentServiceTest extends TestCase
     private function incomingTransfer(): object
     {
         return (object) [
+            'id_mutasi' => 'MM202607150001',
             'nomor_surat_izin' => '400.3/124-SMP',
             'tanggal_surat_izin' => '2026-07-15',
             'sekolah_tujuan' => 'SMP Negeri 3 Bogor',

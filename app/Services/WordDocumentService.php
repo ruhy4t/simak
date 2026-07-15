@@ -22,8 +22,8 @@ class WordDocumentService
     public function mutasiKeluarFilename(object $mutasi): string
     {
         return sprintf(
-            'MK%s_%s_%s.docx',
-            $this->filenameDate($mutasi->tanggal_surat_izin ?? null),
+            '%s_%s_%s.docx',
+            $this->filenamePart($mutasi->id_mutasi ?? 'MK-ID'),
             $this->filenamePart($mutasi->nama_siswa ?? 'Murid'),
             $this->filenamePart($mutasi->sekolah_asal ?? 'Asal Sekolah')
         );
@@ -32,8 +32,8 @@ class WordDocumentService
     public function mutasiMasukFilename(object $mutasi, int $studentCount): string
     {
         return sprintf(
-            'MM%s_%s_%d Murid.docx',
-            $this->filenameDate($mutasi->tanggal_surat_izin ?? null),
+            '%s_%s_%d Murid.docx',
+            $this->filenamePart($mutasi->id_mutasi ?? 'MM-ID'),
             $this->filenamePart($mutasi->sekolah_tujuan ?? 'Sekolah Tujuan'),
             max(0, $studentCount)
         );
@@ -397,17 +397,6 @@ class WordDocumentService
             return Carbon::parse($value)->locale('id')->translatedFormat('j F Y');
         } catch (\Throwable) {
             return '-';
-        }
-    }
-
-    private function filenameDate(mixed $value): string
-    {
-        try {
-            return blank($value)
-                ? now('Asia/Jakarta')->format('Ymd')
-                : Carbon::parse($value)->format('Ymd');
-        } catch (\Throwable) {
-            return now('Asia/Jakarta')->format('Ymd');
         }
     }
 
