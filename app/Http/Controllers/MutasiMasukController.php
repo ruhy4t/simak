@@ -1061,9 +1061,9 @@ class MutasiMasukController extends Controller
         ]);
 
         if ($request->query('format') === 'word') {
-            $filename = 'surat-mutasi-masuk-' . preg_replace('/[^A-Za-z0-9_-]/', '-', $id) . '.docx';
-            $path = app(\App\Services\WordDocumentService::class)
-                ->createMutasiMasuk($mutasiData, $siswaList, $penandatangan);
+            $wordService = app(\App\Services\WordDocumentService::class);
+            $filename = $wordService->mutasiMasukFilename($mutasiData, $siswaList->count());
+            $path = $wordService->createMutasiMasuk($mutasiData, $siswaList, $penandatangan);
 
             return response()->download($path, $filename, [
                 'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',

@@ -12,6 +12,27 @@ use ZipArchive;
 
 class WordDocumentServiceTest extends TestCase
 {
+    public function test_it_builds_descriptive_safe_transfer_filenames(): void
+    {
+        $service = app(WordDocumentService::class);
+
+        $this->assertSame(
+            'MK20260715_Budi Santoso_SMP Negeri 1 Bogor.docx',
+            $service->mutasiKeluarFilename($this->outgoingTransfer())
+        );
+        $this->assertSame(
+            'MM20260715_SMP Negeri 3 Bogor_4 Murid.docx',
+            $service->mutasiMasukFilename($this->incomingTransfer(), 4)
+        );
+
+        $unsafe = (object) [
+            'tanggal_surat_izin' => '2026-07-15',
+            'nama_siswa' => 'Budi / Santoso',
+            'sekolah_asal' => 'SMP: Bogor?',
+        ];
+        $this->assertSame('MK20260715_Budi - Santoso_SMP- Bogor.docx', $service->mutasiKeluarFilename($unsafe));
+    }
+
     public function test_it_creates_native_docx_for_outgoing_transfer_letter(): void
     {
         $path = app(WordDocumentService::class)->createMutasiKeluar($this->outgoingTransfer(), $this->signer());

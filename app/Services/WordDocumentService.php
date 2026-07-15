@@ -19,6 +19,26 @@ class WordDocumentService
 
     private const FONT = 'Arial';
 
+    public function mutasiKeluarFilename(object $mutasi): string
+    {
+        return sprintf(
+            'MK%s_%s_%s.docx',
+            $this->filenameDate($mutasi->tanggal_surat_izin ?? null),
+            $this->filenamePart($mutasi->nama_siswa ?? 'Murid'),
+            $this->filenamePart($mutasi->sekolah_asal ?? 'Asal Sekolah')
+        );
+    }
+
+    public function mutasiMasukFilename(object $mutasi, int $studentCount): string
+    {
+        return sprintf(
+            'MM%s_%s_%d Murid.docx',
+            $this->filenameDate($mutasi->tanggal_surat_izin ?? null),
+            $this->filenamePart($mutasi->sekolah_tujuan ?? 'Sekolah Tujuan'),
+            max(0, $studentCount)
+        );
+    }
+
     public function createMutasiKeluar(object $mutasi, ?object $penandatangan): string
     {
         $word = $this->newDocument('Surat Keterangan Mutasi Keluar');
@@ -378,6 +398,27 @@ class WordDocumentService
         } catch (\Throwable) {
             return '-';
         }
+    }
+
+    private function filenameDate(mixed $value): string
+    {
+        try {
+            return blank($value)
+                ? now('Asia/Jakarta')->format('Ymd')
+                : Carbon::parse($value)->format('Ymd');
+        } catch (\Throwable) {
+            return now('Asia/Jakarta')->format('Ymd');
+        }
+    }
+
+    private function filenamePart(mixed $value): string
+    {
+        $part = $this->text($value);
+        $part = preg_replace('/[\\\\\/:*?"<>|]+/u', '-', $part) ?? '';
+        $part = preg_replace('/\s+/u', ' ', $part) ?? '';
+        $part = trim($part, " .-_\t\n\r\0\x0B");
+
+        return $part !== '' ? $part : '-';
     }
 
     private function text(mixed $value): string
