@@ -6,6 +6,7 @@ use App\Services\WordDocumentService;
 use Illuminate\Support\Collection;
 use PhpOffice\PhpWord\IOFactory;
 use PhpOffice\PhpWord\PhpWord;
+use PhpOffice\PhpWord\Shared\Converter;
 use Tests\TestCase;
 use ZipArchive;
 
@@ -17,6 +18,7 @@ class WordDocumentServiceTest extends TestCase
 
         $document = $this->assertNativeDocx($path, ['SURAT KETERANGAN', 'DATA SISWA', 'Budi Santoso']);
         $this->assertCount(1, $document->getSections());
+        $this->assertRequestedMargins($document);
 
         unlink($path);
     }
@@ -40,8 +42,10 @@ class WordDocumentServiceTest extends TestCase
         $path = app(WordDocumentService::class)->createMutasiMasuk($this->incomingTransfer(), $students, $this->signer());
 
         $document = $this->assertNativeDocx($path, ['Izin Mutasi Siswa', 'DAFTAR SISWA MUTASI MASUK', 'Siti Aminah']);
+        $this->assertDocxTablesHaveNoVisibleBorders($path);
         $this->assertCount(2, $document->getSections());
         $this->assertSame('landscape', $document->getSections()[1]->getStyle()->getOrientation());
+        $this->assertRequestedMargins($document);
 
         unlink($path);
     }
@@ -63,6 +67,32 @@ class WordDocumentServiceTest extends TestCase
         }
 
         return IOFactory::load($path, 'Word2007');
+    }
+
+    private function assertDocxTablesHaveNoVisibleBorders(string $path): void
+    {
+        $zip = new ZipArchive;
+        $this->assertTrue($zip->open($path) === true);
+        $documentXml = (string) $zip->getFromName('word/document.xml');
+        $zip->close();
+
+        preg_match_all('/<w:tblBorders>.*?<\/w:tblBorders>/s', $documentXml, $tableBorders);
+
+        foreach ($tableBorders[0] as $borderDefinition) {
+            $this->assertDoesNotMatchRegularExpression('/w:sz="[1-9][0-9]*"/', $borderDefinition);
+        }
+    }
+
+    private function assertRequestedMargins(PhpWord $document): void
+    {
+        foreach ($document->getSections() as $section) {
+            $style = $section->getStyle();
+
+            $this->assertEqualsWithDelta(Converter::cmToTwip(1.5), $style->getMarginTop(), 1);
+            $this->assertEqualsWithDelta(Converter::cmToTwip(3), $style->getMarginBottom(), 1);
+            $this->assertEqualsWithDelta(Converter::cmToTwip(2.5), $style->getMarginLeft(), 1);
+            $this->assertEqualsWithDelta(Converter::cmToTwip(2.5), $style->getMarginRight(), 1);
+        }
     }
 
     private function signer(): object

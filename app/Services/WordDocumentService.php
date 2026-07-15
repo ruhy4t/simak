@@ -25,10 +25,10 @@ class WordDocumentService
         $section = $word->addSection([
             'pageSizeW' => self::A4_WIDTH,
             'pageSizeH' => self::A4_HEIGHT,
-            'marginTop' => Converter::cmToTwip(1),
-            'marginRight' => Converter::cmToTwip(2),
+            'marginTop' => Converter::cmToTwip(1.5),
+            'marginRight' => Converter::cmToTwip(2.5),
             'marginBottom' => Converter::cmToTwip(3),
-            'marginLeft' => Converter::cmToTwip(3),
+            'marginLeft' => Converter::cmToTwip(2.5),
         ]);
         $contentWidth = self::A4_WIDTH - Converter::cmToTwip(5);
 
@@ -90,14 +90,14 @@ class WordDocumentService
     public function createMutasiMasuk(object $mutasi, Collection|array $siswaList, ?object $penandatangan): string
     {
         $word = $this->newDocument('Surat Izin Mutasi Masuk');
-        $portraitWidth = self::A4_WIDTH - Converter::cmToTwip(4);
+        $portraitWidth = self::A4_WIDTH - Converter::cmToTwip(5);
         $section = $word->addSection([
             'pageSizeW' => self::A4_WIDTH,
             'pageSizeH' => self::A4_HEIGHT,
             'marginTop' => Converter::cmToTwip(1.5),
-            'marginRight' => Converter::cmToTwip(2),
+            'marginRight' => Converter::cmToTwip(2.5),
             'marginBottom' => Converter::cmToTwip(3),
-            'marginLeft' => Converter::cmToTwip(2),
+            'marginLeft' => Converter::cmToTwip(2.5),
         ]);
 
         $this->addLetterhead($section, $portraitWidth, true);
@@ -140,15 +140,15 @@ class WordDocumentService
             $counter = 1;
 
             foreach ($chunks as $pageIndex => $chunk) {
-                $landscapeWidth = self::A4_HEIGHT - Converter::cmToTwip(4);
+                $landscapeWidth = self::A4_HEIGHT - Converter::cmToTwip(5);
                 $landscape = $word->addSection([
                     'orientation' => 'landscape',
                     'pageSizeW' => self::A4_HEIGHT,
                     'pageSizeH' => self::A4_WIDTH,
-                    'marginTop' => Converter::cmToTwip(2),
-                    'marginRight' => Converter::cmToTwip(2),
+                    'marginTop' => Converter::cmToTwip(1.5),
+                    'marginRight' => Converter::cmToTwip(2.5),
                     'marginBottom' => Converter::cmToTwip(3),
-                    'marginLeft' => Converter::cmToTwip(2),
+                    'marginLeft' => Converter::cmToTwip(2.5),
                 ]);
 
                 if ($pageIndex === 0) {
@@ -271,8 +271,7 @@ class WordDocumentService
         $table = $section->addTable([
             'width' => $width,
             'unit' => TblWidth::TWIP,
-            'borderSize' => 6,
-            'borderColor' => '000000',
+            'borderSize' => 0,
             'cellMargin' => 70,
             'layout' => 'fixed',
         ]);
