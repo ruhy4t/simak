@@ -10,6 +10,7 @@ import collapse from '@alpinejs/collapse';
 // Import custom modules
 import './idle-timeout.js';
 import './autosave.js';
+import './dashboard-charts.js';
 
 // Initialize Alpine
 Alpine.plugin(collapse);

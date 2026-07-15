@@ -173,6 +173,60 @@
             </div>
         </div>
 
+        <!-- Interactive Charts -->
+        <section class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            <div class="xl:col-span-2 bg-white rounded-2xl border border-slate-100 shadow-xs p-5 sm:p-6">
+                <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-5">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                            <i class="bi bi-graph-up-arrow text-sky-500"></i>
+                            Tren Mutasi
+                        </h2>
+                        <p class="text-sm text-slate-500 mt-1">Perbandingan jumlah pengajuan masuk dan keluar</p>
+                    </div>
+                    <span class="inline-flex items-center self-start px-3 py-1.5 rounded-full bg-sky-50 text-sky-700 text-xs font-bold border border-sky-100">
+                        {{ $dateFilter['label'] }} · {{ $trendChart['granularity'] === 'day' ? 'Harian' : 'Bulanan' }}
+                    </span>
+                </div>
+
+                @if(count($trendChart['labels']) > 0)
+                    <div class="relative h-72 sm:h-80">
+                        <canvas data-dashboard-trend-chart
+                            data-chart="{{ json_encode($trendChart) }}"
+                            aria-label="Grafik tren mutasi masuk dan keluar"></canvas>
+                    </div>
+                @else
+                    <div class="h-72 flex flex-col items-center justify-center rounded-xl bg-slate-50 border border-dashed border-slate-200 text-center">
+                        <i class="bi bi-bar-chart text-4xl text-slate-300"></i>
+                        <p class="mt-3 text-sm font-semibold text-slate-500">Belum ada data pada periode ini</p>
+                    </div>
+                @endif
+            </div>
+
+            <div class="bg-white rounded-2xl border border-slate-100 shadow-xs p-5 sm:p-6">
+                <div class="mb-5">
+                    <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                        <i class="bi bi-pie-chart text-violet-500"></i>
+                        Distribusi Status
+                    </h2>
+                    <p class="text-sm text-slate-500 mt-1">Gabungan mutasi masuk dan keluar</p>
+                </div>
+
+                @if(array_sum($statusChart['values']) > 0)
+                    <div class="relative h-72 sm:h-80">
+                        <canvas data-dashboard-status-chart
+                            data-chart="{{ json_encode($statusChart) }}"
+                            aria-label="Grafik distribusi status mutasi"></canvas>
+                    </div>
+                @else
+                    <div class="h-72 flex flex-col items-center justify-center rounded-xl bg-slate-50 border border-dashed border-slate-200 text-center">
+                        <i class="bi bi-pie-chart text-4xl text-slate-300"></i>
+                        <p class="mt-3 text-sm font-semibold text-slate-500">Belum ada status pada periode ini</p>
+                    </div>
+                @endif
+            </div>
+        </section>
+
         <!-- User Stats (Sekolah / Dinas) -->
         @if($statsUsers)
             <div class="space-y-4">

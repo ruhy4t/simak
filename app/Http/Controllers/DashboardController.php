@@ -39,6 +39,18 @@ class DashboardController extends Controller
             rsort($availableYears);
         }
 
+        $trendChart = $this->getTrendChartData($user, $dateFilter);
+        $statusChart = [
+            'labels' => ['Menunggu', 'Perbaikan', 'Disetujui', 'Proses TTD', 'Selesai'],
+            'values' => [
+                $statsMasuk['menunggu'] + $statsKeluar['menunggu'],
+                $statsMasuk['perbaikan'] + $statsKeluar['perbaikan'],
+                $statsMasuk['disetujui'] + $statsKeluar['disetujui'],
+                $statsMasuk['proses_ttd'] + $statsKeluar['proses_ttd'],
+                $statsMasuk['selesai'] + $statsKeluar['selesai'],
+            ],
+        ];
+
         return view('dashboard.index', compact(
             'statsKeluar',
             'statsMasuk',
@@ -49,6 +61,8 @@ class DashboardController extends Controller
             'filterYear',
             'dateFilter',
             'availableYears',
+            'trendChart',
+            'statusChart',
             'user'
         ));
     }
@@ -315,6 +329,112 @@ class DashboardController extends Controller
         } catch (\Exception $e) {
             return [(int) date('Y')];
         }
+    }
+
+    private function getTrendChartData($user, array $dateFilter): array
+    {
+        $granularity = $dateFilter['start'] && $dateFilter['end']
+            && CarbonImmutable::parse($dateFilter['start'])->diffInDays(CarbonImmutable::parse($dateFilter['end'])) <= 62
+                ? 'day'
+                : 'month';
+
+        $masuk = $this->getTrendSeries('mutasi_masuk', $user, $dateFilter, $granularity);
+        $keluar = $this->getTrendSeries('mutasi_keluar', $user, $dateFilter, $granularity);
+        $periods = $this->getTrendPeriods($dateFilter, $granularity, array_keys($masuk), array_keys($keluar));
+
+        return [
+            'labels' => array_map(
+                fn (string $period) => CarbonImmutable::parse($granularity === 'day' ? $period : $period.'-01')
+                    ->translatedFormat($granularity === 'day' ? 'j M' : 'M Y'),
+                $periods
+            ),
+            'masuk' => array_map(fn (string $period) => $masuk[$period] ?? 0, $periods),
+            'keluar' => array_map(fn (string $period) => $keluar[$period] ?? 0, $periods),
+            'granularity' => $granularity,
+        ];
+    }
+
+    private function getTrendSeries(string $table, $user, array $dateFilter, string $granularity): array
+    {
+        try {
+            $query = DB::table($table)
+                ->whereNull('deleted_at')
+                ->where('status', '!=', 'Dibatalkan');
+
+            if ($table === 'mutasi_keluar') {
+                if ($user->role === 'Operator') {
+                    $query->where('pengusul', $user->username)
+                        ->where('npsn_sekolah_asal', $user->npsn);
+                } elseif ($user->role === 'Sekolah') {
+                    $query->where('npsn_sekolah_asal', $user->npsn);
+                }
+            } elseif ($user->role === 'Operator') {
+                $query->where('pengusul', $user->username);
+            } elseif ($user->role === 'Sekolah') {
+                $query->where('npsn_sekolah_tujuan', $user->npsn);
+            }
+
+            $this->applyDateFilter($query, $dateFilter);
+            $periodExpression = $this->trendPeriodExpression($granularity);
+
+            return $query
+                ->selectRaw("{$periodExpression} as period, COUNT(*) as total")
+                ->groupByRaw($periodExpression)
+                ->orderBy('period')
+                ->get()
+                ->mapWithKeys(fn ($row) => [(string) $row->period => (int) $row->total])
+                ->all();
+        } catch (\Exception $e) {
+            return [];
+        }
+    }
+
+    private function trendPeriodExpression(string $granularity): string
+    {
+        $driver = DB::connection()->getDriverName();
+
+        return match ($driver) {
+            'sqlite' => $granularity === 'day'
+                ? "strftime('%Y-%m-%d', tanggal_pengajuan)"
+                : "strftime('%Y-%m', tanggal_pengajuan)",
+            'pgsql' => $granularity === 'day'
+                ? "TO_CHAR(tanggal_pengajuan, 'YYYY-MM-DD')"
+                : "TO_CHAR(tanggal_pengajuan, 'YYYY-MM')",
+            default => $granularity === 'day'
+                ? "DATE_FORMAT(tanggal_pengajuan, '%Y-%m-%d')"
+                : "DATE_FORMAT(tanggal_pengajuan, '%Y-%m')",
+        };
+    }
+
+    private function getTrendPeriods(array $dateFilter, string $granularity, array $masukPeriods, array $keluarPeriods): array
+    {
+        if ($dateFilter['start'] && $dateFilter['end']) {
+            $cursor = CarbonImmutable::parse($dateFilter['start']);
+            $last = CarbonImmutable::parse($dateFilter['end']);
+        } else {
+            $availablePeriods = array_values(array_unique([...$masukPeriods, ...$keluarPeriods]));
+            sort($availablePeriods);
+
+            if ($availablePeriods === []) {
+                return [];
+            }
+
+            $cursor = CarbonImmutable::parse($availablePeriods[0].'-01');
+            $last = CarbonImmutable::parse(end($availablePeriods).'-01');
+        }
+
+        if ($granularity === 'month') {
+            $cursor = $cursor->startOfMonth();
+            $last = $last->startOfMonth();
+        }
+
+        $periods = [];
+        while ($cursor->lessThanOrEqualTo($last)) {
+            $periods[] = $cursor->format($granularity === 'day' ? 'Y-m-d' : 'Y-m');
+            $cursor = $granularity === 'day' ? $cursor->addDay() : $cursor->addMonth();
+        }
+
+        return $periods;
     }
 
     private function resolveDateFilter(Request $request): array

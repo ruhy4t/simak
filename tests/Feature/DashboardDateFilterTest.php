@@ -79,6 +79,10 @@ class DashboardDateFilterTest extends TestCase
         $this->assertSame(2, (int) $data['schoolStatsKeluar'][0]->jumlah);
         $this->assertSame(7, (int) $data['schoolStatsMasuk'][0]->jumlah);
         $this->assertSame('Juli 2026', $data['dateFilter']['label']);
+        $this->assertCount(31, $data['trendChart']['labels']);
+        $this->assertSame(2, array_sum($data['trendChart']['masuk']));
+        $this->assertSame(2, array_sum($data['trendChart']['keluar']));
+        $this->assertSame([2, 0, 0, 0, 2], $data['statusChart']['values']);
     }
 
     public function test_custom_date_range_is_inclusive_on_both_dates(): void
@@ -95,6 +99,9 @@ class DashboardDateFilterTest extends TestCase
         $this->assertSame(1, $data['statsKeluar']['selesai']);
         $this->assertSame(7, $data['statsMasuk']['total_siswa']);
         $this->assertSame('5 Jul 2026 – 20 Jul 2026', $data['dateFilter']['label']);
+        $this->assertCount(16, $data['trendChart']['labels']);
+        $this->assertSame(1, $data['trendChart']['masuk'][0]);
+        $this->assertSame(1, $data['trendChart']['masuk'][15]);
     }
 
     private function insertMutationPair(string $date, string $status, int $studentCount): void
