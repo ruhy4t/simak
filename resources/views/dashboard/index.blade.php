@@ -16,6 +16,99 @@
             </div>
         </div>
 
+        <!-- Global Date Filter -->
+        <section x-data="{ showAdvanced: {{ in_array($dateFilter['period'], ['month', 'custom']) ? 'true' : 'false' }} }"
+            class="bg-white rounded-2xl border border-slate-200 shadow-xs p-4 sm:p-5">
+            <div class="flex flex-col xl:flex-row xl:items-center gap-4">
+                <div class="flex items-center gap-3 min-w-fit">
+                    <div class="w-10 h-10 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center">
+                        <i class="bi bi-funnel"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Periode Statistik</p>
+                        <p class="font-bold text-slate-800">{{ $dateFilter['label'] }}</p>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2 xl:ml-auto">
+                    @foreach([
+                        ['label' => 'Semua', 'period' => 'all'],
+                        ['label' => 'Hari Ini', 'period' => 'today'],
+                        ['label' => 'Bulan Ini', 'period' => 'this_month'],
+                        ['label' => 'Tahun Ini', 'period' => 'this_year'],
+                    ] as $preset)
+                        <a href="{{ $preset['period'] === 'all' ? route('dashboard') : route('dashboard', ['period' => $preset['period']]) }}"
+                            class="px-3 py-2 rounded-xl text-sm font-semibold border transition-all {{ $dateFilter['period'] === $preset['period'] ? 'bg-sky-500 border-sky-500 text-white shadow-sm shadow-sky-200' : 'bg-white border-slate-200 text-slate-600 hover:border-sky-300 hover:text-sky-600 hover:bg-sky-50' }}">
+                            {{ $preset['label'] }}
+                        </a>
+                    @endforeach
+
+                    <button type="button" @click="showAdvanced = !showAdvanced"
+                        :aria-expanded="showAdvanced"
+                        class="inline-flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold border transition-all {{ in_array($dateFilter['period'], ['month', 'custom']) ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-white border-slate-200 text-slate-600 hover:border-indigo-300 hover:text-indigo-600' }}">
+                        <i class="bi bi-calendar-range"></i>
+                        Pilih Periode
+                        <i class="bi bi-chevron-down text-xs transition-transform" :class="showAdvanced && 'rotate-180'"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div x-show="showAdvanced" x-collapse x-cloak class="mt-5 pt-5 border-t border-slate-100">
+                <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                    <form method="GET" action="{{ route('dashboard') }}"
+                        class="bg-slate-50 rounded-xl border border-slate-200 p-4">
+                        <input type="hidden" name="period" value="month">
+                        <p class="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
+                            <i class="bi bi-calendar-month text-sky-500"></i> Bulan dan Tahun
+                        </p>
+                        <div class="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2">
+                            <select name="month" required
+                                class="rounded-xl border-slate-200 text-sm text-slate-700 focus:border-sky-400 focus:ring-sky-200">
+                                @foreach(['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'] as $idx => $monthName)
+                                    <option value="{{ $idx + 1 }}" @selected(($filterMonth ?? now()->month) == $idx + 1)>{{ $monthName }}</option>
+                                @endforeach
+                            </select>
+                            <select name="year" required
+                                class="rounded-xl border-slate-200 text-sm text-slate-700 focus:border-sky-400 focus:ring-sky-200">
+                                @foreach($availableYears as $availableYear)
+                                    <option value="{{ $availableYear }}" @selected(($filterYear ?? now()->year) == $availableYear)>{{ $availableYear }}</option>
+                                @endforeach
+                            </select>
+                            <button type="submit"
+                                class="px-4 py-2 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-sm font-bold transition shadow-sm shadow-sky-200">
+                                Terapkan
+                            </button>
+                        </div>
+                    </form>
+
+                    <form method="GET" action="{{ route('dashboard') }}"
+                        class="bg-slate-50 rounded-xl border border-slate-200 p-4">
+                        <input type="hidden" name="period" value="custom">
+                        <p class="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
+                            <i class="bi bi-calendar2-range text-indigo-500"></i> Rentang Tanggal
+                        </p>
+                        <div class="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr_auto] gap-2 items-center">
+                            <input type="date" name="start_date" required
+                                value="{{ $dateFilter['period'] === 'custom' ? $dateFilter['start'] : now()->startOfMonth()->format('Y-m-d') }}"
+                                class="rounded-xl border-slate-200 text-sm text-slate-700 focus:border-indigo-400 focus:ring-indigo-200">
+                            <span class="hidden sm:block text-slate-400 text-sm">s.d.</span>
+                            <input type="date" name="end_date" required
+                                value="{{ $dateFilter['period'] === 'custom' ? $dateFilter['end'] : now()->format('Y-m-d') }}"
+                                class="rounded-xl border-slate-200 text-sm text-slate-700 focus:border-indigo-400 focus:ring-indigo-200">
+                            <button type="submit"
+                                class="px-4 py-2 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-bold transition shadow-sm shadow-indigo-200">
+                                Terapkan
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            @error('end_date')
+                <p class="mt-3 text-sm text-rose-600"><i class="bi bi-exclamation-circle mr-1"></i>{{ $message }}</p>
+            @enderror
+        </section>
+
         <!-- Mutasi Masuk Stats -->
         <div class="space-y-4">
             <h2 class="text-lg font-semibold text-slate-800 flex items-center gap-2 px-1">
@@ -179,52 +272,9 @@
             <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
                 <div>
                      <h2 class="text-lg font-bold text-slate-800">Statistik Mutasi Per Sekolah</h2>
-                     <p class="text-sm text-slate-500 mt-1">Data perpindahan siswa berdasarkan sekolah</p>
+                     <p class="text-sm text-slate-500 mt-1">Data perpindahan siswa berdasarkan sekolah · {{ $dateFilter['label'] }}</p>
                 </div>
-
-                <!-- Filter Form -->
-                <form method="GET" action="{{ route('dashboard') }}" class="flex flex-wrap gap-2 items-center bg-slate-50 p-1.5 rounded-xl border border-slate-200">
-                    <select name="month"
-                        class="text-sm bg-white border-0 rounded-lg px-3 py-2 text-slate-600 focus:ring-2 focus:ring-sky-100 placeholder:text-slate-400 shadow-xs cursor-pointer hover:bg-slate-50 transition">
-                        <option value="">Semua Bulan</option>
-                        @php
-                            $months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-                        @endphp
-                        @foreach($months as $idx => $m)
-                            <option value="{{ $idx + 1 }}" {{ $filterMonth == ($idx + 1) ? 'selected' : '' }}>{{ $m }}</option>
-                        @endforeach
-                    </select>
-                    <select name="year"
-                        class="text-sm bg-white border-0 rounded-lg px-3 py-2 text-slate-600 focus:ring-2 focus:ring-sky-100 placeholder:text-slate-400 shadow-xs cursor-pointer hover:bg-slate-50 transition">
-                        <option value="">Semua Tahun</option>
-                        @foreach($availableYears as $y)
-                            <option value="{{ $y }}" {{ $filterYear == $y ? 'selected' : '' }}>{{ $y }}</option>
-                        @endforeach
-                    </select>
-                    <button type="submit"
-                        class="text-sm bg-sky-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-sky-600 transition shadow-xs shadow-sky-200">
-                        Filter
-                    </button>
-                    @if($filterMonth || $filterYear)
-                        <a href="{{ route('dashboard') }}" class="p-2 text-slate-400 hover:text-rose-500 transition" title="Reset Filter">
-                            <i class="bi bi-arrow-counterclockwise text-lg"></i>
-                        </a>
-                    @endif
-                </form>
             </div>
-
-             @if($filterMonth || $filterYear)
-                <div class="mb-6 inline-flex items-center gap-2 text-sm text-sky-600 bg-sky-50 px-4 py-2 rounded-full border border-sky-100">
-                    <i class="bi bi-calendar-check"></i>
-                    <span>
-                        Filter Aktif: 
-                        <span class="font-semibold">
-                            {{ $filterMonth ? $months[$filterMonth - 1] : 'Semua Bulan' }}
-                            {{ $filterYear ? $filterYear : 'Semua Tahun' }}
-                        </span>
-                    </span>
-                </div>
-            @endif
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
                 <!-- Tabel Mutasi Masuk (KIRI) -->

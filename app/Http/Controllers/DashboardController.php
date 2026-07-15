@@ -12,14 +12,13 @@ class DashboardController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-
-        // Get filter parameters
-        $filterMonth = $request->input('month');
-        $filterYear = $request->input('year');
+        $dateFilter = $this->resolveDateFilter($request);
+        $filterMonth = $dateFilter['month'];
+        $filterYear = $dateFilter['year'];
 
         // Get stats for both Mutasi Keluar and Mutasi Masuk
-        $statsKeluar = $this->getStatsMutasiKeluar($user);
-        $statsMasuk = $this->getStatsMutasiMasuk($user);
+        $statsKeluar = $this->getStatsMutasiKeluar($user, $dateFilter);
+        $statsMasuk = $this->getStatsMutasiMasuk($user, $dateFilter);
 
         // Get user stats (for Sekolah and Dinas roles)
         $statsUsers = null;
@@ -30,11 +29,15 @@ class DashboardController extends Controller
         }
 
         // Get school mutation statistics with filters
-        $schoolStatsKeluar = $this->getSchoolStatsKeluar($user, $filterMonth, $filterYear);
-        $schoolStatsMasuk = $this->getSchoolStatsMasuk($user, $filterMonth, $filterYear);
+        $schoolStatsKeluar = $this->getSchoolStatsKeluar($user, $dateFilter);
+        $schoolStatsMasuk = $this->getSchoolStatsMasuk($user, $dateFilter);
 
         // Get available years for filter
         $availableYears = $this->getAvailableYears();
+        if ($filterYear && ! in_array($filterYear, $availableYears, true)) {
+            $availableYears[] = $filterYear;
+            rsort($availableYears);
+        }
 
         return view('dashboard.index', compact(
             'statsKeluar',
@@ -44,12 +47,13 @@ class DashboardController extends Controller
             'schoolStatsMasuk',
             'filterMonth',
             'filterYear',
+            'dateFilter',
             'availableYears',
             'user'
         ));
     }
 
-    private function getStatsMutasiKeluar($user): array
+    private function getStatsMutasiKeluar($user, array $dateFilter): array
     {
         try {
             $query = DB::table('mutasi_keluar')
@@ -62,6 +66,8 @@ class DashboardController extends Controller
             } elseif ($user->role === 'Sekolah') {
                 $query->where('npsn_sekolah_asal', $user->npsn);
             }
+
+            $this->applyDateFilter($query, $dateFilter);
 
             // Optimization: Single Query Aggregation
             $stats = $query->selectRaw("
@@ -86,7 +92,7 @@ class DashboardController extends Controller
         }
     }
 
-    private function getStatsMutasiMasuk($user): array
+    private function getStatsMutasiMasuk($user, array $dateFilter): array
     {
         try {
             $query = DB::table('mutasi_masuk')
@@ -98,6 +104,8 @@ class DashboardController extends Controller
             } elseif ($user->role === 'Sekolah') {
                 $query->where('npsn_sekolah_tujuan', $user->npsn);
             }
+
+            $this->applyDateFilter($query, $dateFilter);
 
             // Optimization: Single Query Aggregation
             $stats = $query->selectRaw("
@@ -218,7 +226,7 @@ class DashboardController extends Controller
     /**
      * Get school statistics for Mutasi Keluar (group by sekolah asal)
      */
-    private function getSchoolStatsKeluar($user, $month = null, $year = null): array
+    private function getSchoolStatsKeluar($user, array $dateFilter): array
     {
         try {
             $query = DB::table('mutasi_keluar')
@@ -237,7 +245,7 @@ class DashboardController extends Controller
                 $query->where('npsn_sekolah_asal', $user->npsn);
             }
 
-            $this->applyDateFilters($query, $month, $year);
+            $this->applyDateFilter($query, $dateFilter);
 
             return $query->get()->toArray();
         } catch (\Exception $e) {
@@ -248,7 +256,7 @@ class DashboardController extends Controller
     /**
      * Get school statistics for Mutasi Masuk (group by sekolah tujuan)
      */
-    private function getSchoolStatsMasuk($user, $month = null, $year = null): array
+    private function getSchoolStatsMasuk($user, array $dateFilter): array
     {
         try {
             $query = DB::table('mutasi_masuk')
@@ -266,7 +274,7 @@ class DashboardController extends Controller
                 $query->where('npsn_sekolah_tujuan', $user->npsn);
             }
 
-            $this->applyDateFilters($query, $month, $year);
+            $this->applyDateFilter($query, $dateFilter);
 
             return $query->get()->toArray();
         } catch (\Exception $e) {
@@ -309,31 +317,84 @@ class DashboardController extends Controller
         }
     }
 
-    /**
-     * Use index-friendly date ranges whenever a year is selected.
-     */
-    private function applyDateFilters($query, $month = null, $year = null): void
+    private function resolveDateFilter(Request $request): array
     {
-        $validYear = filter_var($year, FILTER_VALIDATE_INT, [
-            'options' => ['min_range' => 1900, 'max_range' => 2200],
+        $validated = $request->validate([
+            'period' => ['nullable', 'in:all,today,this_month,this_year,month,custom'],
+            'month' => ['nullable', 'integer', 'between:1,12'],
+            'year' => ['nullable', 'integer', 'between:1900,2200'],
+            'start_date' => ['nullable', 'date_format:Y-m-d'],
+            'end_date' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:start_date'],
         ]);
-        $validMonth = filter_var($month, FILTER_VALIDATE_INT, [
-            'options' => ['min_range' => 1, 'max_range' => 12],
-        ]);
 
-        if ($validYear !== false) {
-            $start = CarbonImmutable::create($validYear, $validMonth !== false ? $validMonth : 1, 1)->startOfDay();
-            $end = $validMonth !== false ? $start->addMonth() : $start->addYear();
+        $period = $validated['period'] ?? null;
+        if ($period === null) {
+            $period = isset($validated['start_date'], $validated['end_date'])
+                ? 'custom'
+                : (isset($validated['month']) || isset($validated['year']) ? 'month' : 'all');
+        }
 
-            $query->where('tanggal_pengajuan', '>=', $start->toDateString())
-                ->where('tanggal_pengajuan', '<', $end->toDateString());
+        $today = CarbonImmutable::today();
+        $month = isset($validated['month']) ? (int) $validated['month'] : null;
+        $year = isset($validated['year']) ? (int) $validated['year'] : null;
+        $start = null;
+        $end = null;
 
+        if ($period === 'today') {
+            $start = $today;
+            $end = $today;
+        } elseif ($period === 'this_month') {
+            $start = $today->startOfMonth();
+            $end = $today->endOfMonth();
+            $month = $today->month;
+            $year = $today->year;
+        } elseif ($period === 'this_year') {
+            $start = $today->startOfYear();
+            $end = $today->endOfYear();
+            $year = $today->year;
+        } elseif ($period === 'month') {
+            $month ??= $today->month;
+            $year ??= $today->year;
+            $start = CarbonImmutable::create($year, $month, 1)->startOfMonth();
+            $end = $start->endOfMonth();
+        } elseif ($period === 'custom' && isset($validated['start_date'], $validated['end_date'])) {
+            $start = CarbonImmutable::createFromFormat('Y-m-d', $validated['start_date'])->startOfDay();
+            $end = CarbonImmutable::createFromFormat('Y-m-d', $validated['end_date'])->startOfDay();
+        } else {
+            $period = 'all';
+        }
+
+        $label = match ($period) {
+            'today' => 'Hari ini, '.$today->translatedFormat('j F Y'),
+            'this_month', 'month' => $start->translatedFormat('F Y'),
+            'this_year' => 'Tahun '.$today->year,
+            'custom' => $start->equalTo($end)
+                ? $start->translatedFormat('j F Y')
+                : $start->translatedFormat('j M Y').' – '.$end->translatedFormat('j M Y'),
+            default => 'Semua data',
+        };
+
+        return [
+            'period' => $period,
+            'start' => $start?->toDateString(),
+            'end' => $end?->toDateString(),
+            'end_exclusive' => $end?->addDay()->toDateString(),
+            'month' => $month,
+            'year' => $year,
+            'label' => $label,
+        ];
+    }
+
+    /**
+     * Apply an index-friendly half-open date range.
+     */
+    private function applyDateFilter($query, array $dateFilter): void
+    {
+        if ($dateFilter['start'] === null || $dateFilter['end_exclusive'] === null) {
             return;
         }
 
-        // Preserve the existing cross-year month filter when no year is selected.
-        if ($validMonth !== false) {
-            $query->whereMonth('tanggal_pengajuan', $validMonth);
-        }
+        $query->where('tanggal_pengajuan', '>=', $dateFilter['start'])
+            ->where('tanggal_pengajuan', '<', $dateFilter['end_exclusive']);
     }
 }
