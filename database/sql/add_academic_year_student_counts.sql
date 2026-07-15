@@ -21,6 +21,8 @@ CREATE TABLE IF NOT EXISTS `academic_years` (
     `is_active` TINYINT(1) NOT NULL DEFAULT 0,
     `starts_on` DATE NULL,
     `ends_on` DATE NULL,
+    `student_counts_rolled_over_from_id` BIGINT UNSIGNED NULL,
+    `student_counts_rolled_over_at` TIMESTAMP NULL DEFAULT NULL,
     `created_at` TIMESTAMP NULL DEFAULT NULL,
     `updated_at` TIMESTAMP NULL DEFAULT NULL,
     PRIMARY KEY (`id`),
@@ -28,6 +30,54 @@ CREATE TABLE IF NOT EXISTS `academic_years` (
     KEY `academic_years_status_index` (`status`),
     KEY `academic_years_is_active_index` (`is_active`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tambahkan kolom rollover pada database yang sudah memiliki tabel
+-- academic_years. Pemeriksaan INFORMATION_SCHEMA membuat blok ini aman
+-- saat file SQL diimpor ulang.
+SET @rollover_source_column_sql := IF(
+    (
+        SELECT COUNT(*)
+        FROM `INFORMATION_SCHEMA`.`COLUMNS`
+        WHERE `TABLE_SCHEMA` = DATABASE()
+          AND `TABLE_NAME` = 'academic_years'
+          AND `COLUMN_NAME` = 'student_counts_rolled_over_from_id'
+    ) = 0,
+    'ALTER TABLE `academic_years` ADD COLUMN `student_counts_rolled_over_from_id` BIGINT UNSIGNED NULL AFTER `ends_on`',
+    'SELECT 1'
+);
+PREPARE rollover_source_column_statement FROM @rollover_source_column_sql;
+EXECUTE rollover_source_column_statement;
+DEALLOCATE PREPARE rollover_source_column_statement;
+
+SET @rollover_time_column_sql := IF(
+    (
+        SELECT COUNT(*)
+        FROM `INFORMATION_SCHEMA`.`COLUMNS`
+        WHERE `TABLE_SCHEMA` = DATABASE()
+          AND `TABLE_NAME` = 'academic_years'
+          AND `COLUMN_NAME` = 'student_counts_rolled_over_at'
+    ) = 0,
+    'ALTER TABLE `academic_years` ADD COLUMN `student_counts_rolled_over_at` TIMESTAMP NULL DEFAULT NULL AFTER `student_counts_rolled_over_from_id`',
+    'SELECT 1'
+);
+PREPARE rollover_time_column_statement FROM @rollover_time_column_sql;
+EXECUTE rollover_time_column_statement;
+DEALLOCATE PREPARE rollover_time_column_statement;
+
+SET @rollover_source_index_sql := IF(
+    (
+        SELECT COUNT(*)
+        FROM `INFORMATION_SCHEMA`.`STATISTICS`
+        WHERE `TABLE_SCHEMA` = DATABASE()
+          AND `TABLE_NAME` = 'academic_years'
+          AND `INDEX_NAME` = 'academic_years_student_counts_rolled_over_from_id_index'
+    ) = 0,
+    'CREATE INDEX `academic_years_student_counts_rolled_over_from_id_index` ON `academic_years` (`student_counts_rolled_over_from_id`)',
+    'SELECT 1'
+);
+PREPARE rollover_source_index_statement FROM @rollover_source_index_sql;
+EXECUTE rollover_source_index_statement;
+DEALLOCATE PREPARE rollover_source_index_statement;
 
 -- Tambahkan 2025/2026 sebagai tahun awal jika belum tersedia.
 -- Jika sudah ada tahun aktif lain, 2025/2026 dibuat sebagai tahun ditutup.
@@ -167,7 +217,9 @@ SELECT
     `status`,
     `is_active`,
     `starts_on`,
-    `ends_on`
+    `ends_on`,
+    `student_counts_rolled_over_from_id`,
+    `student_counts_rolled_over_at`
 FROM `academic_years`
 ORDER BY `name` DESC;
 

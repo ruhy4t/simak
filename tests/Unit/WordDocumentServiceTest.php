@@ -39,6 +39,7 @@ class WordDocumentServiceTest extends TestCase
 
         $document = $this->assertNativeDocx($path, ['SURAT KETERANGAN', 'DATA SISWA', 'Budi Santoso']);
         $this->assertSingleLineZeroParagraphSpacing($path);
+        $this->assertDocxTablesHaveNoVisibleBorders($path);
         $this->assertCount(1, $document->getSections());
         $this->assertRequestedMargins($document);
 
@@ -101,9 +102,12 @@ class WordDocumentServiceTest extends TestCase
 
         preg_match_all('/<w:tblBorders>.*?<\/w:tblBorders>/s', $documentXml, $tableBorders);
 
+        $this->assertNotEmpty($tableBorders[0]);
         foreach ($tableBorders[0] as $borderDefinition) {
-            $this->assertDoesNotMatchRegularExpression('/w:sz="[1-9][0-9]*"/', $borderDefinition);
+            $this->assertSame(6, substr_count($borderDefinition, 'w:val="nil"'));
+            $this->assertDoesNotMatchRegularExpression('/w:val="(?!nil)[^"]+"/', $borderDefinition);
         }
+        $this->assertStringNotContainsString('<w:tcBorders>', $documentXml);
     }
 
     private function assertSingleLineZeroParagraphSpacing(string $path): void

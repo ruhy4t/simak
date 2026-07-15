@@ -10,6 +10,7 @@ use PhpOffice\PhpWord\PhpWord;
 use PhpOffice\PhpWord\Shared\Converter;
 use PhpOffice\PhpWord\SimpleType\Jc;
 use PhpOffice\PhpWord\SimpleType\TblWidth;
+use ZipArchive;
 
 class WordDocumentService
 {
@@ -233,12 +234,12 @@ class WordDocumentService
             'cellMargin' => 40,
         ]);
         $row = $table->addRow();
-        $logoCell = $row->addCell(1200, ['valign' => 'center', 'borderBottomSize' => 18]);
+        $logoCell = $row->addCell(1200, ['valign' => 'center']);
         $logo = public_path('images/logo_Kota_Bogor.png');
         if (is_file($logo)) {
             $logoCell->addImage($logo, ['width' => $compact ? 60 : 65, 'height' => $compact ? 75 : 80, 'alignment' => Jc::LEFT]);
         }
-        $textCell = $row->addCell($width - 1200, ['valign' => 'center', 'borderBottomSize' => 18]);
+        $textCell = $row->addCell($width - 1200, ['valign' => 'center']);
         $textCell->addText('PEMERINTAH KOTA BOGOR', ['bold' => true, 'size' => 12], ['alignment' => Jc::CENTER, 'spaceAfter' => 0]);
         $textCell->addText('DINAS PENDIDIKAN', ['bold' => true, 'size' => 14], ['alignment' => Jc::CENTER, 'spaceAfter' => 0]);
         $textCell->addText('Jl. Padjajaran No. 125, Bantarjati, Bogor Utara, Kota Bogor, Jawa Barat 16153', ['size' => $compact ? 9 : 11], ['alignment' => Jc::CENTER, 'spaceAfter' => 0]);
@@ -379,8 +380,41 @@ class WordDocumentService
         $docxPath = $path.'.docx';
         @unlink($path);
         $word->save($docxPath, 'Word2007');
+        $this->removeVisibleTableBorders($docxPath);
 
         return $docxPath;
+    }
+
+    private function removeVisibleTableBorders(string $docxPath): void
+    {
+        $zip = new ZipArchive;
+        if ($zip->open($docxPath) !== true) {
+            throw new \RuntimeException('Tidak dapat membuka DOCX untuk menghapus border tabel.');
+        }
+
+        $documentXml = $zip->getFromName('word/document.xml');
+        if ($documentXml === false) {
+            $zip->close();
+            throw new \RuntimeException('Struktur dokumen Word tidak ditemukan.');
+        }
+
+        $noBorders = '<w:tblBorders>'
+            .'<w:top w:val="nil"/><w:left w:val="nil"/>'
+            .'<w:bottom w:val="nil"/><w:right w:val="nil"/>'
+            .'<w:insideH w:val="nil"/><w:insideV w:val="nil"/>'
+            .'</w:tblBorders>';
+        $updatedXml = preg_replace(
+            '/<w:tblBorders\b[^>]*>.*?<\/w:tblBorders>/s',
+            $noBorders,
+            $documentXml
+        );
+
+        if ($updatedXml === null || ! $zip->addFromString('word/document.xml', $updatedXml)) {
+            $zip->close();
+            throw new \RuntimeException('Tidak dapat menyimpan pengaturan tanpa border tabel.');
+        }
+
+        $zip->close();
     }
 
     private function paragraph(array $overrides = []): array
