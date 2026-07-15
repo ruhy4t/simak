@@ -1061,13 +1061,14 @@ class MutasiMasukController extends Controller
         ]);
 
         if ($request->query('format') === 'word') {
-            $filename = 'surat-mutasi-masuk-' . preg_replace('/[^A-Za-z0-9_-]/', '-', $id) . '.doc';
+            $filename = 'surat-mutasi-masuk-' . preg_replace('/[^A-Za-z0-9_-]/', '-', $id) . '.docx';
+            $path = app(\App\Services\WordDocumentService::class)
+                ->createMutasiMasuk($mutasiData, $siswaList, $penandatangan);
 
-            return response($view->render(), 200, [
-                'Content-Type' => 'application/msword; charset=UTF-8',
-                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            return response()->download($path, $filename, [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
                 'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
-            ]);
+            ])->deleteFileAfterSend(true);
         }
 
         return $view;

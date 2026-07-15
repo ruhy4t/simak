@@ -1,0 +1,112 @@
+<?php
+
+namespace Tests\Unit;
+
+use App\Services\WordDocumentService;
+use Illuminate\Support\Collection;
+use PhpOffice\PhpWord\IOFactory;
+use PhpOffice\PhpWord\PhpWord;
+use Tests\TestCase;
+use ZipArchive;
+
+class WordDocumentServiceTest extends TestCase
+{
+    public function test_it_creates_native_docx_for_outgoing_transfer_letter(): void
+    {
+        $path = app(WordDocumentService::class)->createMutasiKeluar($this->outgoingTransfer(), $this->signer());
+
+        $document = $this->assertNativeDocx($path, ['SURAT KETERANGAN', 'DATA SISWA', 'Budi Santoso']);
+        $this->assertCount(1, $document->getSections());
+
+        unlink($path);
+    }
+
+    public function test_it_creates_native_docx_with_landscape_attachment_for_incoming_transfer(): void
+    {
+        $students = new Collection([(object) [
+            'nama_murid' => 'Siti Aminah',
+            'nisn' => '0012345678',
+            'jenis_kelamin' => 'P',
+            'tempat_lahir' => 'Bogor',
+            'tanggal_lahir' => '2012-05-10',
+            'kelas' => 'VIII',
+            'npsn_sekolah_asal' => '20200001',
+            'nama_sekolah_asal' => 'SMP Negeri Asal',
+            'kabupaten_kota_asal' => 'Kabupaten Bogor',
+            'provinsi_asal' => 'Jawa Barat',
+            'tanggal_diterima' => '2026-07-15',
+        ]]);
+
+        $path = app(WordDocumentService::class)->createMutasiMasuk($this->incomingTransfer(), $students, $this->signer());
+
+        $document = $this->assertNativeDocx($path, ['Izin Mutasi Siswa', 'DAFTAR SISWA MUTASI MASUK', 'Siti Aminah']);
+        $this->assertCount(2, $document->getSections());
+        $this->assertSame('landscape', $document->getSections()[1]->getStyle()->getOrientation());
+
+        unlink($path);
+    }
+
+    private function assertNativeDocx(string $path, array $expectedText): PhpWord
+    {
+        $this->assertFileExists($path);
+        $this->assertSame('PK', file_get_contents($path, false, null, 0, 2));
+
+        $zip = new ZipArchive;
+        $this->assertTrue($zip->open($path) === true);
+        $this->assertNotFalse($zip->locateName('[Content_Types].xml'));
+        $this->assertNotFalse($zip->locateName('word/document.xml'));
+        $documentXml = (string) $zip->getFromName('word/document.xml');
+        $zip->close();
+
+        foreach ($expectedText as $text) {
+            $this->assertStringContainsString($text, $documentXml);
+        }
+
+        return IOFactory::load($path, 'Word2007');
+    }
+
+    private function signer(): object
+    {
+        return (object) [
+            'nama' => 'Drs. Pejabat Dinas',
+            'pangkat_golongan' => 'Pembina, IV/a',
+            'nip' => '197001011999031001',
+        ];
+    }
+
+    private function outgoingTransfer(): object
+    {
+        return (object) [
+            'nomor_surat_izin' => '400.3/123-SMP',
+            'sekolah_asal' => 'SMP Negeri 1 Bogor',
+            'nomor_surat_keluar' => '421/10/SMP',
+            'tanggal_surat_keluar' => '2026-07-10',
+            'nama_siswa' => 'Budi Santoso',
+            'tempat_lahir' => 'Bogor',
+            'tanggal_lahir' => '2012-01-01',
+            'jenis_kelamin' => 'L',
+            'kelas' => 'VIII',
+            'nis' => '1234',
+            'nisn' => '0012345678',
+            'alamat_sekolah_asal' => 'Jalan Pendidikan No. 1',
+            'npsn_tujuan' => '20200002',
+            'sekolah_tujuan' => 'SMP Negeri 2 Bandung',
+            'kota_tujuan' => 'Kota Bandung',
+            'provinsi_tujuan' => 'Jawa Barat',
+            'alasan_pindah' => 'Mengikuti orang tua',
+            'tanggal_surat_izin' => '2026-07-15',
+        ];
+    }
+
+    private function incomingTransfer(): object
+    {
+        return (object) [
+            'nomor_surat_izin' => '400.3/124-SMP',
+            'tanggal_surat_izin' => '2026-07-15',
+            'sekolah_tujuan' => 'SMP Negeri 3 Bogor',
+            'alamat_sekolah_tujuan' => 'Jalan Pajajaran No. 3',
+            'nomor_surat_permohonan' => '421/11/SMP',
+            'tanggal_surat_permohonan' => '2026-07-11',
+        ];
+    }
+}
