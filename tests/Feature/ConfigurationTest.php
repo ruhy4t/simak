@@ -32,4 +32,26 @@ class ConfigurationTest extends TestCase
             $vercel['headers'][0]['headers'][0]['value']
         );
     }
+
+    public function test_progressive_navigation_is_limited_to_script_free_pages(): void
+    {
+        $safeRoutes = config('ajax_navigation.safe_routes');
+        $safeViews = config('ajax_navigation.safe_views');
+
+        $this->assertCount(7, $safeRoutes);
+        $this->assertCount(count($safeRoutes), $safeViews);
+
+        foreach ($safeViews as $viewPath) {
+            $contents = strtolower((string) file_get_contents(base_path($viewPath)));
+
+            $this->assertStringNotContainsString('<script', $contents, $viewPath);
+            $this->assertStringNotContainsString("@push('scripts'", $contents, $viewPath);
+            $this->assertStringNotContainsString('@push("scripts"', $contents, $viewPath);
+        }
+
+        $navigationScript = (string) file_get_contents(resource_path('js/ajax-navigation.js'));
+        $this->assertStringContainsString('currentPageIsSafe()', $navigationScript);
+        $this->assertStringContainsString('normalNavigation(', $navigationScript);
+        $this->assertStringContainsString("method: 'GET'", $navigationScript);
+    }
 }

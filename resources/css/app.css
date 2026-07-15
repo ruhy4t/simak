@@ -68,3 +68,34 @@
 .autosave-saving {
     animation: pulse-save 1s ease-in-out infinite;
 }
+
+/* Progressive navigation feedback */
+#simak-navigation-progress {
+    position: fixed;
+    inset: 0 auto auto 0;
+    z-index: 9999;
+    width: 0;
+    height: 3px;
+    opacity: 0;
+    pointer-events: none;
+    background: linear-gradient(90deg, #0ea5e9, #6366f1);
+    box-shadow: 0 0 10px rgb(14 165 233 / 55%);
+    transition: width 180ms ease, opacity 160ms ease;
+}
+
+#simak-navigation-progress.is-active {
+    width: 78%;
+    opacity: 1;
+}
+
+.simak-is-navigating #simak-page-content {
+    opacity: 0.72;
+    transition: opacity 120ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #simak-navigation-progress,
+    .simak-is-navigating #simak-page-content {
+        transition: none;
+    }
+}

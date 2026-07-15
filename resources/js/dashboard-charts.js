@@ -37,7 +37,7 @@ const initializeTrendChart = (Chart, canvas) => {
     const data = parseChartData(canvas);
     if (!data || data.labels.length === 0) return;
 
-    new Chart(canvas, {
+    return new Chart(canvas, {
         type: 'line',
         data: {
             labels: data.labels,
@@ -97,7 +97,7 @@ const initializeStatusChart = (Chart, canvas) => {
     const data = parseChartData(canvas);
     if (!data || data.values.every((value) => value === 0)) return;
 
-    new Chart(canvas, {
+    return new Chart(canvas, {
         type: 'doughnut',
         data: {
             labels: data.labels,
@@ -127,13 +127,36 @@ const initializeStatusChart = (Chart, canvas) => {
     });
 };
 
-document.addEventListener('DOMContentLoaded', async () => {
+const chartInstances = new Map();
+
+const initializeDashboardCharts = async () => {
     const trendCharts = document.querySelectorAll('[data-dashboard-trend-chart]');
     const statusCharts = document.querySelectorAll('[data-dashboard-status-chart]');
 
     if (trendCharts.length === 0 && statusCharts.length === 0) return;
 
     const { default: Chart } = await import('chart.js/auto');
-    trendCharts.forEach((canvas) => initializeTrendChart(Chart, canvas));
-    statusCharts.forEach((canvas) => initializeStatusChart(Chart, canvas));
+    trendCharts.forEach((canvas) => {
+        if (chartInstances.has(canvas) || !canvas.isConnected) return;
+        const chart = initializeTrendChart(Chart, canvas);
+        if (chart) chartInstances.set(canvas, chart);
+    });
+    statusCharts.forEach((canvas) => {
+        if (chartInstances.has(canvas) || !canvas.isConnected) return;
+        const chart = initializeStatusChart(Chart, canvas);
+        if (chart) chartInstances.set(canvas, chart);
+    });
+};
+
+document.addEventListener('DOMContentLoaded', initializeDashboardCharts);
+document.addEventListener('simak:navigated', initializeDashboardCharts);
+document.addEventListener('simak:before-navigate', (event) => {
+    const root = event.detail?.root;
+    if (!root) return;
+
+    for (const [canvas, chart] of chartInstances) {
+        if (!root.contains(canvas)) continue;
+        chart.destroy();
+        chartInstances.delete(canvas);
+    }
 });

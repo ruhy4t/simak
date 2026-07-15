@@ -2,6 +2,13 @@
 <html lang="id" class="scroll-smooth">
 
 <head>
+    @php
+        $simakAjaxSafeRoutes = config('ajax_navigation.safe_routes', []);
+        $simakAjaxSafeUrls = collect($simakAjaxSafeRoutes)
+            ->filter(fn ($routeName) => Route::has($routeName))
+            ->map(fn ($routeName) => route($routeName))
+            ->values();
+    @endphp
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -9,6 +16,12 @@
     <meta http-equiv="Expires" content="0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="theme-color" content="#0f172a">
+
+    <script>
+        window.SIMAK_NAVIGATION = {
+            safeUrls: @json($simakAjaxSafeUrls),
+        };
+    </script>
 
     <title>@yield('title', 'SIMAK') - Sistem Informasi Mutasi</title>
 
@@ -203,7 +216,7 @@
                 </div>
 
                 <!-- Navigation -->
-                <nav class="flex-1 px-4 py-4 space-y-1.5 overflow-y-auto">
+                <nav id="simak-desktop-navigation" class="flex-1 px-4 py-4 space-y-1.5 overflow-y-auto">
                     <!-- Dashboard -->
                     <a href="{{ route('dashboard') }}"
                         class="flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-200 group {{ request()->routeIs('dashboard') ? 'nav-item-active font-medium' : 'nav-item-inactive' }}">
@@ -366,7 +379,9 @@
                 </header>
 
                 <!-- Page Content -->
-                <main class="flex-1 p-4 lg:p-8 {{ $maxWidth ?? 'max-w-full' }} mx-auto w-full page-enter">
+                <main id="simak-page-content"
+                    data-simak-navigation-safe="{{ request()->routeIs(...$simakAjaxSafeRoutes) ? 'true' : 'false' }}"
+                    class="flex-1 p-4 lg:p-8 {{ $maxWidth ?? 'max-w-full' }} mx-auto w-full page-enter">
 
                     <!-- Notification Modals (Alpine) -->
                     @if(session('success'))
@@ -529,7 +544,7 @@
                         </button>
                     </div>
 
-                    <nav class="p-4 space-y-1 overflow-y-auto h-[calc(100vh-80px)]">
+                    <nav id="simak-mobile-navigation" class="p-4 space-y-1 overflow-y-auto h-[calc(100vh-80px)]">
                         <!-- Content duplicates desktop navigation logic suitable for mobile -->
                         {{-- Simplified Mobile Nav logic reusing same classes --}}
                         <a href="{{ route('dashboard') }}"

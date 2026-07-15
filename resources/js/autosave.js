@@ -169,7 +169,8 @@
      */
     function initForm(form) {
         const key = form.dataset.autosave;
-        if (!key) return;
+        if (!key || form.dataset.autosaveInitialized === 'true') return;
+        form.dataset.autosaveInitialized = 'true';
 
         let saveTimer = null;
 
@@ -236,4 +237,5 @@
     } else {
         init();
     }
+    document.addEventListener('simak:navigated', init);
 })();
