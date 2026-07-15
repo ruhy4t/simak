@@ -15,7 +15,11 @@
         return path || '/';
     };
     const safePaths = new Set(config.safeUrls.map(normalizePath));
+    const minimumLoadingDuration = 320;
     let activeRequest = null;
+    let loadingStartedAt = 0;
+    let loadingFinishTimer = null;
+    let loadingResetTimer = null;
 
     const currentContent = () => document.getElementById('simak-page-content');
     const currentPageIsSafe = () => currentContent()?.dataset.simakNavigationSafe === 'true';
@@ -36,13 +40,31 @@
     const setLoading = (loading) => {
         const bar = loadingBar();
         const content = currentContent();
-        document.documentElement.classList.toggle('simak-is-navigating', loading);
-        bar.classList.toggle('is-active', loading);
+        clearTimeout(loadingFinishTimer);
+        clearTimeout(loadingResetTimer);
 
-        if (content) {
-            if (loading) content.setAttribute('aria-busy', 'true');
-            else content.removeAttribute('aria-busy');
+        if (loading) {
+            loadingStartedAt = performance.now();
+            document.documentElement.classList.add('simak-is-navigating');
+            if (content) content.setAttribute('aria-busy', 'true');
+
+            bar.classList.remove('is-active', 'is-complete');
+            void bar.offsetWidth;
+            requestAnimationFrame(() => bar.classList.add('is-active'));
+            return;
         }
+
+        document.documentElement.classList.remove('simak-is-navigating');
+        if (content) content.removeAttribute('aria-busy');
+
+        const elapsed = performance.now() - loadingStartedAt;
+        const finishDelay = Math.max(0, minimumLoadingDuration - elapsed);
+        loadingFinishTimer = setTimeout(() => {
+            bar.classList.add('is-complete');
+            loadingResetTimer = setTimeout(() => {
+                bar.classList.remove('is-active', 'is-complete');
+            }, 180);
+        }, finishDelay);
     };
 
     const initializeAlpineTree = (element) => {

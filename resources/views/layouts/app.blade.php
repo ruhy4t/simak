@@ -180,6 +180,8 @@
 
 <body class="bg-slate-50 font-sans antialiased text-slate-800">
 
+    <div id="simak-navigation-progress" aria-hidden="true"></div>
+
     <script defer src="{{ asset('js/security.js') }}?v={{ config('app.asset_version') }}"></script>
 
     @auth
