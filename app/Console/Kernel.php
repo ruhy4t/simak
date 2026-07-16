@@ -13,6 +13,16 @@ class Kernel extends ConsoleKernel
             ->dailyAt('06:00')
             ->timezone('Asia/Jakarta')
             ->withoutOverlapping();
+
+        $schedule->command('simak:prune-runtime')
+            ->dailyAt('02:30')
+            ->timezone('Asia/Jakarta')
+            ->withoutOverlapping();
+
+        $schedule->command('audit:prune --days=90')
+            ->weeklyOn(1, '03:00')
+            ->timezone('Asia/Jakarta')
+            ->withoutOverlapping();
     }
 
     protected function commands(): void

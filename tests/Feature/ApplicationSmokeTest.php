@@ -16,6 +16,7 @@ class ApplicationSmokeTest extends TestCase
     {
         $this->get('/login')
             ->assertOk()
+            ->assertHeader('Server-Timing')
             ->assertViewIs('auth.login')
             ->assertSee('autocomplete="username"', false)
             ->assertSee('autocomplete="current-password"', false)

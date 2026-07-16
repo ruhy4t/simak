@@ -80,4 +80,17 @@ class ConfigurationTest extends TestCase
         $this->assertNotContains('dailytasks', $route->gatherMiddleware());
         $this->assertFileDoesNotExist(app_path('Http/Middleware/DailyTasksMiddleware.php'));
     }
+
+    public function test_observability_covers_requests_queries_queue_and_telegram(): void
+    {
+        $requestMetrics = (string) file_get_contents(app_path('Http/Middleware/RequestMetrics.php'));
+        $provider = (string) file_get_contents(app_path('Providers/AppServiceProvider.php'));
+        $telegram = (string) file_get_contents(app_path('Jobs/SendTelegramJob.php'));
+
+        $this->assertStringContainsString("'duration_ms'", $requestMetrics);
+        $this->assertStringContainsString("'query_duration_ms'", $requestMetrics);
+        $this->assertStringContainsString('database.slow_query', $provider);
+        $this->assertStringContainsString('queue.failed', $provider);
+        $this->assertStringContainsString('telegram.permanently_failed', $telegram);
+    }
 }

@@ -43,7 +43,7 @@ Dokumen ini menjadi acuan saat pengembangan dilanjutkan. Centang pekerjaan hanya
 - [x] Hilangkan duplikasi route Telegram antara `web.php` dan `api.php`; URL webhook resmi: `/telegram/webhook`.
 - [x] Tambahkan validasi kepemilikan, usia, ukuran, MIME, dan ekstensi upload sementara sebelum file dipindahkan menjadi dokumen permanen.
 - [x] Tambahkan secret scanning dan dependency audit pada CI GitHub Actions.
-- [ ] Tinjau ulang kebijakan lockout login agar serangan tidak dapat mengunci akun korban hanya dengan mengetahui username.
+- [x] Ubah lockout login menjadi rate limit per kombinasi username dan IP tanpa penguncian akun global.
 - [ ] Rotasi berkala token Telegram, credential database, B2 key, dan cron secret.
 
 ### Performa dan operasional
@@ -51,8 +51,8 @@ Dokumen ini menjadi acuan saat pengembangan dilanjutkan. Centang pekerjaan hanya
 - [x] Pindahkan reminder dan auto-cancel sepenuhnya dari middleware dashboard ke scheduled command.
 - [x] Satukan logika reminder dan auto-cancel menjadi satu `DailyTaskService`.
 - [x] Proses reminder dan auto-cancel dengan `chunkById` untuk data besar.
-- [ ] Tambahkan jadwal pembersihan cache database yang sudah kedaluwarsa dan upload sementara yang terbengkalai.
-- [ ] Tambahkan observability untuk durasi request, query lambat, kegagalan queue, dan kegagalan Telegram.
+- [x] Tambahkan jadwal pembersihan cache database yang kedaluwarsa dan upload sementara yang terbengkalai.
+- [x] Tambahkan observability untuk durasi request, query lambat, kegagalan queue, dan kegagalan Telegram.
 - [ ] Pertimbangkan Redis saat trafik dan concurrency sudah melebihi kemampuan cache/queue database.
 
 ## Catatan kompatibilitas

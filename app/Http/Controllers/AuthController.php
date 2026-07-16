@@ -31,10 +31,16 @@ class AuthController extends Controller
 
         $username = strtolower(trim($request->username));
 
-        // Rate limiting
-        $key = 'login_attempt_' . $username;
-        if (RateLimiter::tooManyAttempts($key, 5)) {
-            $seconds = RateLimiter::availableIn($key);
+        // Limit each username+IP pair without allowing an attacker to lock the
+        // account globally. The IP limiter also slows credential stuffing.
+        $credentialKey = 'login_credential:' . hash('sha256', $username . '|' . $request->ip());
+        $ipKey = 'login_ip:' . hash('sha256', (string) $request->ip());
+        if (RateLimiter::tooManyAttempts($credentialKey, 5)
+            || RateLimiter::tooManyAttempts($ipKey, 20)) {
+            $seconds = max(
+                RateLimiter::availableIn($credentialKey),
+                RateLimiter::availableIn($ipKey),
+            );
             AuditLog::log('LOGIN_RATE_LIMITED', $username, "Locked for {$seconds}s");
 
             return back()->withErrors([
@@ -46,31 +52,14 @@ class AuthController extends Controller
         $user = User::where('username', $username)->first();
 
         if (!$user) {
-            RateLimiter::hit($key, 300); // 5 minutes
+            RateLimiter::hit($credentialKey, 300);
+            RateLimiter::hit($ipKey, 300);
             AuditLog::log('LOGIN_FAILED', $username, 'User not found');
 
-            $retries = RateLimiter::attempts($key);
+            $retries = RateLimiter::attempts($credentialKey);
             $remaining = max(0, 5 - $retries);
 
             return back()->withErrors(['username' => "Username atau password salah. Sisa kesempatan: {$remaining} dari 5."])->withInput();
-        }
-
-        // Check if user is locked
-        if ($user->isLocked()) {
-            $remainingSeconds = now()->diffInSeconds($user->locked_until);
-            $remainingMinutes = ceil($remainingSeconds / 60);
-
-            AuditLog::log('LOGIN_BLOCKED', $username, "Account still locked. Remaining: {$remainingMinutes} menit");
-            return back()->withErrors([
-                'username' => "Akun terkunci karena percobaan login gagal. Silakan coba lagi dalam {$remainingMinutes} menit.",
-            ])->withInput();
-        }
-
-        // Check if account was previously locked but now auto-unlocked
-        if ($user->locked_until && $user->locked_until->isPast()) {
-            AuditLog::log('ACCOUNT_AUTO_UNLOCKED', $username, 'Akun dibuka otomatis setelah masa penguncian 5 menit berakhir');
-            // Reset the lock fields (will be fully reset on successful login)
-            $user->update(['locked_until' => null, 'failed_login_attempts' => 0]);
         }
 
         // Check status using accessor for consistency
@@ -81,37 +70,24 @@ class AuthController extends Controller
 
         // Verify password
         if (!Hash::check($request->password, $user->password)) {
-            RateLimiter::hit($key, 300); // 5 minutes
-            $currentFails = RateLimiter::attempts($key);
-
-            // Keep the DB counter in sync with the active 5-minute limiter window.
-            $user->recordFailedLogin($currentFails);
+            RateLimiter::hit($credentialKey, 300);
+            RateLimiter::hit($ipKey, 300);
             AuditLog::log('LOGIN_FAILED', $username, 'Wrong password');
 
-            // Get fresh count from DB to ensure accuracy
-            $freshUser = $user->fresh();
-            $currentFails = $freshUser->failed_login_attempts;
+            $currentFails = RateLimiter::attempts($credentialKey);
             $remaining = max(0, 5 - $currentFails);
-
-            // If account just got locked, show lock message
-            if ($freshUser->isLocked()) {
-                return back()->withErrors(['username' => "Akun dikunci selama 5 menit karena 5x percobaan login gagal."])->withInput();
-            }
 
             return back()->withErrors(['username' => "Username atau password salah. Sisa kesempatan: {$remaining} dari 5."])->withInput();
         }
 
         // Success
-        RateLimiter::clear($key);
+        RateLimiter::clear($credentialKey);
         $user->resetFailedLogin();
 
         // "Ingat saya" only remembers the username for the browser's password
         // manager. It must never create Laravel's persistent login cookie.
         Auth::login($user);
         $request->session()->regenerate();
-
-        // Store login time for daily tasks middleware
-        $request->session()->put('login_time', now('Asia/Jakarta'));
 
         AuditLog::log('LOGIN_SUCCESS', $username);
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\DailyTaskService;
+use App\Services\RuntimePruner;
 
 /**
  * HTTP bridge for schedulers on serverless/shared hosting.
@@ -14,8 +15,11 @@ class CronController extends Controller
      *
      * URL: /cron/reminder with Authorization: Bearer <CRON_SECRET>
      */
-    public function revisionReminder(DailyTaskService $dailyTasks)
+    public function revisionReminder(DailyTaskService $dailyTasks, RuntimePruner $pruner)
     {
-        return response()->json($dailyTasks->run());
+        $result = $dailyTasks->run();
+        $result['maintenance'] = $pruner->prune();
+
+        return response()->json($result);
     }
 }

@@ -25,7 +25,7 @@ class QueueWorkerController extends Controller
             $exitCode = Artisan::call('queue:work', [
                 '--stop-when-empty' => true,
                 '--tries' => 3,
-                '--timeout' => 5 // 5 seconds per job max to fit in Vercel limits
+                '--timeout' => 6
             ]);
 
             Log::info("Queue Worker finished with exit code: " . $exitCode);

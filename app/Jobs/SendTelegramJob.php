@@ -9,10 +9,19 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use RuntimeException;
+use Throwable;
 
 class SendTelegramJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    public int $tries = 3;
+
+    public int $timeout = 5;
+
+    /** @var list<int> */
+    public array $backoff = [10, 30, 60];
 
     protected $chatId;
     protected $message;
@@ -35,22 +44,6 @@ class SendTelegramJob implements ShouldQueue
      */
     public function handle()
     {
-        // Use the existing logic from NotificationHelper
-        // But we must refer to it statically or duplicate logic.
-        // Since NotificationHelper::sendTelegram is static, we can call it directly.
-        // ideally, to avoid circular logic or infinite loops if helper calls job, 
-        // we should call the *actual* sending logic.
-
-        // HOWEVER, NotificationHelper::sendTelegram currently assumes immediate execution. 
-        // We will modify NotificationHelper later to dispatch this job. 
-        // So this Job should contain the *actual* curl logic OR call a "raw" method in Helper.
-
-        // Let's implement the RAW sending logic here or call a new raw method in Helper 
-        // to keep things clean. For now, let's call a new dynamic method 'sendTelegramRaw' 
-        // that we will add to NotificationHelper, OR just copy the curl logic here to be safe/independent.
-
-        // Copying curl logic is safer to avoid method signature confusion during refactor.
-
         $botToken = config('services.telegram.bot_token');
         $chatId = $this->chatId;
         $message = $this->message;
@@ -69,13 +62,31 @@ class SendTelegramJob implements ShouldQueue
         $url = "https://api.telegram.org/bot{$botToken}/sendMessage";
 
         try {
-            $response = Http::asForm()->timeout(10)->post($url, $postData);
-
+            $response = Http::asForm()->timeout(4)->post($url, $postData);
             if (! $response->successful()) {
-                Log::error("Job Telegram failed (HTTP {$response->status()}): {$response->body()}");
+                Log::channel('metrics')->error('telegram.delivery_failed', [
+                    'status' => $response->status(),
+                    'attempt' => $this->attempts(),
+                ]);
+
+                throw new RuntimeException("Telegram API returned HTTP {$response->status()}.");
             }
-        } catch (\Exception $e) {
-            Log::error('Job Telegram exception: '.$e->getMessage());
+
+            Log::channel('metrics')->info('telegram.delivered', ['attempt' => $this->attempts()]);
+        } catch (Throwable $exception) {
+            Log::channel('metrics')->error('telegram.delivery_exception', [
+                'attempt' => $this->attempts(),
+                'exception_class' => $exception::class,
+            ]);
+
+            throw new RuntimeException('Telegram delivery failed.');
         }
+    }
+
+    public function failed(Throwable $exception): void
+    {
+        Log::channel('metrics')->critical('telegram.permanently_failed', [
+            'exception_class' => $exception::class,
+        ]);
     }
 }

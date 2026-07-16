@@ -7,6 +7,7 @@ use Illuminate\Foundation\Http\Kernel as HttpKernel;
 class Kernel extends HttpKernel
 {
     protected $middleware = [
+        \App\Http\Middleware\RequestMetrics::class,
         \App\Http\Middleware\SecurityHeaders::class,
         \Illuminate\Http\Middleware\HandleCors::class,
         \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class,
