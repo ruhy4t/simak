@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
@@ -20,6 +21,7 @@ class DashboardDateFilterTest extends TestCase
         config()->set('database.default', 'sqlite');
         config()->set('database.connections.sqlite.database', ':memory:');
         DB::purge('sqlite');
+        Cache::flush();
 
         Schema::create('mutasi_keluar', function (Blueprint $table) {
             $table->id();
@@ -59,6 +61,7 @@ class DashboardDateFilterTest extends TestCase
     protected function tearDown(): void
     {
         Auth::forgetUser();
+        Cache::flush();
         DB::purge('sqlite');
 
         parent::tearDown();
@@ -102,6 +105,29 @@ class DashboardDateFilterTest extends TestCase
         $this->assertCount(16, $data['trendChart']['labels']);
         $this->assertSame(1, $data['trendChart']['masuk'][0]);
         $this->assertSame(1, $data['trendChart']['masuk'][15]);
+    }
+
+    public function test_repeated_dashboard_request_reuses_the_aggregate_snapshot(): void
+    {
+        $request = Request::create('/dashboard', 'GET', [
+            'period' => 'month',
+            'month' => 7,
+            'year' => 2026,
+        ]);
+        $controller = app(DashboardController::class);
+
+        $controller->index($request);
+
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+        $secondView = $controller->index($request);
+
+        $mutationQueries = collect(DB::getQueryLog())
+            ->filter(fn (array $query) => str_contains($query['query'], 'mutasi_masuk')
+                || str_contains($query['query'], 'mutasi_keluar'));
+
+        $this->assertCount(0, $mutationQueries);
+        $this->assertSame(2, $secondView->getData()['statsMasuk']['total']);
     }
 
     private function insertMutationPair(string $date, string $status, int $studentCount): void

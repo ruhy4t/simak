@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
+    private const DASHBOARD_CACHE_SECONDS = 60;
+
     public function index(Request $request)
     {
         $user = Auth::user();
@@ -17,21 +19,13 @@ class DashboardController extends Controller
         $filterMonth = $dateFilter['month'];
         $filterYear = $dateFilter['year'];
 
-        // Get stats for both Mutasi Keluar and Mutasi Masuk
-        $statsKeluar = $this->getStatsMutasiKeluar($user, $dateFilter);
-        $statsMasuk = $this->getStatsMutasiMasuk($user, $dateFilter);
-
-        // Get user stats (for Sekolah and Dinas roles)
-        $statsUsers = null;
-        if ($user->role === 'Sekolah') {
-            $statsUsers = $this->getStatsUsers($user);
-        } elseif (in_array($user->role, ['Dinas', 'SuperAdmin'])) {
-            $statsUsers = $this->getStatsDinasUsers();
-        }
-
-        // Get school mutation statistics with filters
-        $schoolStatsKeluar = $this->getSchoolStatsKeluar($user, $dateFilter);
-        $schoolStatsMasuk = $this->getSchoolStatsMasuk($user, $dateFilter);
+        $snapshot = $this->getDashboardSnapshot($user, $dateFilter);
+        $statsKeluar = $snapshot['statsKeluar'];
+        $statsMasuk = $snapshot['statsMasuk'];
+        $statsUsers = $snapshot['statsUsers'];
+        $schoolStatsKeluar = $snapshot['schoolStatsKeluar'];
+        $schoolStatsMasuk = $snapshot['schoolStatsMasuk'];
+        $trendChart = $snapshot['trendChart'];
 
         // Get available years for filter
         $availableYears = $this->getAvailableYears();
@@ -40,7 +34,6 @@ class DashboardController extends Controller
             rsort($availableYears);
         }
 
-        $trendChart = $this->getTrendChartData($user, $dateFilter);
         $statusChart = [
             'labels' => ['Menunggu', 'Perbaikan', 'Disetujui', 'Proses TTD', 'Selesai'],
             'values' => [
@@ -66,6 +59,59 @@ class DashboardController extends Controller
             'statusChart',
             'user'
         ));
+    }
+
+    /**
+     * Reuse the expensive aggregate queries briefly. The key is scoped by both
+     * the authenticated user and date filter so data never crosses role/school
+     * boundaries. A short TTL keeps operational figures effectively current.
+     */
+    private function getDashboardSnapshot($user, array $dateFilter): array
+    {
+        $load = function () use ($user, $dateFilter): array {
+            $statsUsers = null;
+            if ($user->role === 'Sekolah') {
+                $statsUsers = $this->getStatsUsers($user);
+            } elseif (in_array($user->role, ['Dinas', 'SuperAdmin'], true)) {
+                $statsUsers = $this->getStatsDinasUsers();
+            }
+
+            return [
+                'statsKeluar' => $this->getStatsMutasiKeluar($user, $dateFilter),
+                'statsMasuk' => $this->getStatsMutasiMasuk($user, $dateFilter),
+                'statsUsers' => $statsUsers,
+                'schoolStatsKeluar' => $this->getSchoolStatsKeluar($user, $dateFilter),
+                'schoolStatsMasuk' => $this->getSchoolStatsMasuk($user, $dateFilter),
+                'trendChart' => $this->getTrendChartData($user, $dateFilter),
+            ];
+        };
+
+        try {
+            return Cache::remember(
+                $this->dashboardCacheKey($user, $dateFilter),
+                now()->addSeconds(self::DASHBOARD_CACHE_SECONDS),
+                $load
+            );
+        } catch (\Throwable) {
+            // Keep the dashboard available if a shared cache is temporarily down.
+            return $load();
+        }
+    }
+
+    private function dashboardCacheKey($user, array $dateFilter): string
+    {
+        $scope = [
+            'v1',
+            (string) $user->getAuthIdentifier(),
+            (string) $user->role,
+            (string) $user->username,
+            (string) $user->npsn,
+            (string) $dateFilter['period'],
+            (string) $dateFilter['start'],
+            (string) $dateFilter['end_exclusive'],
+        ];
+
+        return 'dashboard.snapshot.'.hash('sha256', implode('|', $scope));
     }
 
     private function getStatsMutasiKeluar($user, array $dateFilter): array
