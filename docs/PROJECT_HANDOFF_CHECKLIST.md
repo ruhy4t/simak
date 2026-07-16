@@ -41,7 +41,7 @@ Dokumen ini menjadi acuan saat pengembangan dilanjutkan. Centang pekerjaan hanya
 
 - [ ] Migrasikan inline script ke CSP nonce/hash, lalu hapus `'unsafe-inline'` dan `'unsafe-eval'` dari CSP.
 - [x] Hilangkan duplikasi route Telegram antara `web.php` dan `api.php`; URL webhook resmi: `/telegram/webhook`.
-- [ ] Tambahkan validasi kepemilikan dan metadata upload sementara sebelum file dipindahkan menjadi dokumen permanen.
+- [x] Tambahkan validasi kepemilikan, usia, ukuran, MIME, dan ekstensi upload sementara sebelum file dipindahkan menjadi dokumen permanen.
 - [x] Tambahkan secret scanning dan dependency audit pada CI GitHub Actions.
 - [ ] Tinjau ulang kebijakan lockout login agar serangan tidak dapat mengunci akun korban hanya dengan mengetahui username.
 - [ ] Rotasi berkala token Telegram, credential database, B2 key, dan cron secret.
@@ -62,4 +62,5 @@ Dokumen ini menjadi acuan saat pengembangan dilanjutkan. Centang pekerjaan hanya
 - Jadwal Vercel menggunakan UTC: reminder `23:00 UTC` (sekitar `06:00 WIB`) dan queue worker `00:00 UTC` (sekitar `07:00 WIB`).
 - Endpoint cron sekarang menolak request tanpa Bearer token dengan status `401`.
 - Webhook Telegram production menolak request jika `TELEGRAM_WEBHOOK_SECRET` belum dikonfigurasi.
+- Upload sementara lama yang belum memakai namespace `temp_uploads/{user_id}/` harus diunggah ulang setelah deployment hardening upload.
 - Perubahan CSP penuh belum dilakukan karena Alpine dan sejumlah inline script perlu dimigrasikan terlebih dahulu agar UI tidak rusak.

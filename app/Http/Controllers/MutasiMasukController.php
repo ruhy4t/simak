@@ -2097,41 +2097,28 @@ class MutasiMasukController extends Controller
             // ============================================================
             // TEMP FILE CLEANUP: Move temp files to permanent and delete temp
             // ============================================================
-            $isCloud = $this->fileUploadService->isCloudStorage();
-            $sourceDisk = $isCloud ? 'b2' : 'local';
-            $destDisk = $isCloud ? 'b2' : 'private_docs';
             $uploadPathKey = $this->fileUploadService->getDateBasedPath('masuk');
+            $draftOwnerId = DB::table('users')->where('username', $draft->pengusul)->value('id');
+            if (! $draftOwnerId) {
+                throw new \RuntimeException('Pemilik draft tidak ditemukan.');
+            }
 
-            // Helper to move temp files and delete old temp
-            $moveAndCleanTemp = function ($tempPath, $filenamePrefix) use ($sourceDisk, $destDisk, $uploadPathKey, $id) {
+            // Validate ownership and metadata before promoting each temporary upload.
+            $moveAndCleanTemp = function ($tempPath, $filenamePrefix) use ($uploadPathKey, $id, $draftOwnerId) {
                 if (empty($tempPath) || !str_contains($tempPath, 'temp_uploads/')) {
                     return $tempPath; // Not a temp file, return as-is
                 }
 
-                try {
-                    if (!Storage::disk($sourceDisk)->exists($tempPath)) {
-                        Log::warning("Temp file not found during finalize: {$tempPath}");
-                        return $tempPath; // File not found, keep path as-is
-                    }
+                $ext = pathinfo($tempPath, PATHINFO_EXTENSION);
+                $safeId = preg_replace('/[^a-zA-Z0-9_-]/', '', $id);
+                $newFilename = "{$safeId}_{$filenamePrefix}.{$ext}";
+                $permanentPath = $uploadPathKey . '/' . $newFilename;
 
-                    $ext = pathinfo($tempPath, PATHINFO_EXTENSION);
-                    $safeId = preg_replace('/[^a-zA-Z0-9_-]/', '', $id);
-                    $newFilename = "{$safeId}_{$filenamePrefix}.{$ext}";
-                    $permanentPath = $uploadPathKey . '/' . $newFilename;
-
-                    // Move to permanent location
-                    $content = Storage::disk($sourceDisk)->get($tempPath);
-                    Storage::disk($destDisk)->put($permanentPath, $content);
-
-                    // Delete temp file
-                    Storage::disk($sourceDisk)->delete($tempPath);
-                    Log::info("Moved temp file to permanent: {$tempPath} -> {$permanentPath}");
-
-                    return $permanentPath;
-                } catch (\Exception $e) {
-                    Log::error("Failed to move temp file {$tempPath}: " . $e->getMessage());
-                    return $tempPath; // Keep original path on error
-                }
+                return $this->fileUploadService->promoteTemporaryUpload(
+                    $tempPath,
+                    $permanentPath,
+                    ownerId: $draftOwnerId,
+                );
             };
 
             // Process header file (surat_permohonan)

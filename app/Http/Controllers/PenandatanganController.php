@@ -81,7 +81,7 @@ class PenandatanganController extends Controller
 
         // Upload signature image if provided
         if ($request->hasFile('gambar_ttd')) {
-            $uploadService = new FileUploadService();
+            $uploadService = app(FileUploadService::class);
             $data['gambar_ttd'] = $uploadService->uploadImage(
                 $request->file('gambar_ttd'),
                 'ttd',
@@ -128,11 +128,11 @@ class PenandatanganController extends Controller
         if ($request->hasFile('gambar_ttd')) {
             // Delete old image if exists
             if ($penandatangan->gambar_ttd) {
-                $uploadService = new FileUploadService();
+                $uploadService = app(FileUploadService::class);
                 $uploadService->deleteOldFile($penandatangan->gambar_ttd);
             }
 
-            $uploadService = $uploadService ?? new FileUploadService();
+            $uploadService = $uploadService ?? app(FileUploadService::class);
             $data['gambar_ttd'] = $uploadService->uploadImage(
                 $request->file('gambar_ttd'),
                 'ttd',
@@ -162,7 +162,7 @@ class PenandatanganController extends Controller
         }
 
         if ($penandatangan->gambar_ttd) {
-            $uploadService = new FileUploadService();
+            $uploadService = app(FileUploadService::class);
             $uploadService->deleteOldFile($penandatangan->gambar_ttd);
 
             DB::table('penandatangan')->where('id', $id)->update([

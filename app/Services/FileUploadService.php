@@ -14,6 +14,10 @@ use Illuminate\Support\Facades\Storage;
  */
 class FileUploadService
 {
+    public function __construct(private readonly TemporaryUploadService $temporaryUploads)
+    {
+    }
+
     /**
      * Get the public URL for a file
      * Compatible with local and B2 storage
@@ -69,10 +73,7 @@ class FileUploadService
      */
     public function getTempDisk(): string
     {
-        if (config('filesystems.disks.b2.key') && app()->environment('production')) {
-            return 'b2';
-        }
-        return 'local';
+        return $this->temporaryUploads->disk();
     }
 
     /**
@@ -81,6 +82,35 @@ class FileUploadService
     public function sanitizeFilename(string $filename): string
     {
         return preg_replace('/[^a-zA-Z0-9_-]/', '', $filename);
+    }
+
+    /**
+     * Validate ownership and metadata before promoting a temporary upload.
+     *
+     * @param list<string>|null $allowedMimes
+     */
+    public function promoteTemporaryUpload(
+        string $temporaryPath,
+        string $permanentPath,
+        ?array $allowedMimes = null,
+        int|string|null $ownerId = null,
+    ): string {
+        $metadata = $this->temporaryUploads->validateOwned($temporaryPath, $ownerId, $allowedMimes);
+        $targetDisk = $this->getDisk();
+        $content = Storage::disk($metadata['disk'])->get($metadata['path']);
+
+        Storage::disk($targetDisk)->put($permanentPath, $content);
+        Storage::disk($metadata['disk'])->delete($metadata['path']);
+
+        Log::info('Temporary upload promoted.', [
+            'temporary_path' => $metadata['path'],
+            'permanent_path' => $permanentPath,
+            'owner_id' => $metadata['owner_id'],
+            'mime_type' => $metadata['mime_type'],
+            'size' => $metadata['size'],
+        ]);
+
+        return $permanentPath;
     }
 
     /**
@@ -120,17 +150,9 @@ class FileUploadService
     {
         // Handle Temporary File Path (String)
         if (is_string($file)) {
-            // Validate temp path to prevent traversal
-            if (!str_starts_with($file, 'temp_uploads/')) {
-                throw new \Exception('Invalid temporary file path.');
-            }
-
-            // Temp files are stored on B2 in production, local in dev
-            $tempDisk = $this->getTempDisk();
-
-            if (!Storage::disk($tempDisk)->exists($file)) {
-                throw new \Exception('Temporary file not found or expired.');
-            }
+            $metadata = $this->temporaryUploads->validateOwned($file, allowedMimes: ['application/pdf']);
+            $file = $metadata['path'];
+            $tempDisk = $metadata['disk'];
 
             // Build safe filename
             $safePrefix = $this->sanitizeFilename($prefix);
@@ -205,20 +227,15 @@ class FileUploadService
     {
         // Handle Temporary File Path (String)
         if (is_string($file)) {
-            // Validate temp path to prevent traversal
-            if (!str_starts_with($file, 'temp_uploads/')) {
-                throw new \Exception('Invalid temporary file path.');
-            }
-
-            // Temp files are stored on B2 in production, local in dev
-            $tempDisk = $this->getTempDisk();
-
-            if (!Storage::disk($tempDisk)->exists($file)) {
-                throw new \Exception('Temporary file not found or expired.');
-            }
+            $metadata = $this->temporaryUploads->validateOwned(
+                $file,
+                allowedMimes: ['image/jpeg', 'image/png', 'image/webp'],
+            );
+            $file = $metadata['path'];
+            $tempDisk = $metadata['disk'];
 
             // Get extension from path
-            $ext = pathinfo($file, PATHINFO_EXTENSION) ?: 'jpg';
+            $ext = $metadata['extension'];
 
             // Build safe filename
             $safePrefix = $this->sanitizeFilename($prefix);

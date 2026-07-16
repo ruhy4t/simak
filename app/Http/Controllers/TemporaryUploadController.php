@@ -2,14 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\TemporaryUploadService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class TemporaryUploadController extends Controller
 {
+    public function __construct(private readonly TemporaryUploadService $temporaryUploads)
+    {
+    }
+
     /**
      * Handle temporary file upload.
      * Stores file in 'temp_uploads' directory.
@@ -36,19 +40,29 @@ class TemporaryUploadController extends Controller
 
         if ($request->hasFile('file')) {
             $file = $request->file('file');
-            $ext = strtolower($file->getClientOriginalExtension());
-            $filename = 'temp_' . now()->format('Ymd_His') . '_' . Str::random(20) . '.' . $ext;
-            $path = 'temp_uploads/' . $filename;
+            $path = $this->temporaryUploads->createPath(
+                $file->getClientOriginalName(),
+                $request->user()->getAuthIdentifier(),
+            );
 
             try {
-                $disk = $this->getTempDisk();
+                $disk = $this->temporaryUploads->disk();
                 Storage::disk($disk)->put($path, file_get_contents($file->getRealPath()));
+                $metadata = $this->temporaryUploads->validateOwned(
+                    $path,
+                    $request->user()->getAuthIdentifier(),
+                );
                 Log::info("Temp file uploaded to {$disk}: {$path}");
 
                 return response()->json([
                     'success' => true,
                     'path' => $path,
                     'disk' => $disk,
+                    'metadata' => [
+                        'mime_type' => $metadata['mime_type'],
+                        'size' => $metadata['size'],
+                        'expires_in' => (int) config('uploads.temporary_ttl_hours') * 3600,
+                    ],
                 ]);
             } catch (\Exception $e) {
                 Log::error("Temp upload failed: " . $e->getMessage());
@@ -117,8 +131,10 @@ class TemporaryUploadController extends Controller
         }
 
         // Secure Filename
-        $safeFilename = 'temp_' . now()->format('Ymd_His') . '_' . Str::random(20) . '.' . $ext;
-        $path = 'temp_uploads/' . $safeFilename;
+        $path = $this->temporaryUploads->createPath(
+            $filename,
+            $request->user()->getAuthIdentifier(),
+        );
 
         try {
             // 3. Generate Presigned URL using AWS S3 Client directly
@@ -179,16 +195,4 @@ class TemporaryUploadController extends Controller
     }
 
 
-    /**
-     * Get the appropriate disk for temporary uploads.
-     * B2 in production, local in development.
-     */
-    private function getTempDisk(): string
-    {
-        // Use B2 if configured
-        if ($this->shouldUseDirectUpload()) {
-            return 'b2';
-        }
-        return 'local';
-    }
 }
