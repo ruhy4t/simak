@@ -45,7 +45,7 @@
             "schedule": "0 23 * * *"
         },
         {
-            "path": "/api/queue/work",
+            "path": "/cron/work",
             "schedule": "0 0 * * *"
         }
     ],

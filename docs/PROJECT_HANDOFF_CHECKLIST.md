@@ -28,7 +28,7 @@ Dokumen ini menjadi acuan saat pengembangan dilanjutkan. Centang pekerjaan hanya
 
 - [ ] Buat secret acak minimal 32 karakter untuk `CRON_SECRET` di environment Vercel/hosting.
 - [ ] Buat secret Telegram yang hanya memakai `A-Z`, `a-z`, `0-9`, `_`, atau `-`, lalu simpan sebagai `TELEGRAM_WEBHOOK_SECRET`.
-- [ ] Pastikan kedua Vercel Cron `/cron/reminder` dan `/api/queue/work` muncul setelah deployment dan menggunakan `CRON_SECRET` yang sama.
+- [ ] Pastikan kedua Vercel Cron `/cron/reminder` dan `/cron/work` muncul setelah deployment dan menggunakan `CRON_SECRET` yang sama.
 - [x] Daftarkan ulang webhook Telegram ke `/telegram/webhook` agar `secret_token` baru dikirim pada setiap webhook (dikonfirmasi berhasil 16 Juli 2026).
 - [ ] Jalankan `composer install --no-dev --optimize-autoloader` pada build/deployment production.
 - [ ] Jalankan `php artisan optimize` pada hosting persisten; untuk Vercel pastikan file cache diarahkan ke `/tmp`.

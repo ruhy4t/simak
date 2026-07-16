@@ -13,8 +13,9 @@ class SecurityHardeningTest extends TestCase
     {
         config()->set('services.cron.token', 'test-cron-secret');
 
-        $this->getJson('/api/queue/work')->assertUnauthorized();
-        $this->withToken('wrong-token')->getJson('/api/queue/work')->assertUnauthorized();
+        $this->getJson('/cron/work')->assertUnauthorized();
+        $this->withToken('wrong-token')->getJson('/cron/work')->assertUnauthorized();
+        $this->getJson('/api/queue/work')->assertNotFound();
         $this->getJson('/cron/reminder/test-cron-secret')->assertNotFound();
     }
 
