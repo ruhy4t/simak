@@ -2,45 +2,50 @@
 
 namespace App\Helpers;
 
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\DB;
+use App\Jobs\SendTelegramJob;
 use App\Models\Setting;
+use App\Services\TelegramDeliveryService;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class NotificationHelper
 {
     /**
-     * Send Telegram notification via Bot API using cURL (no Guzzle required)
-     */
-    /**
-     * Send Telegram notification via Bot API using cURL with IP fallback
+     * Send a transactional notification immediately.
      */
     public static function sendTelegram(string $chatId, string $message): bool
     {
-        // OPTIMIZATION: Dispatch to Queue (Async)
         try {
-            \App\Jobs\SendTelegramJob::dispatch($chatId, $message);
-            return true; // Assume success for the caller
-        } catch (\Exception $e) {
-            Log::error("Failed to dispatch Telegram Job: " . $e->getMessage());
+            app(TelegramDeliveryService::class)->deliver($chatId, $message);
+
+            return true;
+        } catch (Throwable $e) {
+            Log::error('Telegram notification failed: '.$e->getMessage());
+
             return false;
         }
+    }
 
-        // OLD SYNCHRONOUS LOGIC (Disabled)
-        /*
-        $botToken = config('services.telegram.bot_token');
+    /**
+     * Queue bulk/non-urgent Telegram notifications for the scheduled worker.
+     */
+    public static function queueTelegram(string $chatId, string $message): bool
+    {
+        try {
+            SendTelegramJob::dispatch($chatId, $message);
 
-        if (empty($botToken) || empty($chatId)) {
-            Log::warning('Telegram notification skipped: missing bot token or chat ID');
+            return true;
+        } catch (Throwable $e) {
+            Log::error('Failed to dispatch Telegram job: '.$e->getMessage());
+
             return false;
         }
-
-        // ... (Remaining logic moved to Job)
-        */
     }
 
     /**
      * Send notification to all Dinas users about new submission
-     * Uses synchronous sending for reliability on shared hosting
+     * Uses immediate sending so new submissions are not delayed by the daily worker.
      */
     public static function notifyDinasNewSubmission(object $mutasi, string $type = 'keluar'): void
     {
@@ -53,10 +58,11 @@ class NotificationHelper
             ->where('is_active', 1)
             ->get();
 
-        Log::info("Found " . $dinasUsers->count() . " Dinas users with Telegram chat ID");
+        Log::info('Found '.$dinasUsers->count().' Dinas users with Telegram chat ID');
 
         if ($dinasUsers->isEmpty()) {
-            Log::warning("No Dinas users found with Telegram chat ID - skipping notification");
+            Log::warning('No Dinas users found with Telegram chat ID - skipping notification');
+
             return;
         }
 
@@ -85,19 +91,19 @@ class NotificationHelper
     public static function buildNewSubmissionMessage(object $mutasi, string $type = 'keluar'): string
     {
         $jenis = $type === 'masuk' ? 'Mutasi Masuk' : 'Mutasi Keluar';
-        $id = $mutasi->id_mutasi ?? '-';
-        $pengusul = $mutasi->pengusul ?? '-';
-        $sekolah = $type === 'masuk'
+        $id = self::escape((string) ($mutasi->id_mutasi ?? '-'));
+        $pengusul = self::escape((string) ($mutasi->pengusul ?? '-'));
+        $sekolah = self::escape((string) ($type === 'masuk'
             ? ($mutasi->nama_sekolah_tujuan ?? '-')
-            : ($mutasi->nama_sekolah_asal ?? '-');
+            : ($mutasi->nama_sekolah_asal ?? '-')));
 
         return "📥 <b>PENGAJUAN BARU</b>\n\n"
-            . "📋 Jenis: {$jenis}\n"
-            . "🆔 ID: {$id}\n"
-            . "🏫 Sekolah: {$sekolah}\n"
-            . "👤 Pengusul: {$pengusul}\n\n"
-            . "⏳ Status: <b>Menunggu Verifikasi</b>\n\n"
-            . "Silakan login ke SIMAK untuk memverifikasi.";
+            ."📋 Jenis: {$jenis}\n"
+            ."🆔 ID: {$id}\n"
+            ."🏫 Sekolah: {$sekolah}\n"
+            ."👤 Pengusul: {$pengusul}\n\n"
+            ."⏳ Status: <b>Menunggu Verifikasi</b>\n\n"
+            .'Silakan login ke SIMAK untuk memverifikasi.';
     }
 
     /**
@@ -106,8 +112,9 @@ class NotificationHelper
     public static function buildStatusChangeMessage(object $mutasi, string $status, string $type = 'keluar'): string
     {
         $jenis = $type === 'masuk' ? 'Mutasi Masuk' : 'Mutasi Keluar';
-        $id = $mutasi->id_mutasi ?? '-';
-        $namaSiswa = $mutasi->nama_murid ?? $mutasi->nama_siswa ?? 'Siswa';
+        $id = self::escape((string) ($mutasi->id_mutasi ?? '-'));
+        $namaSiswa = self::escape((string) ($mutasi->nama_murid ?? $mutasi->nama_siswa ?? 'Siswa'));
+        $escapedStatus = self::escape($status);
 
         $statusEmoji = match ($status) {
             'Disetujui Dinas' => '✅',
@@ -118,10 +125,10 @@ class NotificationHelper
         };
 
         $message = "{$statusEmoji} <b>UPDATE STATUS MUTASI</b>\n\n"
-            . "📋 Jenis: {$jenis}\n"
-            . "🆔 ID: {$id}\n"
-            . "👤 Siswa: {$namaSiswa}\n\n"
-            . "📊 Status: <b>{$status}</b>\n";
+            ."📋 Jenis: {$jenis}\n"
+            ."🆔 ID: {$id}\n"
+            ."👤 Siswa: {$namaSiswa}\n\n"
+            ."📊 Status: <b>{$escapedStatus}</b>\n";
 
         // Add specific instructions based on status
         switch ($status) {
@@ -129,7 +136,7 @@ class NotificationHelper
                 $message .= "\n✅ Data Anda telah disetujui!\nMohon tunggu penerbitan surat izin.";
                 break;
             case 'Perlu Perbaikan':
-                $catatan = $mutasi->catatan_berkas ?? '';
+                $catatan = self::escape((string) ($mutasi->catatan_berkas ?? ''));
                 $message .= "\n⚠️ Data perlu diperbaiki.\n";
                 if ($catatan) {
                     $message .= "\n📝 Catatan:\n{$catatan}\n";
@@ -147,14 +154,15 @@ class NotificationHelper
                 $message .= "\n✍️ Surat sedang dalam proses tanda tangan.\nMohon tunggu konfirmasi selanjutnya.";
                 break;
             case 'Selesai':
-                $nomor = $mutasi->nomor_surat_izin ?? '-';
+                $nomor = self::escape((string) ($mutasi->nomor_surat_izin ?? '-'));
                 $message .= "\n📄 Nomor Surat: {$nomor}\n"
-                    . "\n🎉 Surat sudah selesai!\n"
-                    . "Dapat diambil ke <b>Seksi Kurikulum SMP Bidang SMP Dinas Pendidikan Kota Bogor</b> atau bisa cek berkala di SIMAK untuk unduh/cetak surat.";
+                    ."\n🎉 Surat sudah selesai!\n"
+                    .'Dapat diambil ke <b>Seksi Kurikulum SMP Bidang SMP Dinas Pendidikan Kota Bogor</b> atau bisa cek berkala di SIMAK untuk unduh/cetak surat.';
                 break;
         }
 
         $message .= "\n\n---\nSIMAK - Sistem Informasi Mutasi";
+
         return $message;
     }
 
@@ -169,7 +177,7 @@ class NotificationHelper
             ->where('telegram_chat_id', '!=', '')
             ->first();
 
-        if (!$pengusul) {
+        if (! $pengusul) {
             return;
         }
 
@@ -190,7 +198,7 @@ class NotificationHelper
                 3 => 'Rabu',
                 4 => 'Kamis',
                 5 => 'Jumat',
-                6 => 'Sabtu'
+                6 => 'Sabtu',
             ];
 
             // Get allowed days
@@ -199,7 +207,7 @@ class NotificationHelper
                 return null;
             }
 
-            $allowedDayNames = array_map(fn($d) => $dayNames[$d] ?? '', $allowedDays);
+            $allowedDayNames = array_map(fn ($d) => $dayNames[$d] ?? '', $allowedDays);
             $daysText = implode(', ', array_filter($allowedDayNames));
 
             $info = "📅 Hari: {$daysText}";
@@ -213,7 +221,8 @@ class NotificationHelper
 
             return $info;
         } catch (\Exception $e) {
-            Log::warning("Failed to get service schedule: " . $e->getMessage());
+            Log::warning('Failed to get service schedule: '.$e->getMessage());
+
             return null;
         }
     }
@@ -231,8 +240,9 @@ class NotificationHelper
             return null;
         }
         if (str_starts_with($phone, '0')) {
-            $phone = '62' . substr($phone, 1);
+            $phone = '62'.substr($phone, 1);
         }
+
         return $phone;
     }
 
@@ -242,7 +252,7 @@ class NotificationHelper
      */
     public static function processWebhook(array $update): ?array
     {
-        if (!isset($update['message'])) {
+        if (! isset($update['message'])) {
             return null;
         }
 
@@ -251,23 +261,24 @@ class NotificationHelper
         $text = $message['text'] ?? '';
         $firstName = $message['from']['first_name'] ?? 'User';
 
-        if (!$chatId) {
+        if (! $chatId) {
             return null;
         }
 
         // Handle /start command
         if (str_starts_with($text, '/start')) {
-            $responseText = "👋 <b>Halo, {$firstName}!</b>\n\n"
-                . "🆔 <b>CHAT ID ANDA:</b>\n\n"
-                . "👉 <code>{$chatId}</code> 👈\n\n" // Emphasize with arrows and code block
-                . "📋 <b>CARA MENGHUBUNGKAN:</b>\n"
-                . "1. Salin Chat ID di atas\n"
-                . "2. Login ke Aplikasi SIMAK\n"
-                . "3. Masuk ke Menu <b>Profil Saya</b>\n"
-                . "4. Tempel di kolom <b>Telegram Chat ID</b>\n"
-                . "5. Klik Simpan\n\n"
-                . "✅ <i>Akun Anda akan terhubung untuk menerima notifikasi otomatis.</i>\n\n"
-                . "---\n<b>SIMAK - Dinas Pendidikan Kota Bogor</b>";
+            $escapedFirstName = self::escape((string) $firstName);
+            $responseText = "👋 <b>Halo, {$escapedFirstName}!</b>\n\n"
+                ."🆔 <b>CHAT ID ANDA:</b>\n\n"
+                ."👉 <code>{$chatId}</code> 👈\n\n" // Emphasize with arrows and code block
+                ."📋 <b>CARA MENGHUBUNGKAN:</b>\n"
+                ."1. Salin Chat ID di atas\n"
+                ."2. Login ke Aplikasi SIMAK\n"
+                ."3. Masuk ke Menu <b>Profil Saya</b>\n"
+                ."4. Tempel di kolom <b>Telegram Chat ID</b>\n"
+                ."5. Klik Simpan\n\n"
+                ."✅ <i>Akun Anda akan terhubung untuk menerima notifikasi otomatis.</i>\n\n"
+                ."---\n<b>SIMAK - Dinas Pendidikan Kota Bogor</b>";
 
             self::sendTelegram((string) $chatId, $responseText);
 
@@ -278,5 +289,10 @@ class NotificationHelper
         }
 
         return null;
+    }
+
+    private static function escape(string $value): string
+    {
+        return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
     }
 }

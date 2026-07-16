@@ -2,17 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\NotificationHelper;
+use App\Models\AuditLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
-use App\Models\AuditLog;
 
 class ProfileController extends Controller
 {
     public function index()
     {
         $user = Auth::user();
+
         return view('profile.index', compact('user'));
     }
 
@@ -50,7 +52,7 @@ class ProfileController extends Controller
                 'confirmed',
                 'min:8',
                 // Allow any characters, must have: lowercase, uppercase, digit, and at least one special char
-                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).+$/'
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).+$/',
             ],
         ], [
             'password.regex' => 'Password harus mengandung huruf besar, huruf kecil, angka, dan minimal 1 karakter khusus.',
@@ -58,7 +60,7 @@ class ProfileController extends Controller
         ]);
 
         // Verify current password
-        if (!Hash::check($request->current_password, $user->password)) {
+        if (! Hash::check($request->current_password, $user->password)) {
             return back()->withErrors(['current_password' => 'Password lama tidak sesuai.']);
         }
 
@@ -69,5 +71,32 @@ class ProfileController extends Controller
         AuditLog::log('PASSWORD_CHANGED', $user->username);
 
         return back()->with('success', 'Password berhasil diubah.');
+    }
+
+    public function testTelegram(Request $request)
+    {
+        $user = $request->user();
+        $chatId = (string) ($user->telegram_chat_id ?? '');
+
+        if ($chatId === '') {
+            return back()->withErrors([
+                'telegram_chat_id' => 'Simpan Telegram Chat ID sebelum mengirim notifikasi tes.',
+            ]);
+        }
+
+        $displayName = htmlspecialchars((string) $user->nama_pengguna, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $message = "✅ <b>NOTIFIKASI TES SIMAK</b>\n\n"
+            ."Halo, {$displayName}. Notifikasi Telegram akun Anda berfungsi dengan baik.\n\n"
+            .'— SIMAK Kota Bogor';
+
+        if (! NotificationHelper::sendTelegram($chatId, $message)) {
+            return back()->withErrors([
+                'telegram_chat_id' => 'Pesan tes gagal dikirim. Periksa Chat ID atau konfigurasi bot Telegram.',
+            ]);
+        }
+
+        AuditLog::log('TELEGRAM_TEST_SENT', $user->username);
+
+        return back()->with('success', 'Notifikasi tes berhasil dikirim ke Telegram Anda.');
     }
 }

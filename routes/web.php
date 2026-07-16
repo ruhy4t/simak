@@ -1,38 +1,51 @@
 <?php
 
+use App\Http\Controllers\AcademicYearController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ChangePasswordController;
 use App\Http\Controllers\CronController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DinasUserController;
+use App\Http\Controllers\HolidayController;
+use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\MutasiController;
 use App\Http\Controllers\MutasiMasukController;
-use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\PenandatanganController;
+use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\QueueWorkerController;
+use App\Http\Controllers\RegionController;
 use App\Http\Controllers\SatuanPendidikanController;
+use App\Http\Controllers\SecureFileController;
+use App\Http\Controllers\SettingController;
+use App\Http\Controllers\SystemStatusController;
+use App\Http\Controllers\TelegramController;
+use App\Http\Controllers\TemporaryUploadController;
 use App\Http\Controllers\UserManagementController;
+use App\Http\Middleware\EnsurePasswordChanged;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Route;
 
 // Official Telegram webhook. This exact path is the only Telegram CSRF exception.
-Route::post('/telegram/webhook', [\App\Http\Controllers\TelegramController::class, 'webhook']);
-Route::get('/telegram/set-webhook', [\App\Http\Controllers\TelegramController::class, 'setWebhook']);
-Route::get('/telegram/webhook-info', [\App\Http\Controllers\TelegramController::class, 'webhookInfo']);
+Route::post('/telegram/webhook', [TelegramController::class, 'webhook']);
+Route::get('/telegram/set-webhook', [TelegramController::class, 'setWebhook']);
+Route::get('/telegram/webhook-info', [TelegramController::class, 'webhookInfo']);
 
 // Cron Routes (For external cron service like cron-job.org)
 Route::get('/cron/reminder', [CronController::class, 'revisionReminder'])->middleware('cron.auth');
-Route::get('/cron/work', [\App\Http\Controllers\QueueWorkerController::class, 'work'])->middleware('cron.auth');
+Route::get('/cron/work', [QueueWorkerController::class, 'work'])->middleware('cron.auth');
 
 Route::middleware('guest')->group(function () {
-    Route::get('/', fn() => redirect()->route('login'));
+    Route::get('/', fn () => redirect()->route('login'));
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login']);
 });
 
 // Authenticated routes
-Route::middleware(['auth', \App\Http\Middleware\EnsurePasswordChanged::class])->group(function () {
+Route::middleware(['auth', EnsurePasswordChanged::class])->group(function () {
     // Force Password Change Routes
-    Route::get('/password/change', [\App\Http\Controllers\ChangePasswordController::class, 'show'])->name('password.change');
-    Route::post('/password/update', [\App\Http\Controllers\ChangePasswordController::class, 'update'])->name('password.update');
+    Route::get('/password/change', [ChangePasswordController::class, 'show'])->name('password.change');
+    Route::post('/password/update', [ChangePasswordController::class, 'update'])->name('password.update');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -57,13 +70,13 @@ Route::middleware(['auth', \App\Http\Middleware\EnsurePasswordChanged::class])->
         $required = ['bcmath', 'ctype', 'fileinfo', 'json', 'mbstring', 'openssl', 'pdo', 'tokenizer', 'xml', 'gd'];
         $missing = [];
         foreach ($required as $ext) {
-            if (!extension_loaded($ext)) {
+            if (! extension_loaded($ext)) {
                 $missing[] = $ext;
             }
         }
 
         // 2. Cek DomPDF Class
-        $dompdfStatus = class_exists(\Barryvdh\DomPDF\Facade\Pdf::class) ? 'Terinstall ✅' : 'Tidak Terbaca (Cek folder vendor) ❌';
+        $dompdfStatus = class_exists(Pdf::class) ? 'Terinstall ✅' : 'Tidak Terbaca (Cek folder vendor) ❌';
 
         // 3. Clear Cache (Opsional, uncomment jika perlu)
         // \Illuminate\Support\Facades\Artisan::call('optimize:clear');
@@ -83,6 +96,9 @@ Route::middleware(['auth', \App\Http\Middleware\EnsurePasswordChanged::class])->
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::put('/profile/password', [ProfileController::class, 'changePassword'])->name('profile.password');
+    Route::post('/profile/telegram/test', [ProfileController::class, 'testTelegram'])
+        ->middleware('throttle:6,1')
+        ->name('profile.telegram.test');
 
     // School Profile (For Sekolah/Operator)
     Route::prefix('sekolah')->name('sekolah.')->group(function () {
@@ -177,54 +193,52 @@ Route::middleware(['auth', \App\Http\Middleware\EnsurePasswordChanged::class])->
 
         // Penandatangan
         Route::get('/penandatangan', [PenandatanganController::class, 'index'])->name('penandatangan.index');
-        Route::get('penandatangan/trash', [App\Http\Controllers\PenandatanganController::class, 'trash'])->name('penandatangan.trash');
-        Route::resource('penandatangan', App\Http\Controllers\PenandatanganController::class)->except(['create', 'show', 'edit', 'destroy']);
-        Route::delete('penandatangan/{id}', [App\Http\Controllers\PenandatanganController::class, 'destroy'])->name('penandatangan.destroy');
-        Route::post('penandatangan/{id}/restore', [App\Http\Controllers\PenandatanganController::class, 'restore'])->name('penandatangan.restore');
-        Route::post('penandatangan/{id}/toggle', [App\Http\Controllers\PenandatanganController::class, 'toggleStatus'])->name('penandatangan.toggle');
+        Route::get('penandatangan/trash', [PenandatanganController::class, 'trash'])->name('penandatangan.trash');
+        Route::resource('penandatangan', PenandatanganController::class)->except(['create', 'show', 'edit', 'destroy']);
+        Route::delete('penandatangan/{id}', [PenandatanganController::class, 'destroy'])->name('penandatangan.destroy');
+        Route::post('penandatangan/{id}/restore', [PenandatanganController::class, 'restore'])->name('penandatangan.restore');
+        Route::post('penandatangan/{id}/toggle', [PenandatanganController::class, 'toggleStatus'])->name('penandatangan.toggle');
         Route::delete('penandatangan/{id}/signature', [PenandatanganController::class, 'deleteSignature'])->name('penandatangan.delete-signature');
 
-
-
         // Manajemen Wilayah (Regional Data)
-        Route::get('/admin/wilayah', [\App\Http\Controllers\RegionController::class, 'index'])->name('admin.regions.index');
-        Route::get('/admin/wilayah/{id}', [\App\Http\Controllers\RegionController::class, 'show'])->name('admin.regions.show');
-        Route::post('/admin/wilayah/sync', [\App\Http\Controllers\RegionController::class, 'sync'])->name('admin.regions.sync');
-        Route::post('/admin/wilayah', [\App\Http\Controllers\RegionController::class, 'store'])->name('admin.regions.store');
-        Route::delete('/admin/wilayah', [\App\Http\Controllers\RegionController::class, 'destroy'])->name('admin.regions.destroy');
+        Route::get('/admin/wilayah', [RegionController::class, 'index'])->name('admin.regions.index');
+        Route::get('/admin/wilayah/{id}', [RegionController::class, 'show'])->name('admin.regions.show');
+        Route::post('/admin/wilayah/sync', [RegionController::class, 'sync'])->name('admin.regions.sync');
+        Route::post('/admin/wilayah', [RegionController::class, 'store'])->name('admin.regions.store');
+        Route::delete('/admin/wilayah', [RegionController::class, 'destroy'])->name('admin.regions.destroy');
 
         // Permission Management (SuperAdmin only)
-        Route::get('/users/{user}/permissions', [\App\Http\Controllers\PermissionController::class, 'edit'])->name('permissions.edit');
-        Route::patch('/users/{user}/permissions', [\App\Http\Controllers\PermissionController::class, 'update'])->name('permissions.update');
+        Route::get('/users/{user}/permissions', [PermissionController::class, 'edit'])->name('permissions.edit');
+        Route::patch('/users/{user}/permissions', [PermissionController::class, 'update'])->name('permissions.update');
     });
 
     // SuperAdmin & Dinas routes (Settings)
     Route::middleware('role:Dinas,SuperAdmin')->group(function () {
-        Route::get('/pengaturan', [\App\Http\Controllers\SettingController::class, 'index'])->name('settings.index');
-        Route::post('/pengaturan', [\App\Http\Controllers\SettingController::class, 'update'])->name('settings.update');
-        Route::post('/pengaturan/tahun-pelajaran', [\App\Http\Controllers\AcademicYearController::class, 'store'])
+        Route::get('/pengaturan', [SettingController::class, 'index'])->name('settings.index');
+        Route::post('/pengaturan', [SettingController::class, 'update'])->name('settings.update');
+        Route::post('/pengaturan/tahun-pelajaran', [AcademicYearController::class, 'store'])
             ->name('academic-years.store');
-        Route::patch('/pengaturan/tahun-pelajaran/{academicYearId}/periode', [\App\Http\Controllers\AcademicYearController::class, 'updateSchedule'])
+        Route::patch('/pengaturan/tahun-pelajaran/{academicYearId}/periode', [AcademicYearController::class, 'updateSchedule'])
             ->name('academic-years.schedule.update');
-        Route::patch('/pengaturan/tahun-pelajaran/{academicYearId}/aktifkan', [\App\Http\Controllers\AcademicYearController::class, 'activate'])
+        Route::patch('/pengaturan/tahun-pelajaran/{academicYearId}/aktifkan', [AcademicYearController::class, 'activate'])
             ->name('academic-years.activate');
 
         // System Status
-        Route::get('/system-status', [\App\Http\Controllers\SystemStatusController::class, 'index'])->name('system.status');
-        Route::get('/system-status/refresh', [\App\Http\Controllers\SystemStatusController::class, 'refresh'])->name('system.status.refresh');
+        Route::get('/system-status', [SystemStatusController::class, 'index'])->name('system.status');
+        Route::get('/system-status/refresh', [SystemStatusController::class, 'refresh'])->name('system.status.refresh');
 
         // Holiday management
-        Route::post('/holidays', [\App\Http\Controllers\HolidayController::class, 'store'])->name('holidays.store');
-        Route::put('/holidays/{id}', [\App\Http\Controllers\HolidayController::class, 'update'])->name('holidays.update');
-        Route::delete('/holidays/{id}', [\App\Http\Controllers\HolidayController::class, 'destroy'])->name('holidays.destroy');
+        Route::post('/holidays', [HolidayController::class, 'store'])->name('holidays.store');
+        Route::put('/holidays/{id}', [HolidayController::class, 'update'])->name('holidays.update');
+        Route::delete('/holidays/{id}', [HolidayController::class, 'destroy'])->name('holidays.destroy');
 
         // Satuan Pendidikan Management
         Route::prefix('satuan-pendidikan')->name('satpen.')->group(function () {
-            Route::get('/', [\App\Http\Controllers\SatuanPendidikanController::class, 'manage'])->name('index');
-            Route::get('/create', [\App\Http\Controllers\SatuanPendidikanController::class, 'create'])->name('create');
-            Route::post('/', [\App\Http\Controllers\SatuanPendidikanController::class, 'store'])->name('store');
-            Route::get('/{id}/edit', [\App\Http\Controllers\SatuanPendidikanController::class, 'edit'])->name('edit');
-            Route::put('/{id}', [\App\Http\Controllers\SatuanPendidikanController::class, 'update'])->name('update');
+            Route::get('/', [SatuanPendidikanController::class, 'manage'])->name('index');
+            Route::get('/create', [SatuanPendidikanController::class, 'create'])->name('create');
+            Route::post('/', [SatuanPendidikanController::class, 'store'])->name('store');
+            Route::get('/{id}/edit', [SatuanPendidikanController::class, 'edit'])->name('edit');
+            Route::put('/{id}', [SatuanPendidikanController::class, 'update'])->name('update');
         });
     });
 
@@ -245,18 +259,18 @@ Route::middleware(['auth', \App\Http\Middleware\EnsurePasswordChanged::class])->
 
     // Secure File Access
     // Handles access to private documents
-    Route::get('/dokumen/lihat/{path}', [\App\Http\Controllers\SecureFileController::class, 'show'])
+    Route::get('/dokumen/lihat/{path}', [SecureFileController::class, 'show'])
         ->where('path', '.*') // Allow slashes in path
         ->name('dokumen.view');
 });
 
 // Keep old route for backward compatibility
 Route::middleware('auth')->group(function () {
-    Route::post('/ajax/upload-temp', [App\Http\Controllers\TemporaryUploadController::class, 'store'])->middleware('throttle:uploads')->name('api.upload-temp');
-    Route::post('/ajax/upload-temp-url', [App\Http\Controllers\TemporaryUploadController::class, 'generateUploadUrl'])->middleware('throttle:uploads')->name('api.upload-temp-url');
+    Route::post('/ajax/upload-temp', [TemporaryUploadController::class, 'store'])->middleware('throttle:uploads')->name('api.upload-temp');
+    Route::post('/ajax/upload-temp-url', [TemporaryUploadController::class, 'generateUploadUrl'])->middleware('throttle:uploads')->name('api.upload-temp-url');
     Route::match(['get', 'post'], '/ajax/debug-connection', function () {
         $user = request()->user();
-        if (!app()->isLocal() && (!$user || !in_array($user->role, ['Dinas', 'SuperAdmin'], true))) {
+        if (! app()->isLocal() && (! $user || ! in_array($user->role, ['Dinas', 'SuperAdmin'], true))) {
             abort(404);
         }
 
@@ -266,9 +280,9 @@ Route::middleware('auth')->group(function () {
             'timestamp' => now()->toIso8601String(),
             'method' => request()->method(),
             'url' => app()->isLocal() ? request()->fullUrl() : request()->path(),
-            'csrf_received' => request()->header('X-CSRF-TOKEN') ? 'yes' : 'no'
+            'csrf_received' => request()->header('X-CSRF-TOKEN') ? 'yes' : 'no',
         ]);
     });
-    Route::get('/mutasi', fn() => redirect()->route('mutasi.keluar.index'));
-    Route::post('/session/alive', fn() => response()->noContent())->name('session.alive');
+    Route::get('/mutasi', fn () => redirect()->route('mutasi.keluar.index'));
+    Route::post('/session/alive', fn () => response()->noContent())->name('session.alive');
 });

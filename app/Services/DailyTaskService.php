@@ -14,9 +14,7 @@ class DailyTaskService
 {
     private const CHUNK_SIZE = 100;
 
-    public function __construct(private readonly FileUploadService $files)
-    {
-    }
+    public function __construct(private readonly FileUploadService $files) {}
 
     /** @return array{status:string, sent_count:int, cancelled_count:int, executed_at:string, reason?:string} */
     public function run(?CarbonInterface $now = null): array
@@ -81,7 +79,7 @@ class DailyTaskService
 
                 foreach ($mutations as $mutation) {
                     $user = $users->get($mutation->pengusul);
-                    if ($user && NotificationHelper::sendTelegram(
+                    if ($user && NotificationHelper::queueTelegram(
                         (string) $user->telegram_chat_id,
                         $this->buildReminderMessage($mutation, $type, $now),
                     )) {
@@ -146,11 +144,11 @@ class DailyTaskService
         $daysRemaining = max(0, 30 - (int) CarbonImmutable::parse($mutation->updated_at)->diffInDays($now));
 
         return "⏰ <b>PENGINGAT: Perbaikan Dokumen</b>\n\n"
-            . "📋 Mutasi {$typeLabel}: <code>{$id}</code>\n"
-            . "📅 Diajukan: {$submittedAt}\n"
-            . "⚠️ Sisa waktu: <b>{$daysRemaining} hari</b>\n\n"
-            . "📝 <b>Catatan Dinas:</b>\n{$notes}\n\n"
-            . '🔔 Mohon segera perbaiki. Data akan otomatis dibatalkan setelah 30 hari.';
+            ."📋 Mutasi {$typeLabel}: <code>{$id}</code>\n"
+            ."📅 Diajukan: {$submittedAt}\n"
+            ."⚠️ Sisa waktu: <b>{$daysRemaining} hari</b>\n\n"
+            ."📝 <b>Catatan Dinas:</b>\n{$notes}\n\n"
+            .'🔔 Mohon segera perbaiki. Data akan otomatis dibatalkan setelah 30 hari.';
     }
 
     private function deleteMutationFiles(object $mutation, string $type): void

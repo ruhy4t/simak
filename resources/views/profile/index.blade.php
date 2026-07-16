@@ -136,6 +136,16 @@
                         <i class="bi bi-check-lg mr-1"></i> Simpan Perubahan
                     </button>
                 </form>
+
+                @if($user->telegram_chat_id)
+                    <form action="{{ route('profile.telegram.test') }}" method="POST" class="mt-3">
+                        @csrf
+                        <button type="submit"
+                            class="w-full border border-blue-600 text-blue-700 hover:bg-blue-50 font-medium py-2.5 rounded-lg transition">
+                            <i class="bi bi-send-check mr-1"></i> Kirim Notifikasi Tes
+                        </button>
+                    </form>
+                @endif
             </div>
 
             <!-- Change Password -->
