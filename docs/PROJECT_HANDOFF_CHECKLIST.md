@@ -42,7 +42,7 @@ Dokumen ini menjadi acuan saat pengembangan dilanjutkan. Centang pekerjaan hanya
 - [ ] Migrasikan inline script ke CSP nonce/hash, lalu hapus `'unsafe-inline'` dan `'unsafe-eval'` dari CSP.
 - [x] Hilangkan duplikasi route Telegram antara `web.php` dan `api.php`; URL webhook resmi: `/telegram/webhook`.
 - [ ] Tambahkan validasi kepemilikan dan metadata upload sementara sebelum file dipindahkan menjadi dokumen permanen.
-- [ ] Tambahkan secret scanning dan dependency audit pada CI.
+- [x] Tambahkan secret scanning dan dependency audit pada CI GitHub Actions.
 - [ ] Tinjau ulang kebijakan lockout login agar serangan tidak dapat mengunci akun korban hanya dengan mengetahui username.
 - [ ] Rotasi berkala token Telegram, credential database, B2 key, dan cron secret.
 

@@ -59,4 +59,15 @@ class ConfigurationTest extends TestCase
         $this->assertStringContainsString('normalNavigation(', $navigationScript);
         $this->assertStringContainsString("method: 'GET'", $navigationScript);
     }
+
+    public function test_ci_runs_secret_and_dependency_security_checks(): void
+    {
+        $workflow = (string) file_get_contents(base_path('.github/workflows/security.yml'));
+
+        $this->assertStringContainsString('gitleaks/gitleaks-action@v2', $workflow);
+        $this->assertStringContainsString('composer audit --locked', $workflow);
+        $this->assertStringContainsString('npm audit --omit=dev', $workflow);
+        $this->assertStringContainsString('pull_request:', $workflow);
+        $this->assertStringContainsString('schedule:', $workflow);
+    }
 }
