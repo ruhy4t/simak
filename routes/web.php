@@ -13,8 +13,7 @@ use App\Http\Controllers\SatuanPendidikanController;
 use App\Http\Controllers\UserManagementController;
 use Illuminate\Support\Facades\Route;
 
-// Public routes
-// Telegram Webhook (Bypass CSRF via Middleware)
+// Official Telegram webhook. This exact path is the only Telegram CSRF exception.
 Route::post('/telegram/webhook', [\App\Http\Controllers\TelegramController::class, 'webhook']);
 Route::get('/telegram/set-webhook', [\App\Http\Controllers\TelegramController::class, 'setWebhook']);
 Route::get('/telegram/webhook-info', [\App\Http\Controllers\TelegramController::class, 'webhookInfo']);

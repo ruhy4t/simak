@@ -26,7 +26,7 @@ class TelegramController extends Controller
      * Handle Telegram webhook for /start command
      * This endpoint receives updates from Telegram when user sends /start to the bot
      * 
-     * POST /api/telegram/webhook
+     * POST /telegram/webhook
      */
     public function webhook(Request $request)
     {
@@ -71,7 +71,7 @@ class TelegramController extends Controller
      * Set webhook URL for Telegram bot
      * Call this once to configure your bot to send updates to your webhook
      * 
-     * GET /api/telegram/set-webhook?url=https://yourdomain.com/api/telegram/webhook
+     * GET /telegram/set-webhook?url=https://yourdomain.com/telegram/webhook
      */
     public function setWebhook(Request $request)
     {
@@ -134,7 +134,7 @@ class TelegramController extends Controller
 
     /**
      * Get current webhook info
-     * GET /api/telegram/webhook-info
+     * GET /telegram/webhook-info
      */
     public function webhookInfo()
     {

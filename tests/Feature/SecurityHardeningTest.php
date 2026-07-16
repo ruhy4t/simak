@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Http\Middleware\VerifyCronToken;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 class SecurityHardeningTest extends TestCase
@@ -41,6 +42,16 @@ class SecurityHardeningTest extends TestCase
             ->postJson('/telegram/webhook', [])
             ->assertOk()
             ->assertJson(['ok' => true]);
+    }
+
+    public function test_telegram_has_one_official_webhook_route(): void
+    {
+        $webhookRoutes = collect(Route::getRoutes()->getRoutes())
+            ->filter(fn ($route) => $route->uri() === 'telegram/webhook');
+
+        $this->assertCount(1, $webhookRoutes);
+        $this->assertSame(['POST'], $webhookRoutes->first()->methods());
+        $this->postJson('/api/telegram/webhook')->assertNotFound();
     }
 
     public function test_telegram_clients_never_disable_tls_verification(): void

@@ -1,6 +1,6 @@
 # Checklist Handoff SIMAK
 
-Terakhir diperbarui: 15 Juli 2026
+Terakhir diperbarui: 16 Juli 2026
 
 Dokumen ini menjadi acuan saat pengembangan dilanjutkan. Centang pekerjaan hanya setelah kode, konfigurasi production, dan smoke test deployment selesai.
 
@@ -29,18 +29,18 @@ Dokumen ini menjadi acuan saat pengembangan dilanjutkan. Centang pekerjaan hanya
 - [ ] Buat secret acak minimal 32 karakter untuk `CRON_SECRET` di environment Vercel/hosting.
 - [ ] Buat secret Telegram yang hanya memakai `A-Z`, `a-z`, `0-9`, `_`, atau `-`, lalu simpan sebagai `TELEGRAM_WEBHOOK_SECRET`.
 - [ ] Pastikan kedua Vercel Cron `/cron/reminder` dan `/api/queue/work` muncul setelah deployment dan menggunakan `CRON_SECRET` yang sama.
-- [ ] Daftarkan ulang webhook Telegram agar `secret_token` baru dikirim pada setiap webhook.
+- [x] Daftarkan ulang webhook Telegram ke `/telegram/webhook` agar `secret_token` baru dikirim pada setiap webhook (dikonfirmasi berhasil 16 Juli 2026).
 - [ ] Jalankan `composer install --no-dev --optimize-autoloader` pada build/deployment production.
 - [ ] Jalankan `php artisan optimize` pada hosting persisten; untuk Vercel pastikan file cache diarahkan ke `/tmp`.
 - [ ] Jalankan seluruh automated test, build frontend, dan smoke test login/dashboard/upload/download setelah deployment.
-- [ ] Verifikasi `composer audit --locked` dan `npm audit --omit=dev` tetap menghasilkan nol advisory.
+- [x] Verifikasi `composer audit --locked` dan `npm audit --omit=dev` tetap menghasilkan nol advisory (diverifikasi ulang 16 Juli 2026).
 
 ## Prioritas lanjutan
 
 ### Keamanan
 
 - [ ] Migrasikan inline script ke CSP nonce/hash, lalu hapus `'unsafe-inline'` dan `'unsafe-eval'` dari CSP.
-- [ ] Hilangkan duplikasi route Telegram antara `web.php` dan `api.php`; tetapkan satu URL webhook resmi.
+- [x] Hilangkan duplikasi route Telegram antara `web.php` dan `api.php`; URL webhook resmi: `/telegram/webhook`.
 - [ ] Tambahkan validasi kepemilikan dan metadata upload sementara sebelum file dipindahkan menjadi dokumen permanen.
 - [ ] Tambahkan secret scanning dan dependency audit pada CI.
 - [ ] Tinjau ulang kebijakan lockout login agar serangan tidak dapat mengunci akun korban hanya dengan mengetahui username.
