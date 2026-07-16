@@ -1,0 +1,38 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        if (! Schema::hasColumn('users', 'telegram_chat_id')) {
+            Schema::table('users', function (Blueprint $table): void {
+                $table->string('telegram_chat_id', 50)->nullable()->after('no_kontak');
+            });
+        }
+
+        if (! Schema::hasIndex('users', 'idx_users_role_telegram')) {
+            Schema::table('users', function (Blueprint $table): void {
+                $table->index(['role', 'telegram_chat_id'], 'idx_users_role_telegram');
+            });
+        }
+    }
+
+    public function down(): void
+    {
+        if (Schema::hasIndex('users', 'idx_users_role_telegram')) {
+            Schema::table('users', function (Blueprint $table): void {
+                $table->dropIndex('idx_users_role_telegram');
+            });
+        }
+
+        if (Schema::hasColumn('users', 'telegram_chat_id')) {
+            Schema::table('users', function (Blueprint $table): void {
+                $table->dropColumn('telegram_chat_id');
+            });
+        }
+    }
+};

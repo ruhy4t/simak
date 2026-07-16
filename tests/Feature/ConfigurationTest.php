@@ -70,4 +70,14 @@ class ConfigurationTest extends TestCase
         $this->assertStringContainsString('pull_request:', $workflow);
         $this->assertStringContainsString('schedule:', $workflow);
     }
+
+    public function test_dashboard_does_not_trigger_daily_maintenance(): void
+    {
+        $route = collect(app('router')->getRoutes()->getRoutes())
+            ->first(fn ($route) => $route->getName() === 'dashboard');
+
+        $this->assertNotNull($route);
+        $this->assertNotContains('dailytasks', $route->gatherMiddleware());
+        $this->assertFileDoesNotExist(app_path('Http/Middleware/DailyTasksMiddleware.php'));
+    }
 }

@@ -48,9 +48,9 @@ Dokumen ini menjadi acuan saat pengembangan dilanjutkan. Centang pekerjaan hanya
 
 ### Performa dan operasional
 
-- [ ] Pindahkan reminder dan auto-cancel sepenuhnya dari middleware dashboard ke scheduled command/queued job.
-- [ ] Satukan logika reminder pada `CronController` dan `DailyTasksMiddleware` menjadi satu service agar tidak duplikatif.
-- [ ] Proses reminder dan auto-cancel dengan `chunkById` atau cursor untuk data besar.
+- [x] Pindahkan reminder dan auto-cancel sepenuhnya dari middleware dashboard ke scheduled command.
+- [x] Satukan logika reminder dan auto-cancel menjadi satu `DailyTaskService`.
+- [x] Proses reminder dan auto-cancel dengan `chunkById` untuk data besar.
 - [ ] Tambahkan jadwal pembersihan cache database yang sudah kedaluwarsa dan upload sementara yang terbengkalai.
 - [ ] Tambahkan observability untuk durasi request, query lambat, kegagalan queue, dan kegagalan Telegram.
 - [ ] Pertimbangkan Redis saat trafik dan concurrency sudah melebihi kemampuan cache/queue database.

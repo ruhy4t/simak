@@ -35,10 +35,7 @@ Route::middleware(['auth', \App\Http\Middleware\EnsurePasswordChanged::class])->
     Route::post('/password/update', [\App\Http\Controllers\ChangePasswordController::class, 'update'])->name('password.update');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-    // Dashboard (with daily tasks middleware for auto-reminders and auto-cancel)
-    Route::get('/dashboard', [DashboardController::class, 'index'])
-        ->middleware('dailytasks')
-        ->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Laporan Routes
     // Laporan Routes
