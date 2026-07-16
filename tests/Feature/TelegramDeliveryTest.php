@@ -63,4 +63,17 @@ class TelegramDeliveryTest extends TestCase
         $this->assertStringContainsString('Operator &amp; Admin', $message);
         $this->assertStringContainsString('SMP &lt;Unggul&gt;', $message);
     }
+
+    public function test_resubmission_notification_is_distinguished_from_new_submission(): void
+    {
+        $message = NotificationHelper::buildNewSubmissionMessage((object) [
+            'id_mutasi' => 'MM-001',
+            'pengusul' => 'operator',
+            'nama_sekolah_tujuan' => 'SMP Contoh',
+            'revision_count' => 2,
+        ], 'masuk');
+
+        $this->assertStringContainsString('PERBAIKAN DIKIRIM ULANG', $message);
+        $this->assertStringContainsString('Dikirim ulang setelah perbaikan', $message);
+    }
 }

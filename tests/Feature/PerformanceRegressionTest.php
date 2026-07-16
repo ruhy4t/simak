@@ -124,6 +124,37 @@ class PerformanceRegressionTest extends TestCase
         $this->assertTrue(Schema::hasTable('cache_locks'));
     }
 
+    public function test_submission_timeline_migration_backfills_existing_mutations(): void
+    {
+        foreach (['mutasi_keluar', 'mutasi_masuk'] as $tableName) {
+            Schema::create($tableName, function (Blueprint $table): void {
+                $table->string('id_mutasi')->primary();
+                $table->date('tanggal_pengajuan');
+                $table->timestamps();
+            });
+
+            DB::table($tableName)->insert([
+                'id_mutasi' => $tableName === 'mutasi_keluar' ? 'MK-001' : 'MM-001',
+                'tanggal_pengajuan' => '2026-07-01',
+                'created_at' => '2026-07-01 08:30:00',
+                'updated_at' => '2026-07-01 08:30:00',
+            ]);
+        }
+
+        $migration = require database_path('migrations/2026_07_16_120000_add_submission_timeline_to_mutasi_tables.php');
+        $migration->up();
+        $migration->up();
+
+        foreach (['mutasi_keluar', 'mutasi_masuk'] as $tableName) {
+            $mutation = DB::table($tableName)->first();
+
+            $this->assertTrue(Schema::hasColumn($tableName, 'last_submitted_at'));
+            $this->assertTrue(Schema::hasColumn($tableName, 'revision_count'));
+            $this->assertSame('2026-07-01 08:30:00', $mutation->last_submitted_at);
+            $this->assertSame(0, $mutation->revision_count);
+        }
+    }
+
     public function test_dashboard_available_years_are_reused_from_cache(): void
     {
         Schema::create('mutasi_keluar', function (Blueprint $table) {

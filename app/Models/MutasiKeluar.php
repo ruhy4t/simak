@@ -18,6 +18,8 @@ class MutasiKeluar extends Model
     protected $fillable = [
         'id_mutasi',
         'tanggal_pengajuan',
+        'last_submitted_at',
+        'revision_count',
         'nama_murid',
         'nisn',
         'nis',
@@ -51,6 +53,8 @@ class MutasiKeluar extends Model
 
     protected $casts = [
         'tanggal_pengajuan' => 'date',
+        'last_submitted_at' => 'datetime',
+        'revision_count' => 'integer',
         'tanggal_lahir' => 'date',
         'tanggal_surat_sekolah' => 'date',
         'ceklis_surat_sekolah' => 'boolean',
@@ -74,6 +78,12 @@ class MutasiKeluar extends Model
     public function scopeByStatus($query, $status)
     {
         return $query->where('status', $status);
+    }
+
+    public function scopeLatestSubmissionFirst($query)
+    {
+        return $query->orderByDesc('last_submitted_at')
+            ->orderByDesc('id_mutasi');
     }
 
     public function scopeSearch($query, $keyword)

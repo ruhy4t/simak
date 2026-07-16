@@ -15,7 +15,8 @@
                 <div class="flex items-center gap-2 mt-1 text-sm text-slate-500">
                     <span class="px-2 py-0.5 bg-slate-100 rounded-sm text-slate-600 font-mono">#{{ $mutasi->id_mutasi }}</span>
                     <span>•</span>
-                    <span>{{ \Carbon\Carbon::parse($mutasi->tanggal_pengajuan)->translatedFormat('j F Y') }}</span>
+                    <x-submission-date :original="$mutasi->tanggal_pengajuan" :latest="$mutasi->last_submitted_at ?? null"
+                        :revision-count="$mutasi->revision_count ?? 0" compact class="min-w-0" />
                 </div>
             </div>
 

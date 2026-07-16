@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -100,8 +101,11 @@ class MutasiMasukController extends Controller
         try {
             // Use Eloquent Model for relationships
             $query = \App\Models\MutasiMasuk::query()
-                ->with('siswa:id,id_mutasi,nama_murid,nisn,npsn_sekolah_asal,nama_sekolah_asal,kabupaten_kota_asal')
-                ->orderBy('id_mutasi', 'desc');
+                ->with('siswa:id,id_mutasi,nama_murid,nisn,npsn_sekolah_asal,nama_sekolah_asal,kabupaten_kota_asal');
+
+            $this->supportsSubmissionTimeline()
+                ? $query->latestSubmissionFirst()
+                : $query->orderByDesc('id_mutasi');
 
             // Role-based filtering
             if ($user->role === 'Operator') {
@@ -564,6 +568,7 @@ class MutasiMasukController extends Controller
             DB::table('mutasi_masuk')->insert([
                 'id_mutasi' => $idMutasi,
                 'tanggal_pengajuan' => now(),
+                ...($this->supportsSubmissionTimeline() ? ['last_submitted_at' => now()] : []),
                 'jumlah_siswa' => $jumlahSiswa,
                 'nomor_surat' => $this->sanitize($request->nomor_surat),
                 'tanggal_surat' => $request->tanggal_surat,
@@ -1343,6 +1348,11 @@ class MutasiMasukController extends Controller
                 'catatan_berkas' => null, // Clear notes
                 'updated_at' => now(),
             ];
+
+            if ($this->supportsSubmissionTimeline()) {
+                $updateData['last_submitted_at'] = now();
+                $updateData['revision_count'] = DB::raw('revision_count + 1');
+            }
 
             // Helper for deletion
             $deleteOldFile = function ($oldPath) {
@@ -2161,11 +2171,18 @@ class MutasiMasukController extends Controller
                 ? 'Disetujui Dinas'
                 : 'Menunggu Verifikasi Dinas';
 
-            DB::table('mutasi_masuk')->where('id_mutasi', $id)->update([
+            $headerUpdate = [
                 'status' => $newStatus,
                 'jumlah_siswa' => $studentCount,
+                'tanggal_pengajuan' => now(),
                 'updated_at' => now()
-            ]);
+            ];
+
+            if ($this->supportsSubmissionTimeline()) {
+                $headerUpdate['last_submitted_at'] = now();
+            }
+
+            DB::table('mutasi_masuk')->where('id_mutasi', $id)->update($headerUpdate);
 
             // Notify Dinas (if not Dinas submitter)
             if (!in_array($user->role, ['Dinas', 'SuperAdmin'])) {
@@ -2189,6 +2206,11 @@ class MutasiMasukController extends Controller
             Log::error("Finalize Draft Error: " . $e->getMessage());
             return $this->safeJsonError('Gagal mengirim pengajuan', $e);
         }
+    }
+
+    private function supportsSubmissionTimeline(): bool
+    {
+        return Schema::hasColumns('mutasi_masuk', ['last_submitted_at', 'revision_count']);
     }
 
     /**

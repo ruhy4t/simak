@@ -83,7 +83,7 @@
                         <tr>
                             @if(in_array(Auth::user()->role, ['Dinas', 'SuperAdmin']))
                                 <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
-                                    Tanggal</th>
+                                    Aktivitas Terakhir</th>
                                 <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">ID
                                     Mutasi</th>
                                 <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
@@ -96,7 +96,7 @@
                                 <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">ID
                                     Mutasi</th>
                                 <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
-                                    Tanggal</th>
+                                    Aktivitas Terakhir</th>
                                 <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Nomor
                                     Surat</th>
                                 <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
@@ -118,7 +118,8 @@
                                 @if(in_array(Auth::user()->role, ['Dinas', 'SuperAdmin']))
                                                     {{-- DINAS COLUMNS --}}
                                                     <td class="px-6 py-4 text-sm text-slate-600">
-                                                        {{ \Carbon\Carbon::parse($mutasi->tanggal_pengajuan)->translatedFormat('j F Y') }}
+                                                        <x-submission-date :original="$mutasi->tanggal_pengajuan"
+                                                            :latest="$mutasi->last_submitted_at ?? null" :revision-count="$mutasi->revision_count ?? 0" />
                                                     </td>
                                                     <td class="px-6 py-4 text-sm font-mono text-slate-500">
                                                         #{{ $mutasi->id_mutasi }}
@@ -164,7 +165,8 @@
                                         #{{ $mutasi->id_mutasi }}
                                     </td>
                                     <td class="px-6 py-4 text-sm text-slate-600">
-                                        {{ \Carbon\Carbon::parse($mutasi->tanggal_pengajuan)->translatedFormat('j F Y') }}
+                                        <x-submission-date :original="$mutasi->tanggal_pengajuan"
+                                            :latest="$mutasi->last_submitted_at ?? null" :revision-count="$mutasi->revision_count ?? 0" />
                                     </td>
                                     <td class="px-6 py-4 text-sm font-medium text-slate-800">
                                         {{ $mutasi->nomor_surat }}

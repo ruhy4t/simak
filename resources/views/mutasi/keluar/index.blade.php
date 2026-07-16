@@ -81,7 +81,7 @@
                         <thead class="sticky top-0 z-10 border-b border-slate-200 bg-slate-50/95">
                             <tr>
                                 <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
-                                    Tanggal</th>
+                                    Aktivitas Terakhir</th>
                                 <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">ID
                                     Mutasi</th>
                                 <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Siswa
@@ -102,7 +102,8 @@
                             @foreach($mutasiList as $mutasi)
                                 <tr class="transition-colors hover:bg-sky-50/40">
                                     <td class="px-6 py-4 whitespace-nowrap text-slate-600">
-                                        {{ \Carbon\Carbon::parse($mutasi->tanggal_pengajuan)->translatedFormat('j F Y') }}
+                                        <x-submission-date :original="$mutasi->tanggal_pengajuan"
+                                            :latest="$mutasi->last_submitted_at ?? null" :revision-count="$mutasi->revision_count ?? 0" />
                                     </td>
                                     <td class="px-6 py-4 text-slate-500 font-mono text-xs">
                                         #{{ $mutasi->id_mutasi }}

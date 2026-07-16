@@ -17,6 +17,8 @@ class MutasiMasuk extends Model
     protected $fillable = [
         'id_mutasi',
         'tanggal_pengajuan',
+        'last_submitted_at',
+        'revision_count',
         'jumlah_siswa',
         'nomor_surat',
         'tanggal_surat',
@@ -31,6 +33,8 @@ class MutasiMasuk extends Model
 
     protected $casts = [
         'tanggal_pengajuan' => 'date',
+        'last_submitted_at' => 'datetime',
+        'revision_count' => 'integer',
         'tanggal_surat' => 'date',
     ];
 
@@ -44,6 +48,12 @@ class MutasiMasuk extends Model
     public function scopeByPengusul($query, $username)
     {
         return $query->where('pengusul', $username);
+    }
+
+    public function scopeLatestSubmissionFirst($query)
+    {
+        return $query->orderByDesc('last_submitted_at')
+            ->orderByDesc('id_mutasi');
     }
 
     // ========== RELATIONSHIPS ==========

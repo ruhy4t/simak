@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
@@ -56,10 +57,13 @@ class MutasiController extends Controller
         $user = Auth::user();
 
         try {
-            $query = DB::table('mutasi_keluar')
+            $query = \App\Models\MutasiKeluar::query()
                 ->whereNull('deleted_at') // HIDE SOFT DELETED
-                ->where('status', '!=', 'Dibatalkan') // HIDE CANCELLED
-                ->orderBy('id_mutasi', 'desc');
+                ->where('status', '!=', 'Dibatalkan'); // HIDE CANCELLED
+
+            $this->supportsSubmissionTimeline()
+                ? $query->latestSubmissionFirst()
+                : $query->orderByDesc('id_mutasi');
 
             // Role-based filtering
             if ($user->role === 'Operator') {
@@ -487,6 +491,11 @@ class MutasiController extends Controller
             'updated_at' => now(),
         ];
 
+        if ($this->supportsSubmissionTimeline()) {
+            $updateData['last_submitted_at'] = now();
+            $updateData['revision_count'] = DB::raw('revision_count + 1');
+        }
+
         // Add file paths if new files uploaded
         foreach ($filePaths as $field => $path) {
             $updateData[$field] = $path;
@@ -778,6 +787,10 @@ class MutasiController extends Controller
                 'updated_at' => now(),
             ];
 
+            if ($this->supportsSubmissionTimeline()) {
+                $mutationData['last_submitted_at'] = now();
+            }
+
             if ($draft) {
                 DB::table('mutasi_keluar')
                     ->where('id_mutasi', $idMutasi)
@@ -1009,6 +1022,11 @@ class MutasiController extends Controller
         $successMessage = "Surat Keterangan Mutasi Keluar selesai.\n\nNomor: {$request->nomor_surat_izin}\nTanggal Selesai: " . \Carbon\Carbon::parse($request->tanggal_selesai)->translatedFormat('d F Y');
 
         return redirect()->route('mutasi.keluar.show', $id)->with('success', $successMessage);
+    }
+
+    private function supportsSubmissionTimeline(): bool
+    {
+        return Schema::hasColumns('mutasi_keluar', ['last_submitted_at', 'revision_count']);
     }
 
     /**

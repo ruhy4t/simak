@@ -96,12 +96,16 @@ class NotificationHelper
         $sekolah = self::escape((string) ($type === 'masuk'
             ? ($mutasi->nama_sekolah_tujuan ?? '-')
             : ($mutasi->nama_sekolah_asal ?? '-')));
+        $isResubmission = (int) ($mutasi->revision_count ?? 0) > 0;
+        $heading = $isResubmission ? 'PERBAIKAN DIKIRIM ULANG' : 'PENGAJUAN BARU';
+        $activity = $isResubmission ? 'Dikirim ulang setelah perbaikan' : 'Pengajuan baru';
 
-        return "📥 <b>PENGAJUAN BARU</b>\n\n"
+        return "📥 <b>{$heading}</b>\n\n"
             ."📋 Jenis: {$jenis}\n"
             ."🆔 ID: {$id}\n"
             ."🏫 Sekolah: {$sekolah}\n"
             ."👤 Pengusul: {$pengusul}\n\n"
+            ."🔄 Aktivitas: <b>{$activity}</b>\n"
             ."⏳ Status: <b>Menunggu Verifikasi</b>\n\n"
             .'Silakan login ke SIMAK untuk memverifikasi.';
     }

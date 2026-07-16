@@ -60,10 +60,9 @@
         <div class="bg-white rounded-2xl shadow-xs border border-slate-100 p-6 sm:p-8">
             <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
                 <div>
-                    <p class="text-sm font-medium text-slate-500 mb-1">Tanggal Pengajuan</p>
-                    <p class="font-semibold text-slate-900 text-lg">
-                        {{ \Carbon\Carbon::parse($mutasi->tanggal_pengajuan)->translatedFormat('j F Y') }}
-                    </p>
+                    <p class="text-sm font-medium text-slate-500 mb-1">Aktivitas Pengajuan</p>
+                    <x-submission-date :original="$mutasi->tanggal_pengajuan" :latest="$mutasi->last_submitted_at ?? null"
+                        :revision-count="$mutasi->revision_count ?? 0" />
                 </div>
                 <div>
                     <p class="text-sm font-medium text-slate-500 mb-1">Nomor Surat Pengantar</p>
