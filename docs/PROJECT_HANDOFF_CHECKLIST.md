@@ -28,10 +28,10 @@ Dokumen ini menjadi acuan saat pengembangan dilanjutkan. Centang pekerjaan hanya
 
 - [ ] Buat secret acak minimal 32 karakter untuk `CRON_SECRET` di environment Vercel/hosting.
 - [ ] Buat secret Telegram yang hanya memakai `A-Z`, `a-z`, `0-9`, `_`, atau `-`, lalu simpan sebagai `TELEGRAM_WEBHOOK_SECRET`.
-- [ ] Pastikan kedua Vercel Cron `/cron/reminder` dan `/cron/work` muncul setelah deployment dan menggunakan `CRON_SECRET` yang sama.
+- [x] Pastikan kedua Vercel Cron `/cron/reminder` dan `/cron/work` terdeploy dan menggunakan `CRON_SECRET` yang sama (keduanya terverifikasi `401` tanpa Bearer token pada 16 Juli 2026).
 - [x] Daftarkan ulang webhook Telegram ke `/telegram/webhook` agar `secret_token` baru dikirim pada setiap webhook (dikonfirmasi berhasil 16 Juli 2026).
-- [ ] Jalankan `composer install --no-dev --optimize-autoloader` pada build/deployment production.
-- [ ] Jalankan `php artisan optimize` pada hosting persisten; untuk Vercel pastikan file cache diarahkan ke `/tmp`.
+- [x] Jalankan `composer install --no-dev --optimize-autoloader` pada simulasi build production (diverifikasi 16 Juli 2026).
+- [x] Jalankan `php artisan optimize` pada hosting persisten; untuk Vercel pastikan file cache diarahkan ke `/tmp` (seluruh cache berhasil dibuat dan konfigurasi `/tmp` ada di `vercel.json`).
 - [ ] Jalankan seluruh automated test, build frontend, dan smoke test login/dashboard/upload/download setelah deployment.
 - [x] Verifikasi `composer audit --locked` dan `npm audit --omit=dev` tetap menghasilkan nol advisory (diverifikasi ulang 16 Juli 2026).
 
@@ -53,7 +53,7 @@ Dokumen ini menjadi acuan saat pengembangan dilanjutkan. Centang pekerjaan hanya
 - [x] Proses reminder dan auto-cancel dengan `chunkById` untuk data besar.
 - [x] Tambahkan jadwal pembersihan cache database yang kedaluwarsa dan upload sementara yang terbengkalai.
 - [x] Tambahkan observability untuk durasi request, query lambat, kegagalan queue, dan kegagalan Telegram.
-- [ ] Pertimbangkan Redis saat trafik dan concurrency sudah melebihi kemampuan cache/queue database.
+- [x] Evaluasi Redis: tetap gunakan cache/queue database pada beban saat ini; ambang migrasi didokumentasikan di `docs/PRODUCTION_OPERATIONS.md`.
 
 ## Catatan kompatibilitas
 
@@ -63,4 +63,5 @@ Dokumen ini menjadi acuan saat pengembangan dilanjutkan. Centang pekerjaan hanya
 - Endpoint cron sekarang menolak request tanpa Bearer token dengan status `401`.
 - Webhook Telegram production menolak request jika `TELEGRAM_WEBHOOK_SECRET` belum dikonfigurasi.
 - Upload sementara lama yang belum memakai namespace `temp_uploads/{user_id}/` harus diunggah ulang setelah deployment hardening upload.
-- Perubahan CSP penuh belum dilakukan karena Alpine dan sejumlah inline script perlu dimigrasikan terlebih dahulu agar UI tidak rusak.
+- Script CSP sudah memakai nonce/hash dan Alpine CSP build; `script-src` tidak lagi memerlukan `'unsafe-inline'` atau `'unsafe-eval'`.
+- Prosedur deployment, rotasi credential, smoke test, dan ambang migrasi Redis ada di `docs/PRODUCTION_OPERATIONS.md`.
