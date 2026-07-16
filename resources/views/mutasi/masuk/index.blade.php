@@ -3,36 +3,37 @@
 @section('title', 'Daftar Mutasi Masuk')
 
 @section('content')
-    <div class="space-y-8 animate-fade-in-up">
+    <div class="space-y-6">
         <!-- Header -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-                <h1 class="text-2xl font-bold text-slate-900">Mutasi Masuk</h1>
-                <p class="text-slate-500 mt-1">Daftar pengajuan siswa pindahan masuk ke sekolah</p>
+                <p class="text-xs font-semibold uppercase tracking-[0.18em] text-sky-600">Pengajuan Siswa</p>
+                <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-950">Mutasi Masuk</h1>
+                <p class="mt-1 text-sm text-slate-500">Daftar pengajuan siswa pindahan masuk ke sekolah</p>
             </div>
             @if(in_array(Auth::user()->role, ['Sekolah', 'Operator', 'Dinas', 'SuperAdmin']))
                 <a href="{{ route('mutasi.masuk.create') }}"
-                    class="inline-flex items-center justify-center px-4 py-2.5 bg-sky-500 hover:bg-sky-600 text-white rounded-xl shadow-lg shadow-sky-500/30 transition-all hover:-translate-y-0.5 font-medium group">
-                    <i class="bi bi-plus-lg mr-2 group-hover:rotate-90 transition-transform"></i>
+                    class="inline-flex items-center justify-center rounded-lg bg-sky-600 px-4 py-2.5 font-semibold text-white transition-colors hover:bg-sky-700">
+                    <i class="bi bi-plus-lg mr-2"></i>
                     Buat Mutasi Masuk
                 </a>
             @endif
         </div>
 
         <!-- Filters -->
-        <div class="bg-white rounded-2xl shadow-xs border border-slate-100 p-1.5">
+        <div class="rounded-xl border border-slate-200/80 bg-white p-4">
             <form action="{{ route('mutasi.masuk.index') }}" method="GET" id="filterForm"
-                class="flex flex-col sm:flex-row gap-2">
+                class="flex flex-col gap-3 sm:flex-row">
                 <div class="relative flex-1">
                     <i class="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
                     <input type="text" name="search" id="searchInput" value="{{ request('search') }}"
-                        class="w-full pl-11 pr-4 py-2.5 bg-slate-50 border-0 rounded-xl focus:ring-2 focus:ring-sky-100 focus:bg-white transition text-sm text-slate-700 placeholder:text-slate-400"
+                        class="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-11 pr-4 text-sm text-slate-700 placeholder:text-slate-400 focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
                         placeholder="Cari nomor surat, nama sekolah...">
                 </div>
                 <div class="relative sm:w-64">
                     <i class="bi bi-filter absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
                     <select name="status" id="statusFilter"
-                        class="w-full pl-11 pr-8 py-2.5 bg-slate-50 border-0 rounded-xl focus:ring-2 focus:ring-sky-100 focus:bg-white transition text-sm text-slate-700 cursor-pointer appearance-none">
+                        class="w-full cursor-pointer appearance-none rounded-lg border border-slate-200 bg-white py-2.5 pl-11 pr-8 text-sm text-slate-700 focus:border-sky-400 focus:ring-2 focus:ring-sky-100">
                         <option value="">Semua Status</option>
                         <option value="Draft" {{ request('status') == 'Draft' ? 'selected' : '' }}>📝 Draft (Belum Selesai)</option>
                         <option value="Menunggu Verifikasi Dinas" {{ request('status') == 'Menunggu Verifikasi Dinas' ? 'selected' : '' }}>Menunggu Verifikasi</option>
@@ -46,21 +47,39 @@
                     </select>
                 </div>
                 <button type="submit"
-                    class="px-6 py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl transition font-medium shadow-md">
-                    Cari
+                    class="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-slate-800">
+                    <i class="bi bi-search"></i> Terapkan
                 </button>
+                @if(request('search') || request('status'))
+                    <a href="{{ route('mutasi.masuk.index') }}"
+                        class="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50">
+                        <i class="bi bi-x-lg"></i> Reset
+                    </a>
+                @endif
             </form>
         </div>
 
         <!-- Table -->
-        <div class="bg-white rounded-2xl shadow-xs border border-slate-100 overflow-hidden" x-data="{ 
-                                 showModal: false, 
-                                 modalTitle: '', 
+        <div class="overflow-hidden rounded-xl border border-slate-200/80 bg-white" x-data="{
+                                 showModal: false,
+                                 modalTitle: '',
                                  siswaList: []
                              }">
+            <div class="flex flex-col gap-2 border-b border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <h2 class="font-bold text-slate-900">Daftar Pengajuan</h2>
+                    <p class="text-xs text-slate-500">{{ method_exists($mutasiList, 'total') ? number_format($mutasiList->total()) : number_format(count($mutasiList)) }} data ditemukan</p>
+                </div>
+                @if(request('search') || request('status'))
+                    <span class="inline-flex self-start items-center gap-1.5 rounded-full bg-sky-50 px-2.5 py-1 text-xs font-semibold text-sky-700">
+                        <i class="bi bi-funnel"></i> Filter aktif
+                    </span>
+                @endif
+            </div>
             <div class="overflow-x-auto">
-                <table class="w-full">
-                    <thead class="bg-slate-50 border-b border-slate-100">
+                <table class="w-full min-w-[900px] text-sm">
+                    <caption class="sr-only">Daftar pengajuan mutasi masuk</caption>
+                    <thead class="sticky top-0 z-10 border-b border-slate-200 bg-slate-50/95">
                         <tr>
                             @if(in_array(Auth::user()->role, ['Dinas', 'SuperAdmin']))
                                 <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
@@ -92,9 +111,9 @@
                             </th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-50">
+                    <tbody class="divide-y divide-slate-100">
                         @forelse($mutasiList as $mutasi)
-                            <tr class="hover:bg-slate-50/80 transition-colors group">
+                            <tr class="transition-colors hover:bg-sky-50/40">
 
                                 @if(in_array(Auth::user()->role, ['Dinas', 'SuperAdmin']))
                                                     {{-- DINAS COLUMNS --}}
@@ -190,31 +209,14 @@
                                 @endif
 
                                 <td class="px-6 py-4">
-                                    @php
-                                        $statusMap = [
-                                            'Draft' => ['bg' => 'bg-gray-100', 'text' => 'text-gray-700', 'ring-3' => 'ring-gray-500/20', 'icon' => 'bi-pencil-square'],
-                                            'Menunggu Verifikasi Dinas' => ['bg' => 'bg-amber-100', 'text' => 'text-amber-800', 'ring-3' => 'ring-amber-600/20', 'icon' => 'bi-hourglass-split'],
-                                            'Disetujui Dinas' => ['bg' => 'bg-emerald-100', 'text' => 'text-emerald-800', 'ring-3' => 'ring-emerald-600/20', 'icon' => 'bi-check-circle'],
-                                            'Proses TTD' => ['bg' => 'bg-indigo-100', 'text' => 'text-indigo-800', 'ring-3' => 'ring-indigo-600/20', 'icon' => 'bi-pen'],
-                                            'Selesai' => ['bg' => 'bg-sky-100', 'text' => 'text-sky-800', 'ring-3' => 'ring-sky-600/20', 'icon' => 'bi-check-all'],
-                                            'Perlu Perbaikan' => ['bg' => 'bg-rose-100', 'text' => 'text-rose-800', 'ring-3' => 'ring-rose-600/20', 'icon' => 'bi-exclamation-circle'],
-                                            'Dibatalkan' => ['bg' => 'bg-slate-200', 'text' => 'text-slate-600', 'ring-3' => 'ring-slate-500/20', 'icon' => 'bi-x-circle'],
-                                        ];
-                                        $defaultStatus = ['bg' => 'bg-slate-100', 'text' => 'text-slate-700', 'ring-3' => 'ring-slate-600/20', 'icon' => 'bi-circle'];
-                                        $statusConfig = $statusMap[$mutasi->status] ?? $defaultStatus;
-                                    @endphp
-                                    <span
-                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium {{ $statusConfig['bg'] }} {{ $statusConfig['text'] }} ring-1 ring-inset {{ $statusConfig['ring-3'] }}">
-                                        <i class="bi {{ $statusConfig['icon'] }}"></i>
-                                        {{ $mutasi->status }}
-                                    </span>
+                                    <x-status-badge :status="$mutasi->status" />
                                 </td>
                                 <td class="px-6 py-4 text-center">
                                     <div class="flex items-center justify-center gap-2">
                                         {{-- Resume Draft Button --}}
                                         @if($mutasi->status === 'Draft')
                                             <a href="{{ route('mutasi.masuk.draft.resume', $mutasi->id_mutasi) }}"
-                                                class="inline-flex items-center justify-center px-3 py-1.5 rounded-lg bg-amber-500 text-white hover:bg-amber-600 shadow-md shadow-amber-500/20 transition-all hover:-translate-y-0.5 text-sm font-medium gap-1"
+                                                class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-amber-500 px-3 py-2 text-sm font-semibold text-white hover:bg-amber-600"
                                                 title="Lanjutkan Pengisian">
                                                 <i class="bi bi-pencil-square"></i>
                                                 Lanjutkan
@@ -224,30 +226,31 @@
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit"
-                                                    class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-red-500! text-white! hover:bg-red-600 shadow-md shadow-red-500/20 transition-all hover:-translate-y-0.5 text-sm font-medium gap-1"
+                                                    class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50"
                                                     title="Hapus Draft">
                                                     <i class="bi bi-trash-fill"></i>
                                                 </button>
                                             </form>
                                         @else
                                             <a href="{{ route('mutasi.masuk.show', $mutasi->id_mutasi) }}"
-                                                class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-blue-600 text-white hover:bg-blue-700 shadow-md shadow-blue-500/20 transition-all hover:-translate-y-0.5"
+                                                class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700"
                                                 title="Lihat Detail">
                                                 <i class="bi bi-eye"></i>
+                                                <span>Detail</span>
                                             </a>
 
                                             @if($mutasi->status === 'Selesai')
                                                 @if($mutasi->file_arsip_scan)
                                                     <a href="{{ route('dokumen.view', ['path' => $mutasi->file_arsip_scan]) }}"
                                                         target="_blank"
-                                                        class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-green-600 text-white hover:bg-green-700 shadow-md shadow-green-500/20 transition-all hover:-translate-y-0.5"
+                                                        class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-emerald-200 text-emerald-600 hover:bg-emerald-50"
                                                         title="Lihat Arsip Digital">
                                                         <i class="bi bi-file-earmark-check"></i>
                                                     </a>
                                                 @elseif(in_array(Auth::user()->role, ['Dinas', 'SuperAdmin']))
                                                     <div x-data="{ openPrint: false }" class="relative inline-block">
                                                         <button @click="openPrint = !openPrint" @click.outside="openPrint = false"
-                                                            class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 shadow-md shadow-emerald-500/20 transition-all hover:-translate-y-0.5"
+                                                            class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700"
                                                             title="Cetak Surat">
                                                             <i class="bi bi-printer"></i>
                                                         </button>
