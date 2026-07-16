@@ -39,7 +39,7 @@ Dokumen ini menjadi acuan saat pengembangan dilanjutkan. Centang pekerjaan hanya
 
 ### Keamanan
 
-- [ ] Migrasikan inline script ke CSP nonce/hash, lalu hapus `'unsafe-inline'` dan `'unsafe-eval'` dari CSP.
+- [x] Migrasikan inline script ke CSP nonce/hash, lalu hapus `'unsafe-inline'` dan `'unsafe-eval'` dari `script-src` CSP.
 - [x] Hilangkan duplikasi route Telegram antara `web.php` dan `api.php`; URL webhook resmi: `/telegram/webhook`.
 - [x] Tambahkan validasi kepemilikan, usia, ukuran, MIME, dan ekstensi upload sementara sebelum file dipindahkan menjadi dokumen permanen.
 - [x] Tambahkan secret scanning dan dependency audit pada CI GitHub Actions.

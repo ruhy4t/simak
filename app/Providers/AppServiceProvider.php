@@ -2,17 +2,18 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\URL;
-use Illuminate\Support\Facades\Gate;
-use Carbon\Carbon;
 use App\Models\User;
 use App\Policies\UserPolicy;
+use Carbon\Carbon;
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Queue\Events\JobFailed;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\URL;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -23,6 +24,14 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        Blade::precompiler(function (string $template): string {
+            return preg_replace_callback(
+                '/<script\b(?![^>]*\bnonce\s*=)/i',
+                fn (array $match): string => $match[0].' nonce="{{ request()->attributes->get(\'csp_nonce\') }}"',
+                $template
+            ) ?? $template;
+        });
+
         // Force HTTPS in production (required for Vercel)
         if (config('app.env') === 'production') {
             URL::forceScheme('https');
