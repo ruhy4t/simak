@@ -62,12 +62,11 @@
             background: #94a3b8;
         }
 
-        /* Glass/Modern Sidebar */
+        /* Calm, high-contrast application sidebar */
         .glass-sidebar {
-            background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
-            border-right: 1px solid rgba(255, 255, 255, 0.05);
-            width: 18rem;
-            /* 72 equivalent */
+            background: #111827;
+            border-right: 1px solid rgba(148, 163, 184, 0.14);
+            width: 17rem;
         }
 
         /* Layout Fixes (Force without Tailwind Build) */
@@ -75,22 +74,21 @@
             display: flex;
             flex-direction: column;
             min-height: 100vh;
-            transition: all 0.3s ease;
+            transition: margin 0.2s ease;
         }
 
         @media (min-width: 1024px) {
             .main-wrapper {
-                margin-left: 18rem;
-                /* Match sidebar width */
+                margin-left: 17rem;
             }
         }
 
         /* Active States */
         .nav-item-active {
-            background: linear-gradient(90deg, #0ea5e9 0%, #0284c7 100%);
-            box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+            background: rgba(14, 165, 233, 0.13);
+            box-shadow: inset 3px 0 0 #38bdf8;
             color: white !important;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(56, 189, 248, 0.12);
         }
 
         .nav-item-inactive {
@@ -98,7 +96,7 @@
         }
 
         .nav-item-inactive:hover {
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.04);
             color: #f1f5f9;
         }
 
@@ -178,7 +176,7 @@
     @stack('styles')
 </head>
 
-<body class="bg-slate-50 font-sans antialiased text-slate-800">
+<body class="bg-[#f6f8fb] font-sans antialiased text-slate-800">
 
     <div id="simak-navigation-progress" aria-hidden="true"></div>
 
@@ -204,15 +202,15 @@
             <aside
                 class="hidden lg:flex lg:flex-col glass-sidebar text-white fixed h-screen z-30 transition-all duration-300">
                 <!-- Logo -->
-                <div class="p-8 pb-6">
+                <div class="px-6 pt-7 pb-5">
                     <div class="flex items-center gap-4">
                         <div
-                            class="w-12 h-12 bg-linear-to-br from-white/10 to-white/5 rounded-2xl border border-white/10 flex items-center justify-center shadow-inner">
-                            <i class="bi bi-building text-2xl text-sky-400"></i>
+                            class="w-11 h-11 bg-sky-400/10 rounded-xl border border-sky-300/10 flex items-center justify-center">
+                            <i class="bi bi-building text-xl text-sky-400"></i>
                         </div>
                         <div>
-                            <h1 class="text-xl font-bold tracking-tight text-white">SIMAK</h1>
-                            <p class="text-xs text-slate-400 font-medium tracking-wide">Kota Bogor</p>
+                            <h1 class="text-lg font-bold tracking-tight text-white">SIMAK</h1>
+                            <p class="text-[11px] text-slate-400 font-medium tracking-wide">Kota Bogor</p>
                         </div>
                     </div>
                 </div>
@@ -361,7 +359,6 @@
             </aside>
 
             <!-- Main Content -->
-            {{-- Added lg:ml-72 to account for fixed sidebar width 18rem (72) --}}
             <div class="flex-1 flex flex-col main-wrapper min-h-screen transition-all duration-300">
 
                 <!-- Top Bar (Mobile) -->
@@ -383,7 +380,7 @@
                 <!-- Page Content -->
                 <main id="simak-page-content"
                     data-simak-navigation-safe="{{ request()->routeIs(...$simakAjaxSafeRoutes) ? 'true' : 'false' }}"
-                    class="flex-1 p-4 lg:p-8 {{ $maxWidth ?? 'max-w-full' }} mx-auto w-full page-enter">
+                    class="flex-1 p-4 sm:p-6 lg:p-8 {{ $maxWidth ?? 'max-w-[1680px]' }} mx-auto w-full page-enter">
 
                     <!-- Notification Modals (Alpine) -->
                     @if(session('success'))

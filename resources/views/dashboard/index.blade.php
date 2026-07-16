@@ -3,15 +3,16 @@
 @section('title', 'Dashboard')
 
 @section('content')
-    <div class="space-y-8 animate-fade-in-up">
+    <div class="space-y-7">
         <!-- Header -->
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-                <h1 class="text-2xl font-bold text-slate-900">Dashboard Overview</h1>
-                <p class="text-slate-500 mt-1">Selamat datang kembali, <span class="font-semibold text-sky-600">{{ $user->nama_pengguna ?? $user->username }}</span>!</p>
+                <p class="text-xs font-semibold uppercase tracking-[0.18em] text-sky-600">Pusat Kendali</p>
+                <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Ringkasan Dashboard</h1>
+                <p class="mt-1.5 text-sm text-slate-500">Selamat datang, <span class="font-semibold text-slate-700">{{ $user->nama_pengguna ?? $user->username }}</span>. Berikut kondisi layanan terbaru.</p>
             </div>
-            <div class="inline-flex items-center px-4 py-2 bg-white border border-slate-200 rounded-xl shadow-xs text-sm text-slate-500">
-                <i class="bi bi-calendar3 mr-2 text-slate-400"></i>
+            <div class="inline-flex items-center self-start px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-500">
+                <i class="bi bi-calendar3 mr-2 text-sky-500"></i>
                 {{ now()->translatedFormat('l, j F Y') }}
             </div>
         </div>
@@ -109,69 +110,129 @@
             @enderror
         </section>
 
-        <!-- Mutasi Masuk Stats -->
-        <div class="space-y-4">
-            <h2 class="text-lg font-semibold text-slate-800 flex items-center gap-2 px-1">
-                <i class="bi bi-box-arrow-in-right text-sky-500"></i>
-                Statistik Mutasi Masuk
-            </h2>
-            <div class="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4">
-                {{-- Helper Component for Stats Card --}}
-                @foreach([
-                    ['label' => 'Total', 'value' => $statsMasuk['total'], 'icon' => 'bi-archive', 'color' => 'slate'],
-                    ['label' => 'Siswa', 'value' => $statsMasuk['total_siswa'], 'icon' => 'bi-people', 'color' => 'indigo'],
-                    ['label' => 'Menunggu', 'value' => $statsMasuk['menunggu'], 'icon' => 'bi-hourglass-split', 'color' => 'amber'],
-                    ['label' => 'Perbaikan', 'value' => $statsMasuk['perbaikan'], 'icon' => 'bi-exclamation-triangle', 'color' => 'rose'],
-                    ['label' => 'Disetujui', 'value' => $statsMasuk['disetujui'], 'icon' => 'bi-check-circle', 'color' => 'emerald'],
-                    ['label' => 'Proses TTD', 'value' => $statsMasuk['proses_ttd'] ?? 0, 'icon' => 'bi-pen', 'color' => 'violet'],
-                    ['label' => 'Selesai', 'value' => $statsMasuk['selesai'], 'icon' => 'bi-check-all', 'color' => 'sky']
-                ] as $stat)
-                <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group">
-                    <div class="flex flex-col h-full justify-between gap-3">
-                        <div class="w-10 h-10 rounded-xl bg-{{ $stat['color'] }}-50 text-{{ $stat['color'] }}-500 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                            <i class="bi {{ $stat['icon'] }} text-lg"></i>
-                        </div>
-                        <div>
-                            <p class="text-xs text-slate-400 font-medium uppercase tracking-wider">{{ $stat['label'] }}</p>
-                            <p class="text-2xl font-bold text-slate-800 mt-1">{{ number_format($stat['value']) }}</p>
-                        </div>
-                    </div>
-                </div>
-                @endforeach
-            </div>
-        </div>
+        @php
+            $overviewStats = [
+                [
+                    'label' => 'Total Pengajuan',
+                    'value' => ($statsMasuk['total'] ?? 0) + ($statsKeluar['total'] ?? 0),
+                    'hint' => 'Masuk dan keluar',
+                    'icon' => 'bi-files',
+                    'iconClass' => 'bg-slate-100 text-slate-600',
+                ],
+                [
+                    'label' => 'Menunggu Verifikasi',
+                    'value' => ($statsMasuk['menunggu'] ?? 0) + ($statsKeluar['menunggu'] ?? 0),
+                    'hint' => 'Perlu ditindaklanjuti',
+                    'icon' => 'bi-hourglass-split',
+                    'iconClass' => 'bg-amber-50 text-amber-600',
+                ],
+                [
+                    'label' => 'Perlu Perbaikan',
+                    'value' => ($statsMasuk['perbaikan'] ?? 0) + ($statsKeluar['perbaikan'] ?? 0),
+                    'hint' => 'Menunggu pembaruan',
+                    'icon' => 'bi-exclamation-triangle',
+                    'iconClass' => 'bg-rose-50 text-rose-600',
+                ],
+                [
+                    'label' => 'Selesai',
+                    'value' => ($statsMasuk['selesai'] ?? 0) + ($statsKeluar['selesai'] ?? 0),
+                    'hint' => 'Dokumen diterbitkan',
+                    'icon' => 'bi-check2-circle',
+                    'iconClass' => 'bg-emerald-50 text-emerald-600',
+                ],
+            ];
 
-        <!-- Mutasi Keluar Stats -->
-        <div class="space-y-4">
-            <h2 class="text-lg font-semibold text-slate-800 flex items-center gap-2 px-1">
-                <i class="bi bi-box-arrow-right text-orange-500"></i>
-                Statistik Mutasi Keluar
-            </h2>
-            <div class="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4">
-                 @foreach([
-                    ['label' => 'Total', 'value' => $statsKeluar['total'], 'icon' => 'bi-archive', 'color' => 'slate'],
-                    ['label' => 'Menunggu', 'value' => $statsKeluar['menunggu'], 'icon' => 'bi-hourglass-split', 'color' => 'amber'],
-                    ['label' => 'Perbaikan', 'value' => $statsKeluar['perbaikan'], 'icon' => 'bi-exclamation-triangle', 'color' => 'rose'],
-                    ['label' => 'Disetujui', 'value' => $statsKeluar['disetujui'], 'icon' => 'bi-check-circle', 'color' => 'emerald'],
-                    ['label' => 'Proses TTD', 'value' => $statsKeluar['proses_ttd'] ?? 0, 'icon' => 'bi-pen', 'color' => 'violet'],
-                    ['label' => 'Selesai', 'value' => $statsKeluar['selesai'], 'icon' => 'bi-check-all', 'color' => 'sky']
-                ] as $stat)
-                <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group">
-                    <div class="flex flex-col h-full justify-between gap-3">
-                        <div class="w-10 h-10 rounded-xl bg-{{ $stat['color'] }}-50 text-{{ $stat['color'] }}-500 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                            <i class="bi {{ $stat['icon'] }} text-lg"></i>
+            $mutationSummaries = [
+                [
+                    'label' => 'Mutasi Masuk',
+                    'description' => number_format($statsMasuk['total_siswa'] ?? 0).' siswa tercatat',
+                    'total' => $statsMasuk['total'] ?? 0,
+                    'icon' => 'bi-box-arrow-in-right',
+                    'iconClass' => 'bg-sky-50 text-sky-600',
+                    'statuses' => [
+                        ['label' => 'Menunggu', 'value' => $statsMasuk['menunggu'] ?? 0, 'dot' => 'bg-amber-500'],
+                        ['label' => 'Perbaikan', 'value' => $statsMasuk['perbaikan'] ?? 0, 'dot' => 'bg-rose-500'],
+                        ['label' => 'Disetujui', 'value' => $statsMasuk['disetujui'] ?? 0, 'dot' => 'bg-sky-500'],
+                        ['label' => 'Proses TTD', 'value' => $statsMasuk['proses_ttd'] ?? 0, 'dot' => 'bg-violet-500'],
+                        ['label' => 'Selesai', 'value' => $statsMasuk['selesai'] ?? 0, 'dot' => 'bg-emerald-500'],
+                    ],
+                ],
+                [
+                    'label' => 'Mutasi Keluar',
+                    'description' => 'Pengajuan perpindahan keluar',
+                    'total' => $statsKeluar['total'] ?? 0,
+                    'icon' => 'bi-box-arrow-right',
+                    'iconClass' => 'bg-indigo-50 text-indigo-600',
+                    'statuses' => [
+                        ['label' => 'Menunggu', 'value' => $statsKeluar['menunggu'] ?? 0, 'dot' => 'bg-amber-500'],
+                        ['label' => 'Perbaikan', 'value' => $statsKeluar['perbaikan'] ?? 0, 'dot' => 'bg-rose-500'],
+                        ['label' => 'Disetujui', 'value' => $statsKeluar['disetujui'] ?? 0, 'dot' => 'bg-sky-500'],
+                        ['label' => 'Proses TTD', 'value' => $statsKeluar['proses_ttd'] ?? 0, 'dot' => 'bg-violet-500'],
+                        ['label' => 'Selesai', 'value' => $statsKeluar['selesai'] ?? 0, 'dot' => 'bg-emerald-500'],
+                    ],
+                ],
+            ];
+        @endphp
+
+        <section aria-labelledby="overview-heading" class="space-y-4">
+            <div class="flex items-end justify-between gap-4 px-0.5">
+                <div>
+                    <h2 id="overview-heading" class="text-base font-bold text-slate-900">Ikhtisar Layanan</h2>
+                    <p class="mt-0.5 text-sm text-slate-500">Angka utama pada periode {{ strtolower($dateFilter['label']) }}</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                @foreach($overviewStats as $stat)
+                    <article class="rounded-xl border border-slate-200/80 bg-white p-5">
+                        <div class="flex items-start justify-between gap-4">
+                            <div>
+                                <p class="text-sm font-medium text-slate-500">{{ $stat['label'] }}</p>
+                                <p class="mt-2 text-3xl font-bold tracking-tight text-slate-950">{{ number_format($stat['value']) }}</p>
+                                <p class="mt-1 text-xs text-slate-400">{{ $stat['hint'] }}</p>
+                            </div>
+                            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg {{ $stat['iconClass'] }}">
+                                <i class="bi {{ $stat['icon'] }} text-lg"></i>
+                            </span>
                         </div>
-                        <div>
-                            <p class="text-xs text-slate-400 font-medium uppercase tracking-wider">{{ $stat['label'] }}</p>
-                            <p class="text-2xl font-bold text-slate-800 mt-1">{{ number_format($stat['value']) }}</p>
+                    </article>
+                @endforeach
+            </div>
+        </section>
+
+        <section class="grid grid-cols-1 gap-4 xl:grid-cols-2" aria-label="Rincian mutasi">
+            @foreach($mutationSummaries as $summary)
+                <article class="rounded-xl border border-slate-200/80 bg-white p-5 sm:p-6">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex items-center gap-3">
+                            <span class="flex h-10 w-10 items-center justify-center rounded-lg {{ $summary['iconClass'] }}">
+                                <i class="bi {{ $summary['icon'] }} text-lg"></i>
+                            </span>
+                            <div>
+                                <h2 class="font-bold text-slate-900">{{ $summary['label'] }}</h2>
+                                <p class="text-xs text-slate-500">{{ $summary['description'] }}</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-2xl font-bold tracking-tight text-slate-950">{{ number_format($summary['total']) }}</p>
+                            <p class="text-[11px] font-medium uppercase tracking-wider text-slate-400">Total</p>
                         </div>
                     </div>
-                </div>
-                @endforeach
-                 {{-- Spacer for grid alignment if needed --}} 
-                 <div class="hidden xl:block bg-transparent"></div>
-            </div>
-        </div>
+
+                    <div class="mt-5 grid grid-cols-2 gap-x-5 gap-y-3 border-t border-slate-100 pt-4 sm:grid-cols-5">
+                        @foreach($summary['statuses'] as $status)
+                            <div>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="h-1.5 w-1.5 rounded-full {{ $status['dot'] }}"></span>
+                                    <p class="text-xs text-slate-500">{{ $status['label'] }}</p>
+                                </div>
+                                <p class="mt-1 pl-3 text-base font-bold text-slate-800">{{ number_format($status['value']) }}</p>
+                            </div>
+                        @endforeach
+                    </div>
+                </article>
+            @endforeach
+        </section>
 
         <!-- Interactive Charts -->
         <section class="grid grid-cols-1 xl:grid-cols-3 gap-6">
