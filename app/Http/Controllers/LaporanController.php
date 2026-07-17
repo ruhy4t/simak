@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AcademicYear;
 use App\Models\MutasiKeluar;
 use App\Models\MutasiMasuk;
 use App\Models\Penandatangan;
 use App\Models\SatuanPendidikan;
+use App\Services\CohortReportService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -434,13 +436,52 @@ class LaporanController extends Controller
     }
 
     /**
+     * Display aggregate opening-to-closing student cohort reconciliation.
+     */
+    public function kohort(Request $request, CohortReportService $cohortService)
+    {
+        abort_unless($cohortService->available(), 503, 'Fitur laporan kohort belum siap. Jalankan migrasi database.');
+
+        $user = Auth::user();
+        $academicYears = AcademicYear::query()->orderByDesc('name')->get();
+        $academicYear = $academicYears->firstWhere('id', $request->integer('academic_year'))
+            ?? $academicYears->firstWhere('is_active', true)
+            ?? $academicYears->first();
+
+        abort_unless($academicYear, 404, 'Tahun pelajaran belum tersedia.');
+
+        $schools = collect();
+        $school = null;
+        if (in_array($user->role, ['Sekolah', 'Operator'], true)) {
+            $school = $user->sekolah;
+            abort_unless($school, 404, 'Data sekolah tidak ditemukan.');
+        } else {
+            $schools = SatuanPendidikan::query()
+                ->whereHas('studentCounts', fn ($query) => $query->where('academic_year_id', $academicYear->id))
+                ->orderBy('nama')
+                ->get(['id', 'npsn', 'nama']);
+            if ($request->filled('school')) {
+                $school = $schools->firstWhere('id', $request->integer('school'));
+                abort_unless($school, 404, 'Satuan pendidikan tidak ditemukan.');
+            }
+        }
+
+        $cohort = $cohortService->report($academicYear, $school?->id);
+
+        return view('laporan.kohort.index', compact(
+            'academicYears', 'academicYear', 'schools', 'school', 'cohort'
+        ));
+    }
+
+    /**
      * Display city-wide mutation trends without requiring authentication.
      */
-    public function publicTren(Request $request)
+    public function publicTren(Request $request, CohortReportService $cohortService)
     {
         $validated = $request->validate([
             'year' => ['nullable', 'integer', 'min:2020', 'max:'.date('Y')],
             'month' => ['nullable', 'integer', 'between:1,12'],
+            'academic_year' => ['nullable', 'integer', 'min:1'],
         ]);
 
         $year = (int) ($validated['year'] ?? date('Y'));
@@ -453,8 +494,28 @@ class LaporanController extends Controller
             fn () => $this->getTrendData($year, $month, null)
         );
 
+        $cohortYears = collect();
+        $cohortYear = null;
+        $cohort = null;
+        if ($cohortService->available()) {
+            $cohortYears = AcademicYear::query()->orderByDesc('name')->get();
+            $cohortYear = $cohortYears->firstWhere('id', (int) ($validated['academic_year'] ?? 0))
+                ?? $cohortYears->firstWhere('is_active', true)
+                ?? $cohortYears->first();
+
+            if ($cohortYear) {
+                $cohort = Cache::remember(
+                    "public.statistics.cohort.v1.{$cohortYear->id}",
+                    now()->addMinutes(30),
+                    fn () => $cohortService->report($cohortYear)
+                );
+            }
+        }
+
         return response()
-            ->view('public.statistics', compact('chartData', 'year', 'month'))
+            ->view('public.statistics', compact(
+                'chartData', 'year', 'month', 'cohortYears', 'cohortYear', 'cohort'
+            ))
             ->header('Cache-Control', 'public, max-age=300, s-maxage=1800');
     }
 

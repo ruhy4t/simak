@@ -28,9 +28,15 @@ class StudentCountRolloverService
                 (int) $row->satuan_pendidikan_id,
                 (int) $row->grade
             ));
+        $hasClosingCounts = Schema::hasColumns('satuan_pendidikan_student_counts', [
+            'closing_male_count',
+            'closing_female_count',
+            'closing_confirmed_at',
+        ]);
 
         $incoming = $this->incomingTotals($fromYear);
         $outgoing = $this->outgoingTotals($fromYear);
+        $nonMutationOutgoing = $this->nonMutationOutgoingTotals($fromYear);
         $now = now();
         $rows = [];
 
@@ -41,7 +47,19 @@ class StudentCountRolloverService
                 foreach (['L' => 'male_count', 'P' => 'female_count'] as $gender => $column) {
                     $mutationKey = $this->mutationKey((string) $school->npsn, $sourceGrade, $gender);
                     $opening = (int) ($countRow->{$column} ?? 0);
-                    $final = max(0, $opening + (int) ($incoming[$mutationKey] ?? 0) - (int) ($outgoing[$mutationKey] ?? 0));
+                    $closingColumn = $gender === 'L' ? 'closing_male_count' : 'closing_female_count';
+                    $hasConfirmedClosing = $hasClosingCounts
+                        && $countRow?->closing_confirmed_at !== null
+                        && $countRow?->{$closingColumn} !== null;
+                    $final = $hasConfirmedClosing
+                        ? (int) $countRow->{$closingColumn}
+                        : max(
+                            0,
+                            $opening
+                                + (int) ($incoming[$mutationKey] ?? 0)
+                                - (int) ($outgoing[$mutationKey] ?? 0)
+                                - (int) ($nonMutationOutgoing[$mutationKey] ?? 0)
+                        );
 
                     $rowKey = $this->countKey((int) $school->id, $targetGrade);
                     if (! isset($rows[$rowKey])) {
@@ -115,6 +133,26 @@ class StudentCountRolloverService
                 'mutasi_masuk_siswa.kelas',
                 'mutasi_masuk_siswa.jenis_kelamin'
             )
+            ->get());
+    }
+
+    private function nonMutationOutgoingTotals(AcademicYear $academicYear): Collection
+    {
+        if (! Schema::hasTable('non_mutation_student_exits')) {
+            return collect();
+        }
+
+        return $this->indexMutationTotals(DB::table('non_mutation_student_exits as exits')
+            ->join('satuan_pendidikan as schools', 'schools.id', '=', 'exits.satuan_pendidikan_id')
+            ->select(
+                'schools.npsn',
+                'exits.grade as kelas',
+                'exits.gender as jenis_kelamin',
+                DB::raw('COUNT(*) as total')
+            )
+            ->where('exits.academic_year_id', $academicYear->id)
+            ->whereIn('exits.grade', [7, 8])
+            ->groupBy('schools.npsn', 'exits.grade', 'exits.gender')
             ->get());
     }
 

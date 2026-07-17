@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-    @php($canEditStudentCounts = !$selectedAcademicYear || !$selectedAcademicYear->isClosed())
+    @php($canEditStudentCounts = !$selectedAcademicYear || (!$selectedAcademicYear->isClosed() && !$closingCountsLocked))
     @php($canEditGrade7 = $canEditStudentCounts)
     <div class="max-w-full mx-auto space-y-8">
 
@@ -103,7 +103,9 @@
                                     @endforelse
                                 </select>
                                 <p class="text-xs text-blue-600 mt-2 font-medium">
-                                    @if($canEditStudentCounts)
+                                    @if($closingCountsLocked)
+                                        * Data awal tidak dapat diubah karena data akhir tahun ini sudah dikunci.
+                                    @elseif($canEditStudentCounts)
                                         * Sekolah mengisi kelas VII. Kelas VIII dan IX berasal dari kenaikan kelas dan hanya dapat dikoreksi Dinas.
                                     @else
                                         * Tahun pelajaran ini sudah ditutup dan hanya dapat dilihat.
@@ -182,6 +184,15 @@
                         class="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg rounded-xl shadow-lg transform active:scale-95 transition-all flex items-center justify-center gap-2">
                         <i class="bi bi-check-circle-fill"></i> SIMPAN PERUBAHAN PROFIL
                     </button>
+
+                    <a href="{{ route('sekolah.closing-counts', ['academic_year' => $selectedAcademicYear?->name]) }}"
+                        class="flex w-full items-center justify-between rounded-xl border-2 border-emerald-200 bg-emerald-50 p-5 text-emerald-900 transition hover:border-emerald-400 hover:bg-emerald-100">
+                        <span>
+                            <span class="block font-extrabold">Isi Data Akhir Aktual</span>
+                            <span class="mt-1 block text-xs text-emerald-700">Rekonsiliasi kohort tanpa nama siswa atau dokumen.</span>
+                        </span>
+                        <i class="bi bi-arrow-right-circle-fill text-2xl"></i>
+                    </a>
                 </div>
 
                 <!-- RIGHT COLUMN -->

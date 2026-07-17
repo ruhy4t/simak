@@ -10,6 +10,7 @@ use App\Http\Controllers\HolidayController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\MutasiController;
 use App\Http\Controllers\MutasiMasukController;
+use App\Http\Controllers\NonMutationStudentExitController;
 use App\Http\Controllers\PenandatanganController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProfileController;
@@ -52,6 +53,15 @@ Route::middleware(['auth', EnsurePasswordChanged::class])->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+    Route::prefix('siswa-keluar-non-mutasi')->name('non-mutation-exits.')->group(function () {
+        Route::get('/', [NonMutationStudentExitController::class, 'index'])->name('index');
+        Route::get('/tambah', [NonMutationStudentExitController::class, 'create'])->name('create');
+        Route::post('/', [NonMutationStudentExitController::class, 'store'])->name('store');
+        Route::get('/{nonMutationExit}/edit', [NonMutationStudentExitController::class, 'edit'])->name('edit');
+        Route::put('/{nonMutationExit}', [NonMutationStudentExitController::class, 'update'])->name('update');
+        Route::delete('/{nonMutationExit}', [NonMutationStudentExitController::class, 'destroy'])->name('destroy');
+    });
+
     // Laporan Routes
     // Laporan Routes
     Route::prefix('laporan')->name('laporan.')->group(function () {
@@ -60,6 +70,7 @@ Route::middleware(['auth', EnsurePasswordChanged::class])->group(function () {
         Route::get('/rekap/print', [LaporanController::class, 'printRekap'])->name('rekap.print');
         Route::get('/rekap/excel', [LaporanController::class, 'exportRekapExcel'])->name('rekap.excel');
         Route::get('/tren', [LaporanController::class, 'tren'])->name('tren');
+        Route::get('/kohort', [LaporanController::class, 'kohort'])->name('kohort');
         Route::get('/komprehensif/print', [LaporanController::class, 'printKomprehensif'])->name('cetak-komprehensif');
         Route::get('/nominatif', [LaporanController::class, 'nominatif'])->name('nominatif');
         Route::get('/nominatif/print', [LaporanController::class, 'printNominatif'])->name('nominatif.print');
@@ -106,6 +117,8 @@ Route::middleware(['auth', EnsurePasswordChanged::class])->group(function () {
     Route::prefix('sekolah')->name('sekolah.')->group(function () {
         Route::get('/profil', [SatuanPendidikanController::class, 'editProfile'])->name('profile');
         Route::put('/profil', [SatuanPendidikanController::class, 'updateProfile'])->name('profile.update');
+        Route::get('/data-akhir', [SatuanPendidikanController::class, 'editClosingCounts'])->name('closing-counts');
+        Route::post('/data-akhir', [SatuanPendidikanController::class, 'storeClosingCounts'])->name('closing-counts.store');
     });
 
     // Mutasi Keluar

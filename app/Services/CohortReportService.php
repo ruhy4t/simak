@@ -1,0 +1,275 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\AcademicYear;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+
+class CohortReportService
+{
+    public function available(): bool
+    {
+        return Schema::hasTable('academic_years')
+            && Schema::hasTable('satuan_pendidikan_student_counts')
+            && Schema::hasColumns('satuan_pendidikan_student_counts', [
+                'closing_male_count',
+                'closing_female_count',
+                'closing_confirmed_at',
+            ]);
+    }
+
+    /**
+     * Build an aggregate cohort report without exposing student identities.
+     */
+    public function report(AcademicYear $academicYear, ?int $schoolId = null): array
+    {
+        if (! $this->available()) {
+            return $this->emptyReport();
+        }
+
+        $countQuery = DB::table('satuan_pendidikan_student_counts as counts')
+            ->join('satuan_pendidikan as schools', 'schools.id', '=', 'counts.satuan_pendidikan_id')
+            ->where('counts.academic_year_id', $academicYear->id)
+            ->whereIn('counts.grade', [7, 8, 9])
+            ->select([
+                'counts.satuan_pendidikan_id',
+                'schools.npsn',
+                'counts.grade',
+                'counts.male_count',
+                'counts.female_count',
+                'counts.closing_male_count',
+                'counts.closing_female_count',
+                'counts.closing_confirmed_at',
+            ]);
+
+        if ($schoolId) {
+            $countQuery->where('counts.satuan_pendidikan_id', $schoolId);
+        }
+
+        $countRows = $countQuery->get();
+        $npsns = $countRows->pluck('npsn')->filter()->unique()->values();
+        $incoming = $this->incomingTotals($academicYear, $npsns);
+        $outgoing = $this->outgoingTotals($academicYear, $npsns);
+        $nonMutationOutgoing = $this->nonMutationOutgoingTotals($academicYear, $npsns);
+
+        $rows = collect();
+        foreach ([7, 8, 9] as $grade) {
+            foreach (['L' => 'Laki-laki', 'P' => 'Perempuan'] as $gender => $genderLabel) {
+                $rows->push([
+                    'grade' => $grade,
+                    'gender' => $gender,
+                    'gender_label' => $genderLabel,
+                    'opening' => 0,
+                    'incoming' => 0,
+                    'outgoing' => 0,
+                    'non_mutation_outgoing' => 0,
+                    'expected' => 0,
+                    'actual' => 0,
+                    'unexplained_exit' => 0,
+                    'other_addition' => 0,
+                    'reported_units' => 0,
+                    'missing_units' => 0,
+                    'reported_opening' => 0,
+                    'reported_incoming' => 0,
+                    'reported_outgoing' => 0,
+                    'reported_non_mutation_outgoing' => 0,
+                    'reported_expected' => 0,
+                ]);
+            }
+        }
+        $rows = $rows->keyBy(fn (array $row) => $this->rowKey($row['grade'], $row['gender']));
+
+        foreach ($countRows as $count) {
+            foreach (['L' => ['male_count', 'closing_male_count'], 'P' => ['female_count', 'closing_female_count']] as $gender => [$openingColumn, $closingColumn]) {
+                $rowKey = $this->rowKey((int) $count->grade, $gender);
+                $row = $rows[$rowKey];
+                $mutationKey = $this->mutationKey((string) $count->npsn, (int) $count->grade, $gender);
+                $opening = (int) $count->{$openingColumn};
+                $incomingCount = (int) ($incoming[$mutationKey] ?? 0);
+                $outgoingCount = (int) ($outgoing[$mutationKey] ?? 0);
+                $nonMutationOutgoingCount = (int) ($nonMutationOutgoing[$mutationKey] ?? 0);
+                $expected = $opening + $incomingCount - $outgoingCount - $nonMutationOutgoingCount;
+                $isReported = $count->closing_confirmed_at !== null && $count->{$closingColumn} !== null;
+
+                $row['opening'] += $opening;
+                $row['incoming'] += $incomingCount;
+                $row['outgoing'] += $outgoingCount;
+                $row['non_mutation_outgoing'] += $nonMutationOutgoingCount;
+                $row['expected'] += $expected;
+
+                if ($isReported) {
+                    $actual = (int) $count->{$closingColumn};
+                    $row['actual'] += $actual;
+                    $row['reported_opening'] += $opening;
+                    $row['reported_incoming'] += $incomingCount;
+                    $row['reported_outgoing'] += $outgoingCount;
+                    $row['reported_non_mutation_outgoing'] += $nonMutationOutgoingCount;
+                    $row['reported_expected'] += $expected;
+                    $row['unexplained_exit'] += max(0, $expected - $actual);
+                    $row['other_addition'] += max(0, $actual - $expected);
+                    $row['reported_units']++;
+                } else {
+                    $row['missing_units']++;
+                }
+
+                $rows[$rowKey] = $row;
+            }
+        }
+
+        $rows = $rows->values();
+        $summary = [];
+        foreach (['opening', 'incoming', 'outgoing', 'non_mutation_outgoing', 'expected', 'actual', 'unexplained_exit', 'other_addition'] as $field) {
+            $summary[$field] = (int) $rows->sum($field);
+        }
+        $reportedSummary = [];
+        foreach (['opening', 'incoming', 'outgoing', 'non_mutation_outgoing', 'expected'] as $field) {
+            $reportedSummary[$field] = (int) $rows->sum("reported_{$field}");
+        }
+        $reportedSummary['actual'] = $summary['actual'];
+        $reportedSummary['unexplained_exit'] = $summary['unexplained_exit'];
+        $reportedSummary['other_addition'] = $summary['other_addition'];
+
+        $schoolCount = $countRows->pluck('satuan_pendidikan_id')->unique()->count();
+        $reportedSchoolCount = $countRows
+            ->groupBy('satuan_pendidikan_id')
+            ->filter(fn (Collection $schoolRows) => $schoolRows->count() === 3
+                && $schoolRows->every(fn (object $row) => $row->closing_confirmed_at !== null))
+            ->count();
+
+        return [
+            'rows' => $rows->all(),
+            'summary' => $summary,
+            'reported_summary' => $reportedSummary,
+            'school_count' => $schoolCount,
+            'reported_school_count' => $reportedSchoolCount,
+            'missing_school_count' => max(0, $schoolCount - $reportedSchoolCount),
+            'is_complete' => $schoolCount > 0 && $reportedSchoolCount === $schoolCount,
+        ];
+    }
+
+    private function incomingTotals(AcademicYear $academicYear, Collection $npsns): Collection
+    {
+        if ($npsns->isEmpty() || ! Schema::hasTable('mutasi_masuk') || ! Schema::hasTable('mutasi_masuk_siswa')) {
+            return collect();
+        }
+
+        $query = DB::table('mutasi_masuk')
+            ->join('mutasi_masuk_siswa', 'mutasi_masuk_siswa.id_mutasi', '=', 'mutasi_masuk.id_mutasi')
+            ->select(
+                'mutasi_masuk.npsn_sekolah_tujuan as npsn',
+                'mutasi_masuk_siswa.kelas',
+                'mutasi_masuk_siswa.jenis_kelamin',
+                DB::raw('COUNT(*) as total')
+            )
+            ->where('mutasi_masuk.status', 'Selesai')
+            ->whereIn('mutasi_masuk.npsn_sekolah_tujuan', $npsns)
+            ->whereIn('mutasi_masuk_siswa.kelas', ['7', 'VII', '8', 'VIII', '9', 'IX']);
+
+        $this->constrainToYear($query, 'mutasi_masuk.tanggal_pengajuan', $academicYear);
+
+        return $this->indexMutationTotals($query
+            ->groupBy('mutasi_masuk.npsn_sekolah_tujuan', 'mutasi_masuk_siswa.kelas', 'mutasi_masuk_siswa.jenis_kelamin')
+            ->get());
+    }
+
+    private function outgoingTotals(AcademicYear $academicYear, Collection $npsns): Collection
+    {
+        if ($npsns->isEmpty() || ! Schema::hasTable('mutasi_keluar')) {
+            return collect();
+        }
+
+        $query = DB::table('mutasi_keluar')
+            ->select('npsn_sekolah_asal as npsn', 'kelas', 'jenis_kelamin', DB::raw('COUNT(*) as total'))
+            ->where('status', 'Selesai')
+            ->whereIn('npsn_sekolah_asal', $npsns)
+            ->whereIn('kelas', ['7', 'VII', '8', 'VIII', '9', 'IX']);
+
+        $this->constrainToYear($query, 'tanggal_pengajuan', $academicYear);
+
+        return $this->indexMutationTotals($query
+            ->groupBy('npsn_sekolah_asal', 'kelas', 'jenis_kelamin')
+            ->get());
+    }
+
+    private function nonMutationOutgoingTotals(AcademicYear $academicYear, Collection $npsns): Collection
+    {
+        if ($npsns->isEmpty() || ! Schema::hasTable('non_mutation_student_exits')) {
+            return collect();
+        }
+
+        return $this->indexMutationTotals(DB::table('non_mutation_student_exits as exits')
+            ->join('satuan_pendidikan as schools', 'schools.id', '=', 'exits.satuan_pendidikan_id')
+            ->select(
+                'schools.npsn',
+                'exits.grade as kelas',
+                'exits.gender as jenis_kelamin',
+                DB::raw('COUNT(*) as total')
+            )
+            ->where('exits.academic_year_id', $academicYear->id)
+            ->whereIn('schools.npsn', $npsns)
+            ->groupBy('schools.npsn', 'exits.grade', 'exits.gender')
+            ->get());
+    }
+
+    private function constrainToYear($query, string $column, AcademicYear $academicYear): void
+    {
+        if ($academicYear->starts_on) {
+            $query->whereDate($column, '>=', $academicYear->starts_on->toDateString());
+        }
+        if ($academicYear->ends_on) {
+            $query->whereDate($column, '<=', $academicYear->ends_on->toDateString());
+        }
+    }
+
+    private function indexMutationTotals(Collection $rows): Collection
+    {
+        return $rows->reduce(function (Collection $totals, object $row) {
+            $key = $this->mutationKey(
+                (string) $row->npsn,
+                $this->gradeNumber((string) $row->kelas),
+                (string) $row->jenis_kelamin
+            );
+            $totals[$key] = (int) ($totals[$key] ?? 0) + (int) $row->total;
+
+            return $totals;
+        }, collect());
+    }
+
+    private function gradeNumber(string $grade): int
+    {
+        return match (strtoupper($grade)) {
+            '8', 'VIII' => 8,
+            '9', 'IX' => 9,
+            default => 7,
+        };
+    }
+
+    private function mutationKey(string $npsn, int $grade, string $gender): string
+    {
+        return "{$npsn}|{$grade}|{$gender}";
+    }
+
+    private function rowKey(int $grade, string $gender): string
+    {
+        return "{$grade}|{$gender}";
+    }
+
+    private function emptyReport(): array
+    {
+        return [
+            'rows' => [],
+            'summary' => array_fill_keys([
+                'opening', 'incoming', 'outgoing', 'non_mutation_outgoing', 'expected', 'actual', 'unexplained_exit', 'other_addition',
+            ], 0),
+            'reported_summary' => array_fill_keys([
+                'opening', 'incoming', 'outgoing', 'non_mutation_outgoing', 'expected', 'actual', 'unexplained_exit', 'other_addition',
+            ], 0),
+            'school_count' => 0,
+            'reported_school_count' => 0,
+            'missing_school_count' => 0,
+            'is_complete' => false,
+        ];
+    }
+}

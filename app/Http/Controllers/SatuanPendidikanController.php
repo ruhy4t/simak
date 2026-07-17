@@ -547,6 +547,7 @@ class SatuanPendidikanController extends Controller
         $academicYears = collect();
         $selectedAcademicYear = null;
         $studentCounts = $this->legacyStudentCounts($satpen);
+        $closingCountsLocked = false;
 
         if (Schema::hasTable('academic_years') && Schema::hasTable('satuan_pendidikan_student_counts')) {
             $academicYears = AcademicYear::query()->orderByDesc('name')->get();
@@ -559,6 +560,9 @@ class SatuanPendidikanController extends Controller
                     ->where('academic_year_id', $selectedAcademicYear->id)
                     ->get()
                     ->keyBy('grade');
+                $closingCountsLocked = $annualCounts->contains(
+                    fn ($row) => $row->closing_confirmed_at !== null
+                );
 
                 foreach ([7, 8, 9] as $grade) {
                     if ($annualCounts->has($grade)) {
@@ -577,7 +581,8 @@ class SatuanPendidikanController extends Controller
             'satpen',
             'academicYears',
             'selectedAcademicYear',
-            'studentCounts'
+            'studentCounts',
+            'closingCountsLocked'
         ));
     }
 
@@ -629,7 +634,15 @@ class SatuanPendidikanController extends Controller
             $academicYear = $annualTablesReady
                 ? AcademicYear::findOrFail($request->integer('academic_year_id'))
                 : null;
-            $canEditStudentCounts = !$academicYear || !$academicYear->isClosed();
+            $closingCountsLocked = $academicYear && Schema::hasColumn(
+                'satuan_pendidikan_student_counts',
+                'closing_confirmed_at'
+            ) && $satpen->studentCounts()
+                ->where('academic_year_id', $academicYear->id)
+                ->whereNotNull('closing_confirmed_at')
+                ->exists();
+            $canEditStudentCounts = ! $academicYear
+                || (! $academicYear->isClosed() && ! $closingCountsLocked);
 
             $updateData = [
                 'kepala_sekolah_nama' => $request->kepala_sekolah_nama,
@@ -703,6 +716,125 @@ class SatuanPendidikanController extends Controller
             \Log::error('Update Profile Failed: ' . $e->getMessage());
             return back()->with('error', 'Gagal memperbarui profil: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Show the aggregate actual closing-count form for a school.
+     */
+    public function editClosingCounts(Request $request)
+    {
+        $user = Auth::user();
+        if (! in_array($user->role, ['Sekolah', 'Operator'], true)) {
+            abort(403);
+        }
+
+        $satpen = $user->sekolah;
+        if (! $satpen) {
+            abort(404, 'Data sekolah tidak ditemukan.');
+        }
+
+        abort_unless(
+            Schema::hasTable('academic_years')
+                && Schema::hasColumns('satuan_pendidikan_student_counts', [
+                    'closing_male_count', 'closing_female_count', 'closing_confirmed_at',
+                ]),
+            503,
+            'Fitur data akhir belum siap. Jalankan migrasi database terlebih dahulu.'
+        );
+
+        $academicYears = AcademicYear::query()
+            ->whereIn('status', [AcademicYear::STATUS_ACTIVE, AcademicYear::STATUS_CLOSED])
+            ->orderByDesc('name')
+            ->get();
+        $selectedAcademicYear = $academicYears->firstWhere('name', $request->query('academic_year'))
+            ?? $academicYears->firstWhere('is_active', true)
+            ?? $academicYears->first();
+
+        $countRows = $selectedAcademicYear
+            ? $satpen->studentCounts()->where('academic_year_id', $selectedAcademicYear->id)->get()->keyBy('grade')
+            : collect();
+        $isLocked = $countRows->count() === 3
+            && $countRows->every(fn ($row) => $row->closing_confirmed_at !== null);
+
+        return view('satpen.closing-counts', compact(
+            'satpen',
+            'academicYears',
+            'selectedAcademicYear',
+            'countRows',
+            'isLocked'
+        ));
+    }
+
+    /**
+     * Store and permanently lock a school's aggregate actual closing counts.
+     */
+    public function storeClosingCounts(Request $request)
+    {
+        $user = Auth::user();
+        if (! in_array($user->role, ['Sekolah', 'Operator'], true)) {
+            abort(403);
+        }
+
+        $satpen = $user->sekolah;
+        if (! $satpen) {
+            abort(404);
+        }
+
+        $rules = [
+            'academic_year_id' => ['required', 'integer', 'exists:academic_years,id'],
+            'confirmation' => ['accepted'],
+        ];
+        foreach ([7, 8, 9] as $grade) {
+            $rules["closing_{$grade}_male"] = ['required', 'integer', 'min:0', 'max:99999'];
+            $rules["closing_{$grade}_female"] = ['required', 'integer', 'min:0', 'max:99999'];
+        }
+        $validated = $request->validate($rules);
+
+        $academicYear = AcademicYear::findOrFail($validated['academic_year_id']);
+        if ($academicYear->status === AcademicYear::STATUS_UPCOMING) {
+            return back()->withErrors(['academic_year_id' => 'Data akhir belum dapat diisi untuk tahun pelajaran mendatang.'])->withInput();
+        }
+
+        $alreadyLocked = false;
+        DB::transaction(function () use ($satpen, $academicYear, $validated, &$alreadyLocked) {
+            $rows = $satpen->studentCounts()
+                ->where('academic_year_id', $academicYear->id)
+                ->whereIn('grade', [7, 8, 9])
+                ->lockForUpdate()
+                ->get();
+
+            if ($rows->count() !== 3) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'academic_year_id' => 'Data siswa awal kelas VII, VIII, dan IX belum lengkap.',
+                ]);
+            }
+
+            if ($rows->contains(fn ($row) => $row->closing_confirmed_at !== null)) {
+                $alreadyLocked = true;
+                return;
+            }
+
+            $confirmedAt = now();
+            foreach ($rows as $row) {
+                $row->update([
+                    'closing_male_count' => $validated["closing_{$row->grade}_male"],
+                    'closing_female_count' => $validated["closing_{$row->grade}_female"],
+                    'closing_confirmed_at' => $confirmedAt,
+                ]);
+            }
+        });
+
+        if ($alreadyLocked) {
+            return redirect()
+                ->route('sekolah.closing-counts', ['academic_year' => $academicYear->name])
+                ->with('error', 'Data akhir sudah dikunci dan tidak dapat diubah.');
+        }
+
+        Cache::forget("public.statistics.cohort.v1.{$academicYear->id}");
+
+        return redirect()
+            ->route('sekolah.closing-counts', ['academic_year' => $academicYear->name])
+            ->with('success', "Data akhir tahun pelajaran {$academicYear->name} berhasil disimpan dan dikunci.");
     }
 
     private function legacyStudentCounts(SatuanPendidikan $satpen): array

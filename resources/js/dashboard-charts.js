@@ -175,14 +175,55 @@ const initializeReportTrendChart = (Chart, canvas) => {
     });
 };
 
+const initializeCohortChart = (Chart, canvas) => {
+    const data = parseChartData(canvas);
+    if (!data || !Array.isArray(data.labels) || !Array.isArray(data.values)) return;
+
+    return new Chart(canvas, {
+        type: 'bar',
+        data: {
+            labels: data.labels,
+            datasets: [{
+                label: 'Jumlah siswa',
+                data: data.values,
+                backgroundColor: ['#64748b', '#0ea5e9', '#f97316', '#e11d48', '#6366f1', '#10b981'],
+                borderRadius: 8,
+                borderSkipped: false,
+                maxBarThickness: 64,
+            }],
+        },
+        options: {
+            ...sharedOptions,
+            plugins: {
+                ...sharedOptions.plugins,
+                legend: { display: false },
+                tooltip: {
+                    ...sharedOptions.plugins.tooltip,
+                    callbacks: {
+                        label: (context) => `${Math.abs(context.parsed.y).toLocaleString('id-ID')} siswa`,
+                    },
+                },
+            },
+            scales: {
+                x: { grid: { display: false }, ticks: { color: '#475569', font: { weight: 600 } } },
+                y: {
+                    grid: { color: 'rgba(148, 163, 184, 0.15)' },
+                    ticks: { color: '#64748b', precision: 0 },
+                },
+            },
+        },
+    });
+};
+
 const chartInstances = new Map();
 
 const initializeDashboardCharts = async () => {
     const trendCharts = document.querySelectorAll('[data-dashboard-trend-chart]');
     const statusCharts = document.querySelectorAll('[data-dashboard-status-chart]');
     const reportTrendCharts = document.querySelectorAll('[data-report-trend-chart]');
+    const cohortCharts = document.querySelectorAll('[data-cohort-chart]');
 
-    if (trendCharts.length === 0 && statusCharts.length === 0 && reportTrendCharts.length === 0) return;
+    if (trendCharts.length === 0 && statusCharts.length === 0 && reportTrendCharts.length === 0 && cohortCharts.length === 0) return;
 
     const { default: Chart } = await import('chart.js/auto');
     trendCharts.forEach((canvas) => {
@@ -198,6 +239,11 @@ const initializeDashboardCharts = async () => {
     reportTrendCharts.forEach((canvas) => {
         if (chartInstances.has(canvas) || !canvas.isConnected) return;
         const chart = initializeReportTrendChart(Chart, canvas);
+        if (chart) chartInstances.set(canvas, chart);
+    });
+    cohortCharts.forEach((canvas) => {
+        if (chartInstances.has(canvas) || !canvas.isConnected) return;
+        const chart = initializeCohortChart(Chart, canvas);
         if (chart) chartInstances.set(canvas, chart);
     });
 };

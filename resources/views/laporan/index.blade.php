@@ -47,6 +47,20 @@
                 </a>
 
                 <!-- Card Laporan Detail (Orange Theme) -->
+                <a href="{{ route('laporan.kohort') }}"
+                    class="group flex flex-1 items-center rounded-2xl border-2 border-emerald-100 bg-emerald-50/80 p-8 transition hover:-translate-y-1 hover:border-emerald-300 hover:bg-emerald-100/80 hover:shadow-lg">
+                    <div class="flex items-center gap-6">
+                        <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-white text-emerald-600 shadow-xs transition-transform group-hover:scale-110">
+                            <i class="bi bi-bar-chart-steps text-3xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-extrabold text-emerald-900">Kohort Awal–Akhir</h3>
+                            <p class="mt-1 text-sm font-medium text-emerald-700/80">Rekonsiliasi data awal, mutasi, dan data akhir aktual.</p>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- Card Laporan Detail (Orange Theme) -->
                 <a href="{{ route('laporan.nominatif') }}"
                     class="group flex flex-1 items-center bg-orange-50/80 rounded-2xl border-2 border-orange-100 p-8 transition hover:bg-orange-100/80 hover:border-orange-300 hover:shadow-lg hover:-translate-y-1">
                     <div class="flex items-center gap-6">

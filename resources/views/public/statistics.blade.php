@@ -37,8 +37,8 @@
                 <p class="text-xs font-bold uppercase tracking-[0.2em] text-sky-400">Data Terbuka</p>
                 <h1 class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Tren Mutasi Siswa Kota Bogor</h1>
                 <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base">
-                    Ringkasan agregat pengajuan mutasi yang telah selesai. Halaman ini tidak menampilkan identitas siswa,
-                    dokumen, maupun rincian akun sekolah.
+                    Ringkasan agregat mutasi selesai dan siswa keluar non-mutasi yang telah tercatat.
+                    Halaman ini tidak menampilkan identitas siswa, dokumen, maupun rincian akun sekolah.
                 </p>
             </div>
         </section>
@@ -94,8 +94,29 @@
 
         <x-trend-chart-panels :chart-data="$chartData" />
 
+        @if($cohortYear && $cohort)
+            <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-5">
+                <form action="{{ route('public.statistics') }}" method="GET" class="flex flex-col gap-3 sm:flex-row sm:items-end">
+                    <input type="hidden" name="year" value="{{ $year }}">
+                    @if($month)<input type="hidden" name="month" value="{{ $month }}">@endif
+                    <div class="min-w-0 flex-1">
+                        <label for="public-academic-year" class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-500">Tahun Pelajaran Kohort</label>
+                        <select name="academic_year" id="public-academic-year" class="w-full rounded-xl border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+                            @foreach($cohortYears as $academicYear)
+                                <option value="{{ $academicYear->id }}" @selected($cohortYear->id === $academicYear->id)>{{ $academicYear->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <button class="rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-emerald-700">Tampilkan Kohort</button>
+                </form>
+            </section>
+
+            <x-cohort-summary :cohort="$cohort" title="Kohort Siswa Kota Bogor · {{ $cohortYear->name }}"
+                description="Hanya data agregat sekolah yang telah mengunci data akhir. Tidak memuat nama, NISN, atau identitas siswa." />
+        @endif
+
         <p class="text-center text-xs leading-5 text-slate-500">
-            Statistik diperbarui berkala dari data pengajuan berstatus selesai di SIMAK Kota Bogor.
+            Statistik diperbarui berkala dari data tercatat di SIMAK Kota Bogor.
         </p>
     </main>
 

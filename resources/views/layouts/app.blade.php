@@ -260,6 +260,12 @@
                         </div>
                     </div>
 
+                    <a href="{{ route('non-mutation-exits.index') }}"
+                        class="flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-200 group {{ request()->routeIs('non-mutation-exits.*') ? 'nav-item-active font-medium' : 'nav-item-inactive' }}">
+                        <i class="bi bi-person-x-fill text-lg {{ request()->routeIs('non-mutation-exits.*') ? 'text-white' : 'text-slate-500 group-hover:text-white' }}"></i>
+                        <span class="text-sm">Keluar Non-Mutasi</span>
+                    </a>
+
                     <!-- Admin Menus -->
                     @if(in_array(Auth::user()->role, ['Dinas', 'SuperAdmin', 'Sekolah', 'Operator']))
                         <div class="pt-6 pb-2 px-4 text-[10px] uppercase tracking-wider text-slate-500 font-bold">
@@ -567,6 +573,11 @@
                                     Keluar</a>
                             </div>
                         </div>
+
+                        <a href="{{ route('non-mutation-exits.index') }}"
+                            class="flex items-center gap-3 px-4 py-3 rounded-xl {{ request()->routeIs('non-mutation-exits.*') ? 'nav-item-active' : 'nav-item-inactive' }}">
+                            <i class="bi bi-person-x-fill"></i> <span>Keluar Non-Mutasi</span>
+                        </a>
 
                         @if(in_array(Auth::user()->role, ['Dinas', 'SuperAdmin', 'Sekolah', 'Operator']))
                             <div class="pt-6 pb-2 px-4 text-[10px] uppercase tracking-wider text-slate-500 font-bold">

@@ -61,7 +61,7 @@ class PublicStatisticsTest extends TestCase
             ->assertOk()
             ->assertViewIs('public.statistics')
             ->assertSee('Statistik Publik Mutasi Siswa')
-            ->assertSee('Ringkasan agregat pengajuan mutasi yang telah selesai')
+            ->assertSee('Ringkasan agregat mutasi selesai dan siswa keluar non-mutasi yang telah tercatat')
             ->assertDontSee('Nama Siswa')
             ->assertDontSee('NISN')
             ->assertHeader('Cache-Control', 'max-age=300, public, s-maxage=1800')
