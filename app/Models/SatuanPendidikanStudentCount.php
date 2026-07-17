@@ -12,12 +12,14 @@ class SatuanPendidikanStudentCount extends Model
         'grade',
         'male_count',
         'female_count',
+        'confirmed_at',
     ];
 
     protected $casts = [
         'grade' => 'integer',
         'male_count' => 'integer',
         'female_count' => 'integer',
+        'confirmed_at' => 'datetime',
     ];
 
     public function school()

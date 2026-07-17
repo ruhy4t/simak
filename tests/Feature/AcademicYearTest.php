@@ -140,6 +140,11 @@ class AcademicYearTest extends TestCase
             'male_count' => 20,
             'female_count' => 21,
         ]);
+        $this->assertNotNull(DB::table('satuan_pendidikan_student_counts')
+            ->where('satuan_pendidikan_id', $schoolId)
+            ->where('academic_year_id', $academicYear->id)
+            ->where('grade', 7)
+            ->value('confirmed_at'));
         $this->assertDatabaseHas('satuan_pendidikan', [
             'id' => $schoolId,
             'jumlah_siswa_awal_7' => 41,
@@ -425,6 +430,8 @@ class AcademicYearTest extends TestCase
         $migration = require database_path('migrations/2026_07_14_010000_create_academic_year_student_counts.php');
         $migration->up();
         $this->runRolloverTrackingMigration();
+        $confirmationMigration = require database_path('migrations/2026_07_17_000000_add_confirmed_at_to_student_counts.php');
+        $confirmationMigration->up();
     }
 
     private function runRolloverTrackingMigration(): void

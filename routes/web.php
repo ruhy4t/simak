@@ -109,15 +109,15 @@ Route::middleware(['auth', EnsurePasswordChanged::class])->group(function () {
     // Mutasi Keluar
     Route::prefix('mutasi-keluar')->name('mutasi.keluar.')->group(function () {
         Route::get('/', [MutasiController::class, 'index'])->name('index');
-        Route::get('/create', [MutasiController::class, 'create'])->middleware('workday')->name('create');
-        Route::post('/', [MutasiController::class, 'store'])->middleware('workday')->name('store');
+        Route::get('/create', [MutasiController::class, 'create'])->middleware(['student-counts.complete', 'workday'])->name('create');
+        Route::post('/', [MutasiController::class, 'store'])->middleware(['student-counts.complete', 'workday'])->name('store');
         Route::get('/api/npsn/{npsn}', [MutasiController::class, 'lookupNpsn'])->middleware('throttle:lookups')->name('api.npsn');
         Route::get('/api/provinces', [SatuanPendidikanController::class, 'getProvinces'])->middleware('throttle:lookups')->name('api.provinces');
         Route::get('/api/regencies/{provinceId}', [SatuanPendidikanController::class, 'getRegencies'])->middleware('throttle:lookups')->name('api.regencies');
         Route::delete('/{id}', [MutasiController::class, 'destroy'])->name('destroy'); // DELETE ROUTE
         Route::put('/{id}/cancel', [MutasiController::class, 'cancel'])->name('cancel'); // CANCEL ROUTE
-        Route::post('/draft', [MutasiController::class, 'saveDraft'])->name('draft.save'); // SAVE DRAFT
-        Route::get('/draft/{id}/resume', [MutasiController::class, 'resumeDraft'])->name('draft.resume'); // RESUME DRAFT
+        Route::post('/draft', [MutasiController::class, 'saveDraft'])->middleware('student-counts.complete')->name('draft.save'); // SAVE DRAFT
+        Route::get('/draft/{id}/resume', [MutasiController::class, 'resumeDraft'])->middleware('student-counts.complete')->name('draft.resume'); // RESUME DRAFT
         Route::delete('/draft/{id}', [MutasiController::class, 'deleteDraft'])->name('draft.delete');
         Route::get('/{id}', [MutasiController::class, 'show'])->name('show');
 
@@ -129,8 +129,8 @@ Route::middleware(['auth', EnsurePasswordChanged::class])->group(function () {
     // Mutasi Masuk
     Route::prefix('mutasi-masuk')->name('mutasi.masuk.')->group(function () {
         Route::get('/', [MutasiMasukController::class, 'index'])->name('index');
-        Route::get('/create', [MutasiMasukController::class, 'create'])->middleware('workday')->name('create');
-        Route::post('/', [MutasiMasukController::class, 'store'])->middleware('workday')->name('store');
+        Route::get('/create', [MutasiMasukController::class, 'create'])->middleware(['student-counts.complete', 'workday'])->name('create');
+        Route::post('/', [MutasiMasukController::class, 'store'])->middleware(['student-counts.complete', 'workday'])->name('store');
         Route::get('/api/npsn/{npsn}', [MutasiMasukController::class, 'lookupNpsn'])->middleware('throttle:lookups')->name('api.npsn');
         // Reuse SatuanPendidikanController for consistent region data
         Route::get('/api/provinces', [SatuanPendidikanController::class, 'getProvinces'])->middleware('throttle:lookups')->name('api.provinces');
@@ -144,11 +144,11 @@ Route::middleware(['auth', EnsurePasswordChanged::class])->group(function () {
         Route::put('/{id}/revision', [MutasiMasukController::class, 'revisionResubmit'])->middleware('workday')->name('revision.submit');
 
         // Draft API Routes (Auto-Save Feature)
-        Route::post('/draft', [MutasiMasukController::class, 'createDraft'])->middleware('workday')->name('draft.create');
-        Route::post('/draft/{id}/update-header', [MutasiMasukController::class, 'updateDraftHeader'])->name('draft.update-header');
-        Route::post('/draft/{id}/siswa', [MutasiMasukController::class, 'addStudentToDraft'])->name('draft.addStudent');
-        Route::post('/draft/{id}/finalize', [MutasiMasukController::class, 'finalizeDraft'])->name('draft.finalize');
-        Route::get('/draft/{id}/resume', [MutasiMasukController::class, 'resumeDraft'])->name('draft.resume');
+        Route::post('/draft', [MutasiMasukController::class, 'createDraft'])->middleware(['student-counts.complete', 'workday'])->name('draft.create');
+        Route::post('/draft/{id}/update-header', [MutasiMasukController::class, 'updateDraftHeader'])->middleware('student-counts.complete')->name('draft.update-header');
+        Route::post('/draft/{id}/siswa', [MutasiMasukController::class, 'addStudentToDraft'])->middleware('student-counts.complete')->name('draft.addStudent');
+        Route::post('/draft/{id}/finalize', [MutasiMasukController::class, 'finalizeDraft'])->middleware('student-counts.complete')->name('draft.finalize');
+        Route::get('/draft/{id}/resume', [MutasiMasukController::class, 'resumeDraft'])->middleware('student-counts.complete')->name('draft.resume');
         Route::delete('/draft/{id}', [MutasiMasukController::class, 'deleteDraft'])->name('draft.delete');
     });
 

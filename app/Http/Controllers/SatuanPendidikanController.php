@@ -508,6 +508,7 @@ class SatuanPendidikanController extends Controller
                             'grade' => $grade,
                             'male_count' => $request->integer("jumlah_siswa_{$grade}_l"),
                             'female_count' => $request->integer("jumlah_siswa_{$grade}_p"),
+                            'confirmed_at' => $grade === 7 ? $now : null,
                             'created_at' => $now,
                             'updated_at' => $now,
                         ];
@@ -515,7 +516,7 @@ class SatuanPendidikanController extends Controller
                     DB::table('satuan_pendidikan_student_counts')->upsert(
                         $rows,
                         ['satuan_pendidikan_id', 'academic_year_id', 'grade'],
-                        ['male_count', 'female_count', 'updated_at']
+                        ['male_count', 'female_count', 'confirmed_at', 'updated_at']
                     );
                 }
             });
@@ -681,6 +682,7 @@ class SatuanPendidikanController extends Controller
                                 [
                                     'male_count' => $studentValues[$grade]['male'],
                                     'female_count' => $studentValues[$grade]['female'],
+                                    'confirmed_at' => now(),
                                 ]
                             );
                         }
