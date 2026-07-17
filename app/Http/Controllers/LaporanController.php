@@ -9,6 +9,7 @@ use App\Models\SatuanPendidikan;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
@@ -433,24 +434,77 @@ class LaporanController extends Controller
     }
 
     /**
+     * Display city-wide mutation trends without requiring authentication.
+     */
+    public function publicTren(Request $request)
+    {
+        $validated = $request->validate([
+            'year' => ['nullable', 'integer', 'min:2020', 'max:'.date('Y')],
+            'month' => ['nullable', 'integer', 'between:1,12'],
+        ]);
+
+        $year = (int) ($validated['year'] ?? date('Y'));
+        $month = isset($validated['month']) ? (int) $validated['month'] : null;
+        $cacheKey = 'public.statistics.trend.v1.'.($month ?: 'all').'.'.$year;
+
+        $chartData = Cache::remember(
+            $cacheKey,
+            now()->addMinutes(30),
+            fn () => $this->getTrendData($year, $month, null)
+        );
+
+        return response()
+            ->view('public.statistics', compact('chartData', 'year', 'month'))
+            ->header('Cache-Control', 'public, max-age=300, s-maxage=1800');
+    }
+
+    /**
      * Helper to fetch Trend data.
      */
-    private function getTrendData($year, $month, $user)
+    private function getTrendData($year, $month, $user = null)
     {
-        $role = $user->role;
+        $role = $user?->role;
+
+        [$selectUnit, $selectUnitKeluar] = match (DB::connection()->getDriverName()) {
+            'sqlite' => $month
+                ? [
+                    "CAST(strftime('%d', mutasi_masuk.tanggal_pengajuan) AS INTEGER) as unit",
+                    "CAST(strftime('%d', tanggal_pengajuan) AS INTEGER) as unit",
+                ]
+                : [
+                    "CAST(strftime('%m', mutasi_masuk.tanggal_pengajuan) AS INTEGER) as unit",
+                    "CAST(strftime('%m', tanggal_pengajuan) AS INTEGER) as unit",
+                ],
+            'pgsql' => $month
+                ? [
+                    'EXTRACT(DAY FROM mutasi_masuk.tanggal_pengajuan) as unit',
+                    'EXTRACT(DAY FROM tanggal_pengajuan) as unit',
+                ]
+                : [
+                    'EXTRACT(MONTH FROM mutasi_masuk.tanggal_pengajuan) as unit',
+                    'EXTRACT(MONTH FROM tanggal_pengajuan) as unit',
+                ],
+            default => $month
+                ? [
+                    'DAY(mutasi_masuk.tanggal_pengajuan) as unit',
+                    'DAY(tanggal_pengajuan) as unit',
+                ]
+                : [
+                    'MONTH(mutasi_masuk.tanggal_pengajuan) as unit',
+                    'MONTH(tanggal_pengajuan) as unit',
+                ],
+        };
 
         // Determine Mode: Daily (if month selected) or Monthly (if year only)
         if ($month) {
             $daysInMonth = \Carbon\Carbon::create($year, $month)->daysInMonth;
             $range = range(1, $daysInMonth);
-            $groupBy = 'day';
-            $selectUnit = "DAY(mutasi_masuk.tanggal_pengajuan) as unit";
-            $selectUnitKeluar = "DAY(tanggal_pengajuan) as unit";
+            $periodStart = \Carbon\Carbon::create($year, $month, 1)->startOfMonth()->toDateString();
+            $periodEnd = \Carbon\Carbon::create($year, $month, 1)->endOfMonth()->toDateString();
         } else {
             $range = range(1, 12);
-            $groupBy = 'month';
-            $selectUnit = "MONTH(mutasi_masuk.tanggal_pengajuan) as unit";
-            $selectUnitKeluar = "MONTH(tanggal_pengajuan) as unit";
+            $periodStart = \Carbon\Carbon::create($year, 1, 1)->startOfYear()->toDateString();
+            $periodEnd = \Carbon\Carbon::create($year, 12, 31)->endOfYear()->toDateString();
         }
 
         // --- MUTASI MASUK ---
@@ -460,14 +514,10 @@ class LaporanController extends Controller
                 SUM(CASE WHEN mutasi_masuk_siswa.asal_luar_negeri = 1 THEN 1 ELSE 0 END) as luar_negeri,
                 SUM(CASE WHEN mutasi_masuk_siswa.asal_luar_negeri = 0 AND mutasi_masuk_siswa.kabupaten_kota_asal LIKE '%KOTA BOGOR%' THEN 1 ELSE 0 END) as dalam_kota,
                 SUM(CASE WHEN mutasi_masuk_siswa.asal_luar_negeri = 0 AND (mutasi_masuk_siswa.kabupaten_kota_asal NOT LIKE '%KOTA BOGOR%' OR mutasi_masuk_siswa.kabupaten_kota_asal IS NULL) THEN 1 ELSE 0 END) as luar_kota")
-            ->whereYear('mutasi_masuk.tanggal_pengajuan', $year)
+            ->whereBetween('mutasi_masuk.tanggal_pengajuan', [$periodStart, $periodEnd])
             ->where('mutasi_masuk.status', 'Selesai');
 
-        if ($month) {
-            $masukQuery->whereMonth('mutasi_masuk.tanggal_pengajuan', $month);
-        }
-
-        if (in_array($role, ['Sekolah', 'Operator'])) {
+        if ($user && in_array($role, ['Sekolah', 'Operator'], true)) {
             $npsn = $user->sekolah->npsn ?? $user->npsn;
             $masukQuery->where('mutasi_masuk.npsn_sekolah_tujuan', $npsn);
         }
@@ -479,14 +529,10 @@ class LaporanController extends Controller
                 SUM(CASE WHEN provinsi_tujuan = 'LUAR NEGERI' THEN 1 ELSE 0 END) as luar_negeri,
                 SUM(CASE WHEN provinsi_tujuan != 'LUAR NEGERI' AND kabupaten_kota_tujuan LIKE '%KOTA BOGOR%' THEN 1 ELSE 0 END) as dalam_kota,
                 SUM(CASE WHEN provinsi_tujuan != 'LUAR NEGERI' AND (kabupaten_kota_tujuan NOT LIKE '%KOTA BOGOR%' OR kabupaten_kota_tujuan IS NULL) THEN 1 ELSE 0 END) as luar_kota")
-            ->whereYear('tanggal_pengajuan', $year)
+            ->whereBetween('tanggal_pengajuan', [$periodStart, $periodEnd])
             ->where('status', 'Selesai');
 
-        if ($month) {
-            $keluarQuery->whereMonth('tanggal_pengajuan', $month);
-        }
-
-        if (in_array($role, ['Sekolah', 'Operator'])) {
+        if ($user && in_array($role, ['Sekolah', 'Operator'], true)) {
             $npsn = $user->sekolah->npsn ?? $user->npsn;
             $keluarQuery->where('npsn_sekolah_asal', $npsn);
         }

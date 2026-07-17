@@ -3,30 +3,6 @@
 @section('title', 'Grafik Tren Mutasi')
 
 @section('content')
-    @php
-        $chartSeries = [
-            [
-                'label' => 'Dalam Kota (Bogor)',
-                'color' => '#10b981',
-                'masuk' => $chartData['masuk']['dalam'],
-                'keluar' => $chartData['keluar']['dalam'],
-            ],
-            [
-                'label' => 'Luar Kota',
-                'color' => '#3b82f6',
-                'masuk' => $chartData['masuk']['luar_kota'],
-                'keluar' => $chartData['keluar']['luar_kota'],
-            ],
-            [
-                'label' => 'Luar Negeri',
-                'color' => '#8b5cf6',
-                'dashed' => true,
-                'masuk' => $chartData['masuk']['luar_negeri'],
-                'keluar' => $chartData['keluar']['luar_negeri'],
-            ],
-        ];
-    @endphp
-
     <div class="space-y-6">
         <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
@@ -70,30 +46,7 @@
             </form>
         </div>
 
-        <div class="grid grid-cols-1 gap-6">
-            @foreach(['masuk' => 'Mutasi Masuk', 'keluar' => 'Mutasi Keluar'] as $type => $title)
-                @php
-                    $chartPayload = [
-                        'labels' => $chartData['labels'],
-                        'datasets' => collect($chartSeries)->map(fn ($series) => [
-                            'label' => $series['label'],
-                            'values' => $series[$type],
-                            'color' => $series['color'],
-                            'dashed' => $series['dashed'] ?? false,
-                        ])->values()->all(),
-                    ];
-                @endphp
-
-                <section class="rounded-xl border bg-white p-4 shadow-xs sm:p-6" aria-labelledby="chart-{{ $type }}-title">
-                    <h2 id="chart-{{ $type }}-title" class="mb-6 text-lg font-bold text-gray-900">{{ $title }}</h2>
-                    <div class="relative h-72 w-full sm:h-80">
-                        <canvas data-report-trend-chart
-                            data-chart="{{ json_encode($chartPayload) }}"
-                            aria-label="Grafik {{ strtolower($title) }} berdasarkan wilayah"></canvas>
-                    </div>
-                </section>
-            @endforeach
-        </div>
+        <x-trend-chart-panels :chart-data="$chartData" />
 
         <div class="pt-1 text-center">
             <a href="{{ route('laporan.index') }}" class="inline-flex items-center text-gray-600 hover:text-gray-900">

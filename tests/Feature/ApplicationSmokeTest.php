@@ -18,6 +18,8 @@ class ApplicationSmokeTest extends TestCase
             ->assertOk()
             ->assertHeader('Server-Timing')
             ->assertViewIs('auth.login')
+            ->assertSee(route('public.statistics'), false)
+            ->assertSee('Lihat Statistik Publik')
             ->assertSee('autocomplete="username"', false)
             ->assertSee('autocomplete="current-password"', false)
             ->assertSee('name="remember_credentials"', false)

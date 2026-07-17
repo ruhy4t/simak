@@ -97,13 +97,14 @@ class ConfigurationTest extends TestCase
     {
         $rekapPdf = (string) file_get_contents(resource_path('views/laporan/rekap/pdf.blade.php'));
         $trendView = (string) file_get_contents(resource_path('views/laporan/tren/index.blade.php'));
+        $trendPanels = (string) file_get_contents(resource_path('views/components/trend-chart-panels.blade.php'));
         $chartScript = (string) file_get_contents(resource_path('js/dashboard-charts.js'));
 
         $this->assertStringNotContainsString('.signature {', $rekapPdf);
         $this->assertStringNotContainsString('replace_file_content', $rekapPdf);
         $this->assertSame(1, substr_count($trendView, "@section('content')"));
         $this->assertStringNotContainsString('cdn.jsdelivr.net/npm/chart.js', $trendView);
-        $this->assertStringContainsString('data-report-trend-chart', $trendView);
+        $this->assertStringContainsString('data-report-trend-chart', $trendPanels);
         $this->assertStringContainsString("document.querySelectorAll('[data-report-trend-chart]')", $chartScript);
         $this->assertStringContainsString("import('chart.js/auto')", $chartScript);
 

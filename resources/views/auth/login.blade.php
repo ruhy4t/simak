@@ -190,6 +190,12 @@
                         </div>
                     </button>
 
+                    <a href="{{ route('public.statistics') }}"
+                        class="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-600 transition hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700">
+                        <i class="bi bi-bar-chart-line"></i>
+                        Lihat Statistik Publik
+                    </a>
+
                     <p class="text-xs leading-relaxed text-slate-400">
                         Jika dicentang, username diingat di perangkat ini. Password disimpan dan diisi otomatis oleh
                         pengelola password browser; Anda tetap perlu menekan tombol masuk.

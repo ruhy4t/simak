@@ -33,6 +33,10 @@ Route::get('/telegram/webhook-info', [TelegramController::class, 'webhookInfo'])
 // Cron Routes (For external cron service like cron-job.org)
 Route::get('/cron/reminder', [CronController::class, 'revisionReminder'])->middleware('cron.auth');
 
+Route::get('/statistik-mutasi', [LaporanController::class, 'publicTren'])
+    ->middleware('throttle:public-statistics')
+    ->name('public.statistics');
+
 Route::middleware('guest')->group(function () {
     Route::get('/', fn () => redirect()->route('login'));
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
