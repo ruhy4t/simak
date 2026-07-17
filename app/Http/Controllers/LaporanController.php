@@ -443,12 +443,14 @@ class LaporanController extends Controller
         abort_unless($cohortService->available(), 503, 'Fitur laporan kohort belum siap. Jalankan migrasi database.');
 
         $user = Auth::user();
-        $academicYears = AcademicYear::query()->orderByDesc('name')->get();
+        $academicYears = AcademicYear::query()
+            ->where('status', AcademicYear::STATUS_CLOSED)
+            ->orderByDesc('name')
+            ->get();
         $academicYear = $academicYears->firstWhere('id', $request->integer('academic_year'))
-            ?? $academicYears->firstWhere('is_active', true)
             ?? $academicYears->first();
 
-        abort_unless($academicYear, 404, 'Tahun pelajaran belum tersedia.');
+        abort_unless($academicYear, 404, 'Grafik kohort tersedia setelah tahun pelajaran ditutup.');
 
         $schools = collect();
         $school = null;
@@ -498,9 +500,11 @@ class LaporanController extends Controller
         $cohortYear = null;
         $cohort = null;
         if ($cohortService->available()) {
-            $cohortYears = AcademicYear::query()->orderByDesc('name')->get();
+            $cohortYears = AcademicYear::query()
+                ->where('status', AcademicYear::STATUS_CLOSED)
+                ->orderByDesc('name')
+                ->get();
             $cohortYear = $cohortYears->firstWhere('id', (int) ($validated['academic_year'] ?? 0))
-                ?? $cohortYears->firstWhere('is_active', true)
                 ?? $cohortYears->first();
 
             if ($cohortYear) {

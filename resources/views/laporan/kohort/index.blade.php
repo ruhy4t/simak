@@ -7,7 +7,7 @@
         <div>
             <p class="text-xs font-bold uppercase tracking-[0.16em] text-emerald-600">Laporan Agregat</p>
             <h1 class="mt-1 text-3xl font-black tracking-tight text-slate-950">Kohort Siswa Awal–Akhir</h1>
-            <p class="mt-1 text-sm text-slate-500">Data awal + mutasi masuk − mutasi keluar dibandingkan dengan data akhir aktual.</p>
+            <p class="mt-1 text-sm text-slate-500">Kohort final hanya menggunakan tahun pelajaran yang sudah ditutup.</p>
         </div>
 
         <form method="GET" action="{{ route('laporan.kohort') }}" class="grid gap-4 rounded-2xl border border-slate-200 bg-white p-5 sm:grid-cols-3 sm:items-end">

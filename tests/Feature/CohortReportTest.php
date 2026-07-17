@@ -118,10 +118,40 @@ class CohortReportTest extends TestCase
 
         $this->get('/statistik-mutasi?year=2026&academic_year='.$year->id)
             ->assertOk()
+            ->assertDontSee('Kohort Siswa Kota Bogor');
+
+        $year->update([
+            'status' => AcademicYear::STATUS_CLOSED,
+            'is_active' => false,
+        ]);
+
+        $this->get('/statistik-mutasi?year=2026&academic_year='.$year->id)
+            ->assertOk()
             ->assertSee('Kohort Siswa Kota Bogor')
             ->assertSee('Keluar non-mutasi terdata')
             ->assertDontSee('SMP Uji Kohort')
             ->assertDontSee('12345678');
+    }
+
+    public function test_internal_cohort_is_available_only_for_closed_academic_years(): void
+    {
+        [$year] = $this->seedSchoolAndYear(true);
+        $operator = $this->createUser('operator-cohort', 'Operator', '12345678');
+
+        $this->actingAs($operator)
+            ->get(route('laporan.kohort'))
+            ->assertNotFound();
+
+        $year->update([
+            'status' => AcademicYear::STATUS_CLOSED,
+            'is_active' => false,
+        ]);
+
+        $this->actingAs($operator)
+            ->get(route('laporan.kohort', ['academic_year' => $year->id]))
+            ->assertOk()
+            ->assertViewHas('academicYear', fn (AcademicYear $selectedYear) => $selectedYear->is($year))
+            ->assertSee('2026/2027');
     }
 
     public function test_rollover_uses_locked_actual_closing_counts(): void
@@ -183,6 +213,11 @@ class CohortReportTest extends TestCase
         $report = app(CohortReportService::class)->report($year, $schoolId);
         $this->assertSame(1, $report['reported_summary']['non_mutation_outgoing']);
         $this->assertSame(17, $report['reported_summary']['expected']);
+
+        $year->update([
+            'status' => AcademicYear::STATUS_CLOSED,
+            'is_active' => false,
+        ]);
 
         $this->get('/statistik-mutasi?year=2026&academic_year='.$year->id)
             ->assertOk()

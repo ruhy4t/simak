@@ -100,7 +100,7 @@
                     <input type="hidden" name="year" value="{{ $year }}">
                     @if($month)<input type="hidden" name="month" value="{{ $month }}">@endif
                     <div class="min-w-0 flex-1">
-                        <label for="public-academic-year" class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-500">Tahun Pelajaran Kohort</label>
+                        <label for="public-academic-year" class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-500">Tahun Pelajaran Selesai</label>
                         <select name="academic_year" id="public-academic-year" class="w-full rounded-xl border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
                             @foreach($cohortYears as $academicYear)
                                 <option value="{{ $academicYear->id }}" @selected($cohortYear->id === $academicYear->id)>{{ $academicYear->name }}</option>
