@@ -4,9 +4,15 @@ SIMAK adalah aplikasi Sistem Informasi Mutasi Masuk dan Keluar siswa untuk Dinas
 
 ## Versi Aplikasi
 
-Versi saat ini: **2.0.1**
+Versi saat ini: **2.1.0**
 
-Perubahan utama versi 2.0.1:
+Perubahan utama versi 2.1.0:
+- Menambahkan statistik mutasi publik tanpa login dengan data agregat, cache, dan rate limit.
+- Mengoptimalkan grafik laporan agar memakai bundle Chart.js yang dimuat secara dinamis.
+- Memperbaiki template PDF rekap dan regression test terkait laporan.
+- Mengaktifkan login persisten 30 hari melalui opsi "Ingat saya".
+
+Dasar versi 2.0.1:
 - Memperketat autentikasi endpoint cron menggunakan Bearer token.
 - Menambahkan validasi secret token untuk webhook Telegram.
 - Mengaktifkan verifikasi TLS pada seluruh koneksi Telegram.
@@ -23,7 +29,7 @@ Dasar versi 2.0.0:
 Versi aplikasi dikontrol lewat environment variable:
 
 ```env
-APP_VERSION=2.0.1
+APP_VERSION=2.1.0
 ```
 
 Jika tidak diisi, aplikasi memakai default dari `config/app.php`.
@@ -84,7 +90,7 @@ Environment variable penting di Vercel:
 
 ```env
 APP_NAME=SIMAK
-APP_VERSION=2.0.1
+APP_VERSION=2.1.0
 APP_ENV=production
 APP_DEBUG=false
 APP_KEY=base64:...

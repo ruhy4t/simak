@@ -196,11 +196,6 @@
                         Lihat Statistik Publik
                     </a>
 
-                    <p class="text-xs leading-relaxed text-slate-400">
-                        Jika dicentang, username diingat di perangkat ini. Password disimpan dan diisi otomatis oleh
-                        pengelola password browser; Anda tetap perlu menekan tombol masuk.
-                    </p>
-
                 </form>
 
                 <!-- Footer Mobile -->

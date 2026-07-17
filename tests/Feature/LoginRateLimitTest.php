@@ -106,4 +106,23 @@ class LoginRateLimitTest extends TestCase
             'locked_until' => null,
         ]);
     }
+
+    public function test_remember_credentials_creates_persistent_login_and_username_cookies(): void
+    {
+        $recallerName = Auth::guard()->getRecallerName();
+
+        $response = $this->post('/login', [
+            'username' => 'victim',
+            'password' => 'correct-password',
+            'remember_credentials' => '1',
+        ]);
+
+        $response
+            ->assertRedirect('/dashboard')
+            ->assertCookie($recallerName)
+            ->assertCookie('remembered_username', 'victim');
+
+        $this->assertAuthenticated();
+        $this->assertNotNull(DB::table('users')->where('username', 'victim')->value('remember_token'));
+    }
 }

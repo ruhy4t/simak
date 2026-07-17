@@ -84,16 +84,19 @@ class AuthController extends Controller
         RateLimiter::clear($credentialKey);
         $user->resetFailedLogin();
 
-        // "Ingat saya" only remembers the username for the browser's password
-        // manager. It must never create Laravel's persistent login cookie.
-        Auth::login($user);
+        $remember = $request->boolean('remember_credentials');
+        if ($remember) {
+            Auth::guard()->setRememberDuration(60 * 24 * 30);
+        }
+
+        Auth::login($user, $remember);
         $request->session()->regenerate();
 
         AuditLog::log('LOGIN_SUCCESS', $username);
 
         $response = redirect()->intended(route('dashboard'));
 
-        if ($request->boolean('remember_credentials')) {
+        if ($remember) {
             return $response->withCookie(cookie(
                 'remembered_username',
                 $username,
