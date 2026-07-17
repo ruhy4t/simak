@@ -3,231 +3,102 @@
 @section('title', 'Grafik Tren Mutasi')
 
 @section('content')
-    @section('content')
-        <div class="space-y-6">
-            <!-- Header & Filter -->
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    @php
+        $chartSeries = [
+            [
+                'label' => 'Dalam Kota (Bogor)',
+                'color' => '#10b981',
+                'masuk' => $chartData['masuk']['dalam'],
+                'keluar' => $chartData['keluar']['dalam'],
+            ],
+            [
+                'label' => 'Luar Kota',
+                'color' => '#3b82f6',
+                'masuk' => $chartData['masuk']['luar_kota'],
+                'keluar' => $chartData['keluar']['luar_kota'],
+            ],
+            [
+                'label' => 'Luar Negeri',
+                'color' => '#8b5cf6',
+                'dashed' => true,
+                'masuk' => $chartData['masuk']['luar_negeri'],
+                'keluar' => $chartData['keluar']['luar_negeri'],
+            ],
+        ];
+    @endphp
+
+    <div class="space-y-6">
+        <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Grafik Tren Mutasi</h1>
+                <p class="mt-1 text-gray-500">
+                    Statistik mutasi siswa
+                    {{ $month ? 'harian bulan '.\Carbon\Carbon::createFromDate(null, $month)->translatedFormat('F') : 'per bulan' }}
+                    tahun {{ $year }}.
+                </p>
+            </div>
+
+            <form action="{{ route('laporan.tren') }}" method="GET"
+                class="flex flex-col gap-3 rounded-xl border border-gray-200 bg-white p-3 sm:flex-row sm:items-end">
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-900">Grafik Tren Mutasi</h1>
-                    <p class="text-gray-500 mt-1">Statistik mutasi siswa
-                        {{ $month ? 'harian bulan ' . \Carbon\Carbon::createFromDate(null, $month)->translatedFormat('F') : 'per bulan' }}
-                        tahun {{ $year }}.</p>
-                </div>
-
-                <form action="{{ route('laporan.tren') }}" method="GET" class="flex items-center gap-2">
-
-                    {{-- Month Filter --}}
-                    <label for="month" class="text-sm font-medium text-gray-700">Bulan:</label>
-                    <select name="month" id="month" onchange="this.form.submit()"
-                        class="rounded-md border-gray-300 shadow-xs focus:border-blue-500 focus:ring-blue-500 text-sm">
+                    <label for="month" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-500">Bulan</label>
+                    <select name="month" id="month"
+                        class="w-full rounded-lg border-gray-300 text-sm shadow-xs focus:border-blue-500 focus:ring-blue-500">
                         <option value="">Semua Bulan</option>
                         @for($m = 1; $m <= 12; $m++)
-                            <option value="{{ $m }}" {{ request('month') == $m ? 'selected' : '' }}>
+                            <option value="{{ $m }}" @selected((int) request('month') === $m)>
                                 {{ \Carbon\Carbon::create()->month($m)->translatedFormat('F') }}
                             </option>
                         @endfor
                     </select>
+                </div>
 
-                    <label for="year" class="text-sm font-medium text-gray-700 ml-2">Tahun:</label>
-                    <select name="year" id="year" onchange="this.form.submit()"
-                        class="rounded-md border-gray-300 shadow-xs focus:border-blue-500 focus:ring-blue-500 text-sm">
+                <div>
+                    <label for="year" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-500">Tahun</label>
+                    <select name="year" id="year"
+                        class="w-full rounded-lg border-gray-300 text-sm shadow-xs focus:border-blue-500 focus:ring-blue-500">
                         @for($y = date('Y'); $y >= 2020; $y--)
-                            <option value="{{ $y }}" {{ $year == $y ? 'selected' : '' }}>{{ $y }}</option>
+                            <option value="{{ $y }}" @selected((int) $year === $y)>{{ $y }}</option>
                         @endfor
                     </select>
-                </form>
-            </div>
-
-            <div class="grid grid-cols-1 gap-6">
-                <!-- Tren Mutasi Masuk -->
-                <div class="bg-white rounded-xl shadow-xs border p-6">
-                    <div class="mb-6">
-                        <h3 class="text-lg font-bold text-gray-900">Mutasi Masuk</h3>
-                    </div>
-                    <div class="relative h-72 w-full">
-                        <canvas id="chartMasuk"></canvas>
-                    </div>
                 </div>
 
-                <!-- Tren Mutasi Keluar -->
-                <div class="bg-white rounded-xl shadow-xs border p-6">
-                    <div class="mb-6">
-                        <h3 class="text-lg font-bold text-gray-900">Mutasi Keluar</h3>
-                    </div>
-                    <div class="relative h-72 w-full">
-                        <canvas id="chartKeluar"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <div class="mt-4 text-center">
-                <a href="{{ route('laporan.index') }}" class="inline-flex items-center text-gray-600 hover:text-gray-900">
-                    <i class="bi bi-arrow-left mr-2"></i> Kembali ke Menu Laporan
-                </a>
-            </div>
+                <button type="submit"
+                    class="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700">
+                    Terapkan
+                </button>
+            </form>
         </div>
-    @endsection
 
-    @push('scripts')
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        <script>
-            document.addEventListener('DOMContentLoaded', function () {
-                const labels = @json($chartData['labels']);
+        <div class="grid grid-cols-1 gap-6">
+            @foreach(['masuk' => 'Mutasi Masuk', 'keluar' => 'Mutasi Keluar'] as $type => $title)
+                @php
+                    $chartPayload = [
+                        'labels' => $chartData['labels'],
+                        'datasets' => collect($chartSeries)->map(fn ($series) => [
+                            'label' => $series['label'],
+                            'values' => $series[$type],
+                            'color' => $series['color'],
+                            'dashed' => $series['dashed'] ?? false,
+                        ])->values()->all(),
+                    ];
+                @endphp
 
-                // --- DATA SETUP ---
-                const dataMasuk = {
-                    dalam: @json($chartData['masuk']['dalam']),
-                    luarKota: @json($chartData['masuk']['luar_kota']),
-                    luarNegeri: @json($chartData['masuk']['luar_negeri'])
-                };
+                <section class="rounded-xl border bg-white p-4 shadow-xs sm:p-6" aria-labelledby="chart-{{ $type }}-title">
+                    <h2 id="chart-{{ $type }}-title" class="mb-6 text-lg font-bold text-gray-900">{{ $title }}</h2>
+                    <div class="relative h-72 w-full sm:h-80">
+                        <canvas data-report-trend-chart
+                            data-chart="{{ json_encode($chartPayload) }}"
+                            aria-label="Grafik {{ strtolower($title) }} berdasarkan wilayah"></canvas>
+                    </div>
+                </section>
+            @endforeach
+        </div>
 
-                const dataKeluar = {
-                    dalam: @json($chartData['keluar']['dalam']),
-                    luarKota: @json($chartData['keluar']['luar_kota']),
-                    luarNegeri: @json($chartData['keluar']['luar_negeri'])
-                };
-
-                // --- CONFIG COMMON ---
-                const commonOptions = {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: {
-                        mode: 'index',
-                        intersect: false,
-                    },
-                    plugins: {
-                        legend: {
-                            position: 'top',
-                            align: 'end',
-                            labels: {
-                                usePointStyle: true,
-                                boxWidth: 8,
-                                font: { size: 11 }
-                            }
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(17, 24, 39, 0.9)',
-                            padding: 12,
-                            cornerRadius: 8,
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: { precision: 0 },
-                            grid: { borderDash: [2, 4], color: '#f3f4f6' }
-                        },
-                        x: {
-                            grid: { display: false }
-                        }
-                    },
-                    elements: {
-                        line: { tension: 0.4 }, // Smooth curves
-                        point: { radius: 0, hitRadius: 10, hoverRadius: 5 }
-                    }
-                };
-
-                // --- COLORS & GRADIENTS ---
-                // 1. Dalam Kota (Green - Local/Stable)
-                function createGradientGreen(ctx) {
-                    const grad = ctx.createLinearGradient(0, 0, 0, 300);
-                    grad.addColorStop(0, 'rgba(16, 185, 129, 0.2)'); // Emerald 500
-                    grad.addColorStop(1, 'rgba(16, 185, 129, 0)');
-                    return grad;
-                }
-
-                // 2. Luar Kota (Blue - Regional) - Changed to Blue for high contrast with Green
-                function createGradientBlue(ctx) {
-                    const grad = ctx.createLinearGradient(0, 0, 0, 300);
-                    grad.addColorStop(0, 'rgba(59, 130, 246, 0.2)'); // Blue 500
-                    grad.addColorStop(1, 'rgba(59, 130, 246, 0)');
-                    return grad;
-                }
-
-                // 3. Luar Negeri (Purple - Distant/Special)
-                function createGradientPurple(ctx) {
-                    const grad = ctx.createLinearGradient(0, 0, 0, 300);
-                    grad.addColorStop(0, 'rgba(139, 92, 246, 0.2)'); // Violet 500
-                    grad.addColorStop(1, 'rgba(139, 92, 246, 0)');
-                    return grad;
-                }
-
-                // --- CHART MASUK ---
-                const ctxMasuk = document.getElementById('chartMasuk').getContext('2d');
-
-                new Chart(ctxMasuk, {
-                    type: 'line',
-                    data: {
-                        labels: labels,
-                        datasets: [
-                            {
-                                label: 'Dalam Kota (Bogor)',
-                                data: dataMasuk.dalam,
-                                borderColor: '#10b981', // Emerald 500
-                                backgroundColor: createGradientGreen(ctxMasuk),
-                                fill: true,
-                                pointBackgroundColor: '#10b981'
-                            },
-                            {
-                                label: 'Luar Kota',
-                                data: dataMasuk.luarKota,
-                                borderColor: '#3b82f6', // Blue 500
-                                backgroundColor: createGradientBlue(ctxMasuk),
-                                fill: true,
-                                pointBackgroundColor: '#3b82f6'
-                            },
-                            {
-                                label: 'Luar Negeri',
-                                data: dataMasuk.luarNegeri,
-                                borderColor: '#8b5cf6', // Violet 500
-                                backgroundColor: createGradientPurple(ctxMasuk),
-                                borderDash: [5, 5],
-                                fill: true,
-                                pointBackgroundColor: '#8b5cf6'
-                            }
-                        ]
-                    },
-                    options: commonOptions
-                });
-
-                // --- CHART KELUAR ---
-                const ctxKeluar = document.getElementById('chartKeluar').getContext('2d');
-
-                new Chart(ctxKeluar, {
-                    type: 'line',
-                    data: {
-                        labels: labels,
-                        datasets: [
-                            {
-                                label: 'Dalam Kota (Bogor)',
-                                data: dataKeluar.dalam,
-                                borderColor: '#10b981', // Emerald 500
-                                backgroundColor: createGradientGreen(ctxKeluar),
-                                fill: true,
-                                pointBackgroundColor: '#10b981'
-                            },
-                            {
-                                label: 'Luar Kota',
-                                data: dataKeluar.luarKota,
-                                borderColor: '#3b82f6', // Blue 500
-                                backgroundColor: createGradientBlue(ctxKeluar),
-                                fill: true,
-                                pointBackgroundColor: '#3b82f6'
-                            },
-                            {
-                                label: 'Luar Negeri',
-                                data: dataKeluar.luarNegeri,
-                                borderColor: '#8b5cf6', // Violet 500
-                                backgroundColor: createGradientPurple(ctxKeluar),
-                                borderDash: [5, 5],
-                                fill: true,
-                                pointBackgroundColor: '#8b5cf6'
-                            }
-                        ]
-                    },
-                    options: commonOptions
-                });
-            });
-        </script>
-    @endpush
+        <div class="pt-1 text-center">
+            <a href="{{ route('laporan.index') }}" class="inline-flex items-center text-gray-600 hover:text-gray-900">
+                <i class="bi bi-arrow-left mr-2"></i> Kembali ke Menu Laporan
+            </a>
+        </div>
+    </div>
 @endsection

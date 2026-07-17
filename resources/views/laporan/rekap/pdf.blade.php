@@ -62,7 +62,6 @@
         .footer p {
             margin: 5px 0;
         }
-        .signature {
     </style>
 </head>
 <body>
@@ -74,11 +73,6 @@
             <h2>{{ $user->sekolah->nama ?? 'SEKOLAH' }}</h2>
         @endif
     </div>
-
-    <!-- Meta and Table sections hidden for brevity in replacement argument, assume unchanged parts remain -->
-    <!-- I need to target specific chunks actually since they are far apart. -->
-    <!-- Retrying with separate tool calls or multi_replace if supported, or just careful replacement. -->
-    <!-- The tool replace_file_content is for SINGLE CONTIGUOUS block. I should use multi_replace_file_content. -->
 
     <div class="meta">
         <table>

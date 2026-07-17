@@ -92,4 +92,45 @@ class ConfigurationTest extends TestCase
         $this->assertStringContainsString('queue.failed', $provider);
         $this->assertStringContainsString('telegram.permanently_failed', $telegram);
     }
+
+    public function test_report_views_use_valid_pdf_styles_and_bundled_charts(): void
+    {
+        $rekapPdf = (string) file_get_contents(resource_path('views/laporan/rekap/pdf.blade.php'));
+        $trendView = (string) file_get_contents(resource_path('views/laporan/tren/index.blade.php'));
+        $chartScript = (string) file_get_contents(resource_path('js/dashboard-charts.js'));
+
+        $this->assertStringNotContainsString('.signature {', $rekapPdf);
+        $this->assertStringNotContainsString('replace_file_content', $rekapPdf);
+        $this->assertSame(1, substr_count($trendView, "@section('content')"));
+        $this->assertStringNotContainsString('cdn.jsdelivr.net/npm/chart.js', $trendView);
+        $this->assertStringContainsString('data-report-trend-chart', $trendView);
+        $this->assertStringContainsString("document.querySelectorAll('[data-report-trend-chart]')", $chartScript);
+        $this->assertStringContainsString("import('chart.js/auto')", $chartScript);
+
+        $pdfOutput = \Barryvdh\DomPDF\Facade\Pdf::loadView('laporan.rekap.pdf', [
+            'data' => collect(),
+            'start_date' => '2026-07-01',
+            'end_date' => '2026-07-31',
+            'user' => (object) [
+                'role' => 'Dinas',
+                'nama_pengguna' => 'Petugas Verifikasi',
+                'username' => 'verifikator',
+            ],
+        ])->setPaper('a4', 'landscape')->output();
+
+        $this->assertStringStartsWith('%PDF-', $pdfOutput);
+
+        $renderedTrend = view('laporan.tren.index', [
+            'chartData' => [
+                'labels' => ['Januari'],
+                'masuk' => ['dalam' => [1], 'luar_kota' => [2], 'luar_negeri' => [0]],
+                'keluar' => ['dalam' => [3], 'luar_kota' => [1], 'luar_negeri' => [0]],
+            ],
+            'year' => 2026,
+            'month' => null,
+        ])->render();
+
+        $this->assertSame(2, substr_count($renderedTrend, 'data-report-trend-chart'));
+        $this->assertStringContainsString('&quot;Dalam Kota (Bogor)&quot;', $renderedTrend);
+    }
 }

@@ -127,13 +127,62 @@ const initializeStatusChart = (Chart, canvas) => {
     });
 };
 
+const initializeReportTrendChart = (Chart, canvas) => {
+    const data = parseChartData(canvas);
+    if (!data || !Array.isArray(data.labels) || !Array.isArray(data.datasets)) return;
+
+    return new Chart(canvas, {
+        type: 'line',
+        data: {
+            labels: data.labels,
+            datasets: data.datasets.map((dataset) => ({
+                label: dataset.label,
+                data: dataset.values,
+                borderColor: dataset.color,
+                backgroundColor: `${dataset.color}20`,
+                pointBackgroundColor: dataset.color,
+                borderDash: dataset.dashed ? [5, 5] : [],
+                borderWidth: 2.5,
+                fill: true,
+                tension: 0.4,
+                pointRadius: 0,
+                pointHitRadius: 10,
+                pointHoverRadius: 5,
+            })),
+        },
+        options: {
+            ...sharedOptions,
+            plugins: {
+                ...sharedOptions.plugins,
+                legend: {
+                    ...sharedOptions.plugins.legend,
+                    position: 'top',
+                    align: 'end',
+                },
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#64748b', autoSkip: true, maxTicksLimit: 12 },
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(148, 163, 184, 0.15)' },
+                    ticks: { color: '#64748b', precision: 0 },
+                },
+            },
+        },
+    });
+};
+
 const chartInstances = new Map();
 
 const initializeDashboardCharts = async () => {
     const trendCharts = document.querySelectorAll('[data-dashboard-trend-chart]');
     const statusCharts = document.querySelectorAll('[data-dashboard-status-chart]');
+    const reportTrendCharts = document.querySelectorAll('[data-report-trend-chart]');
 
-    if (trendCharts.length === 0 && statusCharts.length === 0) return;
+    if (trendCharts.length === 0 && statusCharts.length === 0 && reportTrendCharts.length === 0) return;
 
     const { default: Chart } = await import('chart.js/auto');
     trendCharts.forEach((canvas) => {
@@ -144,6 +193,11 @@ const initializeDashboardCharts = async () => {
     statusCharts.forEach((canvas) => {
         if (chartInstances.has(canvas) || !canvas.isConnected) return;
         const chart = initializeStatusChart(Chart, canvas);
+        if (chart) chartInstances.set(canvas, chart);
+    });
+    reportTrendCharts.forEach((canvas) => {
+        if (chartInstances.has(canvas) || !canvas.isConnected) return;
+        const chart = initializeReportTrendChart(Chart, canvas);
         if (chart) chartInstances.set(canvas, chart);
     });
 };
