@@ -43,10 +43,6 @@
         {
             "path": "/cron/reminder",
             "schedule": "0 23 * * *"
-        },
-        {
-            "path": "/cron/work",
-            "schedule": "0 0 * * *"
         }
     ],
     "rewrites": [

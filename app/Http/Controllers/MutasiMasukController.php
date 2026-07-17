@@ -898,7 +898,12 @@ class MutasiMasukController extends Controller
         try {
             $updatedMutasi = DB::table('mutasi_masuk')->where('id_mutasi', $id)->first();
             if ($updatedMutasi) {
-                \App\Helpers\NotificationHelper::notifyPengusul($updatedMutasi, $status, 'masuk');
+                \App\Helpers\NotificationHelper::notifyPengusulOnStatusChange(
+                    $updatedMutasi,
+                    $mutasi->status,
+                    $status,
+                    'masuk'
+                );
             }
         } catch (\Exception $e) {
             Log::error("Telegram notification failed: " . $e->getMessage());
@@ -939,6 +944,7 @@ class MutasiMasukController extends Controller
         if ($mutasi->status !== 'Disetujui Dinas') {
             return back()->with('error', 'Data harus disetujui terlebih dahulu.');
         }
+        $previousStatus = $mutasi->status;
 
         DB::table('mutasi_masuk')->where('id_mutasi', $id)->update([
             'nomor_surat_izin' => $request->filled('nomor_surat_izin') ? $this->sanitize($request->nomor_surat_izin) : null,
@@ -951,7 +957,12 @@ class MutasiMasukController extends Controller
         try {
             $updatedMutasi = DB::table('mutasi_masuk')->where('id_mutasi', $id)->first();
             if ($updatedMutasi) {
-                \App\Helpers\NotificationHelper::notifyPengusul($updatedMutasi, 'Proses TTD', 'masuk');
+                \App\Helpers\NotificationHelper::notifyPengusulOnStatusChange(
+                    $updatedMutasi,
+                    $previousStatus,
+                    'Proses TTD',
+                    'masuk'
+                );
             }
         } catch (\Exception $e) {
             Log::error("Telegram notification failed: " . $e->getMessage());
@@ -991,6 +1002,7 @@ class MutasiMasukController extends Controller
         if ($mutasi->status !== 'Proses TTD') {
             return back()->with('error', 'Status harus Proses TTD untuk mengkonfirmasi.');
         }
+        $previousStatus = $mutasi->status;
 
         DB::table('mutasi_masuk')->where('id_mutasi', $id)->update([
             'nomor_surat_izin' => $this->sanitize($request->nomor_surat_izin),
@@ -1020,7 +1032,12 @@ class MutasiMasukController extends Controller
 
         // Send Telegram notification (wrapped in try-catch)
         try {
-            \App\Helpers\NotificationHelper::notifyPengusul($mutasiWithSiswa, 'Selesai', 'masuk');
+            \App\Helpers\NotificationHelper::notifyPengusulOnStatusChange(
+                $mutasiWithSiswa,
+                $previousStatus,
+                'Selesai',
+                'masuk'
+            );
         } catch (\Exception $e) {
             Log::error("Telegram notification failed: " . $e->getMessage());
         }

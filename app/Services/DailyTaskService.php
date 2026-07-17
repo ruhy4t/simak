@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Helpers\NotificationHelper;
 use App\Models\Holiday;
 use App\Models\Setting;
 use Carbon\CarbonImmutable;
@@ -29,7 +28,9 @@ class DailyTaskService
             return $this->skipped($now, 'Holiday');
         }
 
-        $sentCount = $this->sendRevisionReminders($now);
+        // Telegram notifications are event-driven. Cron must never send
+        // recurring reminders for unchanged mutation records.
+        $sentCount = 0;
         $cancelledCount = $this->autoCancelOldMutations($now);
 
         Log::info('Daily mutation tasks completed.', [
@@ -45,14 +46,6 @@ class DailyTaskService
         ];
     }
 
-    public function sendRevisionReminders(?CarbonInterface $now = null): int
-    {
-        $now = $now ? CarbonImmutable::instance($now) : CarbonImmutable::now('Asia/Jakarta');
-
-        return $this->sendRemindersForTable('mutasi_masuk', 'masuk', $now)
-            + $this->sendRemindersForTable('mutasi_keluar', 'keluar', $now);
-    }
-
     public function autoCancelOldMutations(?CarbonInterface $now = null): int
     {
         $now = $now ? CarbonImmutable::instance($now) : CarbonImmutable::now('Asia/Jakarta');
@@ -60,35 +53,6 @@ class DailyTaskService
 
         return $this->autoCancelForTable('mutasi_masuk', 'masuk', $threshold)
             + $this->autoCancelForTable('mutasi_keluar', 'keluar', $threshold);
-    }
-
-    private function sendRemindersForTable(string $table, string $type, CarbonImmutable $now): int
-    {
-        $sentCount = 0;
-
-        DB::table($table)
-            ->where('status', 'Perlu Perbaikan')
-            ->orderBy('id_mutasi')
-            ->chunkById(self::CHUNK_SIZE, function ($mutations) use (&$sentCount, $type, $now): void {
-                $users = DB::table('users')
-                    ->whereIn('username', $mutations->pluck('pengusul')->filter()->unique())
-                    ->whereNotNull('telegram_chat_id')
-                    ->where('telegram_chat_id', '!=', '')
-                    ->get(['username', 'telegram_chat_id'])
-                    ->keyBy('username');
-
-                foreach ($mutations as $mutation) {
-                    $user = $users->get($mutation->pengusul);
-                    if ($user && NotificationHelper::queueTelegram(
-                        (string) $user->telegram_chat_id,
-                        $this->buildReminderMessage($mutation, $type, $now),
-                    )) {
-                        $sentCount++;
-                    }
-                }
-            }, 'id_mutasi', 'id_mutasi');
-
-        return $sentCount;
     }
 
     private function autoCancelForTable(string $table, string $type, CarbonImmutable $threshold): int
@@ -135,22 +99,6 @@ class DailyTaskService
         return $cancelledCount;
     }
 
-    private function buildReminderMessage(object $mutation, string $type, CarbonImmutable $now): string
-    {
-        $typeLabel = $type === 'masuk' ? 'Masuk' : 'Keluar';
-        $id = $this->escape((string) $mutation->id_mutasi);
-        $notes = $this->escape((string) ($mutation->catatan_berkas ?? 'Silakan periksa dokumen Anda'));
-        $submittedAt = CarbonImmutable::parse($mutation->tanggal_pengajuan)->format('d/m/Y');
-        $daysRemaining = max(0, 30 - (int) CarbonImmutable::parse($mutation->updated_at)->diffInDays($now));
-
-        return "⏰ <b>PENGINGAT: Perbaikan Dokumen</b>\n\n"
-            ."📋 Mutasi {$typeLabel}: <code>{$id}</code>\n"
-            ."📅 Diajukan: {$submittedAt}\n"
-            ."⚠️ Sisa waktu: <b>{$daysRemaining} hari</b>\n\n"
-            ."📝 <b>Catatan Dinas:</b>\n{$notes}\n\n"
-            .'🔔 Mohon segera perbaiki. Data akan otomatis dibatalkan setelah 30 hari.';
-    }
-
     private function deleteMutationFiles(object $mutation, string $type): void
     {
         $columns = $type === 'masuk'
@@ -177,11 +125,6 @@ class DailyTaskService
                 $this->files->deleteOldFile((string) $path);
             }
         }
-    }
-
-    private function escape(string $value): string
-    {
-        return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
     }
 
     /** @return array{status:string, sent_count:int, cancelled_count:int, executed_at:string, reason:string} */

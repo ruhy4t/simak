@@ -128,6 +128,7 @@ class MutasiService
      */
     public function updateMutasiKeluarStatus(string $id, string $status, ?string $catatan = null): object
     {
+        $previousStatus = DB::table('mutasi_keluar')->where('id_mutasi', $id)->value('status');
         $updateData = [
             'status' => $status,
             'updated_at' => now(),
@@ -143,7 +144,7 @@ class MutasiService
 
         // Notify pengusul about status change
         if ($mutasi) {
-            NotificationHelper::notifyPengusul($mutasi, $status, 'keluar');
+            NotificationHelper::notifyPengusulOnStatusChange($mutasi, $previousStatus, $status, 'keluar');
         }
 
         return $mutasi;
@@ -154,6 +155,7 @@ class MutasiService
      */
     public function updateMutasiMasukStatus(string $id, string $status, ?string $catatan = null): object
     {
+        $previousStatus = DB::table('mutasi_masuk')->where('id_mutasi', $id)->value('status');
         $updateData = [
             'status' => $status,
             'updated_at' => now(),
@@ -169,7 +171,7 @@ class MutasiService
 
         // Notify pengusul about status change
         if ($mutasi) {
-            NotificationHelper::notifyPengusul($mutasi, $status, 'masuk');
+            NotificationHelper::notifyPengusulOnStatusChange($mutasi, $previousStatus, $status, 'masuk');
         }
 
         return $mutasi;
@@ -180,6 +182,7 @@ class MutasiService
      */
     public function completeMutasiKeluar(object $mutasi, string $tanggalSelesai): array
     {
+        $previousStatus = $mutasi->status ?? null;
         // Update status to Selesai
         DB::table('mutasi_keluar')->where('id_mutasi', $mutasi->id_mutasi)->update([
             'tanggal_selesai' => $tanggalSelesai,
@@ -197,7 +200,7 @@ class MutasiService
         ]);
 
         // Send Telegram notification
-        NotificationHelper::notifyPengusul($mutasi, 'Selesai', 'keluar');
+        NotificationHelper::notifyPengusulOnStatusChange($mutasi, $previousStatus, 'Selesai', 'keluar');
 
         return [
             'pengusul' => DB::table('users')->where('username', $mutasi->pengusul)->first(),
@@ -210,6 +213,7 @@ class MutasiService
     public function completeMutasiMasuk(object $mutasi, string $tanggalSelesai): array
     {
         $id = $mutasi->id_mutasi;
+        $previousStatus = $mutasi->status ?? null;
 
         // Update status to Selesai
         DB::table('mutasi_masuk')->where('id_mutasi', $id)->update([
@@ -235,7 +239,7 @@ class MutasiService
         }
 
         // Send Telegram notification
-        NotificationHelper::notifyPengusul($mutasiWithSiswa, 'Selesai', 'masuk');
+        NotificationHelper::notifyPengusulOnStatusChange($mutasiWithSiswa, $previousStatus, 'Selesai', 'masuk');
 
         Log::info("Surat Izin Mutasi Masuk {$id} selesai");
 

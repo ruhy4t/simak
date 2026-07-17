@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Jobs\SendTelegramJob;
 use App\Services\DailyTaskService;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Schema\Blueprint;
@@ -33,6 +32,20 @@ class DailyTaskServiceTest extends TestCase
             $table->timestamps();
         });
 
+        Schema::create('settings', function (Blueprint $table): void {
+            $table->string('key')->primary();
+            $table->text('value')->nullable();
+            $table->string('type')->default('string');
+            $table->timestamps();
+        });
+
+        Schema::create('holidays', function (Blueprint $table): void {
+            $table->id();
+            $table->date('date')->unique();
+            $table->string('description');
+            $table->timestamps();
+        });
+
         foreach (['mutasi_masuk', 'mutasi_keluar'] as $tableName) {
             Schema::create($tableName, function (Blueprint $table) use ($tableName): void {
                 $table->string('id_mutasi')->primary();
@@ -60,22 +73,20 @@ class DailyTaskServiceTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_reminders_are_queued_across_multiple_chunks(): void
+    public function test_daily_cron_does_not_send_telegram_for_unchanged_records(): void
     {
         Queue::fake();
         $this->insertUser();
         $now = CarbonImmutable::parse('2026-07-16 06:00:00', 'Asia/Jakarta');
 
-        $rows = [];
-        for ($index = 1; $index <= 105; $index++) {
-            $rows[] = $this->incomingMutation(sprintf('MM-%03d', $index), $now->subDay());
-        }
-        DB::table('mutasi_masuk')->insert($rows);
+        DB::table('mutasi_masuk')->insert(
+            $this->incomingMutation('MM-UNCHANGED', $now->subDay())
+        );
 
-        $sent = app(DailyTaskService::class)->sendRevisionReminders($now);
+        $result = app(DailyTaskService::class)->run($now);
 
-        $this->assertSame(105, $sent);
-        Queue::assertPushed(SendTelegramJob::class, 105);
+        $this->assertSame(0, $result['sent_count']);
+        Queue::assertNothingPushed();
     }
 
     public function test_only_expired_revisions_are_auto_cancelled(): void

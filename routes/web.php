@@ -13,7 +13,6 @@ use App\Http\Controllers\MutasiMasukController;
 use App\Http\Controllers\PenandatanganController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\QueueWorkerController;
 use App\Http\Controllers\RegionController;
 use App\Http\Controllers\SatuanPendidikanController;
 use App\Http\Controllers\SecureFileController;
@@ -33,7 +32,6 @@ Route::get('/telegram/webhook-info', [TelegramController::class, 'webhookInfo'])
 
 // Cron Routes (For external cron service like cron-job.org)
 Route::get('/cron/reminder', [CronController::class, 'revisionReminder'])->middleware('cron.auth');
-Route::get('/cron/work', [QueueWorkerController::class, 'work'])->middleware('cron.auth');
 
 Route::middleware('guest')->group(function () {
     Route::get('/', fn () => redirect()->route('login'));

@@ -190,6 +190,27 @@ class NotificationHelper
     }
 
     /**
+     * Notify the proposer only when the persisted mutation status changes.
+     */
+    public static function notifyPengusulOnStatusChange(
+        object $mutasi,
+        ?string $previousStatus,
+        string $newStatus,
+        string $type = 'keluar'
+    ): void {
+        if ($previousStatus === $newStatus) {
+            Log::info('Telegram status notification skipped because status is unchanged.', [
+                'id_mutasi' => $mutasi->id_mutasi ?? null,
+                'status' => $newStatus,
+            ]);
+
+            return;
+        }
+
+        self::notifyPengusul($mutasi, $newStatus, $type);
+    }
+
+    /**
      * Get service schedule info from Settings for notification messages
      */
     public static function getServiceScheduleInfo(): ?string

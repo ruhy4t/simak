@@ -11,7 +11,7 @@ use App\Services\RuntimePruner;
 class CronController extends Controller
 {
     /**
-     * Run revision reminders and expiry cancellation.
+     * Run expiry cancellation and runtime maintenance.
      *
      * URL: /cron/reminder with Authorization: Bearer <CRON_SECRET>
      */

@@ -9,7 +9,7 @@ class RunDailyTasks extends Command
 {
     protected $signature = 'simak:daily-tasks';
 
-    protected $description = 'Send revision reminders and auto-cancel expired revisions';
+    protected $description = 'Run daily mutation maintenance and auto-cancel expired revisions';
 
     public function handle(DailyTaskService $dailyTasks): int
     {
