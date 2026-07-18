@@ -521,7 +521,7 @@ class LaporanController extends Controller
 
         $statusKey = strtolower($schoolStatus ?? 'all');
         $npsnKey = $selectedSchool?->npsn ?? 'all';
-        $cacheKey = 'public.statistics.trend.v2.'.($month ?: 'all').'.'.$year
+        $cacheKey = 'public.statistics.trend.v3.'.($month ?: 'all').'.'.$year
             .'.status-'.$statusKey.'.npsn-'.$npsnKey;
 
         $chartData = Cache::remember(
@@ -697,21 +697,18 @@ class LaporanController extends Controller
         ?string $schoolStatus,
         ?string $schoolNpsn,
     ): void {
-        $query->whereExists(function ($schoolQuery) use (
+        $query->join(
+            'satuan_pendidikan as filtered_schools',
+            'filtered_schools.npsn',
+            '=',
             $npsnColumn,
-            $schoolStatus,
-            $schoolNpsn,
-        ) {
-            $schoolQuery->selectRaw('1')
-                ->from('satuan_pendidikan as filtered_schools')
-                ->whereColumn('filtered_schools.npsn', $npsnColumn)
-                ->where('filtered_schools.is_local', true)
-                ->whereRaw('UPPER(TRIM(filtered_schools.kota)) = ?', ['KOTA BOGOR'])
-                ->whereRaw('UPPER(TRIM(filtered_schools.bentuk_pendidikan)) = ?', ['SMP'])
-                ->whereIn('filtered_schools.status_sp', ['Negeri', 'Swasta'])
-                ->when($schoolStatus, fn ($filter) => $filter->where('filtered_schools.status_sp', $schoolStatus))
-                ->when($schoolNpsn, fn ($filter) => $filter->where('filtered_schools.npsn', $schoolNpsn));
-        });
+        )
+            ->where('filtered_schools.is_local', true)
+            ->whereRaw('UPPER(TRIM(filtered_schools.kota)) = ?', ['KOTA BOGOR'])
+            ->whereRaw('UPPER(TRIM(filtered_schools.bentuk_pendidikan)) = ?', ['SMP'])
+            ->whereIn('filtered_schools.status_sp', ['Negeri', 'Swasta'])
+            ->when($schoolStatus, fn ($filter) => $filter->where('filtered_schools.status_sp', $schoolStatus))
+            ->when($schoolNpsn, fn ($filter) => $filter->where('filtered_schools.npsn', $schoolNpsn));
     }
 
     /**
