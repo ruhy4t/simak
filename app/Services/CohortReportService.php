@@ -33,6 +33,10 @@ class CohortReportService
             ->join('satuan_pendidikan as schools', 'schools.id', '=', 'counts.satuan_pendidikan_id')
             ->where('counts.academic_year_id', $academicYear->id)
             ->whereIn('counts.grade', [7, 8, 9])
+            ->where('schools.is_local', true)
+            ->whereRaw('UPPER(TRIM(schools.kota)) = ?', ['KOTA BOGOR'])
+            ->whereRaw('UPPER(TRIM(schools.bentuk_pendidikan)) = ?', ['SMP'])
+            ->whereIn('schools.status_sp', ['Negeri', 'Swasta'])
             ->select([
                 'counts.satuan_pendidikan_id',
                 'schools.npsn',

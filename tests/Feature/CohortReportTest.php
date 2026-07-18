@@ -204,6 +204,45 @@ class CohortReportTest extends TestCase
             ->assertDontSee('12345678');
     }
 
+    public function test_citywide_cohort_only_counts_public_and_private_junior_high_schools_from_bogor_city(): void
+    {
+        [$year] = $this->seedSchoolAndYear(true);
+
+        $includedPrivateSchool = $this->insertSchoolWithCounts($year, [
+            'npsn' => '22222222',
+            'nama' => 'SMP Swasta Kota Bogor',
+            'bentuk_pendidikan' => 'SMP',
+            'status_sp' => 'Swasta',
+            'kota' => 'Kota Bogor',
+            'is_local' => true,
+        ]);
+
+        $this->insertSchoolWithCounts($year, [
+            'npsn' => '33333333',
+            'nama' => 'SMP Luar Kota',
+            'bentuk_pendidikan' => 'SMP',
+            'status_sp' => 'Negeri',
+            'kota' => 'Kota Bandung',
+            'is_local' => false,
+        ], 100);
+        $this->insertSchoolWithCounts($year, [
+            'npsn' => '44444444',
+            'nama' => 'SD Kota Bogor',
+            'bentuk_pendidikan' => 'SD',
+            'status_sp' => 'Swasta',
+            'kota' => 'Kota Bogor',
+            'is_local' => true,
+        ], 100);
+
+        $report = app(CohortReportService::class)->report($year);
+
+        $this->assertSame(2, $report['school_count']);
+        $this->assertSame(2, $report['reported_school_count']);
+        $this->assertSame(24, $report['reported_summary']['opening']);
+        $this->assertSame(23, $report['reported_summary']['actual']);
+        $this->assertContains($includedPrivateSchool, DB::table('satuan_pendidikan')->pluck('id')->all());
+    }
+
     public function test_internal_cohort_is_available_only_for_closed_academic_years(): void
     {
         [$year] = $this->seedSchoolAndYear(true);
@@ -302,6 +341,9 @@ class CohortReportTest extends TestCase
         $schoolId = DB::table('satuan_pendidikan')->insertGetId([
             'npsn' => '12345678',
             'nama' => 'SMP Uji Kohort',
+            'bentuk_pendidikan' => 'SMP',
+            'status_sp' => 'Negeri',
+            'kota' => 'Kota Bogor',
             'is_local' => true,
             'created_at' => now(),
             'updated_at' => now(),
@@ -331,6 +373,32 @@ class CohortReportTest extends TestCase
         }
 
         return [$year, $schoolId];
+    }
+
+    private function insertSchoolWithCounts(AcademicYear $year, array $school, int $openingPerGrade = 1): int
+    {
+        $schoolId = DB::table('satuan_pendidikan')->insertGetId(array_merge($school, [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]));
+
+        foreach ([7, 8, 9] as $grade) {
+            DB::table('satuan_pendidikan_student_counts')->insert([
+                'satuan_pendidikan_id' => $schoolId,
+                'academic_year_id' => $year->id,
+                'grade' => $grade,
+                'male_count' => $openingPerGrade,
+                'female_count' => $openingPerGrade,
+                'confirmed_at' => now(),
+                'closing_male_count' => $openingPerGrade,
+                'closing_female_count' => $openingPerGrade,
+                'closing_confirmed_at' => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        return $schoolId;
     }
 
     private function createUser(string $username, string $role, ?string $npsn = null): User
@@ -366,6 +434,9 @@ class CohortReportTest extends TestCase
             $table->id();
             $table->string('npsn')->unique();
             $table->string('nama');
+            $table->string('bentuk_pendidikan')->default('SMP');
+            $table->string('status_sp')->default('Swasta');
+            $table->string('kota')->default('Kota Bogor');
             $table->boolean('is_local')->default(true);
             $table->unsignedInteger('jumlah_siswa_awal_8')->default(0);
             $table->unsignedInteger('jumlah_siswa_awal_9')->default(0);
