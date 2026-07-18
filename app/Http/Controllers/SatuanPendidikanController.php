@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AcademicYear;
 use App\Models\SatuanPendidikan;
 use App\Services\RegionCacheService;
+use App\Services\FileUploadService;
 use App\Services\StudentCountRolloverService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -12,7 +13,6 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Storage;
 
 class SatuanPendidikanController extends Controller
 {
@@ -20,6 +20,7 @@ class SatuanPendidikanController extends Controller
 
     public function __construct(
         RegionCacheService $regionCache,
+        private readonly FileUploadService $fileUploadService,
         private readonly StudentCountRolloverService $studentCountRolloverService
     )
     {
@@ -437,7 +438,7 @@ class SatuanPendidikanController extends Controller
             'jumlah_siswa_8_p' => 'nullable|integer|min:0',
             'jumlah_siswa_9_l' => 'nullable|integer|min:0',
             'jumlah_siswa_9_p' => 'nullable|integer|min:0',
-            'kop_surat' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'kop_surat' => 'nullable|image|mimes:jpg,jpeg|max:2048',
         ];
 
         if (Schema::hasTable('academic_years')) {
@@ -447,6 +448,9 @@ class SatuanPendidikanController extends Controller
         $request->validate($rules, [
             'npsn.size' => 'NPSN harus 8 digit',
             'npsn.unique' => 'NPSN sudah terdaftar',
+            'kop_surat.image' => 'Kop surat harus berupa file gambar JPG/JPEG.',
+            'kop_surat.mimes' => 'Format kop surat harus JPG atau JPEG.',
+            'kop_surat.max' => 'Ukuran kop surat maksimal 2 MB.',
         ]);
 
         try {
@@ -489,14 +493,15 @@ class SatuanPendidikanController extends Controller
 
             // Handle Kop Surat file upload
             if ($request->hasFile('kop_surat')) {
-                // Delete old file if exists
-                if ($satpen->kop_surat_path && Storage::disk('public')->exists($satpen->kop_surat_path)) {
-                    Storage::disk('public')->delete($satpen->kop_surat_path);
-                }
-
-                // Upload new file
-                $path = $request->file('kop_surat')->store('uploads/kop_surat', 'public');
-                $updateData['kop_surat_path'] = $path;
+                $disk = $this->fileUploadService->getPublicImageDisk();
+                $updateData['kop_surat_path'] = $this->fileUploadService->uploadImage(
+                    $request->file('kop_surat'),
+                    (string) $request->npsn,
+                    'kop_surat_'.now()->format('YmdHis'),
+                    'uploads/kop_surat',
+                    $disk,
+                );
+                $this->fileUploadService->deleteOldFile($satpen->kop_surat_path, $disk);
             }
 
             DB::transaction(function () use ($id, $request, $updateData) {
@@ -624,7 +629,11 @@ class SatuanPendidikanController extends Controller
             $rules['academic_year_id'] = 'required|integer|exists:academic_years,id';
         }
 
-        $request->validate($rules);
+        $request->validate($rules, [
+            'kop_surat.image' => 'Kop surat harus berupa file gambar JPG/JPEG.',
+            'kop_surat.mimes' => 'Format kop surat harus JPG atau JPEG.',
+            'kop_surat.max' => 'Ukuran kop surat maksimal 2 MB.',
+        ]);
 
         try {
             $studentValues = [];
@@ -665,15 +674,15 @@ class SatuanPendidikanController extends Controller
 
             // Handle File Upload
             if ($request->hasFile('kop_surat')) {
-                // Delete old file if exists
-                if ($satpen->kop_surat_path && Storage::disk('public')->exists($satpen->kop_surat_path)) {
-                    Storage::disk('public')->delete($satpen->kop_surat_path);
-                }
-
-                // Upload new file
-                // Store in public/uploads/kop_surat
-                $path = $request->file('kop_surat')->store('uploads/kop_surat', 'public');
-                $updateData['kop_surat_path'] = $path;
+                $disk = $this->fileUploadService->getPublicImageDisk();
+                $updateData['kop_surat_path'] = $this->fileUploadService->uploadImage(
+                    $request->file('kop_surat'),
+                    (string) $satpen->npsn,
+                    'kop_surat_'.now()->format('YmdHis'),
+                    'uploads/kop_surat',
+                    $disk,
+                );
+                $this->fileUploadService->deleteOldFile($satpen->kop_surat_path, $disk);
             }
 
             // Using Eloquent update to trigger Model events (boot/saving)
@@ -718,7 +727,9 @@ class SatuanPendidikanController extends Controller
 
         } catch (\Exception $e) {
             \Log::error('Update Profile Failed: ' . $e->getMessage());
-            return back()->with('error', 'Gagal memperbarui profil: ' . $e->getMessage());
+            return back()
+                ->withInput()
+                ->with('error', 'Gagal memperbarui profil. Silakan coba lagi atau hubungi administrator.');
         }
     }
 

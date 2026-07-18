@@ -254,7 +254,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Upload Kop Surat Baru</label>
-                            <input type="file" name="kop_surat" accept="image/*"
+                            <input type="file" name="kop_surat" accept=".jpg,.jpeg,image/jpeg"
                                 class="block w-full text-sm text-gray-500
                                     file:mr-4 file:py-2 file:px-4
                                     file:rounded-lg file:border-0
@@ -262,12 +262,12 @@
                                     file:bg-rose-50 file:text-rose-700
                                     hover:file:bg-rose-100
                                     cursor-pointer border border-dashed border-gray-300 rounded-lg p-2">
-                            <p class="text-xs text-gray-500 mt-1">Format: JPG, PNG. Maks 2MB</p>
+                            <p class="text-xs text-gray-500 mt-1">Format wajib JPG/JPEG, maksimal 2 MB. Gunakan gambar berbentuk lebar (landscape).</p>
                         </div>
                         <div>
                             @if($satpen->kop_surat_path ?? false)
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Preview Terpasang</label>
-                                <img src="{{ Storage::url($satpen->kop_surat_path) }}" alt="Kop Surat"
+                                <img src="{{ \App\Services\FileUploadService::getStorageUrl($satpen->kop_surat_path) }}" alt="Kop Surat"
                                     class="w-full h-auto rounded-lg shadow-xs border">
                             @else
                                 <div class="flex items-center justify-center h-full bg-gray-50 rounded-lg border border-dashed border-gray-300">

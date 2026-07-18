@@ -68,6 +68,14 @@ class FileUploadService
     }
 
     /**
+     * Get the disk for public image assets such as a school's letterhead.
+     */
+    public function getPublicImageDisk(): string
+    {
+        return $this->isCloudStorage() ? 'b2' : 'public';
+    }
+
+    /**
      * Get the disk for temporary uploads.
      * B2 in production (Vercel doesn't persist local), local in development.
      */
@@ -116,14 +124,14 @@ class FileUploadService
     /**
      * Delete old file from storage to save space
      */
-    public function deleteOldFile(?string $oldPath): bool
+    public function deleteOldFile(?string $oldPath, ?string $disk = null): bool
     {
         if (empty($oldPath)) {
             return true;
         }
 
         try {
-            $disk = $this->getDisk();
+            $disk ??= $this->getDisk();
 
             if (Storage::disk($disk)->exists($oldPath)) {
                 Storage::disk($disk)->delete($oldPath);
@@ -223,7 +231,13 @@ class FileUploadService
     /**
      * Upload an Image file (JPG, PNG, WebP)
      */
-    public function uploadImage($file, string $prefix, string $suffix, ?string $subDir = null): string
+    public function uploadImage(
+        $file,
+        string $prefix,
+        string $suffix,
+        ?string $subDir = null,
+        ?string $targetDisk = null,
+    ): string
     {
         // Handle Temporary File Path (String)
         if (is_string($file)) {
@@ -250,7 +264,7 @@ class FileUploadService
                 $storedPath = $filename;
             }
 
-            $disk = $this->getDisk();
+            $disk = $targetDisk ?? $this->getDisk();
 
             // Move/Copy from temp disk to target disk
             $content = Storage::disk($tempDisk)->get($file);
@@ -283,7 +297,7 @@ class FileUploadService
             $storedPath = $filename;
         }
 
-        $disk = $this->getDisk();
+        $disk = $targetDisk ?? $this->getDisk();
 
         // Upload
         Storage::disk($disk)->put($storedPath, file_get_contents($file->getRealPath()));

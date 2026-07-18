@@ -265,7 +265,7 @@
                         <div class="p-6 space-y-6">
                             <div class="relative group">
                                 <label class="block text-sm font-bold text-rose-900 uppercase mb-2">Upload File Baru</label>
-                                <input type="file" name="kop_surat" accept="image/*"
+                                <input type="file" name="kop_surat" accept=".jpg,.jpeg,image/jpeg"
                                     class="block w-full text-sm text-slate-500
                                                             file:mr-4 file:py-3 file:px-6
                                                             file:rounded-xl file:border-0
@@ -273,6 +273,9 @@
                                                             file:bg-rose-50 file:text-rose-700
                                                             hover:file:bg-rose-100
                                                             cursor-pointer border-2 border-dashed border-rose-200 rounded-xl p-2 h-20 leading-10">
+                                <p class="mt-2 text-xs font-medium text-slate-500">
+                                    Format wajib JPG/JPEG, ukuran maksimal 2 MB. Gunakan gambar kop surat berbentuk lebar (landscape).
+                                </p>
                             </div>
 
                             @if($satpen->kop_surat_path)
@@ -280,7 +283,7 @@
                                     <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 text-center">
                                         Preview
                                         Terpasang</p>
-                                    <img src="{{ Storage::url($satpen->kop_surat_path) }}" alt="Preview"
+                                    <img src="{{ \App\Services\FileUploadService::getStorageUrl($satpen->kop_surat_path) }}" alt="Preview"
                                         class="w-full h-auto rounded-lg shadow-xs border border-slate-200">
                                 </div>
                             @endif
