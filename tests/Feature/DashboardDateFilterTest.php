@@ -23,6 +23,16 @@ class DashboardDateFilterTest extends TestCase
         DB::purge('sqlite');
         Cache::flush();
 
+        Schema::create('satuan_pendidikan', function (Blueprint $table) {
+            $table->id();
+            $table->string('npsn')->unique();
+            $table->string('nama');
+            $table->string('bentuk_pendidikan');
+            $table->string('status_sp');
+            $table->string('kota');
+            $table->boolean('is_local')->default(true);
+        });
+
         Schema::create('mutasi_keluar', function (Blueprint $table) {
             $table->id();
             $table->date('tanggal_pengajuan')->index();
@@ -35,6 +45,7 @@ class DashboardDateFilterTest extends TestCase
 
         Schema::create('mutasi_masuk', function (Blueprint $table) {
             $table->id();
+            $table->string('id_mutasi')->unique();
             $table->date('tanggal_pengajuan')->index();
             $table->unsignedInteger('jumlah_siswa')->default(1);
             $table->string('nama_sekolah_tujuan');
@@ -43,6 +54,20 @@ class DashboardDateFilterTest extends TestCase
             $table->string('pengusul');
             $table->softDeletes();
         });
+
+        Schema::create('mutasi_masuk_siswa', function (Blueprint $table) {
+            $table->id();
+            $table->string('id_mutasi');
+        });
+
+        DB::table('satuan_pendidikan')->insert([
+            'npsn' => '12345678',
+            'nama' => 'SMP Test',
+            'bentuk_pendidikan' => 'SMP',
+            'status_sp' => 'Negeri',
+            'kota' => 'KOTA BOGOR',
+            'is_local' => true,
+        ]);
 
         $user = new User([
             'username' => 'operator-test',
@@ -79,6 +104,7 @@ class DashboardDateFilterTest extends TestCase
         $this->assertSame(2, $data['statsKeluar']['total']);
         $this->assertSame(2, $data['statsMasuk']['total']);
         $this->assertSame(7, $data['statsMasuk']['total_siswa']);
+        $this->assertSame(4, $data['statsMasuk']['selesai_siswa']);
         $this->assertSame(2, (int) $data['schoolStatsKeluar'][0]->jumlah);
         $this->assertSame(7, (int) $data['schoolStatsMasuk'][0]->jumlah);
         $this->assertSame('Juli 2026', $data['dateFilter']['label']);
@@ -101,6 +127,7 @@ class DashboardDateFilterTest extends TestCase
         $this->assertSame(1, $data['statsKeluar']['menunggu']);
         $this->assertSame(1, $data['statsKeluar']['selesai']);
         $this->assertSame(7, $data['statsMasuk']['total_siswa']);
+        $this->assertSame(4, $data['statsMasuk']['selesai_siswa']);
         $this->assertSame('5 Jul 2026 – 20 Jul 2026', $data['dateFilter']['label']);
         $this->assertCount(16, $data['trendChart']['labels']);
         $this->assertSame(1, $data['trendChart']['masuk'][0]);
@@ -130,6 +157,48 @@ class DashboardDateFilterTest extends TestCase
         $this->assertSame(2, $secondView->getData()['statsMasuk']['total']);
     }
 
+    public function test_dinas_dashboard_excludes_mutations_whose_local_side_is_not_bogor_junior_high(): void
+    {
+        $dinas = new User([
+            'username' => 'dinas-test',
+            'role' => 'Dinas',
+            'status' => 'Aktif',
+        ]);
+        $dinas->id = 2;
+        Auth::setUser($dinas);
+
+        DB::table('mutasi_keluar')->insert([
+            'tanggal_pengajuan' => '2026-07-25',
+            'nama_sekolah_asal' => 'Sekolah Luar Cakupan',
+            'npsn_sekolah_asal' => '99999999',
+            'status' => 'Selesai',
+            'pengusul' => 'operator-luar',
+        ]);
+        DB::table('mutasi_masuk')->insert([
+            'id_mutasi' => 'MM-OUTSIDE',
+            'tanggal_pengajuan' => '2026-07-25',
+            'jumlah_siswa' => 5,
+            'nama_sekolah_tujuan' => 'Sekolah Luar Cakupan',
+            'npsn_sekolah_tujuan' => '99999999',
+            'status' => 'Selesai',
+            'pengusul' => 'operator-luar',
+        ]);
+        DB::table('mutasi_masuk_siswa')->insert(
+            array_fill(0, 5, ['id_mutasi' => 'MM-OUTSIDE'])
+        );
+
+        $data = app(DashboardController::class)->index(Request::create('/dashboard', 'GET', [
+            'period' => 'month',
+            'month' => 7,
+            'year' => 2026,
+        ]))->getData();
+
+        $this->assertSame(2, $data['statsKeluar']['total']);
+        $this->assertSame(2, $data['statsMasuk']['total']);
+        $this->assertSame(7, $data['statsMasuk']['total_siswa']);
+        $this->assertSame(4, $data['statsMasuk']['selesai_siswa']);
+    }
+
     private function insertMutationPair(string $date, string $status, int $studentCount): void
     {
         DB::table('mutasi_keluar')->insert([
@@ -140,7 +209,9 @@ class DashboardDateFilterTest extends TestCase
             'pengusul' => 'operator-test',
         ]);
 
+        $incomingId = 'MM-'.str_replace('-', '', $date).'-'.$studentCount;
         DB::table('mutasi_masuk')->insert([
+            'id_mutasi' => $incomingId,
             'tanggal_pengajuan' => $date,
             'jumlah_siswa' => $studentCount,
             'nama_sekolah_tujuan' => 'SMP Test',
@@ -148,5 +219,9 @@ class DashboardDateFilterTest extends TestCase
             'status' => $status,
             'pengusul' => 'operator-test',
         ]);
+
+        DB::table('mutasi_masuk_siswa')->insert(
+            array_fill(0, $studentCount, ['id_mutasi' => $incomingId])
+        );
     }
 }

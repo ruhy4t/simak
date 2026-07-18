@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Services\MutationStatisticsCache;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -75,7 +76,7 @@ class PublicStatisticsTest extends TestCase
             ->assertSee('Ringkasan agregat mutasi selesai dan siswa keluar non-mutasi yang telah tercatat')
             ->assertDontSee('Nama Siswa')
             ->assertDontSee('NISN')
-            ->assertHeader('Cache-Control', 'max-age=300, public, s-maxage=1800')
+            ->assertHeader('Cache-Control', 'max-age=0, must-revalidate, public')
             ->assertViewHas('chartData', function (array $data) {
                 return count($data['labels']) === 31
                     && array_sum($data['masuk']['dalam']) === 1
@@ -151,6 +152,18 @@ class PublicStatisticsTest extends TestCase
 
         $this->assertSame(3, $this->total($first['masuk']));
         $this->assertSame($first, $second);
+    }
+
+    public function test_completed_mutation_invalidates_public_statistics_snapshot(): void
+    {
+        $first = $this->get('/statistik-mutasi?year=2026&month=7')->viewData('chartData');
+        $this->assertSame(3, $this->total($first['masuk']));
+
+        $this->insertIncoming('M-REFRESHED', '2026-07-15', 'Selesai', false, 'KOTA BOGOR');
+        MutationStatisticsCache::invalidate();
+
+        $refreshed = $this->get('/statistik-mutasi?year=2026&month=7')->viewData('chartData');
+        $this->assertSame(4, $this->total($refreshed['masuk']));
     }
 
     private function seedStatistics(): void

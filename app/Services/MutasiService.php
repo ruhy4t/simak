@@ -189,6 +189,7 @@ class MutasiService
             'status' => 'Selesai',
             'updated_at' => now(),
         ]);
+        MutationStatisticsCache::invalidate();
 
         // Auto-save new school reference
         \App\Http\Controllers\SatuanPendidikanController::maybeStoreNewSchool([
@@ -221,6 +222,7 @@ class MutasiService
             'status' => 'Selesai',
             'updated_at' => now(),
         ]);
+        MutationStatisticsCache::invalidate();
 
         // Get siswa list and build student names
         $siswaList = DB::table('mutasi_masuk_siswa')->where('id_mutasi', $id)->get();

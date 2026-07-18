@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\SatuanPendidikan;
+use App\Services\MutationStatisticsCache;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -101,7 +103,8 @@ class DashboardController extends Controller
     private function dashboardCacheKey($user, array $dateFilter): string
     {
         $scope = [
-            'v1',
+            'v2',
+            MutationStatisticsCache::version(),
             (string) $user->getAuthIdentifier(),
             (string) $user->role,
             (string) $user->username,
@@ -119,7 +122,8 @@ class DashboardController extends Controller
         try {
             $query = DB::table('mutasi_keluar')
                 ->whereNull('deleted_at') // Filter Deleted
-                ->where('status', '!=', 'Dibatalkan'); // Exclude cancelled
+                ->where('status', '!=', 'Dibatalkan') // Exclude cancelled
+                ->whereIn('npsn_sekolah_asal', $this->eligibleBogorJuniorHighNpsns());
 
             if ($user->role === 'Operator') {
                 $query->where('pengusul', $user->username)
@@ -158,7 +162,8 @@ class DashboardController extends Controller
         try {
             $query = DB::table('mutasi_masuk')
                 ->whereNull('deleted_at') // Filter Deleted
-                ->where('status', '!=', 'Dibatalkan'); // Exclude cancelled
+                ->where('status', '!=', 'Dibatalkan') // Exclude cancelled
+                ->whereIn('npsn_sekolah_tujuan', $this->eligibleBogorJuniorHighNpsns());
 
             if ($user->role === 'Operator') {
                 $query->where('pengusul', $user->username);
@@ -168,10 +173,16 @@ class DashboardController extends Controller
 
             $this->applyDateFilter($query, $dateFilter);
 
+            $studentBase = (clone $query)
+                ->join('mutasi_masuk_siswa', 'mutasi_masuk.id_mutasi', '=', 'mutasi_masuk_siswa.id_mutasi');
+            $totalStudents = (clone $studentBase)->count('mutasi_masuk_siswa.id');
+            $completedStudents = (clone $studentBase)
+                ->where('mutasi_masuk.status', 'Selesai')
+                ->count('mutasi_masuk_siswa.id');
+
             // Optimization: Single Query Aggregation
             $stats = $query->selectRaw("
                 COUNT(*) as total,
-                SUM(jumlah_siswa) as total_siswa,
                 SUM(CASE WHEN status = 'Menunggu Verifikasi Dinas' THEN 1 ELSE 0 END) as menunggu,
                 SUM(CASE WHEN status = 'Disetujui Dinas' THEN 1 ELSE 0 END) as disetujui,
                 SUM(CASE WHEN status = 'Proses TTD' THEN 1 ELSE 0 END) as proses_ttd,
@@ -181,7 +192,8 @@ class DashboardController extends Controller
 
             return [
                 'total' => (int) $stats->total,
-                'total_siswa' => (int) ($stats->total_siswa ?? 0),
+                'total_siswa' => $totalStudents,
+                'selesai_siswa' => $completedStudents,
                 'menunggu' => (int) $stats->menunggu,
                 'disetujui' => (int) $stats->disetujui,
                 'proses_ttd' => (int) $stats->proses_ttd,
@@ -276,6 +288,7 @@ class DashboardController extends Controller
         return [
             'total' => 0,
             'total_siswa' => 0,
+            'selesai_siswa' => 0,
             'menunggu' => 0,
             'disetujui' => 0,
             'proses_ttd' => 0,
@@ -294,6 +307,7 @@ class DashboardController extends Controller
                 ->select('nama_sekolah_asal as nama_sekolah', DB::raw('COUNT(*) as jumlah'))
                 ->whereNull('deleted_at') // Exclude Soft Deleted
                 ->where('status', '!=', 'Dibatalkan') // Exclude Cancelled
+                ->whereIn('npsn_sekolah_asal', $this->eligibleBogorJuniorHighNpsns())
                 ->groupBy('nama_sekolah_asal')
                 ->orderByDesc('jumlah')
                 ->limit(10);
@@ -321,18 +335,20 @@ class DashboardController extends Controller
     {
         try {
             $query = DB::table('mutasi_masuk')
-                ->select('nama_sekolah_tujuan as nama_sekolah', DB::raw('SUM(jumlah_siswa) as jumlah'))
-                ->whereNull('deleted_at') // Exclude Soft Deleted
-                ->where('status', '!=', 'Dibatalkan') // Exclude Cancelled
-                ->groupBy('nama_sekolah_tujuan')
+                ->join('mutasi_masuk_siswa', 'mutasi_masuk.id_mutasi', '=', 'mutasi_masuk_siswa.id_mutasi')
+                ->select('mutasi_masuk.nama_sekolah_tujuan as nama_sekolah', DB::raw('COUNT(mutasi_masuk_siswa.id) as jumlah'))
+                ->whereNull('mutasi_masuk.deleted_at') // Exclude Soft Deleted
+                ->where('mutasi_masuk.status', '!=', 'Dibatalkan') // Exclude Cancelled
+                ->whereIn('mutasi_masuk.npsn_sekolah_tujuan', $this->eligibleBogorJuniorHighNpsns())
+                ->groupBy('mutasi_masuk.nama_sekolah_tujuan')
                 ->orderByDesc('jumlah')
                 ->limit(10);
 
             // Filter by role
             if ($user->role === 'Operator') {
-                $query->where('pengusul', $user->username);
+                $query->where('mutasi_masuk.pengusul', $user->username);
             } elseif ($user->role === 'Sekolah') {
-                $query->where('npsn_sekolah_tujuan', $user->npsn);
+                $query->where('mutasi_masuk.npsn_sekolah_tujuan', $user->npsn);
             }
 
             $this->applyDateFilter($query, $dateFilter);
@@ -415,6 +431,11 @@ class DashboardController extends Controller
             $query = DB::table($table)
                 ->whereNull('deleted_at')
                 ->where('status', '!=', 'Dibatalkan');
+
+            $query->whereIn(
+                $table === 'mutasi_keluar' ? 'npsn_sekolah_asal' : 'npsn_sekolah_tujuan',
+                $this->eligibleBogorJuniorHighNpsns()
+            );
 
             if ($table === 'mutasi_keluar') {
                 if ($user->role === 'Operator') {
@@ -571,5 +592,12 @@ class DashboardController extends Controller
 
         $query->where('tanggal_pengajuan', '>=', $dateFilter['start'])
             ->where('tanggal_pengajuan', '<', $dateFilter['end_exclusive']);
+    }
+
+    private function eligibleBogorJuniorHighNpsns()
+    {
+        return SatuanPendidikan::query()
+            ->eligibleBogorJuniorHigh()
+            ->select('npsn');
     }
 }

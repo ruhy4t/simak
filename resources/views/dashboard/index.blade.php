@@ -134,9 +134,9 @@
                     'iconClass' => 'bg-rose-50 text-rose-600',
                 ],
                 [
-                    'label' => 'Selesai',
+                    'label' => 'Pengajuan Selesai',
                     'value' => ($statsMasuk['selesai'] ?? 0) + ($statsKeluar['selesai'] ?? 0),
-                    'hint' => 'Dokumen diterbitkan',
+                    'hint' => 'Masuk dan keluar',
                     'icon' => 'bi-check2-circle',
                     'iconClass' => 'bg-emerald-50 text-emerald-600',
                 ],
@@ -145,8 +145,11 @@
             $mutationSummaries = [
                 [
                     'label' => 'Mutasi Masuk',
-                    'description' => number_format($statsMasuk['total_siswa'] ?? 0).' siswa tercatat',
+                    'description' => 'Pengajuan perpindahan masuk',
                     'total' => $statsMasuk['total'] ?? 0,
+                    'total_unit' => 'Pengajuan',
+                    'student_total' => $statsMasuk['total_siswa'] ?? 0,
+                    'student_completed' => $statsMasuk['selesai_siswa'] ?? 0,
                     'icon' => 'bi-box-arrow-in-right',
                     'iconClass' => 'bg-sky-50 text-sky-600',
                     'statuses' => [
@@ -161,6 +164,7 @@
                     'label' => 'Mutasi Keluar',
                     'description' => 'Pengajuan perpindahan keluar',
                     'total' => $statsKeluar['total'] ?? 0,
+                    'total_unit' => 'Siswa/Pengajuan',
                     'icon' => 'bi-box-arrow-right',
                     'iconClass' => 'bg-indigo-50 text-indigo-600',
                     'statuses' => [
@@ -213,11 +217,26 @@
                                 <p class="text-xs text-slate-500">{{ $summary['description'] }}</p>
                             </div>
                         </div>
-                        <div class="text-right">
-                            <p class="text-2xl font-bold tracking-tight text-slate-950">{{ number_format($summary['total']) }}</p>
-                            <p class="text-[11px] font-medium uppercase tracking-wider text-slate-400">Total</p>
+                        <div class="flex items-start gap-5 text-right">
+                            <div>
+                                <p class="text-2xl font-bold tracking-tight text-slate-950">{{ number_format($summary['total']) }}</p>
+                                <p class="text-[11px] font-medium uppercase tracking-wider text-slate-400">{{ $summary['total_unit'] }}</p>
+                            </div>
+                            @if(isset($summary['student_total']))
+                                <div class="border-l border-slate-200 pl-5">
+                                    <p class="text-2xl font-bold tracking-tight text-sky-700">{{ number_format($summary['student_total']) }}</p>
+                                    <p class="text-[11px] font-medium uppercase tracking-wider text-slate-400">Siswa</p>
+                                </div>
+                            @endif
                         </div>
                     </div>
+
+                    @if(isset($summary['student_completed']))
+                        <div class="mt-4 flex items-center justify-between rounded-lg border border-emerald-100 bg-emerald-50 px-3.5 py-2.5">
+                            <span class="text-xs font-semibold text-emerald-700">Siswa mutasi masuk berstatus selesai</span>
+                            <span class="text-lg font-bold text-emerald-800">{{ number_format($summary['student_completed']) }}</span>
+                        </div>
+                    @endif
 
                     <div class="mt-5 grid grid-cols-2 gap-x-5 gap-y-3 border-t border-slate-100 pt-4 sm:grid-cols-5">
                         @foreach($summary['statuses'] as $status)

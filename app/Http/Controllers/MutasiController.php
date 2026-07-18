@@ -1002,6 +1002,7 @@ class MutasiController extends Controller
         $mutasi->nomor_surat_izin = $request->nomor_surat_izin;
         $mutasi->tanggal_selesai = $request->tanggal_selesai;
         $mutasi->status = 'Selesai';
+        \App\Services\MutationStatisticsCache::invalidate();
 
         // Auto-save New School (User Request) - Save upon completion
         \App\Http\Controllers\SatuanPendidikanController::maybeStoreNewSchool([

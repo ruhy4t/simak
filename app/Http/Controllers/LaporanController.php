@@ -7,6 +7,7 @@ use App\Models\MutasiKeluar;
 use App\Models\Penandatangan;
 use App\Models\SatuanPendidikan;
 use App\Services\CohortReportService;
+use App\Services\MutationStatisticsCache;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
@@ -232,7 +233,7 @@ class LaporanController extends Controller
                 ->keyBy('npsn');
 
             // Get schools and merge pre-aggregated data
-            $schools = SatuanPendidikan::local()->orderBy('nama')->get();
+            $schools = SatuanPendidikan::eligibleBogorJuniorHigh()->orderBy('nama')->get();
 
             foreach ($schools as $school) {
                 $masuk = $masukStats->get($school->npsn);
@@ -502,11 +503,7 @@ class LaporanController extends Controller
         $npsn = $validated['npsn'] ?? null;
         $schoolStatus = $npsn ? null : ($validated['school_status'] ?? null);
         $selectedSchool = null;
-        $eligibleSchoolQuery = SatuanPendidikan::query()
-            ->where('is_local', true)
-            ->whereRaw('UPPER(TRIM(kota)) = ?', ['KOTA BOGOR'])
-            ->whereRaw('UPPER(TRIM(bentuk_pendidikan)) = ?', ['SMP'])
-            ->whereIn('status_sp', ['Negeri', 'Swasta']);
+        $eligibleSchoolQuery = SatuanPendidikan::eligibleBogorJuniorHigh();
 
         if ($npsn) {
             $selectedSchool = (clone $eligibleSchoolQuery)
@@ -529,7 +526,8 @@ class LaporanController extends Controller
 
         $statusKey = strtolower($schoolStatus ?? 'all');
         $npsnKey = $selectedSchool?->npsn ?? 'all';
-        $cacheKey = 'public.statistics.trend.v4.'.($month ?: 'all').'.'.$year
+        $cacheKey = 'public.statistics.trend.v5.'.MutationStatisticsCache::version()
+            .'.'.($month ?: 'all').'.'.$year
             .'.status-'.$statusKey.'.npsn-'.$npsnKey;
 
         $chartData = Cache::remember(
@@ -563,7 +561,7 @@ class LaporanController extends Controller
                 'chartData', 'year', 'month', 'cohortYears', 'cohortYear', 'cohort',
                 'schoolStatus', 'npsn', 'selectedSchool'
             ))
-            ->header('Cache-Control', 'public, max-age=300, s-maxage=1800');
+            ->header('Cache-Control', 'public, max-age=0, must-revalidate');
     }
 
     /**
@@ -634,6 +632,8 @@ class LaporanController extends Controller
             $masukQuery->where('mutasi_masuk.npsn_sekolah_tujuan', $npsn);
         } elseif (! $user) {
             $masukQuery->whereIn('mutasi_masuk.npsn_sekolah_tujuan', $publicSchoolNpsns ?? []);
+        } else {
+            $masukQuery->whereIn('mutasi_masuk.npsn_sekolah_tujuan', $this->eligibleBogorJuniorHighNpsns());
         }
 
         $masukResults = $masukQuery->groupBy('unit')->get()->keyBy('unit');
@@ -651,6 +651,8 @@ class LaporanController extends Controller
             $keluarQuery->where('npsn_sekolah_asal', $npsn);
         } elseif (! $user) {
             $keluarQuery->whereIn('mutasi_keluar.npsn_sekolah_asal', $publicSchoolNpsns ?? []);
+        } else {
+            $keluarQuery->whereIn('mutasi_keluar.npsn_sekolah_asal', $this->eligibleBogorJuniorHighNpsns());
         }
 
         $keluarResults = $keluarQuery->groupBy('unit')->get()->keyBy('unit');
@@ -789,7 +791,8 @@ class LaporanController extends Controller
                     'mutasi_masuk.status',
                     'mutasi_masuk.npsn_sekolah_tujuan'
                 )
-                ->whereBetween('mutasi_masuk.tanggal_pengajuan', [$start, $end]);
+                ->whereBetween('mutasi_masuk.tanggal_pengajuan', [$start, $end])
+                ->whereIn('mutasi_masuk.npsn_sekolah_tujuan', $this->eligibleBogorJuniorHighNpsns());
 
             if (in_array($role, ['Sekolah', 'Operator'])) {
                 $query->where('mutasi_masuk.npsn_sekolah_tujuan', $user->sekolah->npsn ?? $user->npsn);
@@ -816,7 +819,8 @@ class LaporanController extends Controller
                 'status',
                 'npsn_sekolah_asal'
             )
-                ->whereBetween('tanggal_pengajuan', [$start, $end]);
+                ->whereBetween('tanggal_pengajuan', [$start, $end])
+                ->whereIn('npsn_sekolah_asal', $this->eligibleBogorJuniorHighNpsns());
 
             if (in_array($role, ['Sekolah', 'Operator'])) {
                 $query->where('npsn_sekolah_asal', $user->sekolah->npsn ?? $user->npsn);
@@ -946,6 +950,7 @@ class LaporanController extends Controller
             ->select('mutasi_masuk_siswa.nama_sekolah_asal', 'mutasi_masuk_siswa.npsn_sekolah_asal as npsn', DB::raw('count(*) as total'))
             ->whereBetween('mutasi_masuk.tanggal_pengajuan', [$start, $end])
             ->where('mutasi_masuk.status', 'Selesai')
+            ->whereIn('mutasi_masuk.npsn_sekolah_tujuan', $this->eligibleBogorJuniorHighNpsns())
             ->groupBy('mutasi_masuk_siswa.nama_sekolah_asal', 'mutasi_masuk_siswa.npsn_sekolah_asal')
             ->orderByDesc('total')
             ->limit($limit);
@@ -960,6 +965,7 @@ class LaporanController extends Controller
         $topTujuanQuery = MutasiKeluar::select('nama_sekolah_tujuan', 'npsn_sekolah_tujuan as npsn', DB::raw('count(*) as total'))
             ->whereBetween('tanggal_pengajuan', [$start, $end])
             ->where('status', 'Selesai')
+            ->whereIn('npsn_sekolah_asal', $this->eligibleBogorJuniorHighNpsns())
             ->groupBy('nama_sekolah_tujuan', 'npsn_sekolah_tujuan')
             ->orderByDesc('total')
             ->limit($limit);
@@ -992,7 +998,8 @@ class LaporanController extends Controller
                 SUM(CASE WHEN mutasi_masuk_siswa.kelas IN ("9", "IX") THEN 1 ELSE 0 END) as k9
             ')
             ->whereBetween('mutasi_masuk.tanggal_pengajuan', [$start, $end])
-            ->where('mutasi_masuk.status', 'Selesai');
+            ->where('mutasi_masuk.status', 'Selesai')
+            ->whereIn('mutasi_masuk.npsn_sekolah_tujuan', $this->eligibleBogorJuniorHighNpsns());
 
         if (in_array($role, ['Sekolah', 'Operator'])) {
             $npsn = $user->sekolah->npsn ?? $user->npsn;
@@ -1010,7 +1017,8 @@ class LaporanController extends Controller
                 SUM(CASE WHEN kelas IN ("9", "IX") THEN 1 ELSE 0 END) as k9
             ')
             ->whereBetween('tanggal_pengajuan', [$start, $end])
-            ->where('status', 'Selesai');
+            ->where('status', 'Selesai')
+            ->whereIn('npsn_sekolah_asal', $this->eligibleBogorJuniorHighNpsns());
 
         if (in_array($role, ['Sekolah', 'Operator'])) {
             $npsn = $user->sekolah->npsn ?? $user->npsn;
@@ -1022,5 +1030,10 @@ class LaporanController extends Controller
             'masuk' => $masukStats,
             'keluar' => $keluarStats,
         ];
+    }
+
+    private function eligibleBogorJuniorHighNpsns()
+    {
+        return SatuanPendidikan::eligibleBogorJuniorHigh()->select('npsn');
     }
 }

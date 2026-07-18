@@ -980,6 +980,7 @@ class MutasiMasukController extends Controller
         $mutasi->nomor_surat_izin = $this->sanitize($request->nomor_surat_izin);
         $mutasi->tanggal_selesai = $request->tanggal_selesai;
         $mutasi->status = 'Selesai';
+        \App\Services\MutationStatisticsCache::invalidate();
 
         // Build student list for message
         $siswaList = DB::table('mutasi_masuk_siswa')->where('id_mutasi', $id)->get();
