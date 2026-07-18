@@ -34,7 +34,18 @@ class FileUploadService
 
         // Check if using B2 (Production)
         if (config('filesystems.disks.b2.key') && app()->environment('production')) {
-            return Storage::disk('b2')->url($path);
+            try {
+                // The B2 bucket is private. A normal URL returns an access
+                // denied response that browsers display as a broken image.
+                return Storage::disk('b2')->temporaryUrl($path, now()->addMinutes(15));
+            } catch (\Throwable $e) {
+                Log::warning('Unable to create a temporary B2 image URL.', [
+                    'path' => $path,
+                    'error' => $e->getMessage(),
+                ]);
+
+                return Storage::disk('b2')->url($path);
+            }
         }
 
         // Local Fallback (Public Disk)

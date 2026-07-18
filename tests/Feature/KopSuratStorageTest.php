@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Services\FileUploadService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Mockery;
 use Tests\TestCase;
 
 class KopSuratStorageTest extends TestCase
@@ -48,5 +49,22 @@ class KopSuratStorageTest extends TestCase
 
         $this->assertSame('public', $service->getPublicImageDisk());
         Storage::disk('public')->assertExists($path);
+    }
+
+    public function test_letterhead_preview_uses_a_temporary_signed_b2_url(): void
+    {
+        $this->app['env'] = 'production';
+        config()->set('filesystems.disks.b2.key', 'test-key');
+
+        $disk = Mockery::mock();
+        $disk->shouldReceive('temporaryUrl')
+            ->once()
+            ->with('uploads/kop_surat/kop.jpg', Mockery::type(\DateTimeInterface::class))
+            ->andReturn('https://signed.example.test/kop.jpg?signature=test');
+        Storage::shouldReceive('disk')->once()->with('b2')->andReturn($disk);
+
+        $url = FileUploadService::getStorageUrl('uploads/kop_surat/kop.jpg');
+
+        $this->assertSame('https://signed.example.test/kop.jpg?signature=test', $url);
     }
 }

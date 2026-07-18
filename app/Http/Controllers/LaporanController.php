@@ -509,7 +509,7 @@ class LaporanController extends Controller
 
             if ($cohortYear) {
                 $cohort = Cache::remember(
-                    "public.statistics.cohort.v3.{$cohortYear->id}",
+                    "public.statistics.cohort.v4.{$cohortYear->id}",
                     now()->addMinutes(30),
                     fn () => $cohortService->report($cohortYear)
                 );

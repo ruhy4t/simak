@@ -29,6 +29,11 @@ class CohortReportService
             return $this->emptyReport();
         }
 
+        // The reverse opening-count calculation is a one-year compatibility
+        // aid for legacy 2025/2026 data. Later years use the school's official
+        // opening counts populated through the normal intake/rollover flow.
+        $usesCalculatedOpening = $academicYear->name === '2025/2026';
+
         $countQuery = DB::table('satuan_pendidikan_student_counts as counts')
             ->join('satuan_pendidikan as schools', 'schools.id', '=', 'counts.satuan_pendidikan_id')
             ->where('counts.academic_year_id', $academicYear->id)
@@ -107,10 +112,9 @@ class CohortReportService
 
                 if ($isReported) {
                     $actual = (int) $count->{$closingColumn};
-                    $calculatedOpening = $actual
-                        + $outgoingCount
-                        + $nonMutationOutgoingCount
-                        - $incomingCount;
+                    $calculatedOpening = $usesCalculatedOpening
+                        ? $actual + $outgoingCount + $nonMutationOutgoingCount - $incomingCount
+                        : $opening;
                     $row['actual'] += $actual;
                     $row['calculated_opening'] += $calculatedOpening;
                     $row['opening_variance'] += $opening - $calculatedOpening;
@@ -140,10 +144,12 @@ class CohortReportService
             $reportedSummary[$field] = (int) $rows->sum("reported_{$field}");
         }
         $reportedSummary['actual'] = $summary['actual'];
-        $reportedSummary['calculated_opening'] = $reportedSummary['actual']
-            + $reportedSummary['outgoing']
-            + $reportedSummary['non_mutation_outgoing']
-            - $reportedSummary['incoming'];
+        $reportedSummary['calculated_opening'] = $usesCalculatedOpening
+            ? $reportedSummary['actual']
+                + $reportedSummary['outgoing']
+                + $reportedSummary['non_mutation_outgoing']
+                - $reportedSummary['incoming']
+            : $reportedSummary['opening'];
         $reportedSummary['opening_variance'] = $reportedSummary['opening']
             - $reportedSummary['calculated_opening'];
         $reportedSummary['unexplained_exit'] = $summary['unexplained_exit'];
@@ -160,6 +166,7 @@ class CohortReportService
             'rows' => $rows->all(),
             'summary' => $summary,
             'reported_summary' => $reportedSummary,
+            'uses_calculated_opening' => $usesCalculatedOpening,
             'school_count' => $schoolCount,
             'reported_school_count' => $reportedSchoolCount,
             'missing_school_count' => max(0, $schoolCount - $reportedSchoolCount),
@@ -285,6 +292,7 @@ class CohortReportService
                 'opening', 'incoming', 'outgoing', 'non_mutation_outgoing', 'expected', 'actual',
                 'calculated_opening', 'opening_variance', 'unexplained_exit', 'other_addition',
             ], 0),
+            'uses_calculated_opening' => false,
             'school_count' => 0,
             'reported_school_count' => 0,
             'missing_school_count' => 0,

@@ -175,6 +175,6 @@ class NonMutationStudentExitController extends Controller
 
     private function forgetCohortCache(int $academicYearId): void
     {
-        Cache::forget("public.statistics.cohort.v3.{$academicYearId}");
+        Cache::forget("public.statistics.cohort.v4.{$academicYearId}");
     }
 }

@@ -46,7 +46,11 @@
                     <thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
                         <tr>
                             <th class="px-4 py-3 text-left">Kelas</th><th class="px-4 py-3 text-left">JK</th>
-                            <th class="px-4 py-3 text-right">Awal Pelapor</th><th class="px-4 py-3 text-right">Awal Hitung</th><th class="px-4 py-3 text-right">Selisih Awal</th><th class="px-4 py-3 text-right">Masuk</th>
+                            <th class="px-4 py-3 text-right">Awal Pelapor</th>
+                            @if($cohort['uses_calculated_opening'] ?? false)
+                                <th class="px-4 py-3 text-right">Awal Hitung</th><th class="px-4 py-3 text-right">Selisih Awal</th>
+                            @endif
+                            <th class="px-4 py-3 text-right">Masuk</th>
                             <th class="px-4 py-3 text-right">Keluar Mutasi</th><th class="px-4 py-3 text-right">Keluar Non-mutasi</th><th class="px-4 py-3 text-right">Perkiraan</th>
                             <th class="px-4 py-3 text-right">Aktual</th><th class="px-4 py-3 text-right">Selisih Belum Terdata</th>
                             <th class="px-4 py-3 text-right">Belum Lapor</th>
@@ -57,7 +61,11 @@
                             <tr class="hover:bg-slate-50">
                                 <td class="px-4 py-3 font-black text-slate-800">{{ [7 => 'VII', 8 => 'VIII', 9 => 'IX'][$row['grade']] }}</td>
                                 <td class="px-4 py-3 text-slate-600">{{ $row['gender_label'] }}</td>
-                                @foreach(['reported_opening', 'calculated_opening', 'opening_variance', 'incoming', 'outgoing', 'non_mutation_outgoing', 'expected', 'actual', 'unexplained_exit'] as $field)
+                                @foreach(array_merge(
+                                    ['reported_opening'],
+                                    ($cohort['uses_calculated_opening'] ?? false) ? ['calculated_opening', 'opening_variance'] : [],
+                                    ['incoming', 'outgoing', 'non_mutation_outgoing', 'expected', 'actual', 'unexplained_exit']
+                                ) as $field)
                                     <td class="px-4 py-3 text-right font-semibold {{ in_array($field, ['opening_variance', 'unexplained_exit'], true) && $row[$field] != 0 ? 'text-rose-700' : 'text-slate-700' }}">{{ number_format($row[$field]) }}</td>
                                 @endforeach
                                 <td class="px-4 py-3 text-right"><span class="rounded-full px-2 py-1 text-xs font-bold {{ $row['missing_units'] ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800' }}">{{ number_format($row['missing_units']) }}</span></td>

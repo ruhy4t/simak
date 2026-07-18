@@ -864,7 +864,7 @@ class SatuanPendidikanController extends Controller
                 ->with('error', 'Data akhir sudah dikunci dan tidak dapat diubah.');
         }
 
-        Cache::forget("public.statistics.cohort.v3.{$academicYear->id}");
+        Cache::forget("public.statistics.cohort.v4.{$academicYear->id}");
 
         return redirect()
             ->route('sekolah.closing-counts', ['academic_year' => $academicYear->name])

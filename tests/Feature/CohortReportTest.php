@@ -34,6 +34,7 @@ class CohortReportTest extends TestCase
     public function test_cohort_report_reconciles_only_completed_mutations_and_actual_counts(): void
     {
         [$year, $schoolId] = $this->seedSchoolAndYear(true);
+        $year->update(['name' => '2025/2026']);
 
         DB::table('mutasi_masuk')->insert([
             ['id_mutasi' => 'M-1', 'tanggal_pengajuan' => '2026-08-01', 'npsn_sekolah_tujuan' => '12345678', 'status' => 'Selesai'],
@@ -58,10 +59,22 @@ class CohortReportTest extends TestCase
         $this->assertSame(17, $report['reported_summary']['actual']);
         $this->assertSame(19, $report['reported_summary']['calculated_opening']);
         $this->assertSame(-1, $report['reported_summary']['opening_variance']);
+        $this->assertTrue($report['uses_calculated_opening']);
         $this->assertSame(1, $report['reported_summary']['unexplained_exit']);
         $this->assertSame(2, $report['reported_summary']['other_addition']);
         $this->assertSame(1, $report['reported_school_count']);
         $this->assertTrue($report['is_complete']);
+    }
+
+    public function test_reverse_opening_calculation_is_not_used_after_2025_2026(): void
+    {
+        [$year] = $this->seedSchoolAndYear(true);
+
+        $report = app(CohortReportService::class)->report($year);
+
+        $this->assertFalse($report['uses_calculated_opening']);
+        $this->assertSame($report['reported_summary']['opening'], $report['reported_summary']['calculated_opening']);
+        $this->assertSame(0, $report['reported_summary']['opening_variance']);
     }
 
     public function test_school_can_submit_closing_counts_once_and_values_are_locked(): void
