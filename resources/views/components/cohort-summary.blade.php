@@ -3,9 +3,10 @@
 @php
     $summary = $cohort['reported_summary'];
     $chartPayload = [
-        'labels' => ['Data Awal', 'Mutasi Masuk', 'Mutasi Keluar', 'Keluar Non-Mutasi', 'Perkiraan Akhir', 'Data Akhir Aktual'],
+        'labels' => ['Data Awal Tercatat', 'Data Awal Hasil Hitung', 'Mutasi Masuk', 'Mutasi Keluar', 'Keluar Non-Mutasi', 'Perkiraan Akhir', 'Data Akhir Aktual'],
         'values' => [
             $summary['opening'],
+            $summary['calculated_opening'],
             $summary['incoming'],
             -$summary['outgoing'],
             -$summary['non_mutation_outgoing'],
@@ -31,9 +32,16 @@
     </div>
 
     @if($cohort['reported_school_count'] > 0)
-        <div class="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-6">
+        <div class="mt-6 rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900">
+            <p class="font-bold">Cara menghitung Data Awal Hasil Hitung</p>
+            <p class="mt-1 leading-6">Data Akhir Aktual + Mutasi Keluar + Keluar Non-Mutasi − Mutasi Masuk. Angka ini merupakan pembanding dan tidak menimpa Data Awal resmi sekolah. Selisih dihitung dari Data Awal Tercatat − Data Awal Hasil Hitung; nilai negatif berarti data tercatat lebih rendah.</p>
+        </div>
+
+        <div class="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
             @foreach([
-                ['Data Awal', $summary['opening'], 'border-slate-200 bg-slate-50', 'text-slate-600', 'text-slate-950'],
+                ['Data Awal Tercatat', $summary['opening'], 'border-slate-200 bg-slate-50', 'text-slate-600', 'text-slate-950'],
+                ['Data Awal Hasil Hitung', $summary['calculated_opening'], 'border-blue-100 bg-blue-50', 'text-blue-700', 'text-blue-950'],
+                ['Selisih Data Awal', $summary['opening_variance'], 'border-violet-100 bg-violet-50', 'text-violet-700', 'text-violet-950'],
                 ['Mutasi Masuk', $summary['incoming'], 'border-sky-100 bg-sky-50', 'text-sky-700', 'text-sky-950'],
                 ['Mutasi Keluar', $summary['outgoing'], 'border-orange-100 bg-orange-50', 'text-orange-700', 'text-orange-950'],
                 ['Keluar Non-Mutasi', $summary['non_mutation_outgoing'], 'border-rose-100 bg-rose-50', 'text-rose-700', 'text-rose-950'],

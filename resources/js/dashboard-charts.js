@@ -186,7 +186,7 @@ const initializeCohortChart = (Chart, canvas) => {
             datasets: [{
                 label: 'Jumlah siswa',
                 data: data.values,
-                backgroundColor: ['#64748b', '#0ea5e9', '#f97316', '#e11d48', '#6366f1', '#10b981'],
+                    backgroundColor: ['#64748b', '#2563eb', '#0ea5e9', '#f97316', '#e11d48', '#6366f1', '#10b981'],
                 borderRadius: 8,
                 borderSkipped: false,
                 maxBarThickness: 64,

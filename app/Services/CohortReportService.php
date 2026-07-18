@@ -71,6 +71,8 @@ class CohortReportService
                     'non_mutation_outgoing' => 0,
                     'expected' => 0,
                     'actual' => 0,
+                    'calculated_opening' => 0,
+                    'opening_variance' => 0,
                     'unexplained_exit' => 0,
                     'other_addition' => 0,
                     'reported_units' => 0,
@@ -105,7 +107,13 @@ class CohortReportService
 
                 if ($isReported) {
                     $actual = (int) $count->{$closingColumn};
+                    $calculatedOpening = $actual
+                        + $outgoingCount
+                        + $nonMutationOutgoingCount
+                        - $incomingCount;
                     $row['actual'] += $actual;
+                    $row['calculated_opening'] += $calculatedOpening;
+                    $row['opening_variance'] += $opening - $calculatedOpening;
                     $row['reported_opening'] += $opening;
                     $row['reported_incoming'] += $incomingCount;
                     $row['reported_outgoing'] += $outgoingCount;
@@ -132,6 +140,12 @@ class CohortReportService
             $reportedSummary[$field] = (int) $rows->sum("reported_{$field}");
         }
         $reportedSummary['actual'] = $summary['actual'];
+        $reportedSummary['calculated_opening'] = $reportedSummary['actual']
+            + $reportedSummary['outgoing']
+            + $reportedSummary['non_mutation_outgoing']
+            - $reportedSummary['incoming'];
+        $reportedSummary['opening_variance'] = $reportedSummary['opening']
+            - $reportedSummary['calculated_opening'];
         $reportedSummary['unexplained_exit'] = $summary['unexplained_exit'];
         $reportedSummary['other_addition'] = $summary['other_addition'];
 
@@ -268,7 +282,8 @@ class CohortReportService
                 'opening', 'incoming', 'outgoing', 'non_mutation_outgoing', 'expected', 'actual', 'unexplained_exit', 'other_addition',
             ], 0),
             'reported_summary' => array_fill_keys([
-                'opening', 'incoming', 'outgoing', 'non_mutation_outgoing', 'expected', 'actual', 'unexplained_exit', 'other_addition',
+                'opening', 'incoming', 'outgoing', 'non_mutation_outgoing', 'expected', 'actual',
+                'calculated_opening', 'opening_variance', 'unexplained_exit', 'other_addition',
             ], 0),
             'school_count' => 0,
             'reported_school_count' => 0,

@@ -56,6 +56,8 @@ class CohortReportTest extends TestCase
         $this->assertSame(3, $report['reported_summary']['outgoing']);
         $this->assertSame(16, $report['reported_summary']['expected']);
         $this->assertSame(17, $report['reported_summary']['actual']);
+        $this->assertSame(19, $report['reported_summary']['calculated_opening']);
+        $this->assertSame(-1, $report['reported_summary']['opening_variance']);
         $this->assertSame(1, $report['reported_summary']['unexplained_exit']);
         $this->assertSame(2, $report['reported_summary']['other_addition']);
         $this->assertSame(1, $report['reported_school_count']);
