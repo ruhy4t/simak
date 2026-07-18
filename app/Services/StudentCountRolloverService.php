@@ -10,6 +10,60 @@ use Illuminate\Support\Facades\Schema;
 class StudentCountRolloverService
 {
     /**
+     * Refresh one school's promoted opening counts after its closing counts
+     * are submitted after the following academic year has been activated.
+     */
+    public function syncSchoolFromClosingCounts(
+        AcademicYear $fromYear,
+        AcademicYear $toYear,
+        int $schoolId
+    ): void {
+        $sourceRows = DB::table('satuan_pendidikan_student_counts')
+            ->where('satuan_pendidikan_id', $schoolId)
+            ->where('academic_year_id', $fromYear->id)
+            ->whereIn('grade', [7, 8])
+            ->whereNotNull('closing_confirmed_at')
+            ->get()
+            ->keyBy('grade');
+
+        if (! $sourceRows->has(7) || ! $sourceRows->has(8)) {
+            return;
+        }
+
+        $now = now();
+        $rows = [];
+        $legacyValues = ['updated_at' => $now];
+
+        foreach ([7 => 8, 8 => 9] as $sourceGrade => $targetGrade) {
+            $source = $sourceRows->get($sourceGrade);
+            $male = (int) $source->closing_male_count;
+            $female = (int) $source->closing_female_count;
+
+            $rows[] = [
+                'satuan_pendidikan_id' => $schoolId,
+                'academic_year_id' => (int) $toYear->id,
+                'grade' => $targetGrade,
+                'male_count' => $male,
+                'female_count' => $female,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+
+            $legacyValues["jumlah_siswa_{$targetGrade}_l"] = $male;
+            $legacyValues["jumlah_siswa_{$targetGrade}_p"] = $female;
+            $legacyValues["jumlah_siswa_awal_{$targetGrade}"] = $male + $female;
+        }
+
+        DB::table('satuan_pendidikan_student_counts')->upsert(
+            $rows,
+            ['satuan_pendidikan_id', 'academic_year_id', 'grade'],
+            ['male_count', 'female_count', 'updated_at']
+        );
+
+        DB::table('satuan_pendidikan')->where('id', $schoolId)->update($legacyValues);
+    }
+
+    /**
      * Promote the prior year's final grade 7/8 balances into grade 8/9.
      * All mutation totals are aggregated in a fixed number of queries.
      */

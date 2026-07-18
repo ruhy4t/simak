@@ -185,7 +185,7 @@
                         <i class="bi bi-check-circle-fill"></i> SIMPAN PERUBAHAN PROFIL
                     </button>
 
-                    <a href="{{ route('sekolah.closing-counts', ['academic_year' => $selectedAcademicYear?->name]) }}"
+                    <a href="{{ route('sekolah.closing-counts') }}"
                         class="flex w-full items-center justify-between rounded-xl border-2 border-emerald-200 bg-emerald-50 p-5 text-emerald-900 transition hover:border-emerald-400 hover:bg-emerald-100">
                         <span>
                             <span class="block font-extrabold">Isi Data Akhir Aktual</span>

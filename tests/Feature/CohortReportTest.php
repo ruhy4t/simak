@@ -112,6 +112,77 @@ class CohortReportTest extends TestCase
         ]);
     }
 
+    public function test_closing_counts_default_to_previous_year_and_refresh_active_year_opening_counts(): void
+    {
+        [$previousYear, $schoolId] = $this->seedSchoolAndYear(false);
+        $previousYear->update([
+            'status' => AcademicYear::STATUS_CLOSED,
+            'is_active' => false,
+        ]);
+
+        $activeYear = AcademicYear::create([
+            'name' => '2027/2028',
+            'status' => AcademicYear::STATUS_ACTIVE,
+            'is_active' => true,
+            'starts_on' => '2027-07-15',
+            'ends_on' => '2028-07-14',
+            'student_counts_rolled_over_from_id' => $previousYear->id,
+            'student_counts_rolled_over_at' => now(),
+        ]);
+
+        foreach ([7 => [20, 21], 8 => [1, 1], 9 => [2, 2]] as $grade => [$male, $female]) {
+            DB::table('satuan_pendidikan_student_counts')->insert([
+                'satuan_pendidikan_id' => $schoolId,
+                'academic_year_id' => $activeYear->id,
+                'grade' => $grade,
+                'male_count' => $male,
+                'female_count' => $female,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $user = $this->createUser('operator-rollover-refresh', 'Operator', '12345678');
+
+        $this->actingAs($user)
+            ->get(route('sekolah.closing-counts'))
+            ->assertOk()
+            ->assertViewHas('selectedAcademicYear', fn (AcademicYear $year) => $year->is($previousYear));
+
+        $this->actingAs($user)->post(route('sekolah.closing-counts.store'), [
+            'academic_year_id' => $previousYear->id,
+            'confirmation' => '1',
+            'closing_7_male' => 9,
+            'closing_7_female' => 8,
+            'closing_8_male' => 11,
+            'closing_8_female' => 10,
+            'closing_9_male' => 7,
+            'closing_9_female' => 6,
+        ])->assertSessionHas('success');
+
+        $this->assertDatabaseHas('satuan_pendidikan_student_counts', [
+            'satuan_pendidikan_id' => $schoolId,
+            'academic_year_id' => $activeYear->id,
+            'grade' => 8,
+            'male_count' => 9,
+            'female_count' => 8,
+        ]);
+        $this->assertDatabaseHas('satuan_pendidikan_student_counts', [
+            'satuan_pendidikan_id' => $schoolId,
+            'academic_year_id' => $activeYear->id,
+            'grade' => 9,
+            'male_count' => 11,
+            'female_count' => 10,
+        ]);
+        $this->assertDatabaseHas('satuan_pendidikan', [
+            'id' => $schoolId,
+            'jumlah_siswa_8_l' => 9,
+            'jumlah_siswa_8_p' => 8,
+            'jumlah_siswa_9_l' => 11,
+            'jumlah_siswa_9_p' => 10,
+        ]);
+    }
+
     public function test_public_statistics_expose_only_citywide_cohort_aggregates(): void
     {
         [$year] = $this->seedSchoolAndYear(true);
@@ -296,6 +367,12 @@ class CohortReportTest extends TestCase
             $table->string('npsn')->unique();
             $table->string('nama');
             $table->boolean('is_local')->default(true);
+            $table->unsignedInteger('jumlah_siswa_awal_8')->default(0);
+            $table->unsignedInteger('jumlah_siswa_awal_9')->default(0);
+            $table->unsignedInteger('jumlah_siswa_8_l')->default(0);
+            $table->unsignedInteger('jumlah_siswa_8_p')->default(0);
+            $table->unsignedInteger('jumlah_siswa_9_l')->default(0);
+            $table->unsignedInteger('jumlah_siswa_9_p')->default(0);
             $table->timestamps();
         });
         Schema::create('academic_years', function (Blueprint $table) {

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AcademicYear;
 use App\Models\SatuanPendidikan;
 use App\Services\RegionCacheService;
+use App\Services\StudentCountRolloverService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -17,7 +18,10 @@ class SatuanPendidikanController extends Controller
 {
     protected $regionCache;
 
-    public function __construct(RegionCacheService $regionCache)
+    public function __construct(
+        RegionCacheService $regionCache,
+        private readonly StudentCountRolloverService $studentCountRolloverService
+    )
     {
         $this->regionCache = $regionCache;
     }
@@ -747,6 +751,7 @@ class SatuanPendidikanController extends Controller
             ->orderByDesc('name')
             ->get();
         $selectedAcademicYear = $academicYears->firstWhere('name', $request->query('academic_year'))
+            ?? $academicYears->firstWhere('status', AcademicYear::STATUS_CLOSED)
             ?? $academicYears->firstWhere('is_active', true)
             ?? $academicYears->first();
 
@@ -821,6 +826,24 @@ class SatuanPendidikanController extends Controller
                     'closing_female_count' => $validated["closing_{$row->grade}_female"],
                     'closing_confirmed_at' => $confirmedAt,
                 ]);
+            }
+
+            // A new academic year may already have been activated before the
+            // school submits its final counts. Refresh the promoted grade 8/9
+            // rows so the active year's read-only opening data stays correct.
+            $activeFollowingYear = AcademicYear::query()
+                ->where('is_active', true)
+                ->where('id', '!=', $academicYear->id)
+                ->when($academicYear->starts_on, fn ($query) => $query->where('starts_on', '>', $academicYear->starts_on))
+                ->orderBy('starts_on')
+                ->first();
+
+            if ($activeFollowingYear) {
+                $this->studentCountRolloverService->syncSchoolFromClosingCounts(
+                    $academicYear,
+                    $activeFollowingYear,
+                    (int) $satpen->id
+                );
             }
         });
 
