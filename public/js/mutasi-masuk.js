@@ -678,6 +678,10 @@
 
                 input.setAttribute('data-has-file', 'true');
                 input.removeAttribute('required');
+                // File sudah berada di storage sementara. Kosongkan binary dari
+                // input agar penyimpanan draft hanya mengirim path dan tidak
+                // mengunggah file yang sama untuk kedua kalinya.
+                input.value = '';
 
                 // Simplified Success UI
                 statusEl.innerHTML = `
@@ -1814,9 +1818,12 @@
             if (nomor) formData.append('nomor_surat', nomor);
             if (tanggal) formData.append('tanggal_surat', tanggal);
 
-            // Upload surat permohonan if exists
+            // Gunakan path hasil upload langsung agar file tidak dikirim ulang.
             const fileInput = document.querySelector('[name="file_surat_permohonan"]');
-            if (fileInput?.files[0]) {
+            const uploadedHeader = document.querySelector('input[type="hidden"][name="file_surat_permohonan"][data-temp-path="true"]');
+            if (uploadedHeader?.value) {
+                formData.append('file_surat_permohonan', uploadedHeader.value);
+            } else if (fileInput?.files[0]) {
                 formData.append('file_surat_permohonan', fileInput.files[0]);
             }
 
@@ -1875,14 +1882,17 @@
             });
             if (!response.ok) {
                 console.warn('Failed to update draft header:', await readErrorMessage(response));
-                return;
+                return false;
             }
             const result = await response.json();
             if (!result.success) {
                 console.warn('Failed to update draft header:', result.message);
+                return false;
             }
+            return true;
         } catch (e) {
             console.error('Update header error:', e);
+            return false;
         }
     }
 
@@ -2221,6 +2231,23 @@
                     btn.disabled = false;
                 }
                 return;
+            }
+
+            const headerData = {
+                jumlah_siswa: parseInt(document.getElementById('jumlah_siswa')?.value) || 1,
+                nomor_surat: document.querySelector('[name="nomor_surat"]')?.value || '',
+                tanggal_surat: document.querySelector('[name="tanggal_surat"]')?.value || '',
+                npsn_sekolah_tujuan: document.querySelector('[name="npsn_sekolah_tujuan"]')?.value || '',
+                nama_sekolah_tujuan: document.querySelector('[name="nama_sekolah_tujuan"]')?.value || '',
+                alamat_sekolah_tujuan: document.querySelector('[name="alamat_sekolah_tujuan"]')?.value || ''
+            };
+            const uploadedHeader = document.querySelector('input[type="hidden"][name="file_surat_permohonan"][data-temp-path="true"]');
+            if (uploadedHeader?.value) {
+                headerData.file_surat_permohonan = uploadedHeader.value;
+            }
+
+            if (!await updateDraftHeader(draftId, headerData)) {
+                throw new Error('Data utama atau Surat Permohonan gagal disimpan ke draft.');
             }
 
             // Save ALL students to ensure nothing is missed (Fix for Missing 5th Student)

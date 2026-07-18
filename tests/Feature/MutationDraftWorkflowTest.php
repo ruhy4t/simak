@@ -147,6 +147,32 @@ class MutationDraftWorkflowTest extends TestCase
         ]);
     }
 
+    public function test_incoming_header_upload_is_promoted_and_kept_by_draft(): void
+    {
+        Storage::fake('local');
+        Storage::fake('private_docs');
+
+        $temporaryUploads = app(TemporaryUploadService::class);
+        $temporaryPath = $temporaryUploads->createPath('surat-permohonan.pdf', Auth::id());
+        Storage::disk('local')->put($temporaryPath, "%PDF-1.4\n% incoming draft\n");
+
+        $request = $this->jsonRequest('/mutasi-masuk/draft', [
+            'jumlah_siswa' => 1,
+            'npsn_sekolah_tujuan' => '12345678',
+            'nama_sekolah_tujuan' => 'SMP Pengujian',
+            'alamat_sekolah_tujuan' => 'Kota Bogor',
+            'file_surat_permohonan' => $temporaryPath,
+        ]);
+
+        $response = app(MutasiMasukController::class)->createDraft($request);
+
+        $this->assertTrue($response->getData(true)['success']);
+        $savedPath = DB::table('mutasi_masuk')->value('file_surat_permohonan');
+        $this->assertNotEmpty($savedPath);
+        Storage::disk('private_docs')->assertExists($savedPath);
+        Storage::disk('local')->assertMissing($temporaryPath);
+    }
+
     public function test_outgoing_temporary_upload_is_promoted_and_kept_by_draft(): void
     {
         Storage::fake('local');
