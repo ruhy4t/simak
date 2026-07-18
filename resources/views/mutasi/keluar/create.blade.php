@@ -373,8 +373,12 @@
                             <label class="block text-sm font-semibold text-slate-700 mb-2">Surat Keterangan Keluar *</label>
                             <p class="text-xs text-rose-500 italic mb-2">Silahkan unggah PDF hasil scan dari dokumen asli Surat
                                 Keterangan Mutasi / Keluar dari Kepala Sekolah</p>
-                            <input type="file" name="file_suket_keluar" accept=".pdf" required onchange="validateFile(this, 1)"
+                            <input type="file" name="file_suket_keluar" accept=".pdf"
+                                @if(empty(optional($draft)->file_suket_keluar)) required @endif onchange="validateFile(this, 1)"
                                 class="w-full px-4 py-2.5 bg-slate-50 border-0 rounded-xl focus:ring-2 focus:ring-sky-100 transition file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100 text-slate-500 @error('file_suket_keluar') ring-2 ring-rose-100 @enderror">
+                            @if(!empty(optional($draft)->file_suket_keluar))
+                                <p class="text-emerald-600 text-xs mt-2 font-medium"><i class="bi bi-check-circle-fill mr-1"></i>File sudah tersimpan di draft. Pilih file baru hanya jika ingin mengganti.</p>
+                            @endif
                             @error('file_suket_keluar')<p class="text-rose-500 text-xs mt-1 font-medium">{{ $message }}</p>
                             @enderror
                         </div>
@@ -382,8 +386,12 @@
                             <label class="block text-sm font-semibold text-slate-700 mb-2">Surat Keterangan Dapodik *</label>
                             <p class="text-xs text-rose-500 italic mb-2">Silahkan unggah PDF hasil scan Surat Keterangan yang
                                 dicetak dari Aplikasi Dapodik (sudah TTD Kepala Sekolah)</p>
-                            <input type="file" name="file_suket_dapo" accept=".pdf" required onchange="validateFile(this, 1)"
+                            <input type="file" name="file_suket_dapo" accept=".pdf"
+                                @if(empty(optional($draft)->file_suket_dapo)) required @endif onchange="validateFile(this, 1)"
                                 class="w-full px-4 py-2.5 bg-slate-50 border-0 rounded-xl focus:ring-2 focus:ring-sky-100 transition file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100 text-slate-500 @error('file_suket_dapo') ring-2 ring-rose-100 @enderror">
+                            @if(!empty(optional($draft)->file_suket_dapo))
+                                <p class="text-emerald-600 text-xs mt-2 font-medium"><i class="bi bi-check-circle-fill mr-1"></i>File sudah tersimpan di draft. Pilih file baru hanya jika ingin mengganti.</p>
+                            @endif
                             @error('file_suket_dapo')<p class="text-rose-500 text-xs mt-1 font-medium">{{ $message }}</p>
                             @enderror
                         </div>
@@ -391,9 +399,13 @@
                             <label class="block text-sm font-semibold text-slate-700 mb-2">Surat Keterangan Diterima *</label>
                             <p class="text-xs text-rose-500 italic mb-2">Silahkan unggah PDF hasil scan Surat Keterangan
                                 Diterima dari Sekolah Tujuan (sudah TTD)</p>
-                            <input type="file" name="file_suket_diterima" accept=".pdf" required
+                            <input type="file" name="file_suket_diterima" accept=".pdf"
+                                @if(empty(optional($draft)->file_suket_diterima)) required @endif
                                 onchange="validateFile(this, 1)"
                                 class="w-full px-4 py-2.5 bg-slate-50 border-0 rounded-xl focus:ring-2 focus:ring-sky-100 transition file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100 text-slate-500 @error('file_suket_diterima') ring-2 ring-rose-100 @enderror">
+                            @if(!empty(optional($draft)->file_suket_diterima))
+                                <p class="text-emerald-600 text-xs mt-2 font-medium"><i class="bi bi-check-circle-fill mr-1"></i>File sudah tersimpan di draft. Pilih file baru hanya jika ingin mengganti.</p>
+                            @endif
                             @error('file_suket_diterima')<p class="text-rose-500 text-xs mt-1 font-medium">{{ $message }}</p>
                             @enderror
                         </div>
@@ -401,8 +413,12 @@
                             <label class="block text-sm font-semibold text-slate-700 mb-2">Rapor Lengkap *</label>
                             <p class="text-xs text-rose-500 italic mb-2">Upload Rapor SMP lengkap (Identitas, Nilai, Mutasi)
                                 yang sudah ditandatangani. Maks 2MB.</p>
-                            <input type="file" name="file_rapor" accept=".pdf" required onchange="validateFile(this, 2)"
+                            <input type="file" name="file_rapor" accept=".pdf"
+                                @if(empty(optional($draft)->file_rapor)) required @endif onchange="validateFile(this, 2)"
                                 class="w-full px-4 py-2.5 bg-slate-50 border-0 rounded-xl focus:ring-2 focus:ring-sky-100 transition file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100 text-slate-500 @error('file_rapor') ring-2 ring-rose-100 @enderror">
+                            @if(!empty(optional($draft)->file_rapor))
+                                <p class="text-emerald-600 text-xs mt-2 font-medium"><i class="bi bi-check-circle-fill mr-1"></i>File sudah tersimpan di draft. Pilih file baru hanya jika ingin mengganti.</p>
+                            @endif
                             @error('file_rapor')<p class="text-rose-500 text-xs mt-1 font-medium">{{ $message }}</p>@enderror
                         </div>
                     </div>
@@ -526,7 +542,8 @@
                 apiSatpen: '{{ route('mutasi.keluar.api.npsn', ['npsn' => ':npsn']) }}',
                 apiProvinces: '{{ route('mutasi.keluar.api.provinces') }}',
                 apiRegencies: '{{ route('mutasi.keluar.api.regencies', ['provinceId' => ':provinceId']) }}',
-                saveDraft: '{{ route('mutasi.keluar.draft.save') }}'
+                saveDraft: '{{ route('mutasi.keluar.draft.save') }}',
+                uploadTemp: '{{ route('api.upload-temp') }}'
             },
             draftId: @json(isset($draft) ? $draft->id_mutasi : null)
         };
@@ -569,7 +586,7 @@
                 });
 
                 // Handle Luar Negeri Checkbox
-                if (draft.tujuan_luar_negeri == 1 || draft.tujuan_luar_negeri === '1') {
+                if ((draft.provinsi_tujuan || '').trim().toUpperCase() === 'LUAR NEGERI') {
                     const lnCheckbox = document.getElementById('tujuan_luar_negeri');
                     if (lnCheckbox) {
                         lnCheckbox.checked = true;
@@ -636,22 +653,76 @@
         /**
          * Save current form as Draft
          */
-        function saveDraftKeluar() {
+        async function saveDraftKeluar() {
             const form = document.getElementById('formMutasiKeluar');
             if (!form) return;
 
-            // Change form action to draft route
-            const originalAction = form.action;
-            form.action = '{{ route('mutasi.keluar.draft.save') }}';
-
-            // Show saving indicator
             const btn = document.getElementById('btnSaveDraft');
             const originalText = btn.innerHTML;
             btn.innerHTML = '<i class="bi bi-hourglass-split animate-spin mr-2"></i> Menyimpan...';
             btn.disabled = true;
 
-            // Submit form
-            form.submit();
+            try {
+                const formData = new FormData(form);
+
+                // Unggah satu per satu agar setiap request tetap kecil di Vercel.
+                // Path sementara kemudian dipromosikan server menjadi file permanen draft.
+                const selectedFiles = Array.from(form.querySelectorAll('input[type="file"]'))
+                    .filter(input => input.files && input.files.length > 0);
+
+                form.querySelectorAll('input[type="file"]').forEach(input => formData.delete(input.name));
+
+                for (let index = 0; index < selectedFiles.length; index++) {
+                    const input = selectedFiles[index];
+                    const uploadData = new FormData();
+                    uploadData.append('file', input.files[0]);
+
+                    btn.innerHTML = `<i class="bi bi-cloud-arrow-up animate-pulse mr-2"></i> Mengunggah dokumen ${index + 1}/${selectedFiles.length}...`;
+
+                    const uploadResponse = await fetch(window.MUTASI_CONFIG.routes.uploadTemp, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                            'Accept': 'application/json',
+                        },
+                        body: uploadData,
+                    });
+                    const uploadResult = await uploadResponse.json().catch(() => ({}));
+
+                    if (!uploadResponse.ok || !uploadResult.success || !uploadResult.path) {
+                        throw new Error(uploadResult.message || `Gagal mengunggah ${input.files[0].name}.`);
+                    }
+
+                    formData.set(input.name, uploadResult.path);
+                }
+
+                btn.innerHTML = '<i class="bi bi-hourglass-split animate-spin mr-2"></i> Menyimpan draft...';
+
+                const response = await fetch('{{ route('mutasi.keluar.draft.save') }}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                        'Accept': 'application/json',
+                    },
+                    body: formData,
+                });
+                const result = await response.json().catch(() => ({}));
+
+                if (!response.ok || !result.success) {
+                    const validationMessage = result.errors
+                        ? Object.values(result.errors).flat().join('\n')
+                        : null;
+                    throw new Error(validationMessage || result.message || 'Gagal menyimpan draft.');
+                }
+
+                btn.innerHTML = '<i class="bi bi-check-lg mr-2"></i> Draft Tersimpan';
+                window.location.assign(result.redirect || '{{ route('mutasi.keluar.index') }}');
+            } catch (error) {
+                console.error('Save outgoing draft error:', error);
+                alert(error.message || 'Gagal menyimpan draft. Silakan coba kembali.');
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
         }
     </script>
 @endpush

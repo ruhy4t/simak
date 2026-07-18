@@ -339,9 +339,19 @@ class FileUploadService
         $subDir = $this->getDateBasedPath('keluar');
 
         foreach ($fields as $field) {
-            if ($request->hasFile($field)) {
+            $file = $request->hasFile($field)
+                ? $request->file($field)
+                : $request->input($field);
+
+            if ($file) {
+                if (is_string($file) && !str_starts_with($file, 'temp_uploads/')) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        $field => 'Referensi dokumen draft tidak valid. Silakan unggah ulang dokumen.',
+                    ]);
+                }
+
                 $filePaths[$field] = $this->uploadPdf(
-                    $request->file($field),
+                    $file,
                     $idMutasi,
                     $field,
                     $subDir

@@ -4,6 +4,16 @@
 
 @section('content')
     <div class="space-y-6">
+        @if(request()->boolean('draft_saved'))
+            <div class="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800" role="status">
+                <i class="bi bi-check-circle-fill mt-0.5"></i>
+                <div>
+                    <p class="font-semibold">Draft berhasil disimpan</p>
+                    <p class="text-sm text-emerald-700">Data dapat dilanjutkan kembali dari daftar berstatus Draft.</p>
+                </div>
+            </div>
+        @endif
+
         <!-- Header -->
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>

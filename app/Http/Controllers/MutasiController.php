@@ -110,41 +110,6 @@ class MutasiController extends Controller
     {
         $user = Auth::user();
 
-        // Check Schedule (Only for non-Dinas/SuperAdmin)
-        if (!in_array($user->role, ['Dinas', 'SuperAdmin'])) {
-            $today = now();
-
-            // Common Schedule Retrieval
-            $dayNames = [0 => 'Minggu', 1 => 'Senin', 2 => 'Selasa', 3 => 'Rabu', 4 => 'Kamis', 5 => 'Jumat', 6 => 'Sabtu'];
-            $allowedDays = \App\Models\Setting::getAllowedDays();
-            $allowedDayNames = !empty($allowedDays) ? implode(', ', array_map(fn($d) => $dayNames[$d] ?? '', $allowedDays)) : 'Setiap Hari';
-
-            $startTime = \App\Models\Setting::get('working_hours_start', '08:00');
-            $endTime = \App\Models\Setting::get('working_hours_end', '15:00');
-            $blockData = [
-                'days' => $allowedDayNames,
-                'hours' => "{$startTime} - {$endTime} WIB"
-            ];
-
-            // 1. Check Holiday
-            if (\App\Models\Holiday::isHoliday($today->format('Y-m-d'))) {
-                return redirect()->route('mutasi.keluar.index')->with('schedule_block', $blockData);
-            }
-
-            // 2. Check Allowed Days
-            if (!empty($allowedDays) && !in_array($today->dayOfWeek, $allowedDays)) {
-                return redirect()->route('mutasi.keluar.index')->with('schedule_block', $blockData);
-            }
-
-            // 3. Check Allowed Hours
-            if (\App\Models\Setting::isHourRestrictionEnabled()) {
-                $currentTime = $today->format('H:i');
-                if ($currentTime < $startTime || $currentTime > $endTime) {
-                    return redirect()->route('mutasi.keluar.index')->with('schedule_block', $blockData);
-                }
-            }
-        }
-
         // Initialize with user data
         $alamatSekolahAsal = $user->alamat ?? '';
         $namaSekolahAsal = $user->nama_sekolah ?? '';
@@ -551,6 +516,24 @@ class MutasiController extends Controller
     {
         $user = Auth::user();
         $draftId = $request->input('draft_id');
+        $draftForValidation = null;
+
+        if ($draftId) {
+            $draftForValidation = DB::table('mutasi_keluar')
+                ->where('id_mutasi', $draftId)
+                ->where('status', 'Draft')
+                ->first();
+
+            if (!$draftForValidation) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'draft_id' => 'Draft tidak ditemukan atau sudah pernah dikirim.',
+                ]);
+            }
+
+            if (!$this->canAccessDraft($draftForValidation, $user)) {
+                abort(403, 'Anda tidak berhak mengirim draft ini.');
+            }
+        }
 
         // Check Schedule (Only for non-Dinas/SuperAdmin)
         if (!in_array($user->role, ['Dinas', 'SuperAdmin'])) {
@@ -619,17 +602,22 @@ class MutasiController extends Controller
 
         // File validation: skip jika is_dinas_entry (entry Dinas via checkbox)
         if (!$request->has('is_dinas_entry')) {
-            $rules['file_suket_keluar'] = 'required|file|mimes:pdf|max:1024';
-            $rules['file_suket_dapo'] = 'required|file|mimes:pdf|max:1024';
+            $suketKeluarRequired = empty($draftForValidation?->file_suket_keluar) ? 'required' : 'nullable';
+            $suketDapoRequired = empty($draftForValidation?->file_suket_dapo) ? 'required' : 'nullable';
+            $raporRequired = empty($draftForValidation?->file_rapor) ? 'required' : 'nullable';
+
+            $rules['file_suket_keluar'] = "{$suketKeluarRequired}|file|mimes:pdf|max:1024";
+            $rules['file_suket_dapo'] = "{$suketDapoRequired}|file|mimes:pdf|max:1024";
 
             // Surat Diterima: Wajib jika domestik, Optional jika Luar Negeri
             if ($tujuanLuarNegeri) {
                 $rules['file_suket_diterima'] = 'nullable|file|mimes:pdf|max:1024';
             } else {
-                $rules['file_suket_diterima'] = 'required|file|mimes:pdf|max:1024';
+                $suketDiterimaRequired = empty($draftForValidation?->file_suket_diterima) ? 'required' : 'nullable';
+                $rules['file_suket_diterima'] = "{$suketDiterimaRequired}|file|mimes:pdf|max:1024";
             }
 
-            $rules['file_rapor'] = 'required|file|mimes:pdf|max:2048';
+            $rules['file_rapor'] = "{$raporRequired}|file|mimes:pdf|max:2048";
         }
 
         $validator = Validator::make($request->all(), $rules, [
@@ -779,10 +767,10 @@ class MutasiController extends Controller
                 'alasan_pindah' => $request->alasan_pindah,
                 'status' => 'Menunggu Verifikasi Dinas',
                 'pengusul' => $user->username,
-                'file_suket_keluar' => $filePaths['file_suket_keluar'] ?? null,
-                'file_suket_dapo' => $filePaths['file_suket_dapo'] ?? null,
-                'file_suket_diterima' => $filePaths['file_suket_diterima'] ?? null,
-                'file_rapor' => $filePaths['file_rapor'] ?? null,
+                'file_suket_keluar' => $filePaths['file_suket_keluar'] ?? $draft?->file_suket_keluar,
+                'file_suket_dapo' => $filePaths['file_suket_dapo'] ?? $draft?->file_suket_dapo,
+                'file_suket_diterima' => $filePaths['file_suket_diterima'] ?? $draft?->file_suket_diterima,
+                'file_rapor' => $filePaths['file_rapor'] ?? $draft?->file_rapor,
                 'is_dinas_entry' => $request->has('is_dinas_entry') ? 1 : 0,
                 'updated_at' => now(),
             ];
@@ -1234,12 +1222,23 @@ class MutasiController extends Controller
         $user = Auth::user();
 
         // Basic validation for draft (minimal)
-        $validated = $request->validate([
+        $draftRules = [
             'nama_murid' => 'nullable|string|max:100',
             'nisn' => 'nullable|string|max:10',
             'nis' => 'nullable|string|max:20',
             'draft_id' => 'nullable|string|max:50', // For updating existing draft
-        ]);
+        ];
+
+        foreach (['file_suket_keluar', 'file_suket_dapo', 'file_suket_diterima'] as $field) {
+            $draftRules[$field] = $request->hasFile($field)
+                ? 'nullable|file|mimes:pdf|max:1024'
+                : 'nullable|string|max:255';
+        }
+        $draftRules['file_rapor'] = $request->hasFile('file_rapor')
+            ? 'nullable|file|mimes:pdf|max:2048'
+            : 'nullable|string|max:255';
+
+        $request->validate($draftRules);
 
         // Check if updating existing draft
         $existingDraftId = $request->input('draft_id');
@@ -1263,8 +1262,6 @@ class MutasiController extends Controller
             'alasan_pindah' => $request->input('alasan_pindah') ?: '',
             'nomor_surat_sekolah' => $request->input('nomor_surat_sekolah'),
             'tanggal_surat_sekolah' => $request->input('tanggal_surat_sekolah') ?: null,
-            'tujuan_luar_negeri' => $request->input('tujuan_luar_negeri') ? 1 : 0,
-
             // Dinas Mode Fields
             'is_dinas_entry' => $request->has('is_dinas_entry') ? 1 : 0,
             'ceklis_surat_sekolah' => $request->has('has_suket_keluar') ? 1 : 0,
@@ -1276,32 +1273,65 @@ class MutasiController extends Controller
         ];
 
         try {
+            $existingDraft = null;
             if ($existingDraftId) {
-                // UPDATE existing draft
-                $exists = DB::table('mutasi_keluar')
+                $existingDraft = DB::table('mutasi_keluar')
                     ->where('id_mutasi', $existingDraftId)
                     ->where('status', 'Draft')
                     ->first();
 
-                if ($exists) {
-                    if (!$this->canAccessDraft($exists, $user)) {
-                        abort(403, 'Anda tidak berhak mengubah draft ini.');
-                    }
+                if (!$existingDraft) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'draft_id' => 'Draft tidak ditemukan atau sudah pernah dikirim.',
+                    ]);
+                }
 
+                if (!$this->canAccessDraft($existingDraft, $user)) {
+                    abort(403, 'Anda tidak berhak mengubah draft ini.');
+                }
+
+                $id = $existingDraftId;
+            } else {
+                $id = 'MK-' . date('ymd') . '-' . strtoupper(substr(uniqid(), -5));
+            }
+
+            // File dipromosikan dari upload sementara ke penyimpanan permanen
+            // sebelum path-nya dicatat pada draft.
+            $filePaths = $this->fileUploadService->uploadMutasiKeluarFiles($request, $id);
+            $draftData = array_merge($draftData, $filePaths);
+
+            if ($existingDraftId) {
+                // UPDATE existing draft
+                $exists = $existingDraft;
+
+                if ($exists) {
                     DB::table('mutasi_keluar')
                         ->where('id_mutasi', $existingDraftId)
                         ->update($draftData);
 
                     Log::info("Draft mutasi keluar updated: {$existingDraftId} by {$user->username}");
 
+                    if ($request->expectsJson()) {
+                        $message = 'Draft berhasil diperbarui.';
+                        $request->session()->flash('success', $message);
+
+                        return response()->json([
+                            'success' => true,
+                            'message' => $message,
+                            'redirect' => route('mutasi.keluar.index', ['draft_saved' => 1]),
+                        ]);
+                    }
+
                     return redirect()->route('mutasi.keluar.index')
                         ->with('success', '📝 Draft berhasil diperbarui!');
                 }
+
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'draft_id' => 'Draft tidak ditemukan atau sudah pernah dikirim.',
+                ]);
             }
 
             // INSERT new draft
-            $id = 'MK-' . date('ymd') . '-' . strtoupper(substr(uniqid(), -5));
-
             $draftData['id_mutasi'] = $id;
             $draftData['pengusul'] = $user->username;
             $draftData['status'] = 'Draft';
@@ -1312,10 +1342,29 @@ class MutasiController extends Controller
 
             Log::info("Draft mutasi keluar created: {$id} by {$user->username}");
 
+            if ($request->expectsJson()) {
+                $message = 'Draft berhasil disimpan. Anda dapat melanjutkan pengisian nanti.';
+                $request->session()->flash('success', $message);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => $message,
+                    'id_mutasi' => $id,
+                    'redirect' => route('mutasi.keluar.index', ['draft_saved' => 1]),
+                ]);
+            }
+
             return redirect()->route('mutasi.keluar.index')
                 ->with('success', '📝 Draft berhasil disimpan! Anda dapat melanjutkan pengisian nanti.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             Log::error("Failed to save draft mutasi keluar: " . $e->getMessage());
+
+            if ($request->expectsJson()) {
+                return $this->safeJsonError('Gagal menyimpan draft', $e);
+            }
+
             return back()->with('error', $this->safeErrorMessage('Gagal menyimpan draft', $e))->withInput();
         }
     }
@@ -1345,60 +1394,6 @@ class MutasiController extends Controller
 
         if (!$isOwner) {
             abort(403, 'Anda tidak berhak mengakses draft ini.');
-        }
-
-        // Check Schedule (Only for non-Dinas/SuperAdmin)
-        if (!in_array($user->role, ['Dinas', 'SuperAdmin'])) {
-            $today = now();
-
-            // Common Schedule Retrieval
-            $dayNames = [0 => 'Minggu', 1 => 'Senin', 2 => 'Selasa', 3 => 'Rabu', 4 => 'Kamis', 5 => 'Jumat', 6 => 'Sabtu'];
-            $allowedDays = \App\Models\Setting::getAllowedDays();
-            $allowedDayNames = !empty($allowedDays) ? implode(', ', array_map(fn($d) => $dayNames[$d] ?? '', $allowedDays)) : 'Setiap Hari';
-
-            $startTime = \App\Models\Setting::get('working_hours_start', '08:00');
-            $endTime = \App\Models\Setting::get('working_hours_end', '15:00');
-            $blockData = [
-                'days' => $allowedDayNames,
-                'hours' => "{$startTime} - {$endTime} WIB"
-            ];
-
-            // DEBUG LOGGING
-            \Log::info("Schedule Check - User: {$user->username}, Role: {$user->role}");
-            \Log::info("Time: {$today->toDateTimeString()}, DayISO: {$today->dayOfWeekIso} (" . ($dayNames[$today->dayOfWeek] ?? 'Unknown') . ")");
-            \Log::info("Allowed Days: " . implode(',', $allowedDays));
-            \Log::info("Hour Restriction Enabled: " . (\App\Models\Setting::isHourRestrictionEnabled() ? 'Yes' : 'No'));
-            \Log::info("Current Time: {$today->format('H:i')}, Window: {$startTime} - {$endTime}");
-
-            // 1. Check Holiday
-            if (\App\Models\Holiday::isHoliday($today->format('Y-m-d'))) {
-                \Log::info("Blocked: Holiday");
-                return redirect()->route('mutasi.keluar.index')->with('schedule_block', $blockData);
-            }
-
-            // 2. Check Allowed Days
-            // Carbon dayOfWeekIso: 1 (Mon) - 7 (Sun)
-            // But Settings might be storing 0-6 or 1-7. Let's check `getAllowedDays` implementation again.
-            // Setting::getAllowedDays defaults to [1, 2, 3, 4, 5, 6]. 
-            // If today is Sunday (7), and it's not in array, it blocks.
-            // FIX: Carbon dayOfWeek returns 0 (Sun) - 6 (Sat). 
-            // Carbon dayOfWeekIso returns 1 (Mon) - 7 (Sun).
-            // We need to match what Setting stores. Usually UI forms use 0=Sun or 1=Mon.
-            // If Setting defaults to [1,2,3...6], it assumes Monday-Saturday?
-            // Let's rely on dayOfWeekIso for now but log the mismatch.
-            if (!empty($allowedDays) && !in_array($today->dayOfWeekIso, $allowedDays)) {
-                \Log::info("Blocked: Day not allowed. Today ISO: {$today->dayOfWeekIso}");
-                return redirect()->route('mutasi.keluar.index')->with('schedule_block', $blockData);
-            }
-
-            // 3. Check Allowed Hours
-            if (\App\Models\Setting::isHourRestrictionEnabled()) {
-                $currentTime = $today->format('H:i');
-                if ($currentTime < $startTime || $currentTime > $endTime) {
-                    \Log::info("Blocked: Outside hours. Current: {$currentTime}");
-                    return redirect()->route('mutasi.keluar.index')->with('schedule_block', $blockData);
-                }
-            }
         }
 
         $this->prepareDraftForForm($draft);
@@ -1439,8 +1434,7 @@ class MutasiController extends Controller
             return back()->with('error', 'Hanya usulan dengan status Draft yang dapat dihapus.');
         }
 
-        // Delete files if any (though currently drafts don't save files, good to be safe)
-        // Check standard columns just in case
+        // Delete every document owned by the draft from permanent or temporary storage.
         $fileColumns = ['file_suket_keluar', 'file_suket_dapo', 'file_suket_diterima', 'file_rapor', 'file_arsip_scan'];
 
         // Get disk (private_docs/b2)

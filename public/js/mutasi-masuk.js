@@ -1784,11 +1784,11 @@
     /**
      * Create a draft if jumlah_siswa > 1 and header fields are filled
      */
-    async function createDraftIfNeeded() {
+    async function createDraftIfNeeded(force = false) {
         if (draftId) return draftId; // Already created
 
         const jumlah = parseInt(document.getElementById('jumlah_siswa')?.value) || 1;
-        if (jumlah <= 1) return null; // No draft needed for single student
+        if (!force && jumlah <= 1) return null; // Auto-save only needs multi-student drafts
 
         const npsn = document.querySelector('[name="npsn_sekolah_tujuan"]')?.value;
         const nama = document.querySelector('[name="nama_sekolah_tujuan"]')?.value;
@@ -2212,7 +2212,7 @@
 
         try {
             // Create draft if not exists
-            await createDraftIfNeeded();
+            await createDraftIfNeeded(true);
 
             if (!draftId) {
                 alert('Gagal membuat draft. Pastikan data header sudah diisi (Jumlah Siswa, NPSN, Nama Sekolah, Alamat).');
@@ -2226,7 +2226,14 @@
             // Save ALL students to ensure nothing is missed (Fix for Missing 5th Student)
             if (totalSiswa > 0) {
                 for (let i = 0; i < totalSiswa; i++) {
-                    await saveCurrentStudent(i);
+                    const card = document.querySelector(`.siswa-card[data-index="${i}"]`);
+                    const studentName = card?.querySelector('[name*="[nama_murid]"]')?.value?.trim();
+                    if (!studentName) continue;
+
+                    const saved = await saveCurrentStudent(i);
+                    if (!saved) {
+                        throw new Error(`Data siswa #${i + 1} gagal disimpan.`);
+                    }
                 }
             }
 
@@ -2234,7 +2241,9 @@
 
             // Redirect to index with success message
             setTimeout(() => {
-                window.location.href = CONFIG.routes?.index || '/mutasi-masuk';
+                const target = new URL(CONFIG.routes?.index || '/mutasi-masuk', window.location.origin);
+                target.searchParams.set('draft_saved', '1');
+                window.location.href = target.toString();
             }, 1000);
         } catch (error) {
             console.error('Draft save failed:', error);
