@@ -526,7 +526,7 @@ class LaporanController extends Controller
 
         $statusKey = strtolower($schoolStatus ?? 'all');
         $npsnKey = $selectedSchool?->npsn ?? 'all';
-        $cacheKey = 'public.statistics.trend.v5.'.MutationStatisticsCache::version()
+        $cacheKey = 'public.statistics.trend.v6.'.MutationStatisticsCache::version()
             .'.'.($month ?: 'all').'.'.$year
             .'.status-'.$statusKey.'.npsn-'.$npsnKey;
 
@@ -640,9 +640,9 @@ class LaporanController extends Controller
 
         // --- MUTASI KELUAR ---
         $keluarQuery = MutasiKeluar::selectRaw("$selectUnitKeluar,
-                SUM(CASE WHEN provinsi_tujuan = 'LUAR NEGERI' THEN 1 ELSE 0 END) as luar_negeri,
-                SUM(CASE WHEN provinsi_tujuan != 'LUAR NEGERI' AND kabupaten_kota_tujuan LIKE '%KOTA BOGOR%' THEN 1 ELSE 0 END) as dalam_kota,
-                SUM(CASE WHEN provinsi_tujuan != 'LUAR NEGERI' AND (kabupaten_kota_tujuan NOT LIKE '%KOTA BOGOR%' OR kabupaten_kota_tujuan IS NULL) THEN 1 ELSE 0 END) as luar_kota")
+                SUM(CASE WHEN UPPER(TRIM(COALESCE(provinsi_tujuan, ''))) = 'LUAR NEGERI' THEN 1 ELSE 0 END) as luar_negeri,
+                SUM(CASE WHEN UPPER(TRIM(COALESCE(provinsi_tujuan, ''))) <> 'LUAR NEGERI' AND UPPER(COALESCE(kabupaten_kota_tujuan, '')) LIKE '%KOTA BOGOR%' THEN 1 ELSE 0 END) as dalam_kota,
+                SUM(CASE WHEN UPPER(TRIM(COALESCE(provinsi_tujuan, ''))) <> 'LUAR NEGERI' AND UPPER(COALESCE(kabupaten_kota_tujuan, '')) NOT LIKE '%KOTA BOGOR%' THEN 1 ELSE 0 END) as luar_kota")
             ->whereBetween('tanggal_pengajuan', [$periodStart, $periodEnd])
             ->where('status', 'Selesai');
 

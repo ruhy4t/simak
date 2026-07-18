@@ -150,6 +150,7 @@
                     'total_unit' => 'Pengajuan',
                     'student_total' => $statsMasuk['total_siswa'] ?? 0,
                     'student_completed' => $statsMasuk['selesai_siswa'] ?? 0,
+                    'student_completed_label' => 'Siswa mutasi masuk berstatus selesai',
                     'icon' => 'bi-box-arrow-in-right',
                     'iconClass' => 'bg-sky-50 text-sky-600',
                     'statuses' => [
@@ -165,6 +166,8 @@
                     'description' => 'Pengajuan perpindahan keluar',
                     'total' => $statsKeluar['total'] ?? 0,
                     'total_unit' => 'Siswa/Pengajuan',
+                    'student_completed' => $statsKeluar['selesai'] ?? 0,
+                    'student_completed_label' => 'Siswa mutasi keluar berstatus selesai',
                     'icon' => 'bi-box-arrow-right',
                     'iconClass' => 'bg-indigo-50 text-indigo-600',
                     'statuses' => [
@@ -233,7 +236,7 @@
 
                     @if(isset($summary['student_completed']))
                         <div class="mt-4 flex items-center justify-between rounded-lg border border-emerald-100 bg-emerald-50 px-3.5 py-2.5">
-                            <span class="text-xs font-semibold text-emerald-700">Siswa mutasi masuk berstatus selesai</span>
+                            <span class="text-xs font-semibold text-emerald-700">{{ $summary['student_completed_label'] }}</span>
                             <span class="text-lg font-bold text-emerald-800">{{ number_format($summary['student_completed']) }}</span>
                         </div>
                     @endif

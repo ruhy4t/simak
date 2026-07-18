@@ -166,6 +166,25 @@ class PublicStatisticsTest extends TestCase
         $this->assertSame(4, $this->total($refreshed['masuk']));
     }
 
+    public function test_every_completed_outgoing_mutation_is_included_when_legacy_destination_is_empty(): void
+    {
+        $this->insertOutgoing('K-LEGACY-EMPTY', '2026-07-10', 'Selesai', null, null);
+        $this->insertOutgoing('K-LEGACY-CASE', '2026-07-11', 'Selesai', ' luar negeri ', null);
+
+        $chartData = $this->get('/statistik-mutasi?year=2026&month=7')
+            ->assertOk()
+            ->viewData('chartData');
+
+        $dashboardStyleTotal = DB::table('mutasi_keluar')
+            ->where('status', 'Selesai')
+            ->where('npsn_sekolah_asal', '12345678')
+            ->count();
+
+        $this->assertSame($dashboardStyleTotal, $this->total($chartData['keluar']));
+        $this->assertSame(2, array_sum($chartData['keluar']['luar_kota']));
+        $this->assertSame(2, array_sum($chartData['keluar']['luar_negeri']));
+    }
+
     private function seedStatistics(): void
     {
         $this->insertIncoming('M-1', '2026-07-01', 'Selesai', false, 'KOTA BOGOR');
