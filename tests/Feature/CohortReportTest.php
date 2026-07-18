@@ -493,8 +493,10 @@ class CohortReportTest extends TestCase
         Schema::create('mutasi_masuk', function (Blueprint $table) {
             $table->string('id_mutasi')->primary();
             $table->date('tanggal_pengajuan');
+            $table->unsignedInteger('jumlah_siswa')->default(1);
             $table->string('npsn_sekolah_tujuan');
             $table->string('status');
+            $table->softDeletes();
         });
         Schema::create('mutasi_masuk_siswa', function (Blueprint $table) {
             $table->id();
@@ -513,6 +515,7 @@ class CohortReportTest extends TestCase
             $table->string('status');
             $table->string('provinsi_tujuan')->nullable();
             $table->string('kabupaten_kota_tujuan')->nullable();
+            $table->softDeletes();
         });
         Schema::create('non_mutation_student_exits', function (Blueprint $table) {
             $table->id();

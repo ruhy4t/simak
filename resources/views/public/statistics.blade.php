@@ -4,8 +4,8 @@
 
 @section('content')
     @php
-        $totalMasuk = collect($chartData['masuk'])->flatten()->sum();
-        $totalKeluar = collect($chartData['keluar'])->flatten()->sum();
+        $totalMasuk = $chartData['totals']['masuk'] ?? collect($chartData['masuk'])->flatten()->sum();
+        $totalKeluar = $chartData['totals']['keluar'] ?? collect($chartData['keluar'])->flatten()->sum();
         $periodLabel = $month
             ? \Carbon\Carbon::create($year, $month)->translatedFormat('F Y')
             : 'Tahun '.$year;

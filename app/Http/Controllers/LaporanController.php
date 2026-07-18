@@ -517,16 +517,20 @@ class LaporanController extends Controller
             }
 
             $eligibleSchoolNpsns = [$selectedSchool->npsn];
-        } else {
+        } elseif ($schoolStatus) {
             $eligibleSchoolNpsns = $eligibleSchoolQuery
-                ->when($schoolStatus, fn ($query) => $query->where('status_sp', $schoolStatus))
+                ->where('status_sp', $schoolStatus)
                 ->pluck('npsn')
                 ->all();
+        } else {
+            // Tanpa filter sekolah, gunakan seluruh riwayat mutasi seperti
+            // dashboard Dinas. Data lama tidak selalu mempunyai referensi NPSN.
+            $eligibleSchoolNpsns = null;
         }
 
         $statusKey = strtolower($schoolStatus ?? 'all');
         $npsnKey = $selectedSchool?->npsn ?? 'all';
-        $cacheKey = 'public.statistics.trend.v6.'.MutationStatisticsCache::version()
+        $cacheKey = 'public.statistics.trend.v7.'.MutationStatisticsCache::version()
             .'.'.($month ?: 'all').'.'.$year
             .'.status-'.$statusKey.'.npsn-'.$npsnKey;
 
@@ -624,44 +628,66 @@ class LaporanController extends Controller
                 SUM(CASE WHEN mutasi_masuk_siswa.asal_luar_negeri = 1 THEN 1 ELSE 0 END) as luar_negeri,
                 SUM(CASE WHEN mutasi_masuk_siswa.asal_luar_negeri = 0 AND mutasi_masuk_siswa.kabupaten_kota_asal LIKE '%KOTA BOGOR%' THEN 1 ELSE 0 END) as dalam_kota,
                 SUM(CASE WHEN mutasi_masuk_siswa.asal_luar_negeri = 0 AND (mutasi_masuk_siswa.kabupaten_kota_asal NOT LIKE '%KOTA BOGOR%' OR mutasi_masuk_siswa.kabupaten_kota_asal IS NULL) THEN 1 ELSE 0 END) as luar_kota")
+            ->whereNull('mutasi_masuk.deleted_at')
+            ->whereBetween('mutasi_masuk.tanggal_pengajuan', [$periodStart, $periodEnd])
+            ->where('mutasi_masuk.status', 'Selesai');
+
+        $studentCounts = DB::table('mutasi_masuk_siswa')
+            ->selectRaw('id_mutasi, COUNT(*) as total_siswa')
+            ->groupBy('id_mutasi');
+        $masukTotalQuery = DB::table('mutasi_masuk')
+            ->leftJoinSub($studentCounts, 'student_counts', function ($join): void {
+                $join->on('mutasi_masuk.id_mutasi', '=', 'student_counts.id_mutasi');
+            })
+            ->whereNull('mutasi_masuk.deleted_at')
             ->whereBetween('mutasi_masuk.tanggal_pengajuan', [$periodStart, $periodEnd])
             ->where('mutasi_masuk.status', 'Selesai');
 
         if ($user && in_array($role, ['Sekolah', 'Operator'], true)) {
             $npsn = $user->sekolah->npsn ?? $user->npsn;
             $masukQuery->where('mutasi_masuk.npsn_sekolah_tujuan', $npsn);
-        } elseif (! $user) {
-            $masukQuery->whereIn('mutasi_masuk.npsn_sekolah_tujuan', $publicSchoolNpsns ?? []);
-        } else {
-            $masukQuery->whereIn('mutasi_masuk.npsn_sekolah_tujuan', $this->eligibleBogorJuniorHighNpsns());
+            $masukTotalQuery->where('mutasi_masuk.npsn_sekolah_tujuan', $npsn);
+        } elseif (! $user && $publicSchoolNpsns !== null) {
+            $masukQuery->whereIn('mutasi_masuk.npsn_sekolah_tujuan', $publicSchoolNpsns);
+            $masukTotalQuery->whereIn('mutasi_masuk.npsn_sekolah_tujuan', $publicSchoolNpsns);
         }
 
         $masukResults = $masukQuery->groupBy('unit')->get()->keyBy('unit');
+        $masukTotal = (int) $masukTotalQuery
+            ->selectRaw('COALESCE(SUM(CASE WHEN COALESCE(student_counts.total_siswa, 0) > 0 THEN student_counts.total_siswa ELSE COALESCE(mutasi_masuk.jumlah_siswa, 0) END), 0) as total')
+            ->value('total');
 
         // --- MUTASI KELUAR ---
         $keluarQuery = MutasiKeluar::selectRaw("$selectUnitKeluar,
                 SUM(CASE WHEN UPPER(TRIM(COALESCE(provinsi_tujuan, ''))) = 'LUAR NEGERI' THEN 1 ELSE 0 END) as luar_negeri,
                 SUM(CASE WHEN UPPER(TRIM(COALESCE(provinsi_tujuan, ''))) <> 'LUAR NEGERI' AND UPPER(COALESCE(kabupaten_kota_tujuan, '')) LIKE '%KOTA BOGOR%' THEN 1 ELSE 0 END) as dalam_kota,
                 SUM(CASE WHEN UPPER(TRIM(COALESCE(provinsi_tujuan, ''))) <> 'LUAR NEGERI' AND UPPER(COALESCE(kabupaten_kota_tujuan, '')) NOT LIKE '%KOTA BOGOR%' THEN 1 ELSE 0 END) as luar_kota")
+            ->whereNull('deleted_at')
+            ->whereBetween('tanggal_pengajuan', [$periodStart, $periodEnd])
+            ->where('status', 'Selesai');
+        $keluarTotalQuery = DB::table('mutasi_keluar')
+            ->whereNull('deleted_at')
             ->whereBetween('tanggal_pengajuan', [$periodStart, $periodEnd])
             ->where('status', 'Selesai');
 
         if ($user && in_array($role, ['Sekolah', 'Operator'], true)) {
             $npsn = $user->sekolah->npsn ?? $user->npsn;
             $keluarQuery->where('npsn_sekolah_asal', $npsn);
-        } elseif (! $user) {
-            $keluarQuery->whereIn('mutasi_keluar.npsn_sekolah_asal', $publicSchoolNpsns ?? []);
-        } else {
-            $keluarQuery->whereIn('mutasi_keluar.npsn_sekolah_asal', $this->eligibleBogorJuniorHighNpsns());
+            $keluarTotalQuery->where('npsn_sekolah_asal', $npsn);
+        } elseif (! $user && $publicSchoolNpsns !== null) {
+            $keluarQuery->whereIn('mutasi_keluar.npsn_sekolah_asal', $publicSchoolNpsns);
+            $keluarTotalQuery->whereIn('npsn_sekolah_asal', $publicSchoolNpsns);
         }
 
         $keluarResults = $keluarQuery->groupBy('unit')->get()->keyBy('unit');
+        $keluarTotal = $keluarTotalQuery->count();
 
         // Format data for Chart
         $data = [
             'labels' => [],
             'masuk' => ['dalam' => [], 'luar_kota' => [], 'luar_negeri' => []],
             'keluar' => ['dalam' => [], 'luar_kota' => [], 'luar_negeri' => []],
+            'totals' => ['masuk' => $masukTotal, 'keluar' => $keluarTotal],
         ];
 
         foreach ($range as $unit) {

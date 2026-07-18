@@ -33,8 +33,10 @@ class PublicStatisticsTest extends TestCase
         Schema::create('mutasi_masuk', function (Blueprint $table) {
             $table->string('id_mutasi')->primary();
             $table->date('tanggal_pengajuan');
+            $table->unsignedInteger('jumlah_siswa')->default(1);
             $table->string('npsn_sekolah_tujuan')->nullable();
             $table->string('status');
+            $table->softDeletes();
         });
 
         Schema::create('mutasi_masuk_siswa', function (Blueprint $table) {
@@ -51,6 +53,7 @@ class PublicStatisticsTest extends TestCase
             $table->string('provinsi_tujuan')->nullable();
             $table->string('kabupaten_kota_tujuan')->nullable();
             $table->string('status');
+            $table->softDeletes();
         });
 
         $this->insertSchool('12345678', 'SMP Negeri Contoh', 'Negeri');
@@ -183,6 +186,34 @@ class PublicStatisticsTest extends TestCase
         $this->assertSame($dashboardStyleTotal, $this->total($chartData['keluar']));
         $this->assertSame(2, array_sum($chartData['keluar']['luar_kota']));
         $this->assertSame(2, array_sum($chartData['keluar']['luar_negeri']));
+    }
+
+    public function test_unfiltered_totals_match_dashboard_scope_and_keep_legacy_incoming_students(): void
+    {
+        DB::table('mutasi_masuk')->insert([
+            'id_mutasi' => 'M-LEGACY-NO-DETAIL',
+            'tanggal_pengajuan' => '2026-07-12',
+            'jumlah_siswa' => 4,
+            'npsn_sekolah_tujuan' => '99999999',
+            'status' => 'Selesai',
+        ]);
+        $this->insertOutgoing('K-MISSING-REFERENCE', '2026-07-13', 'Selesai', 'JAWA BARAT', 'KOTA BANDUNG', '99999999');
+        $this->insertIncoming('M-DELETED', '2026-07-14', 'Selesai', false, 'KOTA BOGOR');
+        DB::table('mutasi_masuk')->where('id_mutasi', 'M-DELETED')->update(['deleted_at' => now()]);
+        $this->insertOutgoing('K-DELETED', '2026-07-14', 'Selesai', 'JAWA BARAT', 'KOTA BOGOR');
+        DB::table('mutasi_keluar')->where('id_mutasi', 'K-DELETED')->update(['deleted_at' => now()]);
+
+        $unfiltered = $this->get('/statistik-mutasi?year=2026&month=7')
+            ->assertOk()
+            ->viewData('chartData');
+        $filtered = $this->get('/statistik-mutasi?year=2026&month=7&school_status=Negeri')
+            ->assertOk()
+            ->viewData('chartData');
+
+        $this->assertSame(7, $unfiltered['totals']['masuk']);
+        $this->assertSame(4, $unfiltered['totals']['keluar']);
+        $this->assertSame(3, $filtered['totals']['masuk']);
+        $this->assertSame(3, $filtered['totals']['keluar']);
     }
 
     private function seedStatistics(): void
