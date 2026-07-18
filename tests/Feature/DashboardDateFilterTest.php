@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Http\Controllers\DashboardController;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -157,7 +158,7 @@ class DashboardDateFilterTest extends TestCase
         $this->assertSame(2, $secondView->getData()['statsMasuk']['total']);
     }
 
-    public function test_dinas_dashboard_excludes_mutations_whose_local_side_is_not_bogor_junior_high(): void
+    public function test_dinas_dashboard_keeps_historical_mutations_even_when_school_reference_is_missing(): void
     {
         $dinas = new User([
             'username' => 'dinas-test',
@@ -193,10 +194,69 @@ class DashboardDateFilterTest extends TestCase
             'year' => 2026,
         ]))->getData();
 
-        $this->assertSame(2, $data['statsKeluar']['total']);
-        $this->assertSame(2, $data['statsMasuk']['total']);
-        $this->assertSame(7, $data['statsMasuk']['total_siswa']);
-        $this->assertSame(4, $data['statsMasuk']['selesai_siswa']);
+        $this->assertSame(3, $data['statsKeluar']['total']);
+        $this->assertSame(3, $data['statsMasuk']['total']);
+        $this->assertSame(12, $data['statsMasuk']['total_siswa']);
+        $this->assertSame(9, $data['statsMasuk']['selesai_siswa']);
+    }
+
+    public function test_incoming_student_total_falls_back_to_header_for_legacy_records_without_details(): void
+    {
+        DB::table('mutasi_masuk')->insert([
+            'id_mutasi' => 'MM-LEGACY',
+            'tanggal_pengajuan' => '2026-07-10',
+            'jumlah_siswa' => 6,
+            'nama_sekolah_tujuan' => 'SMP Test',
+            'npsn_sekolah_tujuan' => '12345678',
+            'status' => 'Selesai',
+            'pengusul' => 'operator-test',
+        ]);
+
+        $data = app(DashboardController::class)->index(Request::create('/dashboard', 'GET', [
+            'period' => 'month',
+            'month' => 7,
+            'year' => 2026,
+        ]))->getData();
+
+        $this->assertSame(3, $data['statsMasuk']['total']);
+        $this->assertSame(13, $data['statsMasuk']['total_siswa']);
+        $this->assertSame(10, $data['statsMasuk']['selesai_siswa']);
+        $this->assertSame(13, (int) $data['schoolStatsMasuk'][0]->jumlah);
+    }
+
+    public function test_all_period_counts_from_the_beginning_through_today_and_excludes_drafts(): void
+    {
+        CarbonImmutable::setTestNow('2026-07-18 12:00:00');
+
+        try {
+            DB::table('mutasi_keluar')->insert([
+                'tanggal_pengajuan' => '2026-07-10',
+                'nama_sekolah_asal' => 'SMP Test',
+                'npsn_sekolah_asal' => '12345678',
+                'status' => 'Draft',
+                'pengusul' => 'operator-test',
+            ]);
+            DB::table('mutasi_masuk')->insert([
+                'id_mutasi' => 'MM-DRAFT',
+                'tanggal_pengajuan' => '2026-07-10',
+                'jumlah_siswa' => 8,
+                'nama_sekolah_tujuan' => 'SMP Test',
+                'npsn_sekolah_tujuan' => '12345678',
+                'status' => 'Draft',
+                'pengusul' => 'operator-test',
+            ]);
+
+            $data = app(DashboardController::class)
+                ->index(Request::create('/dashboard', 'GET'))
+                ->getData();
+
+            $this->assertSame(2, $data['statsKeluar']['total']);
+            $this->assertSame(2, $data['statsMasuk']['total']);
+            $this->assertSame(5, $data['statsMasuk']['total_siswa']);
+            $this->assertSame('Awal data s.d. 18 Juli 2026', $data['dateFilter']['label']);
+        } finally {
+            CarbonImmutable::setTestNow();
+        }
     }
 
     private function insertMutationPair(string $date, string $status, int $studentCount): void

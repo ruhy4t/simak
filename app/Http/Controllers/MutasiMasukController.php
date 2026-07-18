@@ -724,6 +724,7 @@ class MutasiMasukController extends Controller
             }
 
             DB::commit();
+            \App\Services\MutationStatisticsCache::invalidate();
 
             // NOTE: Auto-save sekolah ke database hanya dilakukan saat status "Selesai" oleh Dinas
             // via maybeStoreNewSchool() di completeLetter()

@@ -139,6 +139,7 @@ class MutasiService
         }
 
         DB::table('mutasi_keluar')->where('id_mutasi', $id)->update($updateData);
+        MutationStatisticsCache::invalidate();
 
         $mutasi = DB::table('mutasi_keluar')->where('id_mutasi', $id)->first();
 
@@ -166,6 +167,7 @@ class MutasiService
         }
 
         DB::table('mutasi_masuk')->where('id_mutasi', $id)->update($updateData);
+        MutationStatisticsCache::invalidate();
 
         $mutasi = DB::table('mutasi_masuk')->where('id_mutasi', $id)->first();
 

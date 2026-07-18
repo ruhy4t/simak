@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\SatuanPendidikan;
 use App\Services\MutationStatisticsCache;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
@@ -103,7 +102,7 @@ class DashboardController extends Controller
     private function dashboardCacheKey($user, array $dateFilter): string
     {
         $scope = [
-            'v2',
+            'v3',
             MutationStatisticsCache::version(),
             (string) $user->getAuthIdentifier(),
             (string) $user->role,
@@ -122,8 +121,7 @@ class DashboardController extends Controller
         try {
             $query = DB::table('mutasi_keluar')
                 ->whereNull('deleted_at') // Filter Deleted
-                ->where('status', '!=', 'Dibatalkan') // Exclude cancelled
-                ->whereIn('npsn_sekolah_asal', $this->eligibleBogorJuniorHighNpsns());
+                ->whereNotIn('status', ['Draft', 'Dibatalkan']);
 
             if ($user->role === 'Operator') {
                 $query->where('pengusul', $user->username)
@@ -162,8 +160,7 @@ class DashboardController extends Controller
         try {
             $query = DB::table('mutasi_masuk')
                 ->whereNull('deleted_at') // Filter Deleted
-                ->where('status', '!=', 'Dibatalkan') // Exclude cancelled
-                ->whereIn('npsn_sekolah_tujuan', $this->eligibleBogorJuniorHighNpsns());
+                ->whereNotIn('status', ['Draft', 'Dibatalkan']);
 
             if ($user->role === 'Operator') {
                 $query->where('pengusul', $user->username);
@@ -173,12 +170,15 @@ class DashboardController extends Controller
 
             $this->applyDateFilter($query, $dateFilter);
 
-            $studentBase = (clone $query)
-                ->join('mutasi_masuk_siswa', 'mutasi_masuk.id_mutasi', '=', 'mutasi_masuk_siswa.id_mutasi');
-            $totalStudents = (clone $studentBase)->count('mutasi_masuk_siswa.id');
-            $completedStudents = (clone $studentBase)
-                ->where('mutasi_masuk.status', 'Selesai')
-                ->count('mutasi_masuk_siswa.id');
+            $studentCounts = DB::table('mutasi_masuk_siswa')
+                ->selectRaw('id_mutasi, COUNT(*) as total_siswa')
+                ->groupBy('id_mutasi');
+            $studentStats = (clone $query)
+                ->leftJoinSub($studentCounts, 'student_counts', function ($join): void {
+                    $join->on('mutasi_masuk.id_mutasi', '=', 'student_counts.id_mutasi');
+                })
+                ->selectRaw("\n                    COALESCE(SUM(CASE\n                        WHEN COALESCE(student_counts.total_siswa, 0) > 0 THEN student_counts.total_siswa\n                        ELSE COALESCE(mutasi_masuk.jumlah_siswa, 0)\n                    END), 0) as total_siswa,\n                    COALESCE(SUM(CASE WHEN mutasi_masuk.status = 'Selesai' THEN\n                        CASE\n                            WHEN COALESCE(student_counts.total_siswa, 0) > 0 THEN student_counts.total_siswa\n                            ELSE COALESCE(mutasi_masuk.jumlah_siswa, 0)\n                        END\n                    ELSE 0 END), 0) as selesai_siswa\n                ")
+                ->first();
 
             // Optimization: Single Query Aggregation
             $stats = $query->selectRaw("
@@ -192,8 +192,8 @@ class DashboardController extends Controller
 
             return [
                 'total' => (int) $stats->total,
-                'total_siswa' => $totalStudents,
-                'selesai_siswa' => $completedStudents,
+                'total_siswa' => (int) ($studentStats->total_siswa ?? 0),
+                'selesai_siswa' => (int) ($studentStats->selesai_siswa ?? 0),
                 'menunggu' => (int) $stats->menunggu,
                 'disetujui' => (int) $stats->disetujui,
                 'proses_ttd' => (int) $stats->proses_ttd,
@@ -306,8 +306,7 @@ class DashboardController extends Controller
             $query = DB::table('mutasi_keluar')
                 ->select('nama_sekolah_asal as nama_sekolah', DB::raw('COUNT(*) as jumlah'))
                 ->whereNull('deleted_at') // Exclude Soft Deleted
-                ->where('status', '!=', 'Dibatalkan') // Exclude Cancelled
-                ->whereIn('npsn_sekolah_asal', $this->eligibleBogorJuniorHighNpsns())
+                ->whereNotIn('status', ['Draft', 'Dibatalkan'])
                 ->groupBy('nama_sekolah_asal')
                 ->orderByDesc('jumlah')
                 ->limit(10);
@@ -334,12 +333,19 @@ class DashboardController extends Controller
     private function getSchoolStatsMasuk($user, array $dateFilter): array
     {
         try {
+            $studentCounts = DB::table('mutasi_masuk_siswa')
+                ->selectRaw('id_mutasi, COUNT(*) as total_siswa')
+                ->groupBy('id_mutasi');
             $query = DB::table('mutasi_masuk')
-                ->join('mutasi_masuk_siswa', 'mutasi_masuk.id_mutasi', '=', 'mutasi_masuk_siswa.id_mutasi')
-                ->select('mutasi_masuk.nama_sekolah_tujuan as nama_sekolah', DB::raw('COUNT(mutasi_masuk_siswa.id) as jumlah'))
+                ->leftJoinSub($studentCounts, 'student_counts', function ($join): void {
+                    $join->on('mutasi_masuk.id_mutasi', '=', 'student_counts.id_mutasi');
+                })
+                ->select(
+                    'mutasi_masuk.nama_sekolah_tujuan as nama_sekolah',
+                    DB::raw('SUM(CASE WHEN COALESCE(student_counts.total_siswa, 0) > 0 THEN student_counts.total_siswa ELSE COALESCE(mutasi_masuk.jumlah_siswa, 0) END) as jumlah')
+                )
                 ->whereNull('mutasi_masuk.deleted_at') // Exclude Soft Deleted
-                ->where('mutasi_masuk.status', '!=', 'Dibatalkan') // Exclude Cancelled
-                ->whereIn('mutasi_masuk.npsn_sekolah_tujuan', $this->eligibleBogorJuniorHighNpsns())
+                ->whereNotIn('mutasi_masuk.status', ['Draft', 'Dibatalkan'])
                 ->groupBy('mutasi_masuk.nama_sekolah_tujuan')
                 ->orderByDesc('jumlah')
                 ->limit(10);
@@ -430,12 +436,7 @@ class DashboardController extends Controller
         try {
             $query = DB::table($table)
                 ->whereNull('deleted_at')
-                ->where('status', '!=', 'Dibatalkan');
-
-            $query->whereIn(
-                $table === 'mutasi_keluar' ? 'npsn_sekolah_asal' : 'npsn_sekolah_tujuan',
-                $this->eligibleBogorJuniorHighNpsns()
-            );
+                ->whereNotIn('status', ['Draft', 'Dibatalkan']);
 
             if ($table === 'mutasi_keluar') {
                 if ($user->role === 'Operator') {
@@ -558,6 +559,7 @@ class DashboardController extends Controller
             $end = CarbonImmutable::createFromFormat('Y-m-d', $validated['end_date'])->startOfDay();
         } else {
             $period = 'all';
+            $end = $today;
         }
 
         $label = match ($period) {
@@ -567,7 +569,7 @@ class DashboardController extends Controller
             'custom' => $start->equalTo($end)
                 ? $start->translatedFormat('j F Y')
                 : $start->translatedFormat('j M Y').' – '.$end->translatedFormat('j M Y'),
-            default => 'Semua data',
+            default => 'Awal data s.d. '.$today->translatedFormat('j F Y'),
         };
 
         return [
@@ -586,18 +588,12 @@ class DashboardController extends Controller
      */
     private function applyDateFilter($query, array $dateFilter): void
     {
-        if ($dateFilter['start'] === null || $dateFilter['end_exclusive'] === null) {
-            return;
+        if ($dateFilter['start'] !== null) {
+            $query->where('tanggal_pengajuan', '>=', $dateFilter['start']);
         }
 
-        $query->where('tanggal_pengajuan', '>=', $dateFilter['start'])
-            ->where('tanggal_pengajuan', '<', $dateFilter['end_exclusive']);
-    }
-
-    private function eligibleBogorJuniorHighNpsns()
-    {
-        return SatuanPendidikan::query()
-            ->eligibleBogorJuniorHigh()
-            ->select('npsn');
+        if ($dateFilter['end_exclusive'] !== null) {
+            $query->where('tanggal_pengajuan', '<', $dateFilter['end_exclusive']);
+        }
     }
 }

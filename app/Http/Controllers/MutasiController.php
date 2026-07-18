@@ -793,6 +793,7 @@ class MutasiController extends Controller
             // via maybeStoreNewSchool() di completeLetter()
 
             DB::commit(); // COMMIT TRANSACTION - CRITICAL!
+            \App\Services\MutationStatisticsCache::invalidate();
 
             // Notify only after the new submission is safely committed.
             try {
