@@ -502,14 +502,15 @@ class LaporanController extends Controller
         $npsn = $validated['npsn'] ?? null;
         $schoolStatus = $npsn ? null : ($validated['school_status'] ?? null);
         $selectedSchool = null;
+        $eligibleSchoolQuery = SatuanPendidikan::query()
+            ->where('is_local', true)
+            ->whereRaw('UPPER(TRIM(kota)) = ?', ['KOTA BOGOR'])
+            ->whereRaw('UPPER(TRIM(bentuk_pendidikan)) = ?', ['SMP'])
+            ->whereIn('status_sp', ['Negeri', 'Swasta']);
 
         if ($npsn) {
-            $selectedSchool = SatuanPendidikan::query()
+            $selectedSchool = (clone $eligibleSchoolQuery)
                 ->where('npsn', $npsn)
-                ->where('is_local', true)
-                ->whereRaw('UPPER(TRIM(kota)) = ?', ['KOTA BOGOR'])
-                ->whereRaw('UPPER(TRIM(bentuk_pendidikan)) = ?', ['SMP'])
-                ->whereIn('status_sp', ['Negeri', 'Swasta'])
                 ->first();
 
             if (! $selectedSchool) {
@@ -517,17 +518,24 @@ class LaporanController extends Controller
                     'npsn' => 'NPSN tidak ditemukan atau bukan SMP Kota Bogor.',
                 ]);
             }
+
+            $eligibleSchoolNpsns = [$selectedSchool->npsn];
+        } else {
+            $eligibleSchoolNpsns = $eligibleSchoolQuery
+                ->when($schoolStatus, fn ($query) => $query->where('status_sp', $schoolStatus))
+                ->pluck('npsn')
+                ->all();
         }
 
         $statusKey = strtolower($schoolStatus ?? 'all');
         $npsnKey = $selectedSchool?->npsn ?? 'all';
-        $cacheKey = 'public.statistics.trend.v3.'.($month ?: 'all').'.'.$year
+        $cacheKey = 'public.statistics.trend.v4.'.($month ?: 'all').'.'.$year
             .'.status-'.$statusKey.'.npsn-'.$npsnKey;
 
         $chartData = Cache::remember(
             $cacheKey,
             now()->addMinutes(30),
-            fn () => $this->getTrendData($year, $month, null, $schoolStatus, $selectedSchool?->npsn)
+            fn () => $this->getTrendData($year, $month, null, $eligibleSchoolNpsns)
         );
 
         $cohortYears = collect();
@@ -565,8 +573,7 @@ class LaporanController extends Controller
         $year,
         $month,
         $user = null,
-        ?string $schoolStatus = null,
-        ?string $schoolNpsn = null,
+        ?array $publicSchoolNpsns = null,
     ) {
         $role = $user?->role;
 
@@ -626,12 +633,7 @@ class LaporanController extends Controller
             $npsn = $user->sekolah->npsn ?? $user->npsn;
             $masukQuery->where('mutasi_masuk.npsn_sekolah_tujuan', $npsn);
         } elseif (! $user) {
-            $this->constrainToPublicSchoolFilter(
-                $masukQuery,
-                'mutasi_masuk.npsn_sekolah_tujuan',
-                $schoolStatus,
-                $schoolNpsn,
-            );
+            $masukQuery->whereIn('mutasi_masuk.npsn_sekolah_tujuan', $publicSchoolNpsns ?? []);
         }
 
         $masukResults = $masukQuery->groupBy('unit')->get()->keyBy('unit');
@@ -648,12 +650,7 @@ class LaporanController extends Controller
             $npsn = $user->sekolah->npsn ?? $user->npsn;
             $keluarQuery->where('npsn_sekolah_asal', $npsn);
         } elseif (! $user) {
-            $this->constrainToPublicSchoolFilter(
-                $keluarQuery,
-                'mutasi_keluar.npsn_sekolah_asal',
-                $schoolStatus,
-                $schoolNpsn,
-            );
+            $keluarQuery->whereIn('mutasi_keluar.npsn_sekolah_asal', $publicSchoolNpsns ?? []);
         }
 
         $keluarResults = $keluarQuery->groupBy('unit')->get()->keyBy('unit');
@@ -689,26 +686,6 @@ class LaporanController extends Controller
         }
 
         return $data;
-    }
-
-    private function constrainToPublicSchoolFilter(
-        $query,
-        string $npsnColumn,
-        ?string $schoolStatus,
-        ?string $schoolNpsn,
-    ): void {
-        $query->join(
-            'satuan_pendidikan as filtered_schools',
-            'filtered_schools.npsn',
-            '=',
-            $npsnColumn,
-        )
-            ->where('filtered_schools.is_local', true)
-            ->whereRaw('UPPER(TRIM(filtered_schools.kota)) = ?', ['KOTA BOGOR'])
-            ->whereRaw('UPPER(TRIM(filtered_schools.bentuk_pendidikan)) = ?', ['SMP'])
-            ->whereIn('filtered_schools.status_sp', ['Negeri', 'Swasta'])
-            ->when($schoolStatus, fn ($filter) => $filter->where('filtered_schools.status_sp', $schoolStatus))
-            ->when($schoolNpsn, fn ($filter) => $filter->where('filtered_schools.npsn', $schoolNpsn));
     }
 
     /**

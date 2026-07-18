@@ -246,10 +246,10 @@ class CohortReportService
     private function constrainToYear($query, string $column, AcademicYear $academicYear): void
     {
         if ($academicYear->starts_on) {
-            $query->whereDate($column, '>=', $academicYear->starts_on->toDateString());
+            $query->where($column, '>=', $academicYear->starts_on->toDateString());
         }
         if ($academicYear->ends_on) {
-            $query->whereDate($column, '<=', $academicYear->ends_on->toDateString());
+            $query->where($column, '<=', $academicYear->ends_on->toDateString());
         }
     }
 
