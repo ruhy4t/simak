@@ -107,7 +107,7 @@ class LoginRateLimitTest extends TestCase
         ]);
     }
 
-    public function test_remember_credentials_creates_persistent_login_and_username_cookies(): void
+    public function test_login_does_not_create_persistent_login_or_username_cookies(): void
     {
         $recallerName = Auth::guard()->getRecallerName();
 
@@ -119,10 +119,10 @@ class LoginRateLimitTest extends TestCase
 
         $response
             ->assertRedirect('/dashboard')
-            ->assertCookie($recallerName)
-            ->assertCookie('remembered_username', 'victim');
+            ->assertCookieExpired('remembered_username')
+            ->assertCookieMissing($recallerName);
 
         $this->assertAuthenticated();
-        $this->assertNotNull(DB::table('users')->where('username', 'victim')->value('remember_token'));
+        $this->assertNull(DB::table('users')->where('username', 'victim')->value('remember_token'));
     }
 }

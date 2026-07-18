@@ -23,8 +23,11 @@ class CohortReportService
     /**
      * Build an aggregate cohort report without exposing student identities.
      */
-    public function report(AcademicYear $academicYear, ?int $schoolId = null): array
-    {
+    public function report(
+        AcademicYear $academicYear,
+        ?int $schoolId = null,
+        ?string $schoolStatus = null,
+    ): array {
         if (! $this->available()) {
             return $this->emptyReport();
         }
@@ -55,6 +58,8 @@ class CohortReportService
 
         if ($schoolId) {
             $countQuery->where('counts.satuan_pendidikan_id', $schoolId);
+        } elseif ($schoolStatus) {
+            $countQuery->where('schools.status_sp', $schoolStatus);
         }
 
         $countRows = $countQuery->get();

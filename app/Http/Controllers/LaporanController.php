@@ -4,16 +4,18 @@ namespace App\Http\Controllers;
 
 use App\Models\AcademicYear;
 use App\Models\MutasiKeluar;
-use App\Models\MutasiMasuk;
 use App\Models\Penandatangan;
 use App\Models\SatuanPendidikan;
 use App\Services\CohortReportService;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
+use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class LaporanController extends Controller
 {
@@ -67,7 +69,7 @@ class LaporanController extends Controller
 
         $data = $this->getRekapData($start_date, $end_date, $user);
 
-        $filename = 'Rekapitulasi_Mutasi_' . $start_date . '_' . $end_date . '.csv';
+        $filename = 'Rekapitulasi_Mutasi_'.$start_date.'_'.$end_date.'.csv';
 
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
@@ -78,7 +80,7 @@ class LaporanController extends Controller
             $file = fopen('php://output', 'w');
 
             // Add BOM for Excel UTF-8 compatibility
-            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
 
             // Header row
             if ($user->role === 'Sekolah') {
@@ -104,7 +106,7 @@ class LaporanController extends Controller
                     'Keluar IX (L)',
                     'Keluar IX (P)',
                     'Keluar IX (Total)',
-                    'Total Keluar'
+                    'Total Keluar',
                 ]);
             } else {
                 fputcsv($file, [
@@ -130,7 +132,7 @@ class LaporanController extends Controller
                     'Keluar IX (P)',
                     'Keluar IX (Total)',
                     'Total Keluar',
-                    'Jumlah Netto'
+                    'Jumlah Netto',
                 ]);
             }
 
@@ -307,7 +309,7 @@ class LaporanController extends Controller
                         'akhir' => $awalTotal + $masukTotal - $keluarTotal,
 
                         // Netto
-                        'netto' => $masukTotal - $keluarTotal
+                        'netto' => $masukTotal - $keluarTotal,
                     ];
                 }
             }
@@ -315,18 +317,21 @@ class LaporanController extends Controller
             // For Sekolah: Group by Month with Kelas breakdown
             $npsn = $user->sekolah->npsn ?? $user->npsn;
             $school = $user->sekolah; // Get school profile data
-            $period = \Carbon\CarbonPeriod::create($start_date, '1 month', $end_date);
+            $period = CarbonPeriod::create($start_date, '1 month', $end_date);
 
             foreach ($period as $dt) {
                 $monthStart = $dt->copy()->startOfMonth()->format('Y-m-d');
                 $monthEnd = $dt->copy()->endOfMonth()->format('Y-m-d');
 
-                if ($monthStart < $start_date)
+                if ($monthStart < $start_date) {
                     $monthStart = $start_date;
-                if ($monthEnd > $end_date)
+                }
+                if ($monthEnd > $end_date) {
                     $monthEnd = $end_date;
-                if ($monthStart > $monthEnd)
+                }
+                if ($monthStart > $monthEnd) {
                     continue;
+                }
 
                 // Mutasi Masuk per kelas & gender
                 $masukStats = DB::table('mutasi_masuk')
@@ -414,13 +419,14 @@ class LaporanController extends Controller
                     'akhir' => $awalTotal + $masukTotal - $keluarTotal,
 
                     // Netto
-                    'netto' => $masukTotal - $keluarTotal
+                    'netto' => $masukTotal - $keluarTotal,
                 ];
             }
         }
 
         return $data;
     }
+
     /**
      * Display the Trend Charts page.
      */
@@ -484,16 +490,44 @@ class LaporanController extends Controller
             'year' => ['nullable', 'integer', 'min:2020', 'max:'.date('Y')],
             'month' => ['nullable', 'integer', 'between:1,12'],
             'academic_year' => ['nullable', 'integer', 'min:1'],
+            'school_status' => ['nullable', Rule::in(['Negeri', 'Swasta'])],
+            'npsn' => ['nullable', 'string', 'regex:/^[0-9]{8}$/'],
+        ], [
+            'school_status.in' => 'Status sekolah harus Negeri atau Swasta.',
+            'npsn.regex' => 'NPSN harus terdiri dari tepat 8 digit angka.',
         ]);
 
         $year = (int) ($validated['year'] ?? date('Y'));
         $month = isset($validated['month']) ? (int) $validated['month'] : null;
-        $cacheKey = 'public.statistics.trend.v1.'.($month ?: 'all').'.'.$year;
+        $npsn = $validated['npsn'] ?? null;
+        $schoolStatus = $npsn ? null : ($validated['school_status'] ?? null);
+        $selectedSchool = null;
+
+        if ($npsn) {
+            $selectedSchool = SatuanPendidikan::query()
+                ->where('npsn', $npsn)
+                ->where('is_local', true)
+                ->whereRaw('UPPER(TRIM(kota)) = ?', ['KOTA BOGOR'])
+                ->whereRaw('UPPER(TRIM(bentuk_pendidikan)) = ?', ['SMP'])
+                ->whereIn('status_sp', ['Negeri', 'Swasta'])
+                ->first();
+
+            if (! $selectedSchool) {
+                throw ValidationException::withMessages([
+                    'npsn' => 'NPSN tidak ditemukan atau bukan SMP Kota Bogor.',
+                ]);
+            }
+        }
+
+        $statusKey = strtolower($schoolStatus ?? 'all');
+        $npsnKey = $selectedSchool?->npsn ?? 'all';
+        $cacheKey = 'public.statistics.trend.v2.'.($month ?: 'all').'.'.$year
+            .'.status-'.$statusKey.'.npsn-'.$npsnKey;
 
         $chartData = Cache::remember(
             $cacheKey,
             now()->addMinutes(30),
-            fn () => $this->getTrendData($year, $month, null)
+            fn () => $this->getTrendData($year, $month, null, $schoolStatus, $selectedSchool?->npsn)
         );
 
         $cohortYears = collect();
@@ -509,16 +543,17 @@ class LaporanController extends Controller
 
             if ($cohortYear) {
                 $cohort = Cache::remember(
-                    "public.statistics.cohort.v4.{$cohortYear->id}",
+                    "public.statistics.cohort.v5.{$cohortYear->id}.status-{$statusKey}.npsn-{$npsnKey}",
                     now()->addMinutes(30),
-                    fn () => $cohortService->report($cohortYear)
+                    fn () => $cohortService->report($cohortYear, $selectedSchool?->id, $schoolStatus)
                 );
             }
         }
 
         return response()
             ->view('public.statistics', compact(
-                'chartData', 'year', 'month', 'cohortYears', 'cohortYear', 'cohort'
+                'chartData', 'year', 'month', 'cohortYears', 'cohortYear', 'cohort',
+                'schoolStatus', 'npsn', 'selectedSchool'
             ))
             ->header('Cache-Control', 'public, max-age=300, s-maxage=1800');
     }
@@ -526,8 +561,13 @@ class LaporanController extends Controller
     /**
      * Helper to fetch Trend data.
      */
-    private function getTrendData($year, $month, $user = null)
-    {
+    private function getTrendData(
+        $year,
+        $month,
+        $user = null,
+        ?string $schoolStatus = null,
+        ?string $schoolNpsn = null,
+    ) {
         $role = $user?->role;
 
         [$selectUnit, $selectUnitKeluar] = match (DB::connection()->getDriverName()) {
@@ -562,14 +602,14 @@ class LaporanController extends Controller
 
         // Determine Mode: Daily (if month selected) or Monthly (if year only)
         if ($month) {
-            $daysInMonth = \Carbon\Carbon::create($year, $month)->daysInMonth;
+            $daysInMonth = Carbon::create($year, $month)->daysInMonth;
             $range = range(1, $daysInMonth);
-            $periodStart = \Carbon\Carbon::create($year, $month, 1)->startOfMonth()->toDateString();
-            $periodEnd = \Carbon\Carbon::create($year, $month, 1)->endOfMonth()->toDateString();
+            $periodStart = Carbon::create($year, $month, 1)->startOfMonth()->toDateString();
+            $periodEnd = Carbon::create($year, $month, 1)->endOfMonth()->toDateString();
         } else {
             $range = range(1, 12);
-            $periodStart = \Carbon\Carbon::create($year, 1, 1)->startOfYear()->toDateString();
-            $periodEnd = \Carbon\Carbon::create($year, 12, 31)->endOfYear()->toDateString();
+            $periodStart = Carbon::create($year, 1, 1)->startOfYear()->toDateString();
+            $periodEnd = Carbon::create($year, 12, 31)->endOfYear()->toDateString();
         }
 
         // --- MUTASI MASUK ---
@@ -585,6 +625,13 @@ class LaporanController extends Controller
         if ($user && in_array($role, ['Sekolah', 'Operator'], true)) {
             $npsn = $user->sekolah->npsn ?? $user->npsn;
             $masukQuery->where('mutasi_masuk.npsn_sekolah_tujuan', $npsn);
+        } elseif (! $user) {
+            $this->constrainToPublicSchoolFilter(
+                $masukQuery,
+                'mutasi_masuk.npsn_sekolah_tujuan',
+                $schoolStatus,
+                $schoolNpsn,
+            );
         }
 
         $masukResults = $masukQuery->groupBy('unit')->get()->keyBy('unit');
@@ -600,6 +647,13 @@ class LaporanController extends Controller
         if ($user && in_array($role, ['Sekolah', 'Operator'], true)) {
             $npsn = $user->sekolah->npsn ?? $user->npsn;
             $keluarQuery->where('npsn_sekolah_asal', $npsn);
+        } elseif (! $user) {
+            $this->constrainToPublicSchoolFilter(
+                $keluarQuery,
+                'mutasi_keluar.npsn_sekolah_asal',
+                $schoolStatus,
+                $schoolNpsn,
+            );
         }
 
         $keluarResults = $keluarQuery->groupBy('unit')->get()->keyBy('unit');
@@ -608,7 +662,7 @@ class LaporanController extends Controller
         $data = [
             'labels' => [],
             'masuk' => ['dalam' => [], 'luar_kota' => [], 'luar_negeri' => []],
-            'keluar' => ['dalam' => [], 'luar_kota' => [], 'luar_negeri' => []]
+            'keluar' => ['dalam' => [], 'luar_kota' => [], 'luar_negeri' => []],
         ];
 
         foreach ($range as $unit) {
@@ -618,7 +672,7 @@ class LaporanController extends Controller
                 $data['labels'][] = $unit;
             } else {
                 // Monthly: "Januari"
-                $data['labels'][] = \Carbon\Carbon::create($year, $unit, 1)->translatedFormat('F');
+                $data['labels'][] = Carbon::create($year, $unit, 1)->translatedFormat('F');
             }
 
             // Masuk
@@ -635,6 +689,29 @@ class LaporanController extends Controller
         }
 
         return $data;
+    }
+
+    private function constrainToPublicSchoolFilter(
+        $query,
+        string $npsnColumn,
+        ?string $schoolStatus,
+        ?string $schoolNpsn,
+    ): void {
+        $query->whereExists(function ($schoolQuery) use (
+            $npsnColumn,
+            $schoolStatus,
+            $schoolNpsn,
+        ) {
+            $schoolQuery->selectRaw('1')
+                ->from('satuan_pendidikan as filtered_schools')
+                ->whereColumn('filtered_schools.npsn', $npsnColumn)
+                ->where('filtered_schools.is_local', true)
+                ->whereRaw('UPPER(TRIM(filtered_schools.kota)) = ?', ['KOTA BOGOR'])
+                ->whereRaw('UPPER(TRIM(filtered_schools.bentuk_pendidikan)) = ?', ['SMP'])
+                ->whereIn('filtered_schools.status_sp', ['Negeri', 'Swasta'])
+                ->when($schoolStatus, fn ($filter) => $filter->where('filtered_schools.status_sp', $schoolStatus))
+                ->when($schoolNpsn, fn ($filter) => $filter->where('filtered_schools.npsn', $schoolNpsn));
+        });
     }
 
     /**
@@ -681,7 +758,7 @@ class LaporanController extends Controller
         $type = $request->input('type', 'masuk');
 
         $data = $this->getNominatifData($start_date, $end_date, $type, $user);
-        $filename = 'Daftar_Nominatif_' . $type . '_' . $start_date . '_' . $end_date . '.csv';
+        $filename = 'Daftar_Nominatif_'.$type.'_'.$start_date.'_'.$end_date.'.csv';
 
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
@@ -690,7 +767,7 @@ class LaporanController extends Controller
 
         $callback = function () use ($data) {
             $file = fopen('php://output', 'w');
-            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF)); // BOM
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF)); // BOM
 
             // Header
             fputcsv($file, ['No', 'Tanggal', 'Jenis', 'Nama Siswa', 'NISN', 'L/P', 'Kelas', 'Asal Sekolah', 'Tujuan Sekolah', 'Status']);
@@ -746,6 +823,7 @@ class LaporanController extends Controller
 
             $masuk = $query->get()->map(function ($item) {
                 $item->jenis = 'masuk';
+
                 return $item;
             });
             $items = $items->merge($masuk);
@@ -772,6 +850,7 @@ class LaporanController extends Controller
 
             $keluar = $query->get()->map(function ($item) {
                 $item->jenis = 'keluar';
+
                 return $item;
             });
             $items = $items->merge($keluar);
@@ -779,6 +858,7 @@ class LaporanController extends Controller
 
         return $items->sortByDesc('tanggal')->values();
     }
+
     /**
      * Print Comprehensive Report (Rekap + Tren + Distribusi + Demografi + Nominatif).
      */
@@ -791,11 +871,11 @@ class LaporanController extends Controller
             $month = $request->input('month'); // Optional
 
             if ($month) {
-                $start_date = \Carbon\Carbon::create($year, $month, 1)->startOfMonth()->format('Y-m-d');
-                $end_date = \Carbon\Carbon::create($year, $month, 1)->endOfMonth()->format('Y-m-d');
+                $start_date = Carbon::create($year, $month, 1)->startOfMonth()->format('Y-m-d');
+                $end_date = Carbon::create($year, $month, 1)->endOfMonth()->format('Y-m-d');
             } else {
-                $start_date = \Carbon\Carbon::create($year, 1, 1)->startOfYear()->format('Y-m-d');
-                $end_date = \Carbon\Carbon::create($year, 12, 31)->endOfYear()->format('Y-m-d');
+                $start_date = Carbon::create($year, 1, 1)->startOfYear()->format('Y-m-d');
+                $end_date = Carbon::create($year, 12, 31)->endOfYear()->format('Y-m-d');
             }
 
             // 1. Rekap Data
@@ -859,7 +939,7 @@ class LaporanController extends Controller
             return $pdf->stream('Laporan_Komprehensif_Mutasi.pdf');
             */
         } catch (\Exception $e) {
-            \Log::error('Print comprehensive report error: ' . $e->getMessage(), [
+            \Log::error('Print comprehensive report error: '.$e->getMessage(), [
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
             ]);
@@ -918,7 +998,7 @@ class LaporanController extends Controller
 
         return [
             'top_asal' => $topAsal,
-            'top_tujuan' => $topTujuan
+            'top_tujuan' => $topTujuan,
         ];
     }
 
@@ -966,7 +1046,7 @@ class LaporanController extends Controller
 
         return [
             'masuk' => $masukStats,
-            'keluar' => $keluarStats
+            'keluar' => $keluarStats,
         ];
     }
 }

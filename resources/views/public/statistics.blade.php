@@ -9,6 +9,9 @@
         $periodLabel = $month
             ? \Carbon\Carbon::create($year, $month)->translatedFormat('F Y')
             : 'Tahun '.$year;
+        $schoolFilterLabel = $selectedSchool
+            ? 'NPSN '.$selectedSchool->npsn
+            : ($schoolStatus ? 'SMP '.$schoolStatus : 'Seluruh SMP Kota Bogor');
     @endphp
 
     <header class="border-b border-slate-800 bg-slate-950 text-white">
@@ -45,7 +48,8 @@
 
         <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-5">
             <form action="{{ route('public.statistics') }}" method="GET"
-                class="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+                data-public-statistics-filter
+                class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-[1fr_1fr_1fr_1.2fr_auto] xl:items-end">
                 <div>
                     <label for="public-month" class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-500">Bulan</label>
                     <select name="month" id="public-month"
@@ -67,6 +71,25 @@
                         @endfor
                     </select>
                 </div>
+                <div>
+                    <label for="public-school-status" class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-500">Status Sekolah</label>
+                    <select name="school_status" id="public-school-status" data-school-status
+                        @disabled($npsn)
+                        class="w-full rounded-xl border-slate-300 text-sm focus:border-sky-500 focus:ring-sky-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400">
+                        <option value="">Semua Status</option>
+                        <option value="Negeri" @selected($schoolStatus === 'Negeri')>Negeri</option>
+                        <option value="Swasta" @selected($schoolStatus === 'Swasta')>Swasta</option>
+                    </select>
+                    <p data-status-help class="mt-1 text-xs text-slate-400 {{ $npsn ? '' : 'hidden' }}">Diabaikan karena NPSN digunakan.</p>
+                </div>
+                <div>
+                    <label for="public-npsn" class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-500">NPSN Sekolah</label>
+                    <input type="text" inputmode="numeric" maxlength="8" pattern="[0-9]{8}"
+                        name="npsn" id="public-npsn" data-school-npsn value="{{ $npsn }}"
+                        placeholder="Masukkan 8 digit NPSN"
+                        class="w-full rounded-xl border-slate-300 text-sm focus:border-sky-500 focus:ring-sky-500">
+                    @error('npsn')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
+                </div>
                 <button type="submit"
                     class="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-600 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-sky-700">
                     <i class="bi bi-funnel"></i> Terapkan
@@ -78,7 +101,7 @@
             <article class="rounded-2xl border border-slate-200 bg-white p-5">
                 <p class="text-sm font-medium text-slate-500">Periode</p>
                 <p class="mt-2 text-2xl font-bold text-slate-950">{{ $periodLabel }}</p>
-                <p class="mt-1 text-xs text-slate-400">Dapat difilter per bulan</p>
+                <p class="mt-1 text-xs text-slate-400">{{ $schoolFilterLabel }}</p>
             </article>
             <article class="rounded-2xl border border-sky-100 bg-sky-50 p-5">
                 <p class="text-sm font-medium text-sky-700">Mutasi Masuk Selesai</p>
@@ -99,6 +122,11 @@
                 <form action="{{ route('public.statistics') }}" method="GET" class="flex flex-col gap-3 sm:flex-row sm:items-end">
                     <input type="hidden" name="year" value="{{ $year }}">
                     @if($month)<input type="hidden" name="month" value="{{ $month }}">@endif
+                    @if($npsn)
+                        <input type="hidden" name="npsn" value="{{ $npsn }}">
+                    @elseif($schoolStatus)
+                        <input type="hidden" name="school_status" value="{{ $schoolStatus }}">
+                    @endif
                     <div class="min-w-0 flex-1">
                         <label for="public-academic-year" class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-500">Tahun Pelajaran Selesai</label>
                         <select name="academic_year" id="public-academic-year" class="w-full rounded-xl border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
@@ -111,7 +139,7 @@
                 </form>
             </section>
 
-            <x-cohort-summary :cohort="$cohort" title="Kohort Siswa Kota Bogor · {{ $cohortYear->name }}"
+            <x-cohort-summary :cohort="$cohort" title="Kohort {{ $schoolFilterLabel }} · {{ $cohortYear->name }}"
                 description="Hanya data agregat sekolah yang telah mengunci data akhir. Tidak memuat nama, NISN, atau identitas siswa." />
         @endif
 

@@ -22,9 +22,9 @@ class ApplicationSmokeTest extends TestCase
             ->assertSee('Lihat Statistik Publik')
             ->assertSee('autocomplete="username"', false)
             ->assertSee('autocomplete="current-password"', false)
-            ->assertSee('name="remember_credentials"', false)
+            ->assertDontSee('name="remember_credentials"', false)
             ->assertDontSee('name="remember"', false)
-            ->assertDontSee('Jika dicentang, username diingat di perangkat ini.');
+            ->assertDontSee('Ingat saya');
     }
 
     public function test_authenticated_routes_redirect_guests_to_login(): void

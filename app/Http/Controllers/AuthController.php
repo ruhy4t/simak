@@ -11,15 +11,13 @@ use Illuminate\Support\Facades\RateLimiter;
 
 class AuthController extends Controller
 {
-    public function showLogin(Request $request)
+    public function showLogin()
     {
         if (Auth::check()) {
             return redirect()->route('dashboard');
         }
 
-        return view('auth.login', [
-            'rememberedUsername' => $request->cookie('remembered_username'),
-        ]);
+        return view('auth.login');
     }
 
     public function login(Request $request)
@@ -84,31 +82,12 @@ class AuthController extends Controller
         RateLimiter::clear($credentialKey);
         $user->resetFailedLogin();
 
-        $remember = $request->boolean('remember_credentials');
-        if ($remember) {
-            Auth::guard()->setRememberDuration(60 * 24 * 30);
-        }
-
-        Auth::login($user, $remember);
+        Auth::login($user);
         $request->session()->regenerate();
 
         AuditLog::log('LOGIN_SUCCESS', $username);
 
         $response = redirect()->intended(route('dashboard'));
-
-        if ($remember) {
-            return $response->withCookie(cookie(
-                'remembered_username',
-                $username,
-                60 * 24 * 30,
-                '/',
-                null,
-                $request->isSecure(),
-                true,
-                false,
-                'lax'
-            ));
-        }
 
         return $response->withoutCookie('remembered_username');
     }

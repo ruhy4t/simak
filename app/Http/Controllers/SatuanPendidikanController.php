@@ -4,15 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Models\AcademicYear;
 use App\Models\SatuanPendidikan;
-use App\Services\RegionCacheService;
 use App\Services\FileUploadService;
+use App\Services\RegionCacheService;
 use App\Services\StudentCountRolloverService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Validation\ValidationException;
 
 class SatuanPendidikanController extends Controller
 {
@@ -22,16 +23,15 @@ class SatuanPendidikanController extends Controller
         RegionCacheService $regionCache,
         private readonly FileUploadService $fileUploadService,
         private readonly StudentCountRolloverService $studentCountRolloverService
-    )
-    {
+    ) {
         $this->regionCache = $regionCache;
     }
+
     /**
      * Autocomplete search for Satuan Pendidikan
      * Prioritizes local database, falls back to external sources
-     * 
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
+     *
+     * @return JsonResponse
      */
     public function search(Request $request)
     {
@@ -65,9 +65,9 @@ class SatuanPendidikanController extends Controller
 
     /**
      * Get Satuan Pendidikan by NPSN
-     * 
-     * @param string $npsn
-     * @return \Illuminate\Http\JsonResponse
+     *
+     * @param  string  $npsn
+     * @return JsonResponse
      */
     public function findByNpsn($npsn)
     {
@@ -96,7 +96,8 @@ class SatuanPendidikanController extends Controller
                 'data' => null,
             ]);
         } catch (\Exception $e) {
-            \Log::error('NPSN lookup error: ' . $e->getMessage());
+            \Log::error('NPSN lookup error: '.$e->getMessage());
+
             return response()->json([
                 'found' => false,
                 'success' => false,
@@ -107,9 +108,8 @@ class SatuanPendidikanController extends Controller
 
     /**
      * Get all local Satuan Pendidikan (SMP Kota Bogor)
-     * 
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
+     *
+     * @return JsonResponse
      */
     public function index(Request $request)
     {
@@ -136,8 +136,8 @@ class SatuanPendidikanController extends Controller
 
     /**
      * Get provinces from local database
-     * 
-     * @return \Illuminate\Http\JsonResponse
+     *
+     * @return JsonResponse
      */
     /**
      * Get provinces (Local DB -> External API Fallback)
@@ -169,36 +169,39 @@ class SatuanPendidikanController extends Controller
 
     /**
      * Get districts (Kecamatan) by regency ID from local database
-     * 
-     * @param string $regencyId
-     * @return \Illuminate\Http\JsonResponse
+     *
+     * @param  string  $regencyId
+     * @return JsonResponse
      */
     public function getDistricts($regencyId)
     {
         $result = $this->regionCache->getDistricts($regencyId);
+
         return response()->json($result);
     }
 
     /**
      * Get villages (Kelurahan/Desa) by district ID from local database
-     * 
-     * @param string $districtId
-     * @return \Illuminate\Http\JsonResponse
+     *
+     * @param  string  $districtId
+     * @return JsonResponse
      */
     public function getVillages($districtId)
     {
         $result = $this->regionCache->getVillages($districtId);
+
         return response()->json($result);
     }
+
     /**
      * Auto-save new school from Mutation data when status = "Selesai"
      * Called ONLY when Dinas completes a mutation (completeLetter)
-     * 
+     *
      * IMPORTANT: This method uses DB::table() directly to BYPASS Eloquent Observer
      * so that NO user account is created automatically.
      * User accounts are ONLY created via manual entry in Menu Satuan Pendidikan.
-     * 
-     * @param array $data School data from mutation
+     *
+     * @param  array  $data  School data from mutation
      * @return void
      */
     public static function maybeStoreNewSchool($data)
@@ -212,6 +215,7 @@ class SatuanPendidikanController extends Controller
             $npsn = trim($data['npsn']);
             if (strlen($npsn) !== 8) {
                 \Log::warning("maybeStoreNewSchool: Invalid NPSN format: {$npsn}");
+
                 return;
             }
 
@@ -220,7 +224,7 @@ class SatuanPendidikanController extends Controller
                 ->where('npsn', $npsn)
                 ->exists();
 
-            if (!$exists) {
+            if (! $exists) {
                 // Use DB::table to BYPASS Observer (no auto-create user account)
                 \DB::table('satuan_pendidikan')->insert([
                     'npsn' => $npsn,
@@ -238,7 +242,7 @@ class SatuanPendidikanController extends Controller
                 \Log::info("Auto-saved new school (NO user account created): {$data['nama']} ({$npsn})");
             }
         } catch (\Exception $e) {
-            \Log::error("Failed to auto-save school: " . $e->getMessage());
+            \Log::error('Failed to auto-save school: '.$e->getMessage());
             // Fail silently to not disrupt the main flow
         }
     }
@@ -254,7 +258,7 @@ class SatuanPendidikanController extends Controller
 
         // Search filter
         if ($request->filled('search')) {
-            $search = '%' . strip_tags($request->search) . '%';
+            $search = '%'.strip_tags($request->search).'%';
             $query->where(function ($q) use ($search) {
                 $q->where('nama', 'like', $search)
                     ->orWhere('npsn', 'like', $search)
@@ -372,7 +376,7 @@ class SatuanPendidikanController extends Controller
             return redirect()->route('satpen.index')
                 ->with('success', "Satuan Pendidikan {$request->nama} berhasil ditambahkan");
         } catch (\Exception $e) {
-            return back()->with('error', 'Gagal menambahkan data: ' . $e->getMessage())->withInput();
+            return back()->with('error', 'Gagal menambahkan data: '.$e->getMessage())->withInput();
         }
     }
 
@@ -383,7 +387,7 @@ class SatuanPendidikanController extends Controller
     {
         $satpen = \DB::table('satuan_pendidikan')->where('id', $id)->first();
 
-        if (!$satpen) {
+        if (! $satpen) {
             abort(404);
         }
 
@@ -415,7 +419,7 @@ class SatuanPendidikanController extends Controller
     {
         $satpen = \DB::table('satuan_pendidikan')->where('id', $id)->first();
 
-        if (!$satpen) {
+        if (! $satpen) {
             abort(404);
         }
 
@@ -533,9 +537,10 @@ class SatuanPendidikanController extends Controller
             return redirect()->route('satpen.index')
                 ->with('success', "Satuan Pendidikan {$request->nama} berhasil diperbarui");
         } catch (\Exception $e) {
-            return back()->with('error', 'Gagal memperbarui data: ' . $e->getMessage())->withInput();
+            return back()->with('error', 'Gagal memperbarui data: '.$e->getMessage())->withInput();
         }
     }
+
     /**
      * Edit School Profile (For Sekolah/Operator Role)
      */
@@ -544,11 +549,11 @@ class SatuanPendidikanController extends Controller
         $user = Auth::user();
 
         // Ensure only Sekolah/Operator can access
-        if (!in_array($user->role, ['Sekolah', 'Operator'])) {
+        if (! in_array($user->role, ['Sekolah', 'Operator'])) {
             abort(403, 'Unauthorized. Only Sekolah/Operator can edit profile.');
         }
 
-        if (!$user->sekolah) {
+        if (! $user->sekolah) {
             abort(404, 'Data sekolah tidak ditemukan untuk akun ini.');
         }
 
@@ -602,13 +607,13 @@ class SatuanPendidikanController extends Controller
     {
         $user = Auth::user();
 
-        if (!in_array($user->role, ['Sekolah', 'Operator'])) {
+        if (! in_array($user->role, ['Sekolah', 'Operator'])) {
             abort(403);
         }
 
         $satpen = $user->sekolah;
 
-        if (!$satpen) {
+        if (! $satpen) {
             abort(404);
         }
 
@@ -665,7 +670,7 @@ class SatuanPendidikanController extends Controller
 
             // Keep legacy columns synchronized with the active year so existing
             // reports continue to produce the same shape and values.
-            if ($canEditStudentCounts && (!$academicYear || $academicYear->is_active)) {
+            if ($canEditStudentCounts && (! $academicYear || $academicYear->is_active)) {
                 foreach ([7] as $grade) {
                     $updateData["jumlah_siswa_{$grade}_l"] = $studentValues[$grade]['male'];
                     $updateData["jumlah_siswa_{$grade}_p"] = $studentValues[$grade]['female'];
@@ -687,7 +692,7 @@ class SatuanPendidikanController extends Controller
 
             // Using Eloquent update to trigger Model events (boot/saving)
             // Use find() then update() to ensure model events fire
-            $satpenModel = \App\Models\SatuanPendidikan::find($satpen->id);
+            $satpenModel = SatuanPendidikan::find($satpen->id);
             if ($satpenModel) {
                 DB::transaction(function () use (
                     $satpenModel,
@@ -726,7 +731,8 @@ class SatuanPendidikanController extends Controller
             return $redirect->with('success', 'Profil sekolah dan data siswa berhasil diperbarui.');
 
         } catch (\Exception $e) {
-            \Log::error('Update Profile Failed: ' . $e->getMessage());
+            \Log::error('Update Profile Failed: '.$e->getMessage());
+
             return back()
                 ->withInput()
                 ->with('error', 'Gagal memperbarui profil. Silakan coba lagi atau hubungi administrator.');
@@ -820,13 +826,14 @@ class SatuanPendidikanController extends Controller
                 ->get();
 
             if ($rows->count() !== 3) {
-                throw \Illuminate\Validation\ValidationException::withMessages([
+                throw ValidationException::withMessages([
                     'academic_year_id' => 'Data siswa awal kelas VII, VIII, dan IX belum lengkap.',
                 ]);
             }
 
             if ($rows->contains(fn ($row) => $row->closing_confirmed_at !== null)) {
                 $alreadyLocked = true;
+
                 return;
             }
 
@@ -864,7 +871,10 @@ class SatuanPendidikanController extends Controller
                 ->with('error', 'Data akhir sudah dikunci dan tidak dapat diubah.');
         }
 
-        Cache::forget("public.statistics.cohort.v4.{$academicYear->id}");
+        $statusKey = strtolower((string) $satpen->status_sp);
+        Cache::forget("public.statistics.cohort.v5.{$academicYear->id}.status-all.npsn-all");
+        Cache::forget("public.statistics.cohort.v5.{$academicYear->id}.status-{$statusKey}.npsn-all");
+        Cache::forget("public.statistics.cohort.v5.{$academicYear->id}.status-all.npsn-{$satpen->npsn}");
 
         return redirect()
             ->route('sekolah.closing-counts', ['academic_year' => $academicYear->name])

@@ -19,6 +19,16 @@ class PublicStatisticsTest extends TestCase
         DB::purge('sqlite');
         Cache::flush();
 
+        Schema::create('satuan_pendidikan', function (Blueprint $table) {
+            $table->id();
+            $table->string('npsn')->unique();
+            $table->string('nama');
+            $table->string('bentuk_pendidikan');
+            $table->string('status_sp');
+            $table->string('kota')->nullable();
+            $table->boolean('is_local')->default(true);
+        });
+
         Schema::create('mutasi_masuk', function (Blueprint $table) {
             $table->string('id_mutasi')->primary();
             $table->date('tanggal_pengajuan');
@@ -42,6 +52,7 @@ class PublicStatisticsTest extends TestCase
             $table->string('status');
         });
 
+        $this->insertSchool('12345678', 'SMP Negeri Contoh', 'Negeri');
         $this->seedStatistics();
     }
 
@@ -93,6 +104,43 @@ class PublicStatisticsTest extends TestCase
         $this->assertNotContains('auth', $route->gatherMiddleware());
     }
 
+    public function test_status_filter_is_used_only_when_npsn_is_empty(): void
+    {
+        $this->insertSchool('87654321', 'SMP Swasta Contoh', 'Swasta');
+        $this->insertIncoming('M-SWASTA', '2026-07-09', 'Selesai', false, 'KOTA BOGOR', '87654321');
+        $this->insertOutgoing('K-SWASTA', '2026-07-10', 'Selesai', 'JAWA BARAT', 'KOTA BOGOR', '87654321');
+
+        $statusData = $this->get('/statistik-mutasi?year=2026&month=7&school_status=Swasta')
+            ->assertOk()
+            ->assertViewHas('schoolStatus', 'Swasta')
+            ->viewData('chartData');
+
+        $npsnResponse = $this->get('/statistik-mutasi?year=2026&month=7&school_status=Negeri&npsn=87654321');
+        $npsnData = $npsnResponse
+            ->assertOk()
+            ->assertViewHas('schoolStatus', null)
+            ->assertViewHas('selectedSchool', fn ($school) => $school?->npsn === '87654321')
+            ->assertSee('Diabaikan karena NPSN digunakan.')
+            ->viewData('chartData');
+
+        $this->assertSame(1, $this->total($statusData['masuk']));
+        $this->assertSame(1, $this->total($statusData['keluar']));
+        $this->assertSame($statusData, $npsnData);
+    }
+
+    public function test_npsn_must_be_exact_and_belong_to_an_eligible_bogor_city_junior_high_school(): void
+    {
+        $this->from('/statistik-mutasi')
+            ->get('/statistik-mutasi?npsn=123')
+            ->assertRedirect('/statistik-mutasi')
+            ->assertSessionHasErrors('npsn');
+
+        $this->from('/statistik-mutasi')
+            ->get('/statistik-mutasi?npsn=99999999')
+            ->assertRedirect('/statistik-mutasi')
+            ->assertSessionHasErrors('npsn');
+    }
+
     public function test_public_statistics_are_cached(): void
     {
         $first = $this->get('/statistik-mutasi?year=2026&month=7')->viewData('chartData');
@@ -118,12 +166,30 @@ class PublicStatisticsTest extends TestCase
         $this->insertOutgoing('K-4', '2026-07-08', 'Draft', 'JAWA BARAT', 'KOTA BOGOR');
     }
 
-    private function insertIncoming(string $id, string $date, string $status, bool $foreign, ?string $city): void
+    private function insertSchool(string $npsn, string $name, string $status): void
     {
+        DB::table('satuan_pendidikan')->insert([
+            'npsn' => $npsn,
+            'nama' => $name,
+            'bentuk_pendidikan' => 'SMP',
+            'status_sp' => $status,
+            'kota' => 'KOTA BOGOR',
+            'is_local' => true,
+        ]);
+    }
+
+    private function insertIncoming(
+        string $id,
+        string $date,
+        string $status,
+        bool $foreign,
+        ?string $city,
+        string $npsn = '12345678'
+    ): void {
         DB::table('mutasi_masuk')->insert([
             'id_mutasi' => $id,
             'tanggal_pengajuan' => $date,
-            'npsn_sekolah_tujuan' => '12345678',
+            'npsn_sekolah_tujuan' => $npsn,
             'status' => $status,
         ]);
 
@@ -134,12 +200,18 @@ class PublicStatisticsTest extends TestCase
         ]);
     }
 
-    private function insertOutgoing(string $id, string $date, string $status, ?string $province, ?string $city): void
-    {
+    private function insertOutgoing(
+        string $id,
+        string $date,
+        string $status,
+        ?string $province,
+        ?string $city,
+        string $npsn = '12345678'
+    ): void {
         DB::table('mutasi_keluar')->insert([
             'id_mutasi' => $id,
             'tanggal_pengajuan' => $date,
-            'npsn_sekolah_asal' => '12345678',
+            'npsn_sekolah_asal' => $npsn,
             'provinsi_tujuan' => $province,
             'kabupaten_kota_tujuan' => $city,
             'status' => $status,

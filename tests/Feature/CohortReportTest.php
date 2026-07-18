@@ -204,7 +204,7 @@ class CohortReportTest extends TestCase
 
         $this->get('/statistik-mutasi?year=2026&academic_year='.$year->id)
             ->assertOk()
-            ->assertDontSee('Kohort Siswa Kota Bogor');
+            ->assertDontSee('Data Kohort Siswa');
 
         $year->update([
             'status' => AcademicYear::STATUS_CLOSED,
@@ -213,7 +213,7 @@ class CohortReportTest extends TestCase
 
         $this->get('/statistik-mutasi?year=2026&academic_year='.$year->id)
             ->assertOk()
-            ->assertSee('Kohort Siswa Kota Bogor')
+            ->assertSee('Kohort Seluruh SMP Kota Bogor')
             ->assertSee('Keluar non-mutasi terdata')
             ->assertDontSee('SMP Uji Kohort')
             ->assertDontSee('12345678');
@@ -250,11 +250,15 @@ class CohortReportTest extends TestCase
         ], 100);
 
         $report = app(CohortReportService::class)->report($year);
+        $publicReport = app(CohortReportService::class)->report($year, null, 'Negeri');
+        $privateReport = app(CohortReportService::class)->report($year, null, 'Swasta');
 
         $this->assertSame(2, $report['school_count']);
         $this->assertSame(2, $report['reported_school_count']);
         $this->assertSame(24, $report['reported_summary']['opening']);
         $this->assertSame(23, $report['reported_summary']['actual']);
+        $this->assertSame(1, $publicReport['school_count']);
+        $this->assertSame(1, $privateReport['school_count']);
         $this->assertContains($includedPrivateSchool, DB::table('satuan_pendidikan')->pluck('id')->all());
     }
 

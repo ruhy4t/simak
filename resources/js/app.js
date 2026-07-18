@@ -11,6 +11,7 @@ import collapse from '@alpinejs/collapse';
 import './idle-timeout.js';
 import './autosave.js';
 import './dashboard-charts.js';
+import './public-statistics-filters.js';
 import './ajax-navigation.js';
 
 // Initialize Alpine

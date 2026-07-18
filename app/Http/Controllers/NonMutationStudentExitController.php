@@ -78,7 +78,7 @@ class NonMutationStudentExitController extends Controller
             'reported_by' => Auth::id(),
         ]);
 
-        $this->forgetCohortCache((int) $validated['academic_year_id']);
+        $this->forgetCohortCache((int) $validated['academic_year_id'], $school);
 
         return redirect()->route('non-mutation-exits.index', ['academic_year' => $validated['academic_year_id']])
             ->with('success', 'Data siswa keluar non-mutasi berhasil disimpan.');
@@ -106,8 +106,8 @@ class NonMutationStudentExitController extends Controller
 
         $nonMutationExit->update($validated);
 
-        $this->forgetCohortCache((int) $oldYearId);
-        $this->forgetCohortCache((int) $validated['academic_year_id']);
+        $this->forgetCohortCache((int) $oldYearId, $nonMutationExit->school);
+        $this->forgetCohortCache((int) $validated['academic_year_id'], $nonMutationExit->school);
 
         return redirect()->route('non-mutation-exits.index', ['academic_year' => $validated['academic_year_id']])
             ->with('success', 'Data siswa keluar non-mutasi berhasil diperbarui.');
@@ -118,7 +118,7 @@ class NonMutationStudentExitController extends Controller
         $this->authorizeEditable($nonMutationExit);
         $yearId = $nonMutationExit->academic_year_id;
         $nonMutationExit->delete();
-        $this->forgetCohortCache((int) $yearId);
+        $this->forgetCohortCache((int) $yearId, $nonMutationExit->school);
 
         return back()->with('success', 'Data siswa keluar non-mutasi berhasil dihapus.');
     }
@@ -173,8 +173,12 @@ class NonMutationStudentExitController extends Controller
         abort_unless($record->satuan_pendidikan_id === $school->id, 403);
     }
 
-    private function forgetCohortCache(int $academicYearId): void
+    private function forgetCohortCache(int $academicYearId, SatuanPendidikan $school): void
     {
-        Cache::forget("public.statistics.cohort.v4.{$academicYearId}");
+        $statusKey = strtolower((string) $school->status_sp);
+
+        Cache::forget("public.statistics.cohort.v5.{$academicYearId}.status-all.npsn-all");
+        Cache::forget("public.statistics.cohort.v5.{$academicYearId}.status-{$statusKey}.npsn-all");
+        Cache::forget("public.statistics.cohort.v5.{$academicYearId}.status-all.npsn-{$school->npsn}");
     }
 }
