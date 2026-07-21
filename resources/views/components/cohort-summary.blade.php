@@ -1,4 +1,4 @@
-@props(['cohort', 'title' => 'Grafik Kohort Siswa', 'description' => null])
+@props(['cohort', 'title' => 'Grafik Kohort Siswa', 'description' => null, 'compact' => false])
 
 @php
     $summary = $cohort['reported_summary'];
@@ -41,7 +41,14 @@
             <p class="text-xs font-bold uppercase tracking-[0.16em] text-emerald-600">Rekonsiliasi Agregat</p>
             <h2 class="mt-1 text-xl font-bold text-slate-950">{{ $title }}</h2>
             @if($description)
-                <p class="mt-1 max-w-3xl text-sm leading-6 text-slate-500">{{ $description }}</p>
+                @if($compact)
+                    <details class="mt-2 max-w-3xl text-sm text-slate-500">
+                        <summary class="w-fit cursor-pointer font-semibold text-slate-600">Keterangan</summary>
+                        <p class="mt-2 leading-6">{{ $description }}</p>
+                    </details>
+                @else
+                    <p class="mt-1 max-w-3xl text-sm leading-6 text-slate-500">{{ $description }}</p>
+                @endif
             @endif
         </div>
         <span class="inline-flex w-fit items-center gap-2 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-600">
@@ -52,10 +59,11 @@
 
     @if($cohort['reported_school_count'] > 0)
         @if($usesCalculatedOpening)
-            <div class="mt-6 rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900">
-                <p class="font-bold">Cara menghitung Data Awal Hasil Hitung · Khusus 2025/2026</p>
+            <details class="mt-6 rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900" @if(!$compact) open @endif>
+                @if($compact)<summary class="cursor-pointer font-bold">Cara menghitung data awal</summary>@endif
+                @unless($compact)<p class="font-bold">Cara menghitung Data Awal Hasil Hitung · Khusus 2025/2026</p>@endunless
                 <p class="mt-1 leading-6">Data Akhir Aktual + Mutasi Keluar + Keluar Non-Mutasi − Mutasi Masuk. Angka ini merupakan pembanding dan tidak menimpa Data Awal resmi sekolah. Selisih dihitung dari Data Awal Tercatat − Data Awal Hasil Hitung; nilai negatif berarti data tercatat lebih rendah.</p>
-            </div>
+            </details>
         @endif
 
         <div class="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -76,18 +84,28 @@
                 <article class="rounded-xl border border-rose-100 bg-rose-50 p-4">
                     <p class="text-sm font-bold text-rose-800">Keluar non-mutasi terdata</p>
                     <p class="mt-1 text-3xl font-black text-rose-950">{{ number_format($summary['non_mutation_outgoing']) }}</p>
-                    <p class="mt-1 text-xs leading-5 text-rose-700">Data individual yang telah dicatat oleh sekolah.</p>
+                    @unless($compact)<p class="mt-1 text-xs leading-5 text-rose-700">Data individual yang telah dicatat oleh sekolah.</p>@endunless
                 </article>
                 <article class="rounded-xl border border-violet-100 bg-violet-50 p-4">
                     <p class="text-sm font-bold text-violet-800">Selisih keluar belum terdata</p>
                     <p class="mt-1 text-3xl font-black text-violet-950">{{ number_format($summary['unexplained_exit']) }}</p>
-                    <p class="mt-1 text-xs leading-5 text-violet-700">Kekurangan data akhir setelah seluruh laporan terverifikasi dihitung.</p>
+                    @unless($compact)<p class="mt-1 text-xs leading-5 text-violet-700">Kekurangan data akhir setelah seluruh laporan terverifikasi dihitung.</p>@endunless
                 </article>
                 <article class="rounded-xl border border-amber-100 bg-amber-50 p-4">
                     <p class="text-sm font-bold text-amber-800">Penambahan belum tercatat</p>
                     <p class="mt-1 text-3xl font-black text-amber-950">{{ number_format($summary['other_addition']) }}</p>
-                    <p class="mt-1 text-xs leading-5 text-amber-700">Selisih saat data aktual lebih besar dari perkiraan akhir.</p>
+                    @unless($compact)<p class="mt-1 text-xs leading-5 text-amber-700">Selisih saat data aktual lebih besar dari perkiraan akhir.</p>@endunless
                 </article>
+                @if($compact)
+                    <details class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600">
+                        <summary class="cursor-pointer font-bold text-slate-700">Penjelasan indikator</summary>
+                        <div class="mt-2 space-y-2 leading-5">
+                            <p><strong>Keluar non-mutasi:</strong> data individual yang dicatat sekolah.</p>
+                            <p><strong>Selisih keluar:</strong> kekurangan data akhir setelah laporan dihitung.</p>
+                            <p><strong>Penambahan:</strong> selisih saat data aktual melebihi perkiraan.</p>
+                        </div>
+                    </details>
+                @endif
             </div>
         </div>
     @else

@@ -39,10 +39,12 @@
             <div class="max-w-3xl">
                 <p class="text-xs font-bold uppercase tracking-[0.2em] text-sky-400">Data Terbuka</p>
                 <h1 class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Tren Mutasi Siswa Kota Bogor</h1>
-                <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base">
-                    Ringkasan agregat mutasi selesai dan siswa keluar non-mutasi yang telah tercatat.
-                    Halaman ini tidak menampilkan identitas siswa, dokumen, maupun rincian akun sekolah.
-                </p>
+                <details class="mt-4 max-w-2xl text-sm text-slate-300">
+                    <summary class="w-fit cursor-pointer font-semibold text-sky-300">Tentang data</summary>
+                    <p class="mt-2 leading-6">
+                        Ringkasan hanya memuat data agregat tanpa identitas siswa, dokumen, atau rincian akun sekolah.
+                    </p>
+                </details>
             </div>
         </section>
 
@@ -101,21 +103,21 @@
             <article class="rounded-2xl border border-slate-200 bg-white p-5">
                 <p class="text-sm font-medium text-slate-500">Periode</p>
                 <p class="mt-2 text-2xl font-bold text-slate-950">{{ $periodLabel }}</p>
-                <p class="mt-1 text-xs text-slate-400">{{ $schoolFilterLabel }}</p>
+                <p class="mt-1 text-xs font-semibold text-slate-500">{{ $schoolFilterLabel }}</p>
             </article>
             <article class="rounded-2xl border border-sky-100 bg-sky-50 p-5">
                 <p class="text-sm font-medium text-sky-700">Mutasi Masuk Selesai</p>
                 <p class="mt-2 text-3xl font-bold text-sky-950">{{ number_format($totalMasuk) }}</p>
-                <p class="mt-1 text-xs text-sky-600">Siswa tercatat pada periode ini</p>
             </article>
             <article class="rounded-2xl border border-orange-100 bg-orange-50 p-5">
                 <p class="text-sm font-medium text-orange-700">Mutasi Keluar Selesai</p>
                 <p class="mt-2 text-3xl font-bold text-orange-950">{{ number_format($totalKeluar) }}</p>
-                <p class="mt-1 text-xs text-orange-600">Siswa tercatat pada periode ini</p>
             </article>
         </section>
 
         <x-trend-chart-panels :chart-data="$chartData" />
+
+        <x-class-distribution-chart :chart-data="$chartData" />
 
         @if($cohortYear && $cohort)
             <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-5">
@@ -140,12 +142,9 @@
             </section>
 
             <x-cohort-summary :cohort="$cohort" title="Kohort {{ $schoolFilterLabel }} · {{ $cohortYear->name }}"
-                description="Hanya data agregat sekolah yang telah mengunci data akhir. Tidak memuat nama, NISN, atau identitas siswa." />
+                description="Hanya data agregat sekolah yang telah mengunci data akhir."
+                :compact="true" />
         @endif
-
-        <p class="text-center text-xs leading-5 text-slate-500">
-            Statistik diperbarui berkala dari data tercatat di SIMAK Kota Bogor.
-        </p>
     </main>
 
     <footer class="border-t border-slate-200 bg-white py-6 text-center text-xs text-slate-500">

@@ -44,6 +44,7 @@ class PublicStatisticsTest extends TestCase
             $table->string('id_mutasi');
             $table->boolean('asal_luar_negeri')->default(false);
             $table->string('kabupaten_kota_asal')->nullable();
+            $table->string('kelas')->nullable();
         });
 
         Schema::create('mutasi_keluar', function (Blueprint $table) {
@@ -52,6 +53,7 @@ class PublicStatisticsTest extends TestCase
             $table->string('npsn_sekolah_asal')->nullable();
             $table->string('provinsi_tujuan')->nullable();
             $table->string('kabupaten_kota_tujuan')->nullable();
+            $table->string('kelas')->nullable();
             $table->string('status');
             $table->softDeletes();
         });
@@ -76,7 +78,9 @@ class PublicStatisticsTest extends TestCase
             ->assertOk()
             ->assertViewIs('public.statistics')
             ->assertSee('Statistik Publik Mutasi Siswa')
-            ->assertSee('Ringkasan agregat mutasi selesai dan siswa keluar non-mutasi yang telah tercatat')
+            ->assertSee('Tentang data')
+            ->assertSee('Mutasi per Kelas')
+            ->assertDontSee('Tidak terklasifikasi')
             ->assertDontSee('Nama Siswa')
             ->assertDontSee('NISN')
             ->assertHeader('Cache-Control', 'max-age=0, must-revalidate, public')
@@ -91,6 +95,9 @@ class PublicStatisticsTest extends TestCase
             });
 
         $this->assertSame(2, substr_count($response->getContent(), 'data-report-trend-chart'));
+        $this->assertSame(1, substr_count($response->getContent(), 'data-class-distribution-chart'));
+        $this->assertSame([1, 1, 1], $response->viewData('chartData')['kelas']['masuk']);
+        $this->assertSame([1, 1, 1], $response->viewData('chartData')['kelas']['keluar']);
     }
 
     public function test_public_statistics_validate_filters_and_use_rate_limiting(): void
@@ -218,15 +225,15 @@ class PublicStatisticsTest extends TestCase
 
     private function seedStatistics(): void
     {
-        $this->insertIncoming('M-1', '2026-07-01', 'Selesai', false, 'KOTA BOGOR');
-        $this->insertIncoming('M-2', '2026-07-02', 'Selesai', false, 'KOTA BANDUNG');
-        $this->insertIncoming('M-3', '2026-07-03', 'Selesai', true, null);
-        $this->insertIncoming('M-4', '2026-07-04', 'Menunggu Verifikasi Dinas', false, 'KOTA BOGOR');
+        $this->insertIncoming('M-1', '2026-07-01', 'Selesai', false, 'KOTA BOGOR', '12345678', 'VII');
+        $this->insertIncoming('M-2', '2026-07-02', 'Selesai', false, 'KOTA BANDUNG', '12345678', 'VIII');
+        $this->insertIncoming('M-3', '2026-07-03', 'Selesai', true, null, '12345678', 'IX');
+        $this->insertIncoming('M-4', '2026-07-04', 'Menunggu Verifikasi Dinas', false, 'KOTA BOGOR', '12345678', 'VII');
 
-        $this->insertOutgoing('K-1', '2026-07-05', 'Selesai', 'JAWA BARAT', 'KOTA BOGOR');
-        $this->insertOutgoing('K-2', '2026-07-06', 'Selesai', 'JAWA BARAT', 'KOTA BANDUNG');
-        $this->insertOutgoing('K-3', '2026-07-07', 'Selesai', 'LUAR NEGERI', null);
-        $this->insertOutgoing('K-4', '2026-07-08', 'Draft', 'JAWA BARAT', 'KOTA BOGOR');
+        $this->insertOutgoing('K-1', '2026-07-05', 'Selesai', 'JAWA BARAT', 'KOTA BOGOR', '12345678', 'VII');
+        $this->insertOutgoing('K-2', '2026-07-06', 'Selesai', 'JAWA BARAT', 'KOTA BANDUNG', '12345678', 'VIII');
+        $this->insertOutgoing('K-3', '2026-07-07', 'Selesai', 'LUAR NEGERI', null, '12345678', 'IX');
+        $this->insertOutgoing('K-4', '2026-07-08', 'Draft', 'JAWA BARAT', 'KOTA BOGOR', '12345678', 'VII');
     }
 
     private function insertSchool(string $npsn, string $name, string $status): void
@@ -247,7 +254,8 @@ class PublicStatisticsTest extends TestCase
         string $status,
         bool $foreign,
         ?string $city,
-        string $npsn = '12345678'
+        string $npsn = '12345678',
+        ?string $class = 'VII'
     ): void {
         DB::table('mutasi_masuk')->insert([
             'id_mutasi' => $id,
@@ -260,6 +268,7 @@ class PublicStatisticsTest extends TestCase
             'id_mutasi' => $id,
             'asal_luar_negeri' => $foreign,
             'kabupaten_kota_asal' => $city,
+            'kelas' => $class,
         ]);
     }
 
@@ -269,7 +278,8 @@ class PublicStatisticsTest extends TestCase
         string $status,
         ?string $province,
         ?string $city,
-        string $npsn = '12345678'
+        string $npsn = '12345678',
+        ?string $class = 'VII'
     ): void {
         DB::table('mutasi_keluar')->insert([
             'id_mutasi' => $id,
@@ -277,6 +287,7 @@ class PublicStatisticsTest extends TestCase
             'npsn_sekolah_asal' => $npsn,
             'provinsi_tujuan' => $province,
             'kabupaten_kota_tujuan' => $city,
+            'kelas' => $class,
             'status' => $status,
         ]);
     }

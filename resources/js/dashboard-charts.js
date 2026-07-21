@@ -175,6 +175,51 @@ const initializeReportTrendChart = (Chart, canvas) => {
     });
 };
 
+const initializeClassDistributionChart = (Chart, canvas) => {
+    const data = parseChartData(canvas);
+    if (!data || !Array.isArray(data.labels) || !Array.isArray(data.datasets)) return;
+
+    return new Chart(canvas, {
+        type: 'bar',
+        data: {
+            labels: data.labels,
+            datasets: data.datasets.map((dataset) => ({
+                label: dataset.label,
+                data: dataset.values,
+                backgroundColor: dataset.color,
+                borderRadius: 8,
+                borderSkipped: false,
+                maxBarThickness: 72,
+            })),
+        },
+        options: {
+            ...sharedOptions,
+            plugins: {
+                ...sharedOptions.plugins,
+                legend: {
+                    ...sharedOptions.plugins.legend,
+                    position: 'top',
+                    align: 'end',
+                },
+                tooltip: {
+                    ...sharedOptions.plugins.tooltip,
+                    callbacks: {
+                        label: (context) => `${context.dataset.label}: ${context.parsed.y.toLocaleString('id-ID')} siswa`,
+                    },
+                },
+            },
+            scales: {
+                x: { grid: { display: false }, ticks: { color: '#475569', font: { weight: 700 } } },
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(148, 163, 184, 0.15)' },
+                    ticks: { color: '#64748b', precision: 0 },
+                },
+            },
+        },
+    });
+};
+
 const initializeCohortChart = (Chart, canvas) => {
     const data = parseChartData(canvas);
     if (!data || !Array.isArray(data.labels) || !Array.isArray(data.values)) return;
@@ -221,9 +266,10 @@ const initializeDashboardCharts = async () => {
     const trendCharts = document.querySelectorAll('[data-dashboard-trend-chart]');
     const statusCharts = document.querySelectorAll('[data-dashboard-status-chart]');
     const reportTrendCharts = document.querySelectorAll('[data-report-trend-chart]');
+    const classDistributionCharts = document.querySelectorAll('[data-class-distribution-chart]');
     const cohortCharts = document.querySelectorAll('[data-cohort-chart]');
 
-    if (trendCharts.length === 0 && statusCharts.length === 0 && reportTrendCharts.length === 0 && cohortCharts.length === 0) return;
+    if (trendCharts.length === 0 && statusCharts.length === 0 && reportTrendCharts.length === 0 && classDistributionCharts.length === 0 && cohortCharts.length === 0) return;
 
     const { default: Chart } = await import('chart.js/auto');
     trendCharts.forEach((canvas) => {
@@ -239,6 +285,11 @@ const initializeDashboardCharts = async () => {
     reportTrendCharts.forEach((canvas) => {
         if (chartInstances.has(canvas) || !canvas.isConnected) return;
         const chart = initializeReportTrendChart(Chart, canvas);
+        if (chart) chartInstances.set(canvas, chart);
+    });
+    classDistributionCharts.forEach((canvas) => {
+        if (chartInstances.has(canvas) || !canvas.isConnected) return;
+        const chart = initializeClassDistributionChart(Chart, canvas);
         if (chart) chartInstances.set(canvas, chart);
     });
     cohortCharts.forEach((canvas) => {

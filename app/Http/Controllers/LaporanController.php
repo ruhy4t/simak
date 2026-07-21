@@ -530,7 +530,7 @@ class LaporanController extends Controller
 
         $statusKey = strtolower($schoolStatus ?? 'all');
         $npsnKey = $selectedSchool?->npsn ?? 'all';
-        $cacheKey = 'public.statistics.trend.v7.'.MutationStatisticsCache::version()
+        $cacheKey = 'public.statistics.trend.v8.'.MutationStatisticsCache::version()
             .'.'.($month ?: 'all').'.'.$year
             .'.status-'.$statusKey.'.npsn-'.$npsnKey;
 
@@ -627,7 +627,10 @@ class LaporanController extends Controller
             ->selectRaw("$selectUnit,
                 SUM(CASE WHEN mutasi_masuk_siswa.asal_luar_negeri = 1 THEN 1 ELSE 0 END) as luar_negeri,
                 SUM(CASE WHEN mutasi_masuk_siswa.asal_luar_negeri = 0 AND mutasi_masuk_siswa.kabupaten_kota_asal LIKE '%KOTA BOGOR%' THEN 1 ELSE 0 END) as dalam_kota,
-                SUM(CASE WHEN mutasi_masuk_siswa.asal_luar_negeri = 0 AND (mutasi_masuk_siswa.kabupaten_kota_asal NOT LIKE '%KOTA BOGOR%' OR mutasi_masuk_siswa.kabupaten_kota_asal IS NULL) THEN 1 ELSE 0 END) as luar_kota")
+                SUM(CASE WHEN mutasi_masuk_siswa.asal_luar_negeri = 0 AND (mutasi_masuk_siswa.kabupaten_kota_asal NOT LIKE '%KOTA BOGOR%' OR mutasi_masuk_siswa.kabupaten_kota_asal IS NULL) THEN 1 ELSE 0 END) as luar_kota,
+                SUM(CASE WHEN mutasi_masuk_siswa.kelas IN ('7', 'VII') THEN 1 ELSE 0 END) as kelas_vii,
+                SUM(CASE WHEN mutasi_masuk_siswa.kelas IN ('8', 'VIII') THEN 1 ELSE 0 END) as kelas_viii,
+                SUM(CASE WHEN mutasi_masuk_siswa.kelas IN ('9', 'IX') THEN 1 ELSE 0 END) as kelas_ix")
             ->whereNull('mutasi_masuk.deleted_at')
             ->whereBetween('mutasi_masuk.tanggal_pengajuan', [$periodStart, $periodEnd])
             ->where('mutasi_masuk.status', 'Selesai');
@@ -661,7 +664,10 @@ class LaporanController extends Controller
         $keluarQuery = MutasiKeluar::selectRaw("$selectUnitKeluar,
                 SUM(CASE WHEN UPPER(TRIM(COALESCE(provinsi_tujuan, ''))) = 'LUAR NEGERI' THEN 1 ELSE 0 END) as luar_negeri,
                 SUM(CASE WHEN UPPER(TRIM(COALESCE(provinsi_tujuan, ''))) <> 'LUAR NEGERI' AND UPPER(COALESCE(kabupaten_kota_tujuan, '')) LIKE '%KOTA BOGOR%' THEN 1 ELSE 0 END) as dalam_kota,
-                SUM(CASE WHEN UPPER(TRIM(COALESCE(provinsi_tujuan, ''))) <> 'LUAR NEGERI' AND UPPER(COALESCE(kabupaten_kota_tujuan, '')) NOT LIKE '%KOTA BOGOR%' THEN 1 ELSE 0 END) as luar_kota")
+                SUM(CASE WHEN UPPER(TRIM(COALESCE(provinsi_tujuan, ''))) <> 'LUAR NEGERI' AND UPPER(COALESCE(kabupaten_kota_tujuan, '')) NOT LIKE '%KOTA BOGOR%' THEN 1 ELSE 0 END) as luar_kota,
+                SUM(CASE WHEN kelas IN ('7', 'VII') THEN 1 ELSE 0 END) as kelas_vii,
+                SUM(CASE WHEN kelas IN ('8', 'VIII') THEN 1 ELSE 0 END) as kelas_viii,
+                SUM(CASE WHEN kelas IN ('9', 'IX') THEN 1 ELSE 0 END) as kelas_ix")
             ->whereNull('deleted_at')
             ->whereBetween('tanggal_pengajuan', [$periodStart, $periodEnd])
             ->where('status', 'Selesai');
@@ -687,6 +693,11 @@ class LaporanController extends Controller
             'labels' => [],
             'masuk' => ['dalam' => [], 'luar_kota' => [], 'luar_negeri' => []],
             'keluar' => ['dalam' => [], 'luar_kota' => [], 'luar_negeri' => []],
+            'kelas' => [
+                'labels' => ['VII', 'VIII', 'IX'],
+                'masuk' => [0, 0, 0],
+                'keluar' => [0, 0, 0],
+            ],
             'totals' => ['masuk' => $masukTotal, 'keluar' => $keluarTotal],
         ];
 
@@ -705,12 +716,22 @@ class LaporanController extends Controller
             $data['masuk']['dalam'][] = $mItem ? (int) $mItem->dalam_kota : 0;
             $data['masuk']['luar_kota'][] = $mItem ? (int) $mItem->luar_kota : 0;
             $data['masuk']['luar_negeri'][] = $mItem ? (int) $mItem->luar_negeri : 0;
+            if ($mItem) {
+                $data['kelas']['masuk'][0] += (int) $mItem->kelas_vii;
+                $data['kelas']['masuk'][1] += (int) $mItem->kelas_viii;
+                $data['kelas']['masuk'][2] += (int) $mItem->kelas_ix;
+            }
 
             // Keluar
             $kItem = $keluarResults->get($unit);
             $data['keluar']['dalam'][] = $kItem ? (int) $kItem->dalam_kota : 0;
             $data['keluar']['luar_kota'][] = $kItem ? (int) $kItem->luar_kota : 0;
             $data['keluar']['luar_negeri'][] = $kItem ? (int) $kItem->luar_negeri : 0;
+            if ($kItem) {
+                $data['kelas']['keluar'][0] += (int) $kItem->kelas_vii;
+                $data['kelas']['keluar'][1] += (int) $kItem->kelas_viii;
+                $data['kelas']['keluar'][2] += (int) $kItem->kelas_ix;
+            }
         }
 
         return $data;
