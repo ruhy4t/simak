@@ -211,7 +211,9 @@ class CohortReportTest extends TestCase
         $this->get('/statistik-mutasi?year=2026&academic_year='.$year->id)
             ->assertOk()
             ->assertDontSee('Rekonsiliasi Seluruh SMP Kota Bogor')
-            ->assertSee('Kohort Angkatan');
+            ->assertSee('Kohort Angkatan')
+            ->assertSee('id="kohort-angkatan"', false)
+            ->assertSee('action="'.route('public.statistics').'#kohort-angkatan"', false);
 
         $year->update([
             'status' => AcademicYear::STATUS_CLOSED,
@@ -221,6 +223,8 @@ class CohortReportTest extends TestCase
         $this->get('/statistik-mutasi?year=2026&academic_year='.$year->id)
             ->assertOk()
             ->assertSee('Rekonsiliasi Seluruh SMP Kota Bogor')
+            ->assertSee('id="rekonsiliasi-tahunan"', false)
+            ->assertSee('action="'.route('public.statistics').'#rekonsiliasi-tahunan"', false)
             ->assertSee('Jumlah per Kelas')
             ->assertSee('Keluar non-mutasi terdata')
             ->assertDontSee('SMP Uji Kohort')

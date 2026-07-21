@@ -120,8 +120,8 @@
         <x-class-distribution-chart :chart-data="$chartData" />
 
         @if($cohortYear && $cohort)
-            <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-5">
-                <form action="{{ route('public.statistics') }}" method="GET" class="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <section id="rekonsiliasi-tahunan" class="scroll-mt-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-5">
+                <form action="{{ route('public.statistics') }}#rekonsiliasi-tahunan" method="GET" class="flex flex-col gap-3 sm:flex-row sm:items-end">
                     <input type="hidden" name="year" value="{{ $year }}">
                     @if($month)<input type="hidden" name="month" value="{{ $month }}">@endif
                     @if($cohortEntryYear)<input type="hidden" name="cohort_entry_year" value="{{ $cohortEntryYear->id }}">@endif
@@ -148,8 +148,8 @@
         @endif
 
         @if($cohortEntryYear && $longitudinalCohort)
-            <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-5">
-                <form action="{{ route('public.statistics') }}" method="GET" class="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <section id="kohort-angkatan" class="scroll-mt-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-5">
+                <form action="{{ route('public.statistics') }}#kohort-angkatan" method="GET" class="flex flex-col gap-3 sm:flex-row sm:items-end">
                     <input type="hidden" name="year" value="{{ $year }}">
                     @if($month)<input type="hidden" name="month" value="{{ $month }}">@endif
                     @if($cohortYear)<input type="hidden" name="academic_year" value="{{ $cohortYear->id }}">@endif
