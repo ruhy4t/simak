@@ -40,9 +40,8 @@
                 <i class="bi bi-database text-6xl text-blue-600"></i>
             </div>
             <div class="relative z-10">
-                <p class="text-sm font-medium text-gray-500 mb-1">Ukuran Database</p>
-                <h3 class="text-3xl font-bold text-gray-800">{{ $dbSize }} <span
-                        class="text-lg text-gray-500 font-normal">MB</span></h3>
+                <p class="text-sm font-medium text-gray-500 mb-1">Database Aiven Terpakai</p>
+                <h3 class="text-3xl font-bold text-gray-800">{{ $dbStats['formatted_size'] }}</h3>
 
                 <div class="mt-3 mb-2">
                     <p class="text-xs text-gray-400">Host:</p>
@@ -50,22 +49,16 @@
                         {{ $serverInfo['db_host'] }}</p>
                 </div>
 
-                {{-- DB Limit Estimate --}}
-                @php
-                    $dbLimitMB = $serverInfo['db_limit'] / 1024 / 1024;
-                    // Verify if dbSize is numeric
-                    $sizeVal = is_numeric($dbSize) ? floatval($dbSize) : 0;
-                    $dbPercentage = $dbLimitMB > 0 ? ($sizeVal / $dbLimitMB) * 100 : 0;
-                    $dbRemaining = $dbLimitMB - $sizeVal;
-                @endphp
-
                 <div class="w-full bg-gray-100 rounded-full h-1.5 mb-2 overflow-hidden">
-                    <div class="bg-blue-500 h-1.5 rounded-full" style="width: {{ min($dbPercentage, 100) }}%"></div>
+                    <div class="bg-blue-500 h-1.5 rounded-full" style="width: {{ min($dbStats['percentage'], 100) }}%"></div>
                 </div>
                 <div class="flex justify-between text-[10px] text-gray-400">
-                    <span>Limit Est: ~{{ number_format($dbLimitMB, 0) }} MB</span>
-                    <span>Sisa: ~{{ number_format($dbRemaining, 1) }} MB</span>
+                    <span>{{ number_format($dbStats['percentage'], 2) }}% dari {{ $dbStats['formatted_limit'] }}</span>
+                    <span>Sisa: {{ $dbStats['formatted_remaining'] }}</span>
                 </div>
+                @if($dbStats['error'])
+                    <p class="mt-2 text-xs font-semibold text-red-600">{{ $dbStats['error'] }}</p>
+                @endif
             </div>
         </div>
 
@@ -78,7 +71,7 @@
             <div class="relative z-10">
                 <p class="text-sm font-medium text-gray-500 mb-1">Total File (B2)</p>
                 <h3 class="text-3xl font-bold text-gray-800">{{ number_format($b2Stats['count']) }} <span
-                        class="text-lg text-gray-500 font-normal">files</span></h3>
+                        class="text-lg text-gray-500 font-normal">file</span></h3>
                 @if($b2Stats['error'])
                     <div class="mt-4 text-xs text-red-600 bg-red-50 w-fit px-2 py-1 rounded-lg">
                         Error: {{ Str::limit($b2Stats['error'], 20) }}
@@ -106,26 +99,21 @@
                         </h3>
                     </div>
                     <div class="text-right">
-                        <p class="text-xs text-gray-400">Sisa Kuota (Free Tier)</p>
+                        <p class="text-xs text-gray-400">Sisa Batas Pemantauan</p>
                         <p class="text-lg font-semibold text-gray-700">{{ $b2Stats['formatted_remaining'] ?? '-' }}</p>
                     </div>
                 </div>
 
                 {{-- Progress Bar --}}
-                @if(isset($b2Stats['percentage']))
-                    <div class="w-full bg-gray-100 rounded-full h-3 mb-2 overflow-hidden">
-                        <div class="bg-linear-to-r from-green-500 to-green-600 h-3 rounded-full transition-all duration-1000"
-                            style="width: {{ min($b2Stats['percentage'], 100) }}%"></div>
-                    </div>
-                    <div class="flex justify-between text-xs text-gray-500">
-                        <span>{{ number_format($b2Stats['percentage'], 2) }}% Terpakai</span>
-                        <span>Limit: {{ $b2Stats['formatted_limit'] }}</span>
-                    </div>
-                @endif
-
-                @if(isset($b2Stats['size_warning']))
-                    <p class="text-xs text-orange-500 mt-1">{{ $b2Stats['size_warning'] }}</p>
-                @endif
+                <div class="w-full bg-gray-100 rounded-full h-3 mb-2 overflow-hidden">
+                    <div class="bg-linear-to-r from-green-500 to-green-600 h-3 rounded-full transition-all duration-1000"
+                        style="width: {{ min($b2Stats['percentage'], 100) }}%"></div>
+                </div>
+                <div class="flex justify-between text-xs text-gray-500">
+                    <span>{{ number_format($b2Stats['percentage'], 2) }}% Terpakai</span>
+                    <span>Batas: {{ $b2Stats['formatted_limit'] }}</span>
+                </div>
+                <p class="mt-2 text-[11px] text-gray-400">Dihitung dari metadata seluruh objek aktif di bucket.</p>
             </div>
         </div>
     </div>
@@ -232,9 +220,9 @@
                         </tbody>
                     </table>
                 </div>
-                <div class="bg-amber-50 px-6 py-3 border-t border-amber-100 text-xs text-amber-700">
-                    <i class="bi bi-info-circle mr-1"></i> Limit database adalah estimasi (Default: 512MB). Kapasitas
-                    sebenarnya bergantung pada layanan hosting database Anda.
+                <div class="bg-blue-50 px-6 py-3 border-t border-blue-100 text-xs text-blue-700">
+                    <i class="bi bi-info-circle mr-1"></i> Database dihitung dari data dan indeks schema SIMAK dengan batas pemantauan {{ $dbStats['formatted_limit'] }}.
+                    Storage B2 dihitung langsung dari metadata objek aktif di bucket dan diperbarui saat tombol Refresh digunakan.
                 </div>
             </div>
         </div>
