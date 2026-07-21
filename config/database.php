@@ -2,6 +2,23 @@
 
 use Illuminate\Support\Str;
 
+$mysqlOptions = [];
+
+if (extension_loaded('pdo_mysql')) {
+    $sslCaAttribute = defined('Pdo\\Mysql::ATTR_SSL_CA')
+        ? constant('Pdo\\Mysql::ATTR_SSL_CA')
+        : constant('PDO::MYSQL_ATTR_SSL_CA');
+    $sslVerifyServerCertificateAttribute = defined('Pdo\\Mysql::ATTR_SSL_VERIFY_SERVER_CERT')
+        ? constant('Pdo\\Mysql::ATTR_SSL_VERIFY_SERVER_CERT')
+        : constant('PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT');
+
+    $mysqlOptions = [
+        // For Aiven MySQL - enable SSL without local CA file
+        $sslCaAttribute => '/etc/ssl/certs/ca-certificates.crt',
+        $sslVerifyServerCertificateAttribute => false,
+    ];
+}
+
 return [
     'default' => env('DB_CONNECTION', 'mysql'),
 
@@ -29,11 +46,7 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
-            'options' => extension_loaded('pdo_mysql') ? [
-                // For Aiven MySQL - enable SSL without local CA file
-                PDO::MYSQL_ATTR_SSL_CA => '/etc/ssl/certs/ca-certificates.crt',
-                PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => false,
-            ] : [],
+            'options' => $mysqlOptions,
         ],
     ],
 

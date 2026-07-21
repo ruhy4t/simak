@@ -125,4 +125,22 @@ class LoginRateLimitTest extends TestCase
         $this->assertAuthenticated();
         $this->assertNull(DB::table('users')->where('username', 'victim')->value('remember_token'));
     }
+
+    public function test_invalid_password_hash_is_rejected_without_server_error(): void
+    {
+        DB::table('users')->where('username', 'victim')->update([
+            'password' => 'not-a-password-hash',
+        ]);
+
+        $this->post('/login', [
+            'username' => 'victim',
+            'password' => 'correct-password',
+        ])->assertRedirect()->assertSessionHasErrors('username');
+
+        $this->assertGuest();
+        $this->assertDatabaseHas('audit_logs', [
+            'event_type' => 'LOGIN_INVALID_PASSWORD_HASH',
+            'username' => 'victim',
+        ]);
+    }
 }

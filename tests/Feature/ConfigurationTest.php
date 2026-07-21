@@ -22,7 +22,7 @@ class ConfigurationTest extends TestCase
 
         $this->assertSame('npm run build', $vercel['buildCommand']);
         $this->assertSame('public', $vercel['outputDirectory']);
-        $this->assertSame('vercel-php@0.7.4', $vercel['functions']['api/*.php']['runtime']);
+        $this->assertSame('vercel-php@0.9.0', $vercel['functions']['api/*.php']['runtime']);
         $this->assertArrayNotHasKey('APP_URL', $vercel['env']);
         $this->assertArrayNotHasKey('ASSET_URL', $vercel['env']);
         $this->assertSame('true', $vercel['env']['SESSION_SECURE_COOKIE']);

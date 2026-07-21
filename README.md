@@ -50,7 +50,7 @@ Jika tidak diisi, aplikasi memakai default dari `config/app.php`.
 - PHPUnit: `^12.0`
 - Database: MySQL compatible, termasuk Aiven MySQL
 - Storage: local atau Backblaze B2 melalui S3-compatible driver
-- Deploy target: Vercel dengan `vercel-php@0.7.4`
+- Deploy target: Vercel dengan `vercel-php@0.9.0` (PHP 8.5.x)
 
 ## Setup Lokal
 
@@ -88,7 +88,7 @@ Project ini memakai `vercel.json` dengan:
 
 - Build command: `npm run build`
 - Output directory: `public`
-- PHP runtime: `vercel-php@0.7.4`
+- PHP runtime: `vercel-php@0.9.0` (PHP 8.5.x)
 
 Untuk Preview Deployment, jangan hardcode `APP_URL` atau `ASSET_URL` di `vercel.json`. Entry point `api/index.php` akan mengatur URL aplikasi dan asset berdasarkan domain Vercel yang sedang aktif.
 

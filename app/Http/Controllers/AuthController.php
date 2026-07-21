@@ -66,11 +66,19 @@ class AuthController extends Controller
             return back()->withErrors(['username' => 'Akun tidak aktif.'])->withInput();
         }
 
-        // Verify password
-        if (!Hash::check($request->password, $user->password)) {
+        // Reject corrupted or unsupported password hashes without exposing a
+        // server error. Plain-text passwords must never be accepted here.
+        $passwordInfo = Hash::info((string) $user->password);
+        $usesBcrypt = ($passwordInfo['algoName'] ?? null) === 'bcrypt';
+
+        if (!$usesBcrypt || !Hash::check($request->password, $user->password)) {
             RateLimiter::hit($credentialKey, 300);
             RateLimiter::hit($ipKey, 300);
-            AuditLog::log('LOGIN_FAILED', $username, 'Wrong password');
+            AuditLog::log(
+                $usesBcrypt ? 'LOGIN_FAILED' : 'LOGIN_INVALID_PASSWORD_HASH',
+                $username,
+                $usesBcrypt ? 'Wrong password' : 'Unsupported password hash',
+            );
 
             $currentFails = RateLimiter::attempts($credentialKey);
             $remaining = max(0, 5 - $currentFails);
