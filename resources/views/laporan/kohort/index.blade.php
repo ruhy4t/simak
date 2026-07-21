@@ -16,7 +16,7 @@
                     <label for="reconciliation-year" class="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">Rekonsiliasi Tahun Pelajaran</label>
                     <select id="reconciliation-year" name="academic_year" class="w-full rounded-xl border-slate-300 font-semibold">
                         @foreach($academicYears as $year)
-                            <option value="{{ $year->id }}" @selected($academicYear?->id === $year->id)>{{ $year->name }}</option>
+                            <option value="{{ $year->id }}" @selected($academicYear?->id === $year->id)>{{ $year->name }}{{ $year->is_active ? ' (Aktif)' : '' }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -50,7 +50,9 @@
 
         @if($academicYear && $cohort)
             <x-cohort-summary :cohort="$cohort" title="Rekonsiliasi {{ $school?->nama ?? 'Kota Bogor' }} · {{ $academicYear->name }}"
-                description="Perbandingan data awal, perubahan siswa, dan data akhir aktual pada satu tahun pelajaran." />
+                :description="$academicYear->is_active
+                    ? 'Rekonsiliasi sementara tahun berjalan berdasarkan data akhir yang sudah dikunci sekolah.'
+                    : 'Perbandingan data awal, perubahan siswa, dan data akhir aktual pada satu tahun pelajaran.'" />
 
             <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white">
                 <div class="border-b border-slate-200 px-5 py-4">

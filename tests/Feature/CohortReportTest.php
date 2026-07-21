@@ -207,10 +207,20 @@ class CohortReportTest extends TestCase
     public function test_public_statistics_expose_only_citywide_cohort_aggregates(): void
     {
         [$year] = $this->seedSchoolAndYear(true);
+        $upcomingYear = AcademicYear::create([
+            'name' => '2027/2028',
+            'status' => AcademicYear::STATUS_UPCOMING,
+            'is_active' => false,
+            'starts_on' => '2027-07-15',
+            'ends_on' => '2028-07-14',
+        ]);
 
         $this->get('/statistik-mutasi?year=2026&academic_year='.$year->id)
             ->assertOk()
-            ->assertDontSee('Rekonsiliasi Seluruh SMP Kota Bogor')
+            ->assertSee('Rekonsiliasi Seluruh SMP Kota Bogor')
+            ->assertSee('2026/2027 (Aktif)')
+            ->assertSee('Tahun pelajaran masih aktif')
+            ->assertViewHas('cohortYears', fn ($years) => ! $years->contains('id', $upcomingYear->id))
             ->assertSee('Kohort Angkatan')
             ->assertSee('id="kohort-angkatan"', false)
             ->assertSee('action="'.route('public.statistics').'#kohort-angkatan"', false);
@@ -274,7 +284,7 @@ class CohortReportTest extends TestCase
         $this->assertContains($includedPrivateSchool, DB::table('satuan_pendidikan')->pluck('id')->all());
     }
 
-    public function test_internal_longitudinal_cohort_is_available_while_annual_reconciliation_requires_closed_year(): void
+    public function test_internal_annual_reconciliation_is_available_for_active_and_closed_years(): void
     {
         [$year] = $this->seedSchoolAndYear(true);
         $operator = $this->createUser('operator-cohort', 'Operator', '12345678');
@@ -282,8 +292,11 @@ class CohortReportTest extends TestCase
         $this->actingAs($operator)
             ->get(route('laporan.kohort'))
             ->assertOk()
+            ->assertViewHas('academicYear', fn (AcademicYear $selectedYear) => $selectedYear->is($year))
             ->assertSee('Kohort Angkatan')
-            ->assertDontSee('Rekonsiliasi SMP Uji Kohort');
+            ->assertSee('Rekonsiliasi SMP Uji Kohort')
+            ->assertSee('2026/2027 (Aktif)')
+            ->assertSee('Rekonsiliasi sementara tahun berjalan');
 
         $year->update([
             'status' => AcademicYear::STATUS_CLOSED,

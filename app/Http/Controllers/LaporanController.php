@@ -455,7 +455,8 @@ class LaporanController extends Controller
 
         $user = Auth::user();
         $academicYears = AcademicYear::query()
-            ->where('status', AcademicYear::STATUS_CLOSED)
+            ->whereIn('status', [AcademicYear::STATUS_ACTIVE, AcademicYear::STATUS_CLOSED])
+            ->orderByDesc('is_active')
             ->orderByDesc('name')
             ->get();
         $academicYear = $academicYears->firstWhere('id', $request->integer('academic_year'))
@@ -572,7 +573,8 @@ class LaporanController extends Controller
         $cohort = null;
         if ($cohortService->available()) {
             $cohortYears = AcademicYear::query()
-                ->where('status', AcademicYear::STATUS_CLOSED)
+                ->whereIn('status', [AcademicYear::STATUS_ACTIVE, AcademicYear::STATUS_CLOSED])
+                ->orderByDesc('is_active')
                 ->orderByDesc('name')
                 ->get();
             $cohortYear = $cohortYears->firstWhere('id', (int) ($validated['academic_year'] ?? 0))

@@ -134,7 +134,7 @@
                         <label for="public-academic-year" class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-500">Rekonsiliasi Tahun Pelajaran</label>
                         <select name="academic_year" id="public-academic-year" class="w-full rounded-xl border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
                             @foreach($cohortYears as $academicYear)
-                                <option value="{{ $academicYear->id }}" @selected($cohortYear->id === $academicYear->id)>{{ $academicYear->name }}</option>
+                                <option value="{{ $academicYear->id }}" @selected($cohortYear->id === $academicYear->id)>{{ $academicYear->name }}{{ $academicYear->is_active ? ' (Aktif)' : '' }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -143,7 +143,9 @@
             </section>
 
             <x-cohort-summary :cohort="$cohort" title="Rekonsiliasi {{ $schoolFilterLabel }} · {{ $cohortYear->name }}"
-                description="Hanya data agregat sekolah yang telah mengunci data akhir."
+                :description="$cohortYear->is_active
+                    ? 'Tahun pelajaran masih aktif. Angka bersifat sementara dan hanya mencakup sekolah yang telah mengunci data akhir.'
+                    : 'Hanya data agregat sekolah yang telah mengunci data akhir.'"
                 :compact="true" />
         @endif
 
