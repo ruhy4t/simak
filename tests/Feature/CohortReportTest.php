@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\AcademicYear;
 use App\Models\User;
 use App\Services\CohortReportService;
+use App\Services\LongitudinalCohortService;
 use App\Services\StudentCountRolloverService;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -64,6 +65,11 @@ class CohortReportTest extends TestCase
         $this->assertSame(2, $report['reported_summary']['other_addition']);
         $this->assertSame(1, $report['reported_school_count']);
         $this->assertTrue($report['is_complete']);
+        $this->assertSame(18, $report['grade_summary'][0]['opening']);
+        $this->assertSame(1, $report['grade_summary'][0]['incoming']);
+        $this->assertSame(3, $report['grade_summary'][0]['outgoing']);
+        $this->assertSame(16, $report['grade_summary'][0]['expected']);
+        $this->assertSame(17, $report['grade_summary'][0]['actual']);
     }
 
     public function test_reverse_opening_calculation_is_not_used_after_2025_2026(): void
@@ -204,7 +210,8 @@ class CohortReportTest extends TestCase
 
         $this->get('/statistik-mutasi?year=2026&academic_year='.$year->id)
             ->assertOk()
-            ->assertDontSee('Data Kohort Siswa');
+            ->assertDontSee('Rekonsiliasi Seluruh SMP Kota Bogor')
+            ->assertSee('Kohort Angkatan');
 
         $year->update([
             'status' => AcademicYear::STATUS_CLOSED,
@@ -213,7 +220,8 @@ class CohortReportTest extends TestCase
 
         $this->get('/statistik-mutasi?year=2026&academic_year='.$year->id)
             ->assertOk()
-            ->assertSee('Kohort Seluruh SMP Kota Bogor')
+            ->assertSee('Rekonsiliasi Seluruh SMP Kota Bogor')
+            ->assertSee('Jumlah per Kelas')
             ->assertSee('Keluar non-mutasi terdata')
             ->assertDontSee('SMP Uji Kohort')
             ->assertDontSee('12345678');
@@ -262,14 +270,16 @@ class CohortReportTest extends TestCase
         $this->assertContains($includedPrivateSchool, DB::table('satuan_pendidikan')->pluck('id')->all());
     }
 
-    public function test_internal_cohort_is_available_only_for_closed_academic_years(): void
+    public function test_internal_longitudinal_cohort_is_available_while_annual_reconciliation_requires_closed_year(): void
     {
         [$year] = $this->seedSchoolAndYear(true);
         $operator = $this->createUser('operator-cohort', 'Operator', '12345678');
 
         $this->actingAs($operator)
             ->get(route('laporan.kohort'))
-            ->assertNotFound();
+            ->assertOk()
+            ->assertSee('Kohort Angkatan')
+            ->assertDontSee('Rekonsiliasi SMP Uji Kohort');
 
         $year->update([
             'status' => AcademicYear::STATUS_CLOSED,
@@ -281,6 +291,93 @@ class CohortReportTest extends TestCase
             ->assertOk()
             ->assertViewHas('academicYear', fn (AcademicYear $selectedYear) => $selectedYear->is($year))
             ->assertSee('2026/2027');
+    }
+
+    public function test_longitudinal_cohort_follows_one_intake_from_grade_seven_to_nine(): void
+    {
+        [$entryYear, $schoolId] = $this->seedSchoolAndYear(true);
+        $entryYear->update([
+            'name' => '2025/2026',
+            'status' => AcademicYear::STATUS_CLOSED,
+            'is_active' => false,
+            'starts_on' => '2025-07-15',
+            'ends_on' => '2026-07-14',
+        ]);
+        DB::table('satuan_pendidikan_student_counts')
+            ->where('academic_year_id', $entryYear->id)
+            ->where('grade', 7)
+            ->update([
+                'male_count' => 50,
+                'female_count' => 50,
+                'closing_male_count' => 49,
+                'closing_female_count' => 49,
+            ]);
+
+        $gradeEightYear = AcademicYear::create([
+            'name' => '2026/2027',
+            'status' => AcademicYear::STATUS_CLOSED,
+            'is_active' => false,
+            'starts_on' => '2026-07-15',
+            'ends_on' => '2027-07-14',
+        ]);
+        $gradeNineYear = AcademicYear::create([
+            'name' => '2027/2028',
+            'status' => AcademicYear::STATUS_CLOSED,
+            'is_active' => false,
+            'starts_on' => '2027-07-15',
+            'ends_on' => '2028-07-14',
+        ]);
+
+        foreach ([[$gradeEightYear, 8, 98, 97], [$gradeNineYear, 9, 97, 96]] as [$year, $grade, $opening, $closing]) {
+            DB::table('satuan_pendidikan_student_counts')->insert([
+                'satuan_pendidikan_id' => $schoolId,
+                'academic_year_id' => $year->id,
+                'grade' => $grade,
+                'male_count' => intdiv($opening, 2),
+                'female_count' => $opening - intdiv($opening, 2),
+                'confirmed_at' => now(),
+                'closing_male_count' => intdiv($closing, 2),
+                'closing_female_count' => $closing - intdiv($closing, 2),
+                'closing_confirmed_at' => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        DB::table('mutasi_masuk')->insert([
+            'id_mutasi' => 'M-LONG-1',
+            'tanggal_pengajuan' => '2026-08-01',
+            'jumlah_siswa' => 3,
+            'npsn_sekolah_tujuan' => '12345678',
+            'status' => 'Selesai',
+        ]);
+        DB::table('mutasi_masuk_siswa')->insert([
+            ['id_mutasi' => 'M-LONG-1', 'kelas' => 'VIII', 'jenis_kelamin' => 'L'],
+            ['id_mutasi' => 'M-LONG-1', 'kelas' => '8', 'jenis_kelamin' => 'P'],
+            ['id_mutasi' => 'M-LONG-1', 'kelas' => 'VIII', 'jenis_kelamin' => 'P'],
+        ]);
+        DB::table('mutasi_keluar')->insert([
+            ['id_mutasi' => 'K-LONG-1', 'tanggal_pengajuan' => '2026-09-01', 'npsn_sekolah_asal' => '12345678', 'kelas' => 'VIII', 'jenis_kelamin' => 'L', 'status' => 'Selesai'],
+            ['id_mutasi' => 'K-LONG-2', 'tanggal_pengajuan' => '2027-09-01', 'npsn_sekolah_asal' => '12345678', 'kelas' => 'IX', 'jenis_kelamin' => 'L', 'status' => 'Selesai'],
+            ['id_mutasi' => 'K-LONG-3', 'tanggal_pengajuan' => '2027-10-01', 'npsn_sekolah_asal' => '12345678', 'kelas' => '9', 'jenis_kelamin' => 'P', 'status' => 'Selesai'],
+        ]);
+        DB::table('non_mutation_student_exits')->insert([
+            ['satuan_pendidikan_id' => $schoolId, 'academic_year_id' => $gradeEightYear->id, 'student_name' => 'Siswa Satu', 'nisn' => '1000000001', 'grade' => 8, 'gender' => 'L', 'exit_date' => '2026-10-01', 'reason' => 'Lainnya', 'created_at' => now(), 'updated_at' => now()],
+            ['satuan_pendidikan_id' => $schoolId, 'academic_year_id' => $gradeEightYear->id, 'student_name' => 'Siswa Dua', 'nisn' => '1000000002', 'grade' => 8, 'gender' => 'P', 'exit_date' => '2026-10-02', 'reason' => 'Lainnya', 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        $report = app(LongitudinalCohortService::class)->report($entryYear, $schoolId);
+
+        $this->assertSame(3, $report['available_stage_count']);
+        $this->assertTrue($report['is_complete']);
+        $this->assertSame(100, $report['summary']['initial']);
+        $this->assertSame(3, $report['summary']['incoming']);
+        $this->assertSame(3, $report['summary']['outgoing']);
+        $this->assertSame(2, $report['summary']['non_mutation_outgoing']);
+        $this->assertSame(96, $report['summary']['graduated']);
+        $this->assertSame(['VII', 'VIII', 'IX'], array_column($report['stages'], 'grade_label'));
+        $this->assertSame([100, 98, 97], array_column($report['stages'], 'opening'));
+        $this->assertSame([98, 97, 96], array_column($report['stages'], 'actual'));
     }
 
     public function test_rollover_uses_locked_actual_closing_counts(): void

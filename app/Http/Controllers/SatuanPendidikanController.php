@@ -5,12 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\AcademicYear;
 use App\Models\SatuanPendidikan;
 use App\Services\FileUploadService;
+use App\Services\MutationStatisticsCache;
 use App\Services\RegionCacheService;
 use App\Services\StudentCountRolloverService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
@@ -871,10 +871,7 @@ class SatuanPendidikanController extends Controller
                 ->with('error', 'Data akhir sudah dikunci dan tidak dapat diubah.');
         }
 
-        $statusKey = strtolower((string) $satpen->status_sp);
-        Cache::forget("public.statistics.cohort.v5.{$academicYear->id}.status-all.npsn-all");
-        Cache::forget("public.statistics.cohort.v5.{$academicYear->id}.status-{$statusKey}.npsn-all");
-        Cache::forget("public.statistics.cohort.v5.{$academicYear->id}.status-all.npsn-{$satpen->npsn}");
+        MutationStatisticsCache::invalidate();
 
         return redirect()
             ->route('sekolah.closing-counts', ['academic_year' => $academicYear->name])

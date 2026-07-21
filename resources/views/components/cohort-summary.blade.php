@@ -1,4 +1,4 @@
-@props(['cohort', 'title' => 'Grafik Kohort Siswa', 'description' => null, 'compact' => false])
+@props(['cohort', 'title' => 'Rekonsiliasi Tahunan', 'description' => null, 'compact' => false])
 
 @php
     $summary = $cohort['reported_summary'];
@@ -38,7 +38,7 @@
 <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs sm:p-6">
     <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
         <div>
-            <p class="text-xs font-bold uppercase tracking-[0.16em] text-emerald-600">Rekonsiliasi Agregat</p>
+            <p class="text-xs font-bold uppercase tracking-[0.16em] text-emerald-600">Rekonsiliasi Tahunan</p>
             <h2 class="mt-1 text-xl font-bold text-slate-950">{{ $title }}</h2>
             @if($description)
                 @if($compact)
@@ -74,6 +74,39 @@
                 </article>
             @endforeach
         </div>
+
+        @if(!empty($cohort['grade_summary']))
+            <div class="mt-6 overflow-hidden rounded-xl border border-slate-200">
+                <div class="border-b border-slate-200 bg-slate-50 px-4 py-3">
+                    <h3 class="font-bold text-slate-900">Jumlah per Kelas</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full min-w-[48rem] text-sm">
+                        <thead class="bg-white text-xs uppercase tracking-wider text-slate-500">
+                            <tr>
+                                <th class="px-4 py-3 text-left">Kelas</th>
+                                <th class="px-4 py-3 text-right">Data Awal</th>
+                                <th class="px-4 py-3 text-right">Masuk</th>
+                                <th class="px-4 py-3 text-right">Keluar</th>
+                                <th class="px-4 py-3 text-right">Non-Mutasi</th>
+                                <th class="px-4 py-3 text-right">Perkiraan Akhir</th>
+                                <th class="px-4 py-3 text-right">Akhir Aktual</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            @foreach($cohort['grade_summary'] as $grade)
+                                <tr class="hover:bg-slate-50">
+                                    <td class="px-4 py-3 font-black text-slate-900">{{ $grade['grade_label'] }}</td>
+                                    @foreach(['opening', 'incoming', 'outgoing', 'non_mutation_outgoing', 'expected', 'actual'] as $field)
+                                        <td class="px-4 py-3 text-right font-semibold text-slate-700">{{ number_format($grade[$field]) }}</td>
+                                    @endforeach
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        @endif
 
         <div class="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1fr)_18rem]">
             <div class="relative h-72 min-w-0 sm:h-80">

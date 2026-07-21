@@ -15,7 +15,7 @@
     @endphp
 
     <header class="border-b border-slate-800 bg-slate-950 text-white">
-        <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
+        <div class="mx-auto flex w-full max-w-[1680px] items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
             <a href="{{ route('public.statistics') }}" class="flex items-center gap-3">
                 <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-400/10 text-sky-400 ring-1 ring-sky-300/10">
                     <i class="bi bi-bar-chart-line-fill"></i>
@@ -34,7 +34,7 @@
         </div>
     </header>
 
-    <main class="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+    <main class="mx-auto w-full max-w-[1680px] space-y-6 px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
         <section class="overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-900 to-sky-950 px-5 py-7 text-white sm:px-8 sm:py-9">
             <div class="max-w-3xl">
                 <p class="text-xs font-bold uppercase tracking-[0.2em] text-sky-400">Data Terbuka</p>
@@ -124,25 +124,54 @@
                 <form action="{{ route('public.statistics') }}" method="GET" class="flex flex-col gap-3 sm:flex-row sm:items-end">
                     <input type="hidden" name="year" value="{{ $year }}">
                     @if($month)<input type="hidden" name="month" value="{{ $month }}">@endif
+                    @if($cohortEntryYear)<input type="hidden" name="cohort_entry_year" value="{{ $cohortEntryYear->id }}">@endif
                     @if($npsn)
                         <input type="hidden" name="npsn" value="{{ $npsn }}">
                     @elseif($schoolStatus)
                         <input type="hidden" name="school_status" value="{{ $schoolStatus }}">
                     @endif
                     <div class="min-w-0 flex-1">
-                        <label for="public-academic-year" class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-500">Tahun Pelajaran Selesai</label>
+                        <label for="public-academic-year" class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-500">Rekonsiliasi Tahun Pelajaran</label>
                         <select name="academic_year" id="public-academic-year" class="w-full rounded-xl border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
                             @foreach($cohortYears as $academicYear)
                                 <option value="{{ $academicYear->id }}" @selected($cohortYear->id === $academicYear->id)>{{ $academicYear->name }}</option>
                             @endforeach
                         </select>
                     </div>
-                    <button class="rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-emerald-700">Tampilkan Kohort</button>
+                    <button class="rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-emerald-700">Tampilkan Rekonsiliasi</button>
                 </form>
             </section>
 
-            <x-cohort-summary :cohort="$cohort" title="Kohort {{ $schoolFilterLabel }} · {{ $cohortYear->name }}"
+            <x-cohort-summary :cohort="$cohort" title="Rekonsiliasi {{ $schoolFilterLabel }} · {{ $cohortYear->name }}"
                 description="Hanya data agregat sekolah yang telah mengunci data akhir."
+                :compact="true" />
+        @endif
+
+        @if($cohortEntryYear && $longitudinalCohort)
+            <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-5">
+                <form action="{{ route('public.statistics') }}" method="GET" class="flex flex-col gap-3 sm:flex-row sm:items-end">
+                    <input type="hidden" name="year" value="{{ $year }}">
+                    @if($month)<input type="hidden" name="month" value="{{ $month }}">@endif
+                    @if($cohortYear)<input type="hidden" name="academic_year" value="{{ $cohortYear->id }}">@endif
+                    @if($npsn)
+                        <input type="hidden" name="npsn" value="{{ $npsn }}">
+                    @elseif($schoolStatus)
+                        <input type="hidden" name="school_status" value="{{ $schoolStatus }}">
+                    @endif
+                    <div class="min-w-0 flex-1">
+                        <label for="public-cohort-entry-year" class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-500">Angkatan Masuk</label>
+                        <select name="cohort_entry_year" id="public-cohort-entry-year" class="w-full rounded-xl border-slate-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            @foreach($cohortEntryYears as $entryYear)
+                                <option value="{{ $entryYear->id }}" @selected($cohortEntryYear->id === $entryYear->id)>{{ $entryYear->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <button class="rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-indigo-700">Tampilkan Kohort</button>
+                </form>
+            </section>
+
+            <x-longitudinal-cohort :report="$longitudinalCohort"
+                title="Angkatan {{ $cohortEntryYear->name }} · {{ $schoolFilterLabel }}"
                 :compact="true" />
         @endif
     </main>

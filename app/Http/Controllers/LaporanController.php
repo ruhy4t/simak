@@ -7,6 +7,7 @@ use App\Models\MutasiKeluar;
 use App\Models\Penandatangan;
 use App\Models\SatuanPendidikan;
 use App\Services\CohortReportService;
+use App\Services\LongitudinalCohortService;
 use App\Services\MutationStatisticsCache;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -443,10 +444,13 @@ class LaporanController extends Controller
     }
 
     /**
-     * Display aggregate opening-to-closing student cohort reconciliation.
+     * Display annual reconciliation and longitudinal intake cohorts.
      */
-    public function kohort(Request $request, CohortReportService $cohortService)
-    {
+    public function kohort(
+        Request $request,
+        CohortReportService $cohortService,
+        LongitudinalCohortService $longitudinalCohortService,
+    ) {
         abort_unless($cohortService->available(), 503, 'Fitur laporan kohort belum siap. Jalankan migrasi database.');
 
         $user = Auth::user();
@@ -456,8 +460,15 @@ class LaporanController extends Controller
             ->get();
         $academicYear = $academicYears->firstWhere('id', $request->integer('academic_year'))
             ?? $academicYears->first();
+        $cohortEntryYears = AcademicYear::query()
+            ->whereHas('studentCounts', fn ($query) => $query->where('grade', 7))
+            ->orderByDesc('starts_on')
+            ->orderByDesc('name')
+            ->get();
+        $cohortEntryYear = $cohortEntryYears->firstWhere('id', $request->integer('cohort_entry_year'))
+            ?? $cohortEntryYears->first();
 
-        abort_unless($academicYear, 404, 'Grafik kohort tersedia setelah tahun pelajaran ditutup.');
+        abort_unless($academicYear || $cohortEntryYear, 404, 'Data rekonsiliasi dan kohort belum tersedia.');
 
         $schools = collect();
         $school = null;
@@ -466,7 +477,12 @@ class LaporanController extends Controller
             abort_unless($school, 404, 'Data sekolah tidak ditemukan.');
         } else {
             $schools = SatuanPendidikan::query()
-                ->whereHas('studentCounts', fn ($query) => $query->where('academic_year_id', $academicYear->id))
+                ->whereHas('studentCounts', function ($query) use ($academicYear, $cohortEntryYear): void {
+                    $query->whereIn('academic_year_id', array_filter([
+                        $academicYear?->id,
+                        $cohortEntryYear?->id,
+                    ]));
+                })
                 ->orderBy('nama')
                 ->get(['id', 'npsn', 'nama']);
             if ($request->filled('school')) {
@@ -475,22 +491,32 @@ class LaporanController extends Controller
             }
         }
 
-        $cohort = $cohortService->report($academicYear, $school?->id);
+        $cohort = $academicYear
+            ? $cohortService->report($academicYear, $school?->id)
+            : null;
+        $longitudinalCohort = $cohortEntryYear && $longitudinalCohortService->available()
+            ? $longitudinalCohortService->report($cohortEntryYear, $school?->id)
+            : null;
 
         return view('laporan.kohort.index', compact(
-            'academicYears', 'academicYear', 'schools', 'school', 'cohort'
+            'academicYears', 'academicYear', 'cohortEntryYears', 'cohortEntryYear',
+            'schools', 'school', 'cohort', 'longitudinalCohort'
         ));
     }
 
     /**
      * Display city-wide mutation trends without requiring authentication.
      */
-    public function publicTren(Request $request, CohortReportService $cohortService)
-    {
+    public function publicTren(
+        Request $request,
+        CohortReportService $cohortService,
+        LongitudinalCohortService $longitudinalCohortService,
+    ) {
         $validated = $request->validate([
             'year' => ['nullable', 'integer', 'min:2020', 'max:'.date('Y')],
             'month' => ['nullable', 'integer', 'between:1,12'],
             'academic_year' => ['nullable', 'integer', 'min:1'],
+            'cohort_entry_year' => ['nullable', 'integer', 'min:1'],
             'school_status' => ['nullable', Rule::in(['Negeri', 'Swasta'])],
             'npsn' => ['nullable', 'string', 'regex:/^[0-9]{8}$/'],
         ], [
@@ -530,7 +556,8 @@ class LaporanController extends Controller
 
         $statusKey = strtolower($schoolStatus ?? 'all');
         $npsnKey = $selectedSchool?->npsn ?? 'all';
-        $cacheKey = 'public.statistics.trend.v8.'.MutationStatisticsCache::version()
+        $statisticsVersion = MutationStatisticsCache::version();
+        $cacheKey = 'public.statistics.trend.v8.'.$statisticsVersion
             .'.'.($month ?: 'all').'.'.$year
             .'.status-'.$statusKey.'.npsn-'.$npsnKey;
 
@@ -553,9 +580,34 @@ class LaporanController extends Controller
 
             if ($cohortYear) {
                 $cohort = Cache::remember(
-                    "public.statistics.cohort.v5.{$cohortYear->id}.status-{$statusKey}.npsn-{$npsnKey}",
+                    "public.statistics.reconciliation.v1.{$statisticsVersion}.{$cohortYear->id}.status-{$statusKey}.npsn-{$npsnKey}",
                     now()->addMinutes(30),
                     fn () => $cohortService->report($cohortYear, $selectedSchool?->id, $schoolStatus)
+                );
+            }
+        }
+
+        $cohortEntryYears = collect();
+        $cohortEntryYear = null;
+        $longitudinalCohort = null;
+        if ($longitudinalCohortService->available()) {
+            $cohortEntryYears = AcademicYear::query()
+                ->whereHas('studentCounts', fn ($query) => $query->where('grade', 7))
+                ->orderByDesc('starts_on')
+                ->orderByDesc('name')
+                ->get();
+            $cohortEntryYear = $cohortEntryYears->firstWhere('id', (int) ($validated['cohort_entry_year'] ?? 0))
+                ?? $cohortEntryYears->first();
+
+            if ($cohortEntryYear) {
+                $longitudinalCohort = Cache::remember(
+                    "public.statistics.longitudinal-cohort.v1.{$statisticsVersion}.{$cohortEntryYear->id}.status-{$statusKey}.npsn-{$npsnKey}",
+                    now()->addMinutes(30),
+                    fn () => $longitudinalCohortService->report(
+                        $cohortEntryYear,
+                        $selectedSchool?->id,
+                        $schoolStatus
+                    )
                 );
             }
         }
@@ -563,6 +615,7 @@ class LaporanController extends Controller
         return response()
             ->view('public.statistics', compact(
                 'chartData', 'year', 'month', 'cohortYears', 'cohortYear', 'cohort',
+                'cohortEntryYears', 'cohortEntryYear', 'longitudinalCohort',
                 'schoolStatus', 'npsn', 'selectedSchool'
             ))
             ->header('Cache-Control', 'public, max-age=0, must-revalidate');

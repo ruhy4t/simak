@@ -54,8 +54,8 @@
                             <i class="bi bi-bar-chart-steps text-3xl"></i>
                         </div>
                         <div>
-                            <h3 class="text-xl font-extrabold text-emerald-900">Kohort Awal–Akhir</h3>
-                            <p class="mt-1 text-sm font-medium text-emerald-700/80">Rekonsiliasi data awal, mutasi, dan data akhir aktual.</p>
+                            <h3 class="text-xl font-extrabold text-emerald-900">Rekonsiliasi & Kohort</h3>
+                            <p class="mt-1 text-sm font-medium text-emerald-700/80">Rekonsiliasi tahunan dan perkembangan satu angkatan selama tiga tahun.</p>
                         </div>
                     </div>
                 </a>

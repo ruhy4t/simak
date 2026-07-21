@@ -5,9 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\AcademicYear;
 use App\Models\NonMutationStudentExit;
 use App\Models\SatuanPendidikan;
+use App\Services\MutationStatisticsCache;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -175,10 +175,6 @@ class NonMutationStudentExitController extends Controller
 
     private function forgetCohortCache(int $academicYearId, SatuanPendidikan $school): void
     {
-        $statusKey = strtolower((string) $school->status_sp);
-
-        Cache::forget("public.statistics.cohort.v5.{$academicYearId}.status-all.npsn-all");
-        Cache::forget("public.statistics.cohort.v5.{$academicYearId}.status-{$statusKey}.npsn-all");
-        Cache::forget("public.statistics.cohort.v5.{$academicYearId}.status-all.npsn-{$school->npsn}");
+        MutationStatisticsCache::invalidate();
     }
 }

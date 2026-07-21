@@ -140,6 +140,22 @@ class CohortReportService
         }
 
         $rows = $rows->values();
+        $gradeSummary = collect([7, 8, 9])->map(function (int $grade) use ($rows): array {
+            $gradeRows = $rows->where('grade', $grade);
+
+            return [
+                'grade' => $grade,
+                'grade_label' => [7 => 'VII', 8 => 'VIII', 9 => 'IX'][$grade],
+                'opening' => (int) $gradeRows->sum('reported_opening'),
+                'incoming' => (int) $gradeRows->sum('reported_incoming'),
+                'outgoing' => (int) $gradeRows->sum('reported_outgoing'),
+                'non_mutation_outgoing' => (int) $gradeRows->sum('reported_non_mutation_outgoing'),
+                'expected' => (int) $gradeRows->sum('reported_expected'),
+                'actual' => (int) $gradeRows->sum('actual'),
+                'unexplained_exit' => (int) $gradeRows->sum('unexplained_exit'),
+                'other_addition' => (int) $gradeRows->sum('other_addition'),
+            ];
+        });
         $summary = [];
         foreach (['opening', 'incoming', 'outgoing', 'non_mutation_outgoing', 'expected', 'actual', 'unexplained_exit', 'other_addition'] as $field) {
             $summary[$field] = (int) $rows->sum($field);
@@ -169,6 +185,7 @@ class CohortReportService
 
         return [
             'rows' => $rows->all(),
+            'grade_summary' => $gradeSummary->all(),
             'summary' => $summary,
             'reported_summary' => $reportedSummary,
             'uses_calculated_opening' => $usesCalculatedOpening,
@@ -194,6 +211,7 @@ class CohortReportService
                 DB::raw('COUNT(*) as total')
             )
             ->where('mutasi_masuk.status', 'Selesai')
+            ->whereNull('mutasi_masuk.deleted_at')
             ->whereIn('mutasi_masuk.npsn_sekolah_tujuan', $npsns)
             ->whereIn('mutasi_masuk_siswa.kelas', ['7', 'VII', '8', 'VIII', '9', 'IX']);
 
@@ -213,6 +231,7 @@ class CohortReportService
         $query = DB::table('mutasi_keluar')
             ->select('npsn_sekolah_asal as npsn', 'kelas', 'jenis_kelamin', DB::raw('COUNT(*) as total'))
             ->where('status', 'Selesai')
+            ->whereNull('deleted_at')
             ->whereIn('npsn_sekolah_asal', $npsns)
             ->whereIn('kelas', ['7', 'VII', '8', 'VIII', '9', 'IX']);
 
@@ -290,6 +309,7 @@ class CohortReportService
     {
         return [
             'rows' => [],
+            'grade_summary' => [],
             'summary' => array_fill_keys([
                 'opening', 'incoming', 'outgoing', 'non_mutation_outgoing', 'expected', 'actual', 'unexplained_exit', 'other_addition',
             ], 0),
