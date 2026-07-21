@@ -25,8 +25,10 @@ class CohortReportService
         ?int $schoolId = null,
         ?string $schoolStatus = null,
     ): array {
+        $isProvisional = $academicYear->status === AcademicYear::STATUS_ACTIVE;
+
         if (! $this->available()) {
-            return $this->emptyReport();
+            return array_merge($this->emptyReport(), ['is_provisional' => $isProvisional]);
         }
 
         // The reverse opening-count calculation is a one-year compatibility
@@ -153,6 +155,21 @@ class CohortReportService
                 'other_addition' => (int) $gradeRows->sum('other_addition'),
             ];
         });
+        $provisionalGradeSummary = collect([7, 8, 9])->map(function (int $grade) use ($rows): array {
+            $gradeRows = $rows->where('grade', $grade);
+
+            return [
+                'grade' => $grade,
+                'grade_label' => [7 => 'VII', 8 => 'VIII', 9 => 'IX'][$grade],
+                'opening' => (int) $gradeRows->sum('opening'),
+                'incoming' => (int) $gradeRows->sum('incoming'),
+                'outgoing' => (int) $gradeRows->sum('outgoing'),
+                'non_mutation_outgoing' => (int) $gradeRows->sum('non_mutation_outgoing'),
+                'expected' => (int) $gradeRows->sum('expected'),
+                'actual' => (int) $gradeRows->sum('actual'),
+                'has_actual' => (int) $gradeRows->sum('reported_units') > 0,
+            ];
+        });
         $summary = [];
         foreach (['opening', 'incoming', 'outgoing', 'non_mutation_outgoing', 'expected', 'actual', 'unexplained_exit', 'other_addition'] as $field) {
             $summary[$field] = (int) $rows->sum($field);
@@ -183,9 +200,11 @@ class CohortReportService
         return [
             'rows' => $rows->all(),
             'grade_summary' => $gradeSummary->all(),
+            'provisional_grade_summary' => $provisionalGradeSummary->all(),
             'summary' => $summary,
             'reported_summary' => $reportedSummary,
             'uses_calculated_opening' => $usesCalculatedOpening,
+            'is_provisional' => $isProvisional,
             'school_count' => $schoolCount,
             'reported_school_count' => $reportedSchoolCount,
             'missing_school_count' => max(0, $schoolCount - $reportedSchoolCount),
@@ -307,6 +326,7 @@ class CohortReportService
         return [
             'rows' => [],
             'grade_summary' => [],
+            'provisional_grade_summary' => [],
             'summary' => array_fill_keys([
                 'opening', 'incoming', 'outgoing', 'non_mutation_outgoing', 'expected', 'actual', 'unexplained_exit', 'other_addition',
             ], 0),
@@ -315,6 +335,7 @@ class CohortReportService
                 'calculated_opening', 'opening_variance', 'unexplained_exit', 'other_addition',
             ], 0),
             'uses_calculated_opening' => false,
+            'is_provisional' => false,
             'school_count' => 0,
             'reported_school_count' => 0,
             'missing_school_count' => 0,

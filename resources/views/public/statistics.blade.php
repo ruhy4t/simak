@@ -10,7 +10,7 @@
             ? \Carbon\Carbon::create($year, $month)->translatedFormat('F Y')
             : 'Tahun '.$year;
         $schoolFilterLabel = $selectedSchool
-            ? 'NPSN '.$selectedSchool->npsn
+            ? $selectedSchool->nama.' · NPSN '.$selectedSchool->npsn
             : ($schoolStatus ? 'SMP '.$schoolStatus : 'Seluruh SMP Kota Bogor');
     @endphp
 
@@ -97,6 +97,16 @@
                     <i class="bi bi-funnel"></i> Terapkan
                 </button>
             </form>
+
+            @if($selectedSchool)
+                <div class="mt-4 flex flex-col gap-1 rounded-xl border border-sky-100 bg-sky-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-wider text-sky-700">Sekolah Terpilih</p>
+                        <p class="mt-0.5 font-bold text-sky-950">{{ $selectedSchool->nama }}</p>
+                    </div>
+                    <p class="text-sm font-semibold text-sky-800">NPSN {{ $selectedSchool->npsn }}</p>
+                </div>
+            @endif
         </section>
 
         <section aria-label="Ringkasan statistik {{ $periodLabel }}" class="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -144,7 +154,7 @@
 
             <x-cohort-summary :cohort="$cohort" title="Rekonsiliasi {{ $schoolFilterLabel }} · {{ $cohortYear->name }}"
                 :description="$cohortYear->is_active
-                    ? 'Tahun pelajaran masih aktif. Angka bersifat sementara dan hanya mencakup sekolah yang telah mengunci data akhir.'
+                    ? 'Tahun pelajaran masih aktif. Ringkasan berjalan mencakup seluruh sekolah yang memiliki data awal; data akhir hanya tersedia setelah dikunci.'
                     : 'Hanya data agregat sekolah yang telah mengunci data akhir.'"
                 :compact="true" />
         @endif

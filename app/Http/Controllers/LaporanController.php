@@ -582,7 +582,7 @@ class LaporanController extends Controller
 
             if ($cohortYear) {
                 $cohort = Cache::remember(
-                    "public.statistics.reconciliation.v1.{$statisticsVersion}.{$cohortYear->id}.status-{$statusKey}.npsn-{$npsnKey}",
+                    "public.statistics.reconciliation.v2.{$statisticsVersion}.{$cohortYear->id}.status-{$statusKey}.npsn-{$npsnKey}",
                     now()->addMinutes(30),
                     fn () => $cohortService->report($cohortYear, $selectedSchool?->id, $schoolStatus)
                 );

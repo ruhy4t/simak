@@ -1,13 +1,22 @@
 @props(['cohort', 'title' => 'Rekonsiliasi Tahunan', 'description' => null, 'compact' => false])
 
 @php
-    $summary = $cohort['reported_summary'];
-    $usesCalculatedOpening = $cohort['uses_calculated_opening'] ?? false;
+    $isProvisional = $cohort['is_provisional'] ?? false;
+    $summary = $isProvisional ? $cohort['summary'] : $cohort['reported_summary'];
+    $hasActual = !$isProvisional || $cohort['reported_school_count'] > 0;
+    $summary['actual'] = $hasActual ? $summary['actual'] : null;
+    $usesCalculatedOpening = !$isProvisional && ($cohort['uses_calculated_opening'] ?? false);
+    $gradeSummary = $isProvisional
+        ? ($cohort['provisional_grade_summary'] ?? [])
+        : ($cohort['grade_summary'] ?? []);
+    $expectedLabel = $isProvisional ? 'Perkiraan Saat Ini' : 'Perkiraan Akhir';
+    $actualLabel = $isProvisional ? 'Data Akhir Terkunci' : 'Akhir Aktual';
     $chartPayload = [
         'labels' => array_values(array_filter([
             'Data Awal Tercatat',
             $usesCalculatedOpening ? 'Data Awal Hasil Hitung' : null,
-            'Mutasi Masuk', 'Mutasi Keluar', 'Keluar Non-Mutasi', 'Perkiraan Akhir', 'Data Akhir Aktual',
+            'Mutasi Masuk', 'Mutasi Keluar', 'Keluar Non-Mutasi', $expectedLabel,
+            $hasActual ? $actualLabel : null,
         ])),
         'values' => array_values(array_filter([
             $summary['opening'],
@@ -30,9 +39,12 @@
         ['Mutasi Masuk', $summary['incoming'], 'border-sky-100 bg-sky-50', 'text-sky-700', 'text-sky-950'],
         ['Mutasi Keluar', $summary['outgoing'], 'border-orange-100 bg-orange-50', 'text-orange-700', 'text-orange-950'],
         ['Keluar Non-Mutasi', $summary['non_mutation_outgoing'], 'border-rose-100 bg-rose-50', 'text-rose-700', 'text-rose-950'],
-        ['Perkiraan Akhir', $summary['expected'], 'border-indigo-100 bg-indigo-50', 'text-indigo-700', 'text-indigo-950'],
-        ['Akhir Aktual', $summary['actual'], 'border-emerald-100 bg-emerald-50', 'text-emerald-700', 'text-emerald-950'],
+        [$expectedLabel, $summary['expected'], 'border-indigo-100 bg-indigo-50', 'text-indigo-700', 'text-indigo-950'],
+        [$actualLabel, $summary['actual'], 'border-emerald-100 bg-emerald-50', 'text-emerald-700', 'text-emerald-950'],
     ]);
+    $hasDisplayData = $isProvisional
+        ? $cohort['school_count'] > 0
+        : $cohort['reported_school_count'] > 0;
 @endphp
 
 <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs sm:p-6">
@@ -53,11 +65,19 @@
         </div>
         <span class="inline-flex w-fit items-center gap-2 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-600">
             <i class="bi bi-building-check"></i>
-            {{ number_format($cohort['reported_school_count']) }}/{{ number_format($cohort['school_count']) }} sekolah melapor
+            {{ number_format($cohort['reported_school_count']) }}/{{ number_format($cohort['school_count']) }}
+            {{ $isProvisional ? 'data akhir terkunci' : 'sekolah melapor' }}
         </span>
     </div>
 
-    @if($cohort['reported_school_count'] > 0)
+    @if($hasDisplayData)
+        @if($isProvisional)
+            <div class="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                <p class="font-bold">Data sementara tahun berjalan, bukan angka final.</p>
+                <p class="mt-1 leading-5">Perkiraan saat ini dihitung dari data awal, mutasi masuk, mutasi keluar, dan keluar non-mutasi yang telah tercatat.</p>
+            </div>
+        @endif
+
         @if($usesCalculatedOpening)
             <details class="mt-6 rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900" @if(!$compact) open @endif>
                 @if($compact)<summary class="cursor-pointer font-bold">Cara menghitung data awal</summary>@endif
@@ -70,12 +90,12 @@
             @foreach($summaryCards as [$label, $value, $cardClass, $labelClass, $valueClass])
                 <article class="rounded-xl border p-4 {{ $cardClass }}">
                     <p class="text-xs font-semibold {{ $labelClass }}">{{ $label }}</p>
-                    <p class="mt-1 text-2xl font-black {{ $valueClass }}">{{ number_format($value) }}</p>
+                    <p class="mt-1 text-2xl font-black {{ $valueClass }}">{{ $value === null ? '—' : number_format($value) }}</p>
                 </article>
             @endforeach
         </div>
 
-        @if(!empty($cohort['grade_summary']))
+        @if(!empty($gradeSummary))
             <div class="mt-6 overflow-hidden rounded-xl border border-slate-200">
                 <div class="border-b border-slate-200 bg-slate-50 px-4 py-3">
                     <h3 class="font-bold text-slate-900">Jumlah per Kelas</h3>
@@ -89,16 +109,18 @@
                                 <th class="px-4 py-3 text-right">Masuk</th>
                                 <th class="px-4 py-3 text-right">Keluar</th>
                                 <th class="px-4 py-3 text-right">Non-Mutasi</th>
-                                <th class="px-4 py-3 text-right">Perkiraan Akhir</th>
-                                <th class="px-4 py-3 text-right">Akhir Aktual</th>
+                                <th class="px-4 py-3 text-right">{{ $expectedLabel }}</th>
+                                <th class="px-4 py-3 text-right">{{ $actualLabel }}</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100">
-                            @foreach($cohort['grade_summary'] as $grade)
+                            @foreach($gradeSummary as $grade)
                                 <tr class="hover:bg-slate-50">
                                     <td class="px-4 py-3 font-black text-slate-900">{{ $grade['grade_label'] }}</td>
                                     @foreach(['opening', 'incoming', 'outgoing', 'non_mutation_outgoing', 'expected', 'actual'] as $field)
-                                        <td class="px-4 py-3 text-right font-semibold text-slate-700">{{ number_format($grade[$field]) }}</td>
+                                        <td class="px-4 py-3 text-right font-semibold text-slate-700">
+                                            {{ $isProvisional && $field === 'actual' && !($grade['has_actual'] ?? false) ? '—' : number_format($grade[$field]) }}
+                                        </td>
                                     @endforeach
                                 </tr>
                             @endforeach
@@ -119,17 +141,19 @@
                     <p class="mt-1 text-3xl font-black text-rose-950">{{ number_format($summary['non_mutation_outgoing']) }}</p>
                     @unless($compact)<p class="mt-1 text-xs leading-5 text-rose-700">Data individual yang telah dicatat oleh sekolah.</p>@endunless
                 </article>
-                <article class="rounded-xl border border-violet-100 bg-violet-50 p-4">
-                    <p class="text-sm font-bold text-violet-800">Selisih keluar belum terdata</p>
-                    <p class="mt-1 text-3xl font-black text-violet-950">{{ number_format($summary['unexplained_exit']) }}</p>
-                    @unless($compact)<p class="mt-1 text-xs leading-5 text-violet-700">Kekurangan data akhir setelah seluruh laporan terverifikasi dihitung.</p>@endunless
-                </article>
-                <article class="rounded-xl border border-amber-100 bg-amber-50 p-4">
-                    <p class="text-sm font-bold text-amber-800">Penambahan belum tercatat</p>
-                    <p class="mt-1 text-3xl font-black text-amber-950">{{ number_format($summary['other_addition']) }}</p>
-                    @unless($compact)<p class="mt-1 text-xs leading-5 text-amber-700">Selisih saat data aktual lebih besar dari perkiraan akhir.</p>@endunless
-                </article>
-                @if($compact)
+                @unless($isProvisional)
+                    <article class="rounded-xl border border-violet-100 bg-violet-50 p-4">
+                        <p class="text-sm font-bold text-violet-800">Selisih keluar belum terdata</p>
+                        <p class="mt-1 text-3xl font-black text-violet-950">{{ number_format($summary['unexplained_exit']) }}</p>
+                        @unless($compact)<p class="mt-1 text-xs leading-5 text-violet-700">Kekurangan data akhir setelah seluruh laporan terverifikasi dihitung.</p>@endunless
+                    </article>
+                    <article class="rounded-xl border border-amber-100 bg-amber-50 p-4">
+                        <p class="text-sm font-bold text-amber-800">Penambahan belum tercatat</p>
+                        <p class="mt-1 text-3xl font-black text-amber-950">{{ number_format($summary['other_addition']) }}</p>
+                        @unless($compact)<p class="mt-1 text-xs leading-5 text-amber-700">Selisih saat data aktual lebih besar dari perkiraan akhir.</p>@endunless
+                    </article>
+                @endunless
+                @if($compact && !$isProvisional)
                     <details class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600">
                         <summary class="cursor-pointer font-bold text-slate-700">Penjelasan indikator</summary>
                         <div class="mt-2 space-y-2 leading-5">
@@ -144,8 +168,8 @@
     @else
         <div class="mt-6 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-5 py-10 text-center">
             <i class="bi bi-clipboard-data text-3xl text-slate-400"></i>
-            <p class="mt-3 font-bold text-slate-700">Data akhir aktual belum tersedia.</p>
-            <p class="mt-1 text-sm text-slate-500">Grafik akan tampil setelah sekolah pertama mengunci data akhir.</p>
+            <p class="mt-3 font-bold text-slate-700">{{ $isProvisional ? 'Data awal tahun aktif belum tersedia.' : 'Data akhir aktual belum tersedia.' }}</p>
+            <p class="mt-1 text-sm text-slate-500">{{ $isProvisional ? 'Ringkasan akan tampil setelah data awal sekolah tersedia.' : 'Grafik akan tampil setelah sekolah pertama mengunci data akhir.' }}</p>
         </div>
     @endif
 </section>

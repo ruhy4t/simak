@@ -83,6 +83,28 @@ class CohortReportTest extends TestCase
         $this->assertSame(0, $report['reported_summary']['opening_variance']);
     }
 
+    public function test_active_year_displays_provisional_totals_without_locked_closing_counts(): void
+    {
+        [$year] = $this->seedSchoolAndYear(false);
+
+        $report = app(CohortReportService::class)->report($year);
+
+        $this->assertTrue($report['is_provisional']);
+        $this->assertSame(0, $report['reported_school_count']);
+        $this->assertSame(18, $report['summary']['opening']);
+        $this->assertSame(18, $report['summary']['expected']);
+        $this->assertSame(18, $report['provisional_grade_summary'][0]['opening']);
+        $this->assertFalse($report['provisional_grade_summary'][0]['has_actual']);
+
+        $this->get('/statistik-mutasi?year=2026&academic_year='.$year->id)
+            ->assertOk()
+            ->assertSee('Data sementara tahun berjalan, bukan angka final.')
+            ->assertSee('Perkiraan Saat Ini')
+            ->assertSee('Data Akhir Terkunci')
+            ->assertSee('—')
+            ->assertDontSee('Data akhir aktual belum tersedia.');
+    }
+
     public function test_school_can_submit_closing_counts_once_and_values_are_locked(): void
     {
         [$year, $schoolId] = $this->seedSchoolAndYear(false);
@@ -284,6 +306,32 @@ class CohortReportTest extends TestCase
         $this->assertContains($includedPrivateSchool, DB::table('satuan_pendidikan')->pluck('id')->all());
     }
 
+    public function test_npsn_filter_scopes_reconciliation_and_cohort_and_displays_school_name(): void
+    {
+        [$year] = $this->seedSchoolAndYear(false);
+        $this->insertSchoolWithCounts($year, [
+            'npsn' => '22222222',
+            'nama' => 'SMP Pembanding',
+            'bentuk_pendidikan' => 'SMP',
+            'status_sp' => 'Swasta',
+            'kota' => 'Kota Bogor',
+            'is_local' => true,
+        ], 100);
+
+        $this->get('/statistik-mutasi?year=2026&npsn=12345678&academic_year='.$year->id.'&cohort_entry_year='.$year->id)
+            ->assertOk()
+            ->assertViewHas('selectedSchool', fn ($school) => $school?->nama === 'SMP Uji Kohort')
+            ->assertViewHas('cohort', fn (array $report) => $report['school_count'] === 1
+                && $report['summary']['opening'] === 18)
+            ->assertViewHas('longitudinalCohort', fn (array $report) => $report['summary']['initial'] === 18
+                && $report['stages'][0]['school_count'] === 1)
+            ->assertSee('Sekolah Terpilih')
+            ->assertSee('SMP Uji Kohort')
+            ->assertSee('NPSN 12345678')
+            ->assertSee('Rekonsiliasi SMP Uji Kohort')
+            ->assertSee('Angkatan 2026/2027 · SMP Uji Kohort');
+    }
+
     public function test_internal_annual_reconciliation_is_available_for_active_and_closed_years(): void
     {
         [$year] = $this->seedSchoolAndYear(true);
@@ -296,7 +344,7 @@ class CohortReportTest extends TestCase
             ->assertSee('Kohort Angkatan')
             ->assertSee('Rekonsiliasi SMP Uji Kohort')
             ->assertSee('2026/2027 (Aktif)')
-            ->assertSee('Rekonsiliasi sementara tahun berjalan');
+            ->assertSee('Ringkasan sementara tahun berjalan');
 
         $year->update([
             'status' => AcademicYear::STATUS_CLOSED,

@@ -51,7 +51,7 @@
         @if($academicYear && $cohort)
             <x-cohort-summary :cohort="$cohort" title="Rekonsiliasi {{ $school?->nama ?? 'Kota Bogor' }} · {{ $academicYear->name }}"
                 :description="$academicYear->is_active
-                    ? 'Rekonsiliasi sementara tahun berjalan berdasarkan data akhir yang sudah dikunci sekolah.'
+                    ? 'Ringkasan sementara tahun berjalan berdasarkan data awal dan perubahan siswa yang telah tercatat.'
                     : 'Perbandingan data awal, perubahan siswa, dan data akhir aktual pada satu tahun pelajaran.'" />
 
             <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white">
