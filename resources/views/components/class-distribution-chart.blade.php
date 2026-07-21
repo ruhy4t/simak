@@ -41,4 +41,16 @@
             role="img"
             aria-label="Grafik mutasi masuk dan keluar untuk kelas VII, VIII, dan IX"></canvas>
     </div>
+
+    <div class="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3" aria-label="Ringkasan jumlah mutasi per kelas">
+        @foreach($classData['labels'] as $index => $label)
+            <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Kelas {{ $label }}</p>
+                <div class="mt-2 flex items-center justify-between gap-3 text-sm">
+                    <span class="font-semibold text-sky-700">Masuk {{ number_format($classData['masuk'][$index] ?? 0) }}</span>
+                    <span class="font-semibold text-orange-700">Keluar {{ number_format($classData['keluar'][$index] ?? 0) }}</span>
+                </div>
+            </div>
+        @endforeach
+    </div>
 </section>

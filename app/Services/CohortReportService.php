@@ -5,19 +5,16 @@ namespace App\Services;
 use App\Models\AcademicYear;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
 class CohortReportService
 {
+    public function __construct(private readonly ReportingSchema $reportingSchema)
+    {
+    }
+
     public function available(): bool
     {
-        return Schema::hasTable('academic_years')
-            && Schema::hasTable('satuan_pendidikan_student_counts')
-            && Schema::hasColumns('satuan_pendidikan_student_counts', [
-                'closing_male_count',
-                'closing_female_count',
-                'closing_confirmed_at',
-            ]);
+        return $this->reportingSchema->cohortAvailable();
     }
 
     /**
@@ -198,7 +195,7 @@ class CohortReportService
 
     private function incomingTotals(AcademicYear $academicYear, Collection $npsns): Collection
     {
-        if ($npsns->isEmpty() || ! Schema::hasTable('mutasi_masuk') || ! Schema::hasTable('mutasi_masuk_siswa')) {
+        if ($npsns->isEmpty() || ! $this->reportingSchema->longitudinalAvailable()) {
             return collect();
         }
 
@@ -224,7 +221,7 @@ class CohortReportService
 
     private function outgoingTotals(AcademicYear $academicYear, Collection $npsns): Collection
     {
-        if ($npsns->isEmpty() || ! Schema::hasTable('mutasi_keluar')) {
+        if ($npsns->isEmpty() || ! $this->reportingSchema->longitudinalAvailable()) {
             return collect();
         }
 
@@ -244,7 +241,7 @@ class CohortReportService
 
     private function nonMutationOutgoingTotals(AcademicYear $academicYear, Collection $npsns): Collection
     {
-        if ($npsns->isEmpty() || ! Schema::hasTable('non_mutation_student_exits')) {
+        if ($npsns->isEmpty() || ! $this->reportingSchema->hasNonMutationExits()) {
             return collect();
         }
 

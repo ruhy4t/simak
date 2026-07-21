@@ -5,17 +5,16 @@ namespace App\Services;
 use App\Models\AcademicYear;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
 class LongitudinalCohortService
 {
+    public function __construct(private readonly ReportingSchema $reportingSchema)
+    {
+    }
+
     public function available(): bool
     {
-        return Schema::hasTable('academic_years')
-            && Schema::hasTable('satuan_pendidikan_student_counts')
-            && Schema::hasTable('mutasi_masuk')
-            && Schema::hasTable('mutasi_masuk_siswa')
-            && Schema::hasTable('mutasi_keluar');
+        return $this->reportingSchema->longitudinalAvailable();
     }
 
     /**
@@ -233,7 +232,7 @@ class LongitudinalCohortService
 
     private function nonMutationOutgoingTotal(AcademicYear $academicYear, int $grade, Collection $schoolIds): int
     {
-        if ($schoolIds->isEmpty() || ! Schema::hasTable('non_mutation_student_exits')) {
+        if ($schoolIds->isEmpty() || ! $this->reportingSchema->hasNonMutationExits()) {
             return 0;
         }
 

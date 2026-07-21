@@ -688,30 +688,32 @@ class LaporanController extends Controller
             ->whereBetween('mutasi_masuk.tanggal_pengajuan', [$periodStart, $periodEnd])
             ->where('mutasi_masuk.status', 'Selesai');
 
-        $studentCounts = DB::table('mutasi_masuk_siswa')
-            ->selectRaw('id_mutasi, COUNT(*) as total_siswa')
-            ->groupBy('id_mutasi');
-        $masukTotalQuery = DB::table('mutasi_masuk')
-            ->leftJoinSub($studentCounts, 'student_counts', function ($join): void {
-                $join->on('mutasi_masuk.id_mutasi', '=', 'student_counts.id_mutasi');
-            })
+        $legacyMasukQuery = DB::table('mutasi_masuk')
             ->whereNull('mutasi_masuk.deleted_at')
             ->whereBetween('mutasi_masuk.tanggal_pengajuan', [$periodStart, $periodEnd])
-            ->where('mutasi_masuk.status', 'Selesai');
+            ->where('mutasi_masuk.status', 'Selesai')
+            ->whereNotExists(function ($query): void {
+                $query->selectRaw('1')
+                    ->from('mutasi_masuk_siswa')
+                    ->whereColumn('mutasi_masuk_siswa.id_mutasi', 'mutasi_masuk.id_mutasi');
+            });
 
         if ($user && in_array($role, ['Sekolah', 'Operator'], true)) {
             $npsn = $user->sekolah->npsn ?? $user->npsn;
             $masukQuery->where('mutasi_masuk.npsn_sekolah_tujuan', $npsn);
-            $masukTotalQuery->where('mutasi_masuk.npsn_sekolah_tujuan', $npsn);
+            $legacyMasukQuery->where('mutasi_masuk.npsn_sekolah_tujuan', $npsn);
         } elseif (! $user && $publicSchoolNpsns !== null) {
             $masukQuery->whereIn('mutasi_masuk.npsn_sekolah_tujuan', $publicSchoolNpsns);
-            $masukTotalQuery->whereIn('mutasi_masuk.npsn_sekolah_tujuan', $publicSchoolNpsns);
+            $legacyMasukQuery->whereIn('mutasi_masuk.npsn_sekolah_tujuan', $publicSchoolNpsns);
         }
 
         $masukResults = $masukQuery->groupBy('unit')->get()->keyBy('unit');
-        $masukTotal = (int) $masukTotalQuery
-            ->selectRaw('COALESCE(SUM(CASE WHEN COALESCE(student_counts.total_siswa, 0) > 0 THEN student_counts.total_siswa ELSE COALESCE(mutasi_masuk.jumlah_siswa, 0) END), 0) as total')
-            ->value('total');
+        $masukTotal = (int) $masukResults->sum(
+            fn (object $row): int => (int) $row->dalam_kota
+                + (int) $row->luar_kota
+                + (int) $row->luar_negeri
+        );
+        $masukTotal += (int) $legacyMasukQuery->sum('mutasi_masuk.jumlah_siswa');
 
         // --- MUTASI KELUAR ---
         $keluarQuery = MutasiKeluar::selectRaw("$selectUnitKeluar,
@@ -724,22 +726,19 @@ class LaporanController extends Controller
             ->whereNull('deleted_at')
             ->whereBetween('tanggal_pengajuan', [$periodStart, $periodEnd])
             ->where('status', 'Selesai');
-        $keluarTotalQuery = DB::table('mutasi_keluar')
-            ->whereNull('deleted_at')
-            ->whereBetween('tanggal_pengajuan', [$periodStart, $periodEnd])
-            ->where('status', 'Selesai');
-
         if ($user && in_array($role, ['Sekolah', 'Operator'], true)) {
             $npsn = $user->sekolah->npsn ?? $user->npsn;
             $keluarQuery->where('npsn_sekolah_asal', $npsn);
-            $keluarTotalQuery->where('npsn_sekolah_asal', $npsn);
         } elseif (! $user && $publicSchoolNpsns !== null) {
             $keluarQuery->whereIn('mutasi_keluar.npsn_sekolah_asal', $publicSchoolNpsns);
-            $keluarTotalQuery->whereIn('npsn_sekolah_asal', $publicSchoolNpsns);
         }
 
         $keluarResults = $keluarQuery->groupBy('unit')->get()->keyBy('unit');
-        $keluarTotal = $keluarTotalQuery->count();
+        $keluarTotal = (int) $keluarResults->sum(
+            fn (object $row): int => (int) $row->dalam_kota
+                + (int) $row->luar_kota
+                + (int) $row->luar_negeri
+        );
 
         // Format data for Chart
         $data = [
