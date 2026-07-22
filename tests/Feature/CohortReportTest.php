@@ -239,7 +239,7 @@ class CohortReportTest extends TestCase
 
         $this->get('/statistik-mutasi?year=2026&academic_year='.$year->id)
             ->assertOk()
-            ->assertSee('Rekonsiliasi Seluruh SMP Kota Bogor')
+            ->assertSee('Rekonsiliasi Seluruh SMP/SPK SMP Kota Bogor')
             ->assertSee('2026/2027 (Aktif)')
             ->assertSee('Tahun pelajaran masih aktif')
             ->assertViewHas('cohortYears', fn ($years) => ! $years->contains('id', $upcomingYear->id))
@@ -254,7 +254,7 @@ class CohortReportTest extends TestCase
 
         $this->get('/statistik-mutasi?year=2026&academic_year='.$year->id)
             ->assertOk()
-            ->assertSee('Rekonsiliasi Seluruh SMP Kota Bogor')
+            ->assertSee('Rekonsiliasi Seluruh SMP/SPK SMP Kota Bogor')
             ->assertSee('id="rekonsiliasi-tahunan"', false)
             ->assertSee('action="'.route('public.statistics').'#rekonsiliasi-tahunan"', false)
             ->assertSee('Jumlah per Kelas')
@@ -271,6 +271,14 @@ class CohortReportTest extends TestCase
             'npsn' => '22222222',
             'nama' => 'SMP Swasta Kota Bogor',
             'bentuk_pendidikan' => 'SMP',
+            'status_sp' => 'Swasta',
+            'kota' => 'Kota Bogor',
+            'is_local' => true,
+        ]);
+        $includedSpkSchool = $this->insertSchoolWithCounts($year, [
+            'npsn' => '55555555',
+            'nama' => 'SPK SMP Kota Bogor',
+            'bentuk_pendidikan' => 'SPK SMP',
             'status_sp' => 'Swasta',
             'kota' => 'Kota Bogor',
             'is_local' => true,
@@ -297,13 +305,14 @@ class CohortReportTest extends TestCase
         $publicReport = app(CohortReportService::class)->report($year, null, 'Negeri');
         $privateReport = app(CohortReportService::class)->report($year, null, 'Swasta');
 
-        $this->assertSame(2, $report['school_count']);
-        $this->assertSame(2, $report['reported_school_count']);
-        $this->assertSame(24, $report['reported_summary']['opening']);
-        $this->assertSame(23, $report['reported_summary']['actual']);
+        $this->assertSame(3, $report['school_count']);
+        $this->assertSame(3, $report['reported_school_count']);
+        $this->assertSame(30, $report['reported_summary']['opening']);
+        $this->assertSame(29, $report['reported_summary']['actual']);
         $this->assertSame(1, $publicReport['school_count']);
-        $this->assertSame(1, $privateReport['school_count']);
+        $this->assertSame(2, $privateReport['school_count']);
         $this->assertContains($includedPrivateSchool, DB::table('satuan_pendidikan')->pluck('id')->all());
+        $this->assertContains($includedSpkSchool, DB::table('satuan_pendidikan')->pluck('id')->all());
     }
 
     public function test_npsn_filter_scopes_reconciliation_and_cohort_and_displays_school_name(): void
@@ -356,6 +365,51 @@ class CohortReportTest extends TestCase
             ->assertOk()
             ->assertViewHas('academicYear', fn (AcademicYear $selectedYear) => $selectedYear->is($year))
             ->assertSee('2026/2027');
+    }
+
+    public function test_dinas_school_filter_only_lists_bogor_smp_and_spk_smp_with_search_and_reset(): void
+    {
+        [$year] = $this->seedSchoolAndYear(true);
+        $this->insertSchoolWithCounts($year, [
+            'npsn' => '22222222',
+            'nama' => 'SPK SMP Bogor Raya',
+            'bentuk_pendidikan' => 'SPK SMP',
+            'status_sp' => 'Swasta',
+            'kota' => 'Kota Bogor',
+            'is_local' => true,
+        ]);
+        $this->insertSchoolWithCounts($year, [
+            'npsn' => '33333333',
+            'nama' => 'SMP Bandung Tidak Tampil',
+            'bentuk_pendidikan' => 'SMP',
+            'status_sp' => 'Negeri',
+            'kota' => 'Kota Bandung',
+            'is_local' => false,
+        ]);
+        $this->insertSchoolWithCounts($year, [
+            'npsn' => '44444444',
+            'nama' => 'SD Bogor Tidak Tampil',
+            'bentuk_pendidikan' => 'SD',
+            'status_sp' => 'Negeri',
+            'kota' => 'Kota Bogor',
+            'is_local' => true,
+        ]);
+        $dinas = $this->createUser('dinas-cohort-filter', 'Dinas');
+
+        $this->actingAs($dinas)
+            ->get(route('laporan.kohort'))
+            ->assertOk()
+            ->assertViewHas('schools', fn ($schools) => $schools->pluck('nama')->all() === [
+                'SMP Uji Kohort',
+                'SPK SMP Bogor Raya',
+            ])
+            ->assertSee('Cari nama sekolah atau NPSN')
+            ->assertSee('Seluruh SMP/SPK SMP Kota Bogor')
+            ->assertSee('Reset Filter')
+            ->assertSee('x-data="cohortSchoolFilter"', false)
+            ->assertSee('SPK SMP Bogor Raya')
+            ->assertDontSee('SMP Bandung Tidak Tampil')
+            ->assertDontSee('SD Bogor Tidak Tampil');
     }
 
     public function test_longitudinal_cohort_follows_one_intake_from_grade_seven_to_nine(): void

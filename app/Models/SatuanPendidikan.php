@@ -71,7 +71,7 @@ class SatuanPendidikan extends Model
     // ========== SCOPES ==========
 
     /**
-     * Scope untuk SMP Kota Bogor saja
+     * Scope untuk SMP dan SPK SMP Kota Bogor saja.
      */
     public function scopeLocal($query)
     {
@@ -79,14 +79,14 @@ class SatuanPendidikan extends Model
     }
 
     /**
-     * SMP Negeri/Swasta yang berada di Kota Bogor dan menjadi cakupan mutasi.
+     * SMP/SPK SMP Negeri dan Swasta di Kota Bogor yang menjadi cakupan mutasi.
      */
     public function scopeEligibleBogorJuniorHigh($query)
     {
         return $query
             ->where('is_local', true)
             ->whereRaw('UPPER(TRIM(kota)) = ?', ['KOTA BOGOR'])
-            ->whereRaw('UPPER(TRIM(bentuk_pendidikan)) = ?', ['SMP'])
+            ->whereRaw('UPPER(TRIM(bentuk_pendidikan)) IN (?, ?)', ['SMP', 'SPK SMP'])
             ->whereIn('status_sp', ['Negeri', 'Swasta']);
     }
 

@@ -34,18 +34,37 @@
             @endif
 
             @if($schools->isNotEmpty())
-                <div>
-                    <label for="cohort-school" class="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500">Satuan Pendidikan</label>
-                    <select id="cohort-school" name="school" class="w-full rounded-xl border-slate-300 font-semibold">
-                        <option value="">Seluruh sekolah</option>
+                <div x-data="cohortSchoolFilter" class="space-y-2">
+                    <label for="cohort-school-search" class="block text-xs font-bold uppercase tracking-wider text-slate-500">Satuan Pendidikan</label>
+                    <div class="relative">
+                        <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                        <input id="cohort-school-search" type="search" x-model="search" @input="filterSchools"
+                            class="w-full rounded-xl border-slate-300 py-2 pl-9 pr-3 text-sm"
+                            placeholder="Cari nama sekolah atau NPSN" autocomplete="off">
+                    </div>
+                    <select id="cohort-school" name="school" x-ref="schoolSelect" class="w-full rounded-xl border-slate-300 font-semibold">
+                        <option value="">Seluruh SMP/SPK SMP Kota Bogor</option>
                         @foreach($schools as $schoolOption)
-                            <option value="{{ $schoolOption->id }}" @selected($school?->id === $schoolOption->id)>{{ $schoolOption->nama }}</option>
+                            <option value="{{ $schoolOption->id }}"
+                                data-search="{{ mb_strtolower($schoolOption->nama.' '.$schoolOption->npsn) }}"
+                                @selected($school?->id === $schoolOption->id)>
+                                {{ $schoolOption->nama }} · {{ $schoolOption->npsn }}
+                            </option>
                         @endforeach
                     </select>
+                    <p x-show="visibleCount === 0" x-cloak class="text-xs font-semibold text-amber-700">Sekolah tidak ditemukan.</p>
                 </div>
             @endif
 
-            <button class="rounded-xl bg-slate-900 px-5 py-2.5 font-bold text-white hover:bg-slate-700"><i class="bi bi-funnel"></i> Terapkan</button>
+            <div class="flex gap-2">
+                <button type="submit" class="flex-1 rounded-xl bg-slate-900 px-5 py-2.5 font-bold text-white hover:bg-slate-700">
+                    <i class="bi bi-funnel"></i> Terapkan
+                </button>
+                <a href="{{ route('laporan.kohort') }}"
+                    class="inline-flex items-center justify-center rounded-xl border border-slate-300 px-4 py-2.5 font-bold text-slate-700 hover:bg-slate-50">
+                    <i class="bi bi-arrow-counterclockwise mr-1"></i> Reset Filter
+                </a>
+            </div>
         </form>
 
         @if($academicYear && $cohort)

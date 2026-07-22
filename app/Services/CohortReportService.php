@@ -42,7 +42,7 @@ class CohortReportService
             ->whereIn('counts.grade', [7, 8, 9])
             ->where('schools.is_local', true)
             ->whereRaw('UPPER(TRIM(schools.kota)) = ?', ['KOTA BOGOR'])
-            ->whereRaw('UPPER(TRIM(schools.bentuk_pendidikan)) = ?', ['SMP'])
+            ->whereRaw('UPPER(TRIM(schools.bentuk_pendidikan)) IN (?, ?)', ['SMP', 'SPK SMP'])
             ->whereIn('schools.status_sp', ['Negeri', 'Swasta'])
             ->select([
                 'counts.satuan_pendidikan_id',

@@ -182,7 +182,7 @@ class LongitudinalCohortService
             ->where('counts.grade', $grade)
             ->where('schools.is_local', true)
             ->whereRaw('UPPER(TRIM(schools.kota)) = ?', ['KOTA BOGOR'])
-            ->whereRaw('UPPER(TRIM(schools.bentuk_pendidikan)) = ?', ['SMP'])
+            ->whereRaw('UPPER(TRIM(schools.bentuk_pendidikan)) IN (?, ?)', ['SMP', 'SPK SMP'])
             ->whereIn('schools.status_sp', ['Negeri', 'Swasta'])
             ->when($schoolId, fn ($query) => $query->where('counts.satuan_pendidikan_id', $schoolId))
             ->when(! $schoolId && $schoolStatus, fn ($query) => $query->where('schools.status_sp', $schoolStatus))

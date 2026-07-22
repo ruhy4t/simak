@@ -11,7 +11,7 @@
             : 'Tahun '.$year;
         $schoolFilterLabel = $selectedSchool
             ? $selectedSchool->nama.' · NPSN '.$selectedSchool->npsn
-            : ($schoolStatus ? 'SMP '.$schoolStatus : 'Seluruh SMP Kota Bogor');
+            : ($schoolStatus ? 'SMP/SPK SMP '.$schoolStatus : 'Seluruh SMP/SPK SMP Kota Bogor');
     @endphp
 
     <header class="border-b border-slate-800 bg-slate-950 text-white">

@@ -477,7 +477,7 @@ class LaporanController extends Controller
             $school = $user->sekolah;
             abort_unless($school, 404, 'Data sekolah tidak ditemukan.');
         } else {
-            $schools = SatuanPendidikan::query()
+            $schools = SatuanPendidikan::eligibleBogorJuniorHigh()
                 ->whereHas('studentCounts', function ($query) use ($academicYear, $cohortEntryYear): void {
                     $query->whereIn('academic_year_id', array_filter([
                         $academicYear?->id,
@@ -539,7 +539,7 @@ class LaporanController extends Controller
 
             if (! $selectedSchool) {
                 throw ValidationException::withMessages([
-                    'npsn' => 'NPSN tidak ditemukan atau bukan SMP Kota Bogor.',
+                    'npsn' => 'NPSN tidak ditemukan atau bukan SMP/SPK SMP Kota Bogor.',
                 ]);
             }
 

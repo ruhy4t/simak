@@ -237,4 +237,30 @@ export function registerAlpineComponents(Alpine) {
             }
         },
     }));
+
+    Alpine.data('cohortSchoolFilter', () => ({
+        search: '',
+        visibleCount: 0,
+
+        init() {
+            this.visibleCount = Math.max(0, this.$refs.schoolSelect.options.length - 1);
+        },
+
+        filterSchools(event) {
+            const keyword = event.target.value.trim().toLocaleLowerCase('id-ID');
+            let visibleCount = 0;
+
+            Array.from(this.$refs.schoolSelect.options).forEach((option, index) => {
+                if (index === 0) {
+                    return;
+                }
+
+                const matches = keyword === '' || option.dataset.search.includes(keyword);
+                option.hidden = !matches;
+                visibleCount += matches ? 1 : 0;
+            });
+
+            this.visibleCount = visibleCount;
+        },
+    }));
 }
