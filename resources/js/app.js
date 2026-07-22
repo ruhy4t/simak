@@ -1,6 +1,9 @@
 /**
  * SIMAK Application JavaScript Bundle
- * Includes: Alpine.js, Idle Timeout, Auto-Save
+ * Includes: Alpine.js, Auto-Save, charts, and AJAX navigation.
+ *
+ * Authenticated pages load the single session monitor from
+ * public/js/session-monitor.js via the application layout.
  */
 
 // Import Alpine.js
@@ -8,7 +11,6 @@ import Alpine from '@alpinejs/csp';
 import collapse from '@alpinejs/collapse';
 
 // Import custom modules
-import './idle-timeout.js';
 import './autosave.js';
 import './dashboard-charts.js';
 import './public-statistics-filters.js';
