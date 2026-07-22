@@ -115,4 +115,126 @@ export function registerAlpineComponents(Alpine) {
             this.showModal = true;
         },
     }));
+
+    Alpine.data('schoolUserManagement', () => ({
+        showAddModal: false,
+        submitting: false,
+
+        init() {
+            this.showAddModal = this.$root.dataset.openOnError === 'true';
+        },
+
+        openAddModal() {
+            this.showAddModal = true;
+            this.$nextTick(() => this.$refs.username?.focus());
+        },
+
+        closeAddModal() {
+            if (!this.submitting) {
+                this.showAddModal = false;
+            }
+        },
+
+        submitCreate(event) {
+            if (this.submitting) {
+                event.preventDefault();
+                return;
+            }
+
+            this.submitting = true;
+        },
+
+        confirmAction(event) {
+            if (!window.confirm(event.currentTarget.dataset.confirmation || 'Lanjutkan tindakan ini?')) {
+                event.preventDefault();
+            }
+        },
+    }));
+
+    Alpine.data('dinasUserManagement', () => ({
+        showAddModal: false,
+        submitting: false,
+        role: 'Operator',
+        schoolName: '',
+        npsnStatus: 'idle',
+        lookupSequence: 0,
+
+        init() {
+            this.showAddModal = this.$root.dataset.openOnError === 'true';
+            this.role = this.$root.dataset.initialRole || 'Operator';
+            this.schoolName = this.$root.dataset.initialSchoolName || '';
+        },
+
+        openAddModal() {
+            this.showAddModal = true;
+            this.$nextTick(() => this.$refs.username?.focus());
+        },
+
+        closeAddModal() {
+            if (!this.submitting) {
+                this.showAddModal = false;
+            }
+        },
+
+        changeRole(event) {
+            this.role = event.target.value;
+            this.npsnStatus = 'idle';
+        },
+
+        async lookupNpsn(event) {
+            const input = event.target;
+            const npsn = input.value.replace(/\D/g, '').slice(0, 8);
+            input.value = npsn;
+            const sequence = ++this.lookupSequence;
+
+            if (npsn.length !== 8) {
+                this.npsnStatus = 'idle';
+                return;
+            }
+
+            this.npsnStatus = 'loading';
+
+            try {
+                const response = await fetch(`${this.$root.dataset.lookupUrl}/${encodeURIComponent(npsn)}`, {
+                    headers: { Accept: 'application/json' },
+                });
+
+                if (!response.ok) {
+                    throw new Error(`NPSN lookup failed with status ${response.status}`);
+                }
+
+                const data = await response.json();
+                if (sequence !== this.lookupSequence) {
+                    return;
+                }
+
+                if (data.found) {
+                    this.schoolName = data.nama_sekolah;
+                    this.npsnStatus = 'found';
+                    return;
+                }
+
+                this.npsnStatus = 'not-found';
+            } catch (error) {
+                if (sequence === this.lookupSequence) {
+                    this.npsnStatus = 'error';
+                }
+            }
+        },
+
+        submitCreate(event) {
+            if (this.submitting) {
+                event.preventDefault();
+                return;
+            }
+
+            this.submitting = true;
+        },
+
+        confirmAction(event) {
+            if (!window.confirm(event.currentTarget.dataset.confirmation || 'Lanjutkan tindakan ini?')) {
+                event.preventDefault();
+            }
+        },
+    }));
 }

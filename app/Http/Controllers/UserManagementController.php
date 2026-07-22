@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -16,10 +18,12 @@ class UserManagementController extends Controller
      */
     private function sanitize($input): ?string
     {
-        if ($input === null || $input === '')
+        if ($input === null || $input === '') {
             return null;
+        }
         $input = str_replace("\0", '', $input);
         $input = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $input);
+
         return htmlspecialchars($input, ENT_QUOTES, 'UTF-8');
     }
 
@@ -36,7 +40,7 @@ class UserManagementController extends Controller
         }
 
         // Use User model so casts are applied
-        $operators = \App\Models\User::where('npsn', $user->npsn)
+        $operators = User::where('npsn', $user->npsn)
             ->where('role', 'Operator')
             ->orderBy('nama_pengguna')
             ->get();
@@ -58,6 +62,10 @@ class UserManagementController extends Controller
 
         if ($user->role !== 'Sekolah') {
             abort(403);
+        }
+
+        if (! preg_match('/^\d{8}$/', (string) $user->npsn)) {
+            return back()->with('error', 'NPSN akun sekolah belum valid. Hubungi administrator untuk memperbarui profil sekolah.');
         }
 
         // Base validation (without global unique)
@@ -87,7 +95,7 @@ class UserManagementController extends Controller
         $noKontak = $this->sanitize($request->no_kontak);
 
         // Generate random password
-        $password = Str::random(8) . rand(10, 99) . '@';
+        $password = Str::random(8).rand(10, 99).'@';
 
         try {
             DB::table('users')->insert([
@@ -108,8 +116,11 @@ class UserManagementController extends Controller
             Log::info("Operator {$username} created by {$user->username} for NPSN {$user->npsn}");
 
             return back()->with('success', "✅ Akun Operator baru berhasil dibuat!\n\n👤 Nama: {$namaPengguna}\n📧 Username: @{$username}\n🔑 Password: {$password}\n\n⚠️ Catat password ini, tidak bisa dilihat lagi!");
-        } catch (\Exception $e) {
-            Log::error("Failed to create operator {$username}: " . $e->getMessage());
+        } catch (UniqueConstraintViolationException $e) {
+            return back()->withErrors(['username' => 'Username sudah digunakan di sekolah ini.'])->withInput();
+        } catch (\Throwable $e) {
+            Log::error("Failed to create operator {$username}: ".$e->getMessage());
+
             return back()->with('error', '❌ Gagal membuat akun operator. Silakan coba lagi atau hubungi administrator.')->withInput();
         }
     }
@@ -129,12 +140,12 @@ class UserManagementController extends Controller
         $id = intval($id);
 
         // Use User model for proper casting
-        $operator = \App\Models\User::where('id', $id)
+        $operator = User::where('id', $id)
             ->where('npsn', $user->npsn)
             ->where('role', 'Operator')
             ->first();
 
-        if (!$operator) {
+        if (! $operator) {
             return back()->with('error', '❌ Operator tidak ditemukan atau bukan bagian dari sekolah Anda.');
         }
 
@@ -142,7 +153,7 @@ class UserManagementController extends Controller
             // Explicitly cast current status to boolean, then toggle
             // Accessor getIsActiveAttribute will return true if status === 'Aktif'
             $currentStatus = $operator->is_active;
-            $newStatus = !$currentStatus;
+            $newStatus = ! $currentStatus;
 
             // Update BOTH columns to handle potential schema drift (Production might have is_active column)
             $newStatusString = $newStatus ? 'Aktif' : 'Non Aktif';
@@ -161,7 +172,7 @@ class UserManagementController extends Controller
 
             return back()->with('success', "{$statusEmoji} Akun berhasil {$statusText}!\n\n👤 Nama: {$operator->nama_pengguna}\n📧 Username: @{$operator->username}\n📌 Status: Akun sekarang {$statusColor}.");
         } catch (\Throwable $e) {
-            Log::error("Operator toggle failed: " . $e->getMessage(), [
+            Log::error('Operator toggle failed: '.$e->getMessage(), [
                 'operator_id' => $id,
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
@@ -191,12 +202,12 @@ class UserManagementController extends Controller
             ->where('role', 'Operator')
             ->first();
 
-        if (!$operator) {
+        if (! $operator) {
             return back()->with('error', '❌ Operator tidak ditemukan atau bukan bagian dari sekolah Anda.');
         }
 
         // Generate new random password
-        $newPassword = Str::random(8) . rand(10, 99) . '@';
+        $newPassword = Str::random(8).rand(10, 99).'@';
 
         DB::table('users')->where('id', $id)->update([
             'password' => Hash::make($newPassword),

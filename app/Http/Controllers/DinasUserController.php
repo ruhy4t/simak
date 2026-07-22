@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -13,17 +15,19 @@ class DinasUserController extends Controller
 {
     private function sanitize($input): ?string
     {
-        if ($input === null || $input === '')
+        if ($input === null || $input === '') {
             return null;
+        }
         $input = str_replace("\0", '', $input);
         $input = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $input);
+
         return htmlspecialchars(trim($input), ENT_QUOTES, 'UTF-8');
     }
 
     public function index(Request $request)
     {
         $user = Auth::user();
-        if (!in_array($user->role, ['Dinas', 'SuperAdmin'])) {
+        if (! in_array($user->role, ['Dinas', 'SuperAdmin'])) {
             abort(403);
         }
 
@@ -33,7 +37,7 @@ class DinasUserController extends Controller
             : ['Sekolah', 'Operator'];
 
         // Query dengan User Model agar Accessor jalan
-        $query = \App\Models\User::whereIn('role', $managedRoles);
+        $query = User::whereIn('role', $managedRoles);
 
         // Filter by Role
         if ($request->filled('role') && in_array($request->role, $managedRoles)) {
@@ -42,7 +46,7 @@ class DinasUserController extends Controller
 
         // Search
         if ($request->filled('search')) {
-            $search = '%' . $request->search . '%';
+            $search = '%'.$request->search.'%';
             $query->where(function ($q) use ($search) {
                 $q->where('username', 'like', $search)
                     ->orWhere('nama_pengguna', 'like', $search)
@@ -62,12 +66,12 @@ class DinasUserController extends Controller
             ->groupBy('role', 'status')
             ->get();
 
-        $byRole = $allStats->groupBy('role')->map(fn($items) => $items->sum('total'));
+        $byRole = $allStats->groupBy('role')->map(fn ($items) => $items->sum('total'));
         $totalUsers = $byRole->sum();
 
-        $activeByRole = $allStats->where('status', 'Aktif')->groupBy('role')->map(fn($items) => $items->sum('total'));
+        $activeByRole = $allStats->where('status', 'Aktif')->groupBy('role')->map(fn ($items) => $items->sum('total'));
         // Inactive includes 'Non Aktif' or anything else
-        $inactiveByRole = $allStats->where('status', '!=', 'Aktif')->groupBy('role')->map(fn($items) => $items->sum('total'));
+        $inactiveByRole = $allStats->where('status', '!=', 'Aktif')->groupBy('role')->map(fn ($items) => $items->sum('total'));
 
         // Pass managed roles to view for filter dropdown
         $availableRoles = $managedRoles;
@@ -100,14 +104,14 @@ class DinasUserController extends Controller
 
         return response()->json([
             'found' => false,
-            'message' => 'NPSN tidak ditemukan atau bukan sekolah Kota Bogor'
+            'message' => 'NPSN tidak ditemukan atau bukan sekolah Kota Bogor',
         ]);
     }
 
     public function store(Request $request)
     {
         $user = Auth::user();
-        if (!in_array($user->role, ['Dinas', 'SuperAdmin'])) {
+        if (! in_array($user->role, ['Dinas', 'SuperAdmin'])) {
             abort(403);
         }
 
@@ -118,12 +122,12 @@ class DinasUserController extends Controller
         $rules = [
             'username' => 'required|string|max:50|regex:/^[a-zA-Z0-9_]+$/',
             'nama_pengguna' => 'required|string|max:100',
-            'role' => 'required|in:' . implode(',', $allowedRoles),
+            'role' => 'required|in:'.implode(',', $allowedRoles),
         ];
 
         // NPSN dan nama_sekolah wajib untuk Sekolah/Operator
         if (in_array($request->role, ['Sekolah', 'Operator'])) {
-            $rules['npsn'] = 'required|string|max:8';
+            $rules['npsn'] = 'required|digits:8';
             $rules['nama_sekolah'] = 'required|string|max:150';
         }
 
@@ -160,20 +164,21 @@ class DinasUserController extends Controller
         }
 
         // Additional validation: NPSN must be a local school (Kota Bogor)
+        $localSchool = null;
         if (in_array($request->role, ['Sekolah', 'Operator'])) {
-            $isLocalSchool = DB::table('satuan_pendidikan')
+            $localSchool = DB::table('satuan_pendidikan')
                 ->where('npsn', $npsn)
                 ->where('is_local', true)
-                ->exists();
+                ->first();
 
-            if (!$isLocalSchool) {
+            if (! $localSchool) {
                 return back()->withErrors([
-                    'npsn' => 'NPSN harus dari sekolah Kota Bogor. Sekolah referensi dari luar kota tidak dapat dijadikan pengguna.'
+                    'npsn' => 'NPSN harus dari sekolah Kota Bogor. Sekolah referensi dari luar kota tidak dapat dijadikan pengguna.',
                 ])->withInput();
             }
         }
 
-        $password = Str::random(8) . rand(10, 99) . '@';
+        $password = Str::random(8).rand(10, 99).'@';
 
         $data = [
             'username' => $username,
@@ -189,21 +194,34 @@ class DinasUserController extends Controller
 
         if (in_array($request->role, ['Sekolah', 'Operator'])) {
             $data['npsn'] = $npsn;
-            $data['nama_sekolah'] = $this->sanitize($request->nama_sekolah);
+            $data['nama_sekolah'] = $this->sanitize($localSchool->nama);
         }
 
-        DB::table('users')->insert($data);
+        try {
+            DB::table('users')->insert($data);
+        } catch (UniqueConstraintViolationException $e) {
+            return back()->withErrors([
+                'username' => in_array($request->role, ['Sekolah', 'Operator'])
+                    ? 'Username sudah digunakan di sekolah ini.'
+                    : 'Username sudah digunakan.',
+            ])->withInput();
+        } catch (\Throwable $e) {
+            Log::error("Failed to create {$request->role} user {$username}: ".$e->getMessage());
 
-        Log::info("User {$username} ({$request->role}) ditambahkan oleh {$user->username}" . ($npsn ? " untuk NPSN {$npsn}" : ''));
+            return back()->with('error', 'Gagal membuat akun pengguna. Silakan coba lagi atau hubungi administrator.')->withInput();
+        }
+
+        Log::info("User {$username} ({$request->role}) ditambahkan oleh {$user->username}".($npsn ? " untuk NPSN {$npsn}" : ''));
 
         $roleLabel = $request->role;
+
         return back()->with('success', "✅ Akun {$roleLabel} berhasil dibuat!\n\n👤 Nama: {$request->nama_pengguna}\n📧 Username: {$username}\n🔑 Password: {$password}\n\n⚠️ Catat password ini!");
     }
 
     public function toggleStatus($id)
     {
         $user = Auth::user();
-        if (!in_array($user->role, ['Dinas', 'SuperAdmin'])) {
+        if (! in_array($user->role, ['Dinas', 'SuperAdmin'])) {
             abort(403);
         }
 
@@ -213,11 +231,11 @@ class DinasUserController extends Controller
             : ['Sekolah', 'Operator'];
 
         // Use User Model
-        $targetUser = \App\Models\User::where('id', intval($id))
+        $targetUser = User::where('id', intval($id))
             ->whereIn('role', $managedRoles)
             ->first();
 
-        if (!$targetUser) {
+        if (! $targetUser) {
             return back()->with('error', 'User tidak ditemukan.');
         }
 
@@ -229,7 +247,7 @@ class DinasUserController extends Controller
         try {
             // Accessor returns bool (true if status === 'Aktif')
             $currentIsActive = $targetUser->is_active;
-            $newIsActive = !$currentIsActive;
+            $newIsActive = ! $currentIsActive;
 
             // Direct assignment to BOTH status column and is_active column (if exists)
             $newStatusString = $newIsActive ? 'Aktif' : 'Non Aktif';
@@ -247,7 +265,7 @@ class DinasUserController extends Controller
 
             return back()->with('success', "{$statusEmoji} Akun berhasil {$statusText}!\n\n👤 Nama: {$targetUser->nama_pengguna}\n📧 Username: @{$targetUser->username}\n🏷️ Role: {$targetUser->role}");
         } catch (\Throwable $e) {
-            Log::error("Dinas user toggle failed: " . $e->getMessage(), [
+            Log::error('Dinas user toggle failed: '.$e->getMessage(), [
                 'user_id' => $id,
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
@@ -260,7 +278,7 @@ class DinasUserController extends Controller
     public function unlock($id)
     {
         $user = Auth::user();
-        if (!in_array($user->role, ['Dinas', 'SuperAdmin'])) {
+        if (! in_array($user->role, ['Dinas', 'SuperAdmin'])) {
             abort(403);
         }
 
@@ -269,11 +287,11 @@ class DinasUserController extends Controller
             ? ['Dinas', 'Sekolah', 'Operator']
             : ['Sekolah', 'Operator'];
 
-        $targetUser = \App\Models\User::where('id', intval($id))
+        $targetUser = User::where('id', intval($id))
             ->whereIn('role', $managedRoles)
             ->first();
 
-        if (!$targetUser) {
+        if (! $targetUser) {
             return back()->with('error', 'User tidak ditemukan.');
         }
 
@@ -284,13 +302,13 @@ class DinasUserController extends Controller
 
         Log::info("User {$targetUser->username} unlocked by {$user->username}");
 
-        return back()->with('success', "🔓 Akun berhasil dibuka kuncinya! User sekarang bisa login kembali.");
+        return back()->with('success', '🔓 Akun berhasil dibuka kuncinya! User sekarang bisa login kembali.');
     }
 
     public function resetPassword($id)
     {
         $user = Auth::user();
-        if (!in_array($user->role, ['Dinas', 'SuperAdmin'])) {
+        if (! in_array($user->role, ['Dinas', 'SuperAdmin'])) {
             abort(403);
         }
 
@@ -304,11 +322,11 @@ class DinasUserController extends Controller
             ->whereIn('role', $managedRoles)
             ->first();
 
-        if (!$targetUser) {
+        if (! $targetUser) {
             return back()->with('error', 'User tidak ditemukan.');
         }
 
-        $newPassword = Str::random(8) . rand(10, 99) . '@';
+        $newPassword = Str::random(8).rand(10, 99).'@';
 
         DB::table('users')->where('id', $id)->update([
             'password' => Hash::make($newPassword),
@@ -327,7 +345,7 @@ class DinasUserController extends Controller
     public function edit($id)
     {
         $user = Auth::user();
-        if (!in_array($user->role, ['Dinas', 'SuperAdmin'])) {
+        if (! in_array($user->role, ['Dinas', 'SuperAdmin'])) {
             abort(403);
         }
 
@@ -336,11 +354,11 @@ class DinasUserController extends Controller
             ? ['Dinas', 'Sekolah', 'Operator']
             : ['Sekolah', 'Operator'];
 
-        $targetUser = \App\Models\User::where('id', intval($id))
+        $targetUser = User::where('id', intval($id))
             ->whereIn('role', $managedRoles)
             ->first();
 
-        if (!$targetUser) {
+        if (! $targetUser) {
             return redirect()->route('dinas.users')->with('error', 'User tidak ditemukan.');
         }
 
@@ -356,7 +374,7 @@ class DinasUserController extends Controller
     public function update(Request $request, $id)
     {
         $user = Auth::user();
-        if (!in_array($user->role, ['Dinas', 'SuperAdmin'])) {
+        if (! in_array($user->role, ['Dinas', 'SuperAdmin'])) {
             abort(403);
         }
 
@@ -365,17 +383,17 @@ class DinasUserController extends Controller
             ? ['Dinas', 'Sekolah', 'Operator']
             : ['Sekolah', 'Operator'];
 
-        $targetUser = \App\Models\User::where('id', intval($id))
+        $targetUser = User::where('id', intval($id))
             ->whereIn('role', $managedRoles)
             ->first();
 
-        if (!$targetUser) {
+        if (! $targetUser) {
             return redirect()->route('dinas.users')->with('error', 'User tidak ditemukan.');
         }
 
         $rules = [
             'nama_pengguna' => 'required|string|max:100',
-            'role' => 'required|in:' . implode(',', $managedRoles),
+            'role' => 'required|in:'.implode(',', $managedRoles),
         ];
 
         // NPSN dan nama_sekolah wajib untuk Sekolah/Operator
@@ -394,9 +412,9 @@ class DinasUserController extends Controller
                 ->where('is_local', true)
                 ->exists();
 
-            if (!$isLocalSchool) {
+            if (! $isLocalSchool) {
                 return back()->withErrors([
-                    'npsn' => 'NPSN harus dari sekolah Kota Bogor. Sekolah referensi dari luar kota tidak dapat dijadikan pengguna.'
+                    'npsn' => 'NPSN harus dari sekolah Kota Bogor. Sekolah referensi dari luar kota tidak dapat dijadikan pengguna.',
                 ])->withInput();
             }
         }

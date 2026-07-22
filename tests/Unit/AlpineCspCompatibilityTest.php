@@ -66,4 +66,18 @@ class AlpineCspCompatibilityTest extends TestCase
             strpos($appSource, 'registerAlpineComponents(Alpine)')
         );
     }
+
+    public function test_user_management_views_do_not_depend_on_inline_event_handlers(): void
+    {
+        foreach (['users/manage.blade.php', 'dinas/users.blade.php'] as $view) {
+            $contents = File::get(resource_path('views/'.$view));
+
+            $this->assertDoesNotMatchRegularExpression(
+                '/\son(?:click|submit|input|change)\s*=/i',
+                $contents,
+                $view,
+            );
+            $this->assertStringNotContainsString('<script', strtolower($contents), $view);
+        }
+    }
 }

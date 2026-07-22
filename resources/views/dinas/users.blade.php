@@ -3,6 +3,12 @@
 @section('title', 'Kelola Pengguna')
 
 @section('content')
+    <div x-data="dinasUserManagement"
+        data-open-on-error="{{ $errors->any() ? 'true' : 'false' }}"
+        data-initial-role="{{ old('role', 'Operator') }}"
+        data-initial-school-name="{{ old('nama_sekolah') }}"
+        data-lookup-url="{{ url('/dinas/pengguna/npsn') }}"
+        @keydown.escape.window="closeAddModal">
     <div class="space-y-6">
         <!-- Header -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -10,7 +16,7 @@
                 <h1 class="text-2xl font-bold text-gray-900">Kelola Pengguna</h1>
                 <p class="text-gray-500 mt-1">Kelola akun Sekolah dan Operator</p>
             </div>
-            <button onclick="document.getElementById('addModal').classList.remove('hidden')"
+            <button type="button" @click="openAddModal"
                 class="inline-flex items-center justify-center px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition font-medium">
                 <i class="bi bi-plus-lg mr-2"></i>
                 Tambah Pengguna
@@ -163,7 +169,9 @@
                                         </a>
 
                                         {{-- 3. Toggle Status (Active/Inactive) --}}
-                                        <form action="{{ route('dinas.users.toggle', $u->id) }}" method="POST" class="inline">
+                                        <form action="{{ route('dinas.users.toggle', $u->id) }}" method="POST" class="inline"
+                                            data-confirmation="{{ $u->is_active ? 'Nonaktifkan' : 'Aktifkan' }} akun {{ $u->nama_pengguna }}?"
+                                            @submit="confirmAction">
                                             @csrf
                                             <button type="submit" class="p-1.5 rounded-sm hover:bg-gray-100 transition" 
                                                 title="{{ $u->is_active ? 'Nonaktifkan Akun' : 'Aktifkan Akun' }}">
@@ -173,7 +181,9 @@
 
                                         {{-- 3. Unlock (Only if Locked) --}}
                                         @if($u->isLocked())
-                                            <form action="{{ route('dinas.users.unlock', $u->id) }}" method="POST" class="inline" onsubmit="return confirm('Buka blokir akun {{ $u->nama_pengguna }}? User akan bisa login lagi.')">
+                                            <form action="{{ route('dinas.users.unlock', $u->id) }}" method="POST" class="inline"
+                                                data-confirmation="Buka blokir akun {{ $u->nama_pengguna }}? Pengguna akan bisa login lagi."
+                                                @submit="confirmAction">
                                                 @csrf
                                                 <button type="submit" class="p-1.5 text-orange-500 hover:text-orange-700 rounded-sm hover:bg-orange-50 transition" title="Buka Blokir (Unlock)">
                                                     <i class="bi bi-unlock-fill text-lg"></i>
@@ -182,7 +192,9 @@
                                         @endif
 
                                         {{-- 4. Reset Password --}}
-                                        <form action="{{ route('dinas.users.reset', $u->id) }}" method="POST" class="inline" onsubmit="return confirm('Reset password untuk {{ $u->nama_pengguna }}? Password baru akan digenerate.')">
+                                        <form action="{{ route('dinas.users.reset', $u->id) }}" method="POST" class="inline"
+                                            data-confirmation="Reset password untuk {{ $u->nama_pengguna }}? Password baru akan dibuat."
+                                            @submit="confirmAction">
                                             @csrf
                                             <button type="submit" class="p-1.5 text-yellow-600 hover:text-yellow-800 rounded-sm hover:bg-yellow-50 transition" title="Reset Password">
                                                 <i class="bi bi-key-fill text-lg"></i>
@@ -213,22 +225,25 @@
     </div>
 
     <!-- Add Modal -->
-    <div id="addModal" class="hidden fixed inset-0 z-50 overflow-y-auto">
+    <div x-show="showAddModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true"
+        aria-labelledby="add-user-title">
         <div class="flex items-center justify-center min-h-screen px-4">
-            <div class="fixed inset-0 bg-black/50" onclick="document.getElementById('addModal').classList.add('hidden')"></div>
+            <button type="button" class="fixed inset-0 w-full bg-black/50" aria-label="Tutup modal"
+                @click="closeAddModal"></button>
             <div class="relative bg-white rounded-xl shadow-xl max-w-md w-full p-6 z-10">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-semibold text-gray-900">Tambah Pengguna Baru</h3>
-                    <button onclick="document.getElementById('addModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
+                    <h3 id="add-user-title" class="text-lg font-semibold text-gray-900">Tambah Pengguna Baru</h3>
+                    <button type="button" @click="closeAddModal" class="text-gray-400 hover:text-gray-600"
+                        aria-label="Tutup modal">
                         <i class="bi bi-x-lg"></i>
                     </button>
                 </div>
                 
-                <form action="{{ route('dinas.users.store') }}" method="POST" class="space-y-4" x-data="{ role: 'Operator' }">
+                <form action="{{ route('dinas.users.store') }}" method="POST" class="space-y-4" @submit="submitCreate">
                     @csrf
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Role *</label>
-                        <select name="role" x-model="role" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden">
+                        <select name="role" x-model="role" @change="changeRole" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden">
                             <option value="Operator">Operator</option>
                             <option value="Sekolah">Sekolah</option>
                             @if(auth()->user()->role === 'SuperAdmin')
@@ -238,11 +253,15 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Username *</label>
-                        <input type="text" name="username" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden">
+                        <input type="text" name="username" value="{{ old('username') }}" required x-ref="username"
+                            autocomplete="username" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden">
+                        @error('username')
+                            <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap *</label>
-                        <input type="text" name="nama_pengguna" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden">
+                        <input type="text" name="nama_pengguna" value="{{ old('nama_pengguna') }}" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden">
                     </div>
                     
                     <!-- NPSN & Nama Sekolah hanya untuk Sekolah/Operator -->
@@ -251,15 +270,24 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">NPSN *</label>
                                 <div class="relative">
-                                    <input type="text" name="npsn" id="npsnInput" maxlength="8" 
+                                    <input type="text" name="npsn" maxlength="8" inputmode="numeric"
+                                        value="{{ old('npsn') }}" :required="role !== 'Dinas'"
                                         class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden"
-                                        oninput="lookupNpsn(this.value)">
-                                    <span id="npsnStatus" class="absolute right-3 top-1/2 -translate-y-1/2 text-sm"></span>
+                                        @input.debounce.500ms="lookupNpsn">
+                                    <span class="absolute right-3 top-1/2 -translate-y-1/2 text-sm">
+                                        <i x-show="npsnStatus === 'loading'" class="bi bi-hourglass-split text-gray-400"></i>
+                                        <i x-show="npsnStatus === 'found'" class="bi bi-check-circle text-green-600"></i>
+                                        <span x-show="npsnStatus === 'not-found'" class="text-yellow-600 text-xs">Bukan sekolah Kota Bogor</span>
+                                        <i x-show="npsnStatus === 'error'" class="bi bi-exclamation-circle text-red-500"></i>
+                                    </span>
                                 </div>
+                                @error('npsn')
+                                    <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                                @enderror
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Nama Sekolah *</label>
-                                <input type="text" name="nama_sekolah" id="namaSekolahInput"
+                                <input type="text" name="nama_sekolah" x-model="schoolName" :required="role !== 'Dinas'"
                                     class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden">
                             </div>
                         </div>
@@ -271,9 +299,10 @@
                     </div>
                     
                     <div class="flex gap-3 pt-2">
-                        <button type="button" onclick="document.getElementById('addModal').classList.add('hidden')"
+                        <button type="button" @click="closeAddModal"
                             class="flex-1 px-4 py-2.5 border rounded-lg hover:bg-gray-50 transition font-medium">Batal</button>
-                        <button type="submit" class="flex-1 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition font-medium">
+                        <button type="submit" :disabled="submitting"
+                            class="flex-1 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 disabled:opacity-60 disabled:cursor-not-allowed text-white rounded-lg transition font-medium">
                             <i class="bi bi-plus-lg mr-1"></i> Tambah
                         </button>
                     </div>
@@ -281,36 +310,5 @@
             </div>
         </div>
     </div>
-
-    <script>
-        let lookupTimeout;
-        function lookupNpsn(npsn) {
-            const statusEl = document.getElementById('npsnStatus');
-            const namaEl = document.getElementById('namaSekolahInput');
-            
-            if (npsn.length < 8) {
-                statusEl.innerHTML = '';
-                return;
-            }
-            
-            clearTimeout(lookupTimeout);
-            statusEl.innerHTML = '<i class="bi bi-hourglass-split text-gray-400"></i>';
-            
-            lookupTimeout = setTimeout(async () => {
-                try {
-                    const response = await fetch(`{{ url('/dinas/pengguna/npsn') }}/${npsn}`);
-                    const data = await response.json();
-                    
-                    if (data.found) {
-                        namaEl.value = data.nama_sekolah;
-                        statusEl.innerHTML = '<i class="bi bi-check-circle text-green-600"></i>';
-                    } else {
-                        statusEl.innerHTML = '<span class="text-yellow-600 text-xs">Bukan sekolah Kota Bogor</span>';
-                    }
-                } catch (error) {
-                    statusEl.innerHTML = '<i class="bi bi-exclamation-circle text-red-500"></i>';
-                }
-            }, 500);
-        }
-    </script>
+    </div>
 @endsection
