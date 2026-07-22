@@ -4,7 +4,12 @@ SIMAK adalah aplikasi Sistem Informasi Mutasi Masuk dan Keluar siswa untuk Dinas
 
 ## Versi Aplikasi
 
-Versi saat ini: **2.2.0**
+Versi saat ini: **2.3.3**
+
+Perubahan utama versi 2.3.3:
+- Mempercepat login dengan memperbaiki pencatatan audit yang sebelumnya selalu gagal karena ketidaksesuaian timestamp.
+- Menambahkan pilihan jenis akun dan mewajibkan NPSN untuk login Sekolah dan Operator.
+- Mengizinkan username Operator yang sama pada sekolah berbeda dengan pembeda NPSN.
 
 Perubahan utama versi 2.2.0:
 - Menambahkan grafik kohort data awal, mutasi, data akhir aktual, dan selisih rekonsiliasi.
@@ -35,7 +40,7 @@ Dasar versi 2.0.0:
 Versi aplikasi dikontrol lewat environment variable:
 
 ```env
-APP_VERSION=2.2.0
+APP_VERSION=2.3.3
 ```
 
 Jika tidak diisi, aplikasi memakai default dari `config/app.php`.
@@ -96,7 +101,7 @@ Environment variable penting di Vercel:
 
 ```env
 APP_NAME=SIMAK
-APP_VERSION=2.2.0
+APP_VERSION=2.3.3
 APP_ENV=production
 APP_DEBUG=false
 APP_KEY=base64:...

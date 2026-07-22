@@ -42,7 +42,7 @@ class LoginRateLimitTest extends TestCase
             $table->string('username');
             $table->string('ip_address')->nullable();
             $table->text('details')->nullable();
-            $table->timestamps();
+            $table->timestamp('created_at')->useCurrent();
         });
 
         DB::table('users')->insert([
@@ -239,6 +239,10 @@ class LoginRateLimitTest extends TestCase
         ])->assertRedirect('/dashboard');
 
         $this->assertAuthenticatedAs(\App\Models\User::where('username', 'staff')->first());
+        $this->assertDatabaseHas('audit_logs', [
+            'event_type' => 'LOGIN_SUCCESS',
+            'username' => 'admin:staff',
+        ]);
     }
 
     public function test_login_page_offers_all_account_types(): void

@@ -10,7 +10,11 @@ class AuditLog extends Model
     use HasFactory;
 
     protected $table = 'audit_logs';
-    public $timestamps = true;
+
+    // The audit table uses a database-generated created_at value and has no
+    // updated_at column. Disabling Eloquent timestamps prevents every audit
+    // insert from failing and being written to the application error log.
+    public $timestamps = false;
 
     protected $fillable = [
         'event_type',
@@ -25,7 +29,7 @@ class AuditLog extends Model
         try {
             self::create([
                 'event_type' => $eventType,
-                'username' => $username ?? 'System', // Fallback for null username
+                'username' => mb_substr($username ?? 'System', 0, 50),
                 'ip_address' => request()->ip(),
                 'details' => $details,
             ]);
