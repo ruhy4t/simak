@@ -28,6 +28,10 @@ class WordDocumentServiceTest extends TestCase
             'MK202607150001_Budi Santoso_SMP Negeri 1 Bogor_SRIKANDI.docx',
             $service->mutasiKeluarSrikandiFilename($this->outgoingTransfer())
         );
+        $this->assertSame(
+            'MM202607150001_SMP Negeri 3 Bogor_4 Murid_SRIKANDI.docx',
+            $service->mutasiMasukSrikandiFilename($this->incomingTransfer(), 4)
+        );
 
         $unsafe = (object) [
             'id_mutasi' => 'MK/2026:002',
@@ -102,6 +106,35 @@ class WordDocumentServiceTest extends TestCase
         unlink($path);
     }
 
+    public function test_it_creates_srikandi_incoming_transfer_from_the_two_section_template(): void
+    {
+        $students = new Collection([$this->incomingStudent()]);
+        $path = app(WordDocumentService::class)->createMutasiMasukSrikandi($this->incomingTransfer(), $students);
+
+        $document = $this->assertNativeDocx($path, [
+            'DAFTAR MURID MUTASI MASUK',
+            'Siti Aminah',
+            '${nomor_naskah}',
+            '${tanggal_naskah}',
+            '${sifat}',
+            '${hal}',
+            '${jabatan_tujuan}',
+            '${ttd_pengirim}',
+            '${nama_pengirim}',
+            '${pangkat_pengirim}',
+            '${nip_pengirim}',
+        ]);
+        $this->assertSingleLineZeroParagraphSpacing($path);
+        $this->assertStudentTableHasVisibleBorders($path);
+        $this->assertCount(2, $document->getSections());
+        $this->assertSame('landscape', $document->getSections()[1]->getStyle()->getOrientation());
+        $this->assertRequestedMargins($document);
+        $this->assertSame('Times New Roman', $document->getDefaultFontName());
+        $this->assertIncomingSrikandiPlaceholderCounts($path);
+
+        unlink($path);
+    }
+
     private function assertNativeDocx(string $path, array $expectedText): PhpWord
     {
         $this->assertFileExists($path);
@@ -154,6 +187,17 @@ class WordDocumentServiceTest extends TestCase
         $this->assertDoesNotMatchRegularExpression('/w:line="(?!240")[^"]+"/', $documentXml);
     }
 
+    private function assertStudentTableHasVisibleBorders(string $path): void
+    {
+        $zip = new ZipArchive;
+        $this->assertTrue($zip->open($path) === true);
+        $documentXml = (string) $zip->getFromName('word/document.xml');
+        $zip->close();
+
+        $this->assertStringContainsString('<w:tblBorders>', $documentXml);
+        $this->assertStringContainsString('w:val="single"', $documentXml);
+    }
+
     private function assertSrikandiPlaceholdersOccurExactlyOnce(string $path): void
     {
         $zip = new ZipArchive;
@@ -173,6 +217,31 @@ class WordDocumentServiceTest extends TestCase
         }
 
         $this->assertStringNotContainsString('400.3/123-SMP', $documentXml);
+        $this->assertStringNotContainsString('Drs. Pejabat Dinas', $documentXml);
+    }
+
+    private function assertIncomingSrikandiPlaceholderCounts(string $path): void
+    {
+        $zip = new ZipArchive;
+        $this->assertTrue($zip->open($path) === true);
+        $documentXml = (string) $zip->getFromName('word/document.xml');
+        $zip->close();
+
+        foreach ([
+            '${nomor_naskah}' => 2,
+            '${tanggal_naskah}' => 2,
+            '${sifat}' => 1,
+            '${hal}' => 1,
+            '${jabatan_tujuan}' => 1,
+            '${ttd_pengirim}' => 2,
+            '${nama_pengirim}' => 2,
+            '${pangkat_pengirim}' => 2,
+            '${nip_pengirim}' => 2,
+        ] as $placeholder => $expectedCount) {
+            $this->assertSame($expectedCount, substr_count($documentXml, $placeholder), $placeholder);
+        }
+
+        $this->assertStringNotContainsString('400.3/124-SMP', $documentXml);
         $this->assertStringNotContainsString('Drs. Pejabat Dinas', $documentXml);
     }
 
@@ -232,6 +301,23 @@ class WordDocumentServiceTest extends TestCase
             'alamat_sekolah_tujuan' => 'Jalan Pajajaran No. 3',
             'nomor_surat_permohonan' => '421/11/SMP',
             'tanggal_surat_permohonan' => '2026-07-11',
+        ];
+    }
+
+    private function incomingStudent(): object
+    {
+        return (object) [
+            'nama_murid' => 'Siti Aminah',
+            'nisn' => '0012345678',
+            'jenis_kelamin' => 'P',
+            'tempat_lahir' => 'Bogor',
+            'tanggal_lahir' => '2012-05-10',
+            'kelas' => 'VIII',
+            'npsn_sekolah_asal' => '20200001',
+            'nama_sekolah_asal' => 'SMP Negeri Asal',
+            'kabupaten_kota_asal' => 'Kabupaten Bogor',
+            'provinsi_asal' => 'Jawa Barat',
+            'tanggal_diterima' => '2026-07-15',
         ];
     }
 }

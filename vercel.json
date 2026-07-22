@@ -80,7 +80,7 @@
         }
     ],
     "env": {
-        "APP_VERSION": "2.4.0",
+        "APP_VERSION": "2.5.0",
         "APP_ENV": "production",
         "APP_DEBUG": "false",
         "APP_CONFIG_CACHE": "/tmp/config.php",

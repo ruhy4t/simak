@@ -47,6 +47,11 @@ class WordDocumentService
         );
     }
 
+    public function mutasiMasukSrikandiFilename(object $mutasi, int $studentCount): string
+    {
+        return pathinfo($this->mutasiMasukFilename($mutasi, $studentCount), PATHINFO_FILENAME).'_SRIKANDI.docx';
+    }
+
     public function createMutasiKeluar(object $mutasi, ?object $penandatangan): string
     {
         return $this->createMutasiKeluarDocument($mutasi, $penandatangan, false);
@@ -66,10 +71,10 @@ class WordDocumentService
         $section = $word->addSection([
             'pageSizeW' => self::A4_WIDTH,
             'pageSizeH' => self::A4_HEIGHT,
-            'marginTop' => Converter::cmToTwip(1.5),
-            'marginRight' => Converter::cmToTwip(2.5),
-            'marginBottom' => Converter::cmToTwip(3),
-            'marginLeft' => Converter::cmToTwip(2.5),
+            'marginTop' => (int) round(Converter::cmToTwip(1.5)),
+            'marginRight' => (int) round(Converter::cmToTwip(2.5)),
+            'marginBottom' => (int) round(Converter::cmToTwip(3)),
+            'marginLeft' => (int) round(Converter::cmToTwip(2.5)),
         ]);
         $contentWidth = self::A4_WIDTH - Converter::cmToTwip(5);
 
@@ -138,27 +143,52 @@ class WordDocumentService
 
     public function createMutasiMasuk(object $mutasi, Collection|array $siswaList, ?object $penandatangan): string
     {
-        $word = $this->newDocument('Surat Izin Mutasi Masuk');
+        return $this->createMutasiMasukDocument($mutasi, $siswaList, $penandatangan, false);
+    }
+
+    public function createMutasiMasukSrikandi(object $mutasi, Collection|array $siswaList): string
+    {
+        return $this->createMutasiMasukDocument($mutasi, $siswaList, null, true);
+    }
+
+    private function createMutasiMasukDocument(
+        object $mutasi,
+        Collection|array $siswaList,
+        ?object $penandatangan,
+        bool $srikandi
+    ): string {
+        $word = $this->newDocument(
+            'Surat Izin Mutasi Masuk'.($srikandi ? ' SRIKANDI' : ''),
+            $srikandi ? self::SRIKANDI_FONT : self::FONT
+        );
         $portraitWidth = self::A4_WIDTH - Converter::cmToTwip(5);
         $section = $word->addSection([
             'pageSizeW' => self::A4_WIDTH,
             'pageSizeH' => self::A4_HEIGHT,
-            'marginTop' => Converter::cmToTwip(1.5),
-            'marginRight' => Converter::cmToTwip(2.5),
-            'marginBottom' => Converter::cmToTwip(3),
-            'marginLeft' => Converter::cmToTwip(2.5),
+            'marginTop' => (int) round(Converter::cmToTwip(1.5)),
+            'marginRight' => (int) round(Converter::cmToTwip(2.5)),
+            'marginBottom' => (int) round(Converter::cmToTwip(3)),
+            'marginLeft' => (int) round(Converter::cmToTwip(2.5)),
         ]);
 
-        $this->addLetterhead($section, $portraitWidth, true);
-        $this->addIncomingLetterInfo($section, $mutasi, $portraitWidth);
+        if ($srikandi) {
+            $this->addIncomingSrikandiLetterhead($section, $portraitWidth);
+        } else {
+            $this->addLetterhead($section, $portraitWidth, true);
+        }
+        $this->addIncomingLetterInfo($section, $mutasi, $portraitWidth, $srikandi);
 
-        $recipient = $section->addTable(['width' => $portraitWidth, 'unit' => TblWidth::TWIP, 'borderSize' => 0]);
-        $row = $recipient->addRow();
-        $row->addCell(500)->addText('Yth.', [], ['spaceAfter' => 0]);
-        $recipientCell = $row->addCell((int) ($portraitWidth * 0.48));
-        $recipientCell->addText('Kepala '.$this->text($mutasi->sekolah_tujuan ?? '-'), [], ['spaceAfter' => 0]);
-        $recipientCell->addText($this->text($mutasi->alamat_sekolah_tujuan ?? '-'), [], ['spaceAfter' => 0]);
-        $row->addCell((int) ($portraitWidth * 0.52) - 500);
+        if ($srikandi) {
+            $section->addText('Yth. ${jabatan_tujuan}', [], ['spaceAfter' => 0]);
+        } else {
+            $recipient = $section->addTable(['width' => $portraitWidth, 'unit' => TblWidth::TWIP, 'borderSize' => 0]);
+            $row = $recipient->addRow();
+            $row->addCell(500)->addText('Yth.', [], ['spaceAfter' => 0]);
+            $recipientCell = $row->addCell((int) ($portraitWidth * 0.48));
+            $recipientCell->addText('Kepala '.$this->text($mutasi->sekolah_tujuan ?? '-'), [], ['spaceAfter' => 0]);
+            $recipientCell->addText($this->text($mutasi->alamat_sekolah_tujuan ?? '-'), [], ['spaceAfter' => 0]);
+            $row->addCell((int) ($portraitWidth * 0.52) - 500);
+        }
         $section->addText('di Bogor', [], ['indentation' => ['left' => 500], 'spaceBefore' => 0, 'spaceAfter' => 0]);
 
         $body = sprintf(
@@ -181,7 +211,11 @@ class WordDocumentService
             [],
             $this->paragraph(['indentation' => ['firstLine' => 567]])
         );
-        $this->addSignature($section, $penandatangan, null, $portraitWidth);
+        if ($srikandi) {
+            $this->addSrikandiSignature($section, $portraitWidth, false, true);
+        } else {
+            $this->addSignature($section, $penandatangan, null, $portraitWidth);
+        }
 
         $students = collect($siswaList)->map(fn ($student) => (array) $student)->values();
         if ($students->isNotEmpty()) {
@@ -194,17 +228,17 @@ class WordDocumentService
                     'orientation' => 'landscape',
                     'pageSizeW' => self::A4_HEIGHT,
                     'pageSizeH' => self::A4_WIDTH,
-                    'marginTop' => Converter::cmToTwip(1.5),
-                    'marginRight' => Converter::cmToTwip(2.5),
-                    'marginBottom' => Converter::cmToTwip(3),
-                    'marginLeft' => Converter::cmToTwip(2.5),
+                    'marginTop' => (int) round(Converter::cmToTwip(1.5)),
+                    'marginRight' => (int) round(Converter::cmToTwip(2.5)),
+                    'marginBottom' => (int) round(Converter::cmToTwip(3)),
+                    'marginLeft' => (int) round(Converter::cmToTwip(2.5)),
                 ]);
 
                 if ($pageIndex === 0) {
                     $landscape->addText('LAMPIRAN', ['bold' => true], ['spaceAfter' => 0]);
                     $this->addKeyValueTable($landscape, [
-                        ['Nomor', $mutasi->nomor_surat_izin ?? '-'],
-                        ['Tanggal', $this->date($mutasi->tanggal_surat_izin ?? null)],
+                        ['Nomor', $srikandi ? '${nomor_naskah}' : ($mutasi->nomor_surat_izin ?? '-')],
+                        ['Tanggal', $srikandi ? '${tanggal_naskah}' : $this->date($mutasi->tanggal_surat_izin ?? null)],
                     ], 4500, 0, 1000);
                     $landscape->addText('DAFTAR MURID MUTASI MASUK', ['bold' => true], [
                         'alignment' => Jc::CENTER,
@@ -217,15 +251,23 @@ class WordDocumentService
                     ]);
                 }
 
-                $this->addStudentTable($landscape, $chunk->all(), $counter, $landscapeWidth);
+                $this->addStudentTable($landscape, $chunk->all(), $counter, $landscapeWidth, $srikandi);
 
                 if ($pageIndex === $chunks->count() - 1) {
-                    $this->addSignature($landscape, $penandatangan, null, $landscapeWidth);
+                    if ($srikandi) {
+                        $this->addSrikandiSignature($landscape, $landscapeWidth, false, true);
+                    } else {
+                        $this->addSignature($landscape, $penandatangan, null, $landscapeWidth);
+                    }
                 }
             }
         }
 
-        return $this->save($word, 'surat-mutasi-masuk');
+        return $this->save(
+            $word,
+            $srikandi ? 'surat-mutasi-masuk-srikandi' : 'surat-mutasi-masuk',
+            $srikandi
+        );
     }
 
     private function newDocument(string $title, string $font = self::FONT): PhpWord
@@ -300,19 +342,30 @@ class WordDocumentService
         $textCell->addText('Situs web disdik.kotabogor.go.id', ['size' => 8], ['alignment' => Jc::CENTER, 'spaceAfter' => 0]);
     }
 
-    private function addIncomingLetterInfo(Section $section, object $mutasi, int $width): void
+    private function addIncomingSrikandiLetterhead(Section $section, int $width): void
+    {
+        $this->addLetterhead($section, $width, true);
+        $section->addText('', [], [
+            'borderBottomSize' => 18,
+            'borderBottomColor' => '000000',
+            'spaceBefore' => 0,
+            'spaceAfter' => 0,
+        ]);
+    }
+
+    private function addIncomingLetterInfo(Section $section, object $mutasi, int $width, bool $srikandi): void
     {
         $table = $section->addTable(['width' => $width, 'unit' => TblWidth::TWIP, 'borderSize' => 0]);
         $row = $table->addRow();
         $left = $row->addCell((int) ($width * 0.58));
         $this->addKeyValueRows($left->addTable(['width' => (int) ($width * 0.58), 'unit' => TblWidth::TWIP, 'borderSize' => 0]), [
-            ['Nomor', $mutasi->nomor_surat_izin ?? '-'],
-            ['Sifat', 'Biasa'],
-            ['Lampiran', '1 (satu) berkas'],
-            ['Hal', 'Izin Mutasi Murid', true],
+            ['Nomor', $srikandi ? '${nomor_naskah}' : ($mutasi->nomor_surat_izin ?? '-')],
+            ['Sifat', $srikandi ? '${sifat}' : 'Biasa'],
+            ['Lampiran', '1 (satu)'],
+            ['Hal', $srikandi ? '${hal}' : 'Izin Mutasi Murid', true],
         ], (int) ($width * 0.58), 1000);
         $row->addCell((int) ($width * 0.42))->addText(
-            'Bogor, '.$this->date($mutasi->tanggal_surat_izin ?? null),
+            'Bogor, '.($srikandi ? '${tanggal_naskah}' : $this->date($mutasi->tanggal_surat_izin ?? null)),
             [],
             ['alignment' => Jc::RIGHT, 'spaceAfter' => 0]
         );
@@ -344,13 +397,19 @@ class WordDocumentService
         }
     }
 
-    private function addStudentTable(Section $section, array $students, int &$counter, int $width): void
-    {
+    private function addStudentTable(
+        Section $section,
+        array $students,
+        int &$counter,
+        int $width,
+        bool $visibleBorders = false
+    ): void {
         $widths = [500, 2700, 1600, 600, 2500, 650, 3900, $width - 11850];
         $table = $section->addTable([
             'width' => $width,
             'unit' => TblWidth::TWIP,
-            'borderSize' => 0,
+            'borderSize' => $visibleBorders ? 1 : 0,
+            'borderColor' => 'B7B7B7',
             'cellMargin' => 70,
             'layout' => 'fixed',
         ]);
@@ -424,14 +483,17 @@ class WordDocumentService
         }
     }
 
-    private function addSrikandiSignature(Section $section, int $width): void
-    {
+    private function addSrikandiSignature(
+        Section $section,
+        int $width,
+        bool $includeDate = true,
+        bool $spacious = false
+    ): void {
         $outer = $section->addTable(['width' => $width, 'unit' => TblWidth::TWIP, 'borderSize' => 0]);
         $row = $outer->addRow();
         $row->addCell((int) ($width * 0.53));
         $cell = $row->addCell((int) ($width * 0.47));
-        foreach ([
-            'Bogor, ${tanggal_naskah}',
+        $lines = [
             'a.n. Kepala Dinas,',
             'Sekretaris,',
             'u.b. Kabid SMP,',
@@ -439,15 +501,22 @@ class WordDocumentService
             '${nama_pengirim}',
             '${pangkat_pengirim}',
             'NIP. ${nip_pengirim}',
-        ] as $index => $line) {
-            $cell->addText($line, ['bold' => $index === 5], [
+        ];
+        if ($includeDate) {
+            array_unshift($lines, 'Bogor, ${tanggal_naskah}');
+        }
+        if ($spacious) {
+            array_splice($lines, array_search('${ttd_pengirim}', $lines, true) + 1, 0, ['', '']);
+        }
+        foreach ($lines as $line) {
+            $cell->addText($line, ['bold' => $line === '${nama_pengirim}'], [
                 'spaceBefore' => 0,
                 'spaceAfter' => 0,
             ]);
         }
     }
 
-    private function save(PhpWord $word, string $prefix): string
+    private function save(PhpWord $word, string $prefix, bool $preserveTableBorders = false): string
     {
         $path = tempnam(sys_get_temp_dir(), $prefix.'-');
         if ($path === false) {
@@ -456,12 +525,12 @@ class WordDocumentService
         $docxPath = $path.'.docx';
         @unlink($path);
         $word->save($docxPath, 'Word2007');
-        $this->removeVisibleTableBorders($docxPath);
+        $this->removeVisibleTableBorders($docxPath, $preserveTableBorders);
 
         return $docxPath;
     }
 
-    private function removeVisibleTableBorders(string $docxPath): void
+    private function removeVisibleTableBorders(string $docxPath, bool $preserveStudentTable = false): void
     {
         $zip = new ZipArchive;
         if ($zip->open($docxPath) !== true) {
@@ -479,9 +548,15 @@ class WordDocumentService
             .'<w:bottom w:val="nil"/><w:right w:val="nil"/>'
             .'<w:insideH w:val="nil"/><w:insideV w:val="nil"/>'
             .'</w:tblBorders>';
-        $updatedXml = preg_replace(
+        $updatedXml = preg_replace_callback(
             '/<w:tblBorders\b[^>]*>.*?<\/w:tblBorders>/s',
-            $noBorders,
+            static function (array $matches) use ($noBorders, $preserveStudentTable): string {
+                if ($preserveStudentTable && str_contains($matches[0], 'w:color="B7B7B7"')) {
+                    return $matches[0];
+                }
+
+                return $noBorders;
+            },
             $documentXml
         );
 

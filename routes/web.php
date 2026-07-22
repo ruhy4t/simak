@@ -11,6 +11,7 @@ use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\MutasiController;
 use App\Http\Controllers\MutasiKeluarSrikandiController;
 use App\Http\Controllers\MutasiMasukController;
+use App\Http\Controllers\MutasiMasukSrikandiController;
 use App\Http\Controllers\NonMutationStudentExitController;
 use App\Http\Controllers\PenandatanganController;
 use App\Http\Controllers\PermissionController;
@@ -194,6 +195,7 @@ Route::middleware(['auth', EnsurePasswordChanged::class])->group(function () {
         Route::post('/mutasi-masuk/{id}/issue-letter', [MutasiMasukController::class, 'issueLetter'])->middleware('workday')->name('mutasi.masuk.issue-letter');
         Route::post('/mutasi-masuk/{id}/complete-letter', [MutasiMasukController::class, 'completeLetter'])->middleware('workday')->name('mutasi.masuk.complete-letter');
         Route::get('/mutasi-masuk/{id}/print-letter', [MutasiMasukController::class, 'printLetter'])->name('mutasi.masuk.print-letter');
+        Route::get('/mutasi-masuk/{id}/word-srikandi', MutasiMasukSrikandiController::class)->name('mutasi.masuk.word-srikandi');
         Route::get('/mutasi-masuk/{id}/edit', [MutasiMasukController::class, 'edit'])->name('mutasi.masuk.edit');
         Route::put('/mutasi-masuk/{id}', [MutasiMasukController::class, 'update'])->name('mutasi.masuk.update');
 
