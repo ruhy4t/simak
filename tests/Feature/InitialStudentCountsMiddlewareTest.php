@@ -26,6 +26,9 @@ class InitialStudentCountsMiddlewareTest extends TestCase
             $table->id();
             $table->string('npsn')->unique();
             $table->string('nama');
+            $table->string('kepala_sekolah_nama')->nullable();
+            $table->string('kepala_sekolah_nip')->nullable();
+            $table->string('kop_surat_path')->nullable();
             $table->timestamps();
         });
         Schema::create('academic_years', function (Blueprint $table) {
@@ -45,6 +48,9 @@ class InitialStudentCountsMiddlewareTest extends TestCase
             $table->unsignedInteger('male_count')->default(0);
             $table->unsignedInteger('female_count')->default(0);
             $table->timestamp('confirmed_at')->nullable();
+            $table->unsignedInteger('closing_male_count')->nullable();
+            $table->unsignedInteger('closing_female_count')->nullable();
+            $table->timestamp('closing_confirmed_at')->nullable();
             $table->timestamps();
         });
 
@@ -72,26 +78,40 @@ class InitialStudentCountsMiddlewareTest extends TestCase
         $this->assertStringContainsString('2026/2027', session('error'));
     }
 
-    public function test_confirmed_zero_counts_allow_school_to_submit_mutations(): void
+    public function test_school_is_redirected_to_closing_counts_when_only_final_data_is_missing(): void
     {
         [$school, $user] = $this->schoolUser();
-        $academicYear = AcademicYear::query()->where('is_active', true)->firstOrFail();
+        $this->insertCounts($school, withClosing: false);
 
-        DB::table('satuan_pendidikan_student_counts')->insert([
-            'satuan_pendidikan_id' => $school->id,
-            'academic_year_id' => $academicYear->id,
-            'grade' => 7,
-            'male_count' => 0,
-            'female_count' => 0,
-            'confirmed_at' => now(),
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        $response = $this->runMiddleware($user);
+
+        $this->assertSame(302, $response->getStatusCode());
+        $this->assertSame(route('sekolah.closing-counts'), $response->headers->get('Location'));
+        $this->assertStringContainsString('Data Akhir', session('error'));
+    }
+
+    public function test_complete_profile_initial_and_final_zero_counts_allow_mutations(): void
+    {
+        [$school, $user] = $this->schoolUser();
+        $this->insertCounts($school, withClosing: true);
 
         $response = $this->runMiddleware($user);
 
         $this->assertSame(200, $response->getStatusCode());
         $this->assertSame('allowed', $response->getContent());
+    }
+
+    public function test_incomplete_profile_blocks_submission_even_when_counts_are_complete(): void
+    {
+        [$school, $user] = $this->schoolUser();
+        $this->insertCounts($school, withClosing: true);
+        DB::table('satuan_pendidikan')->where('id', $school->id)->update(['kop_surat_path' => null]);
+
+        $response = $this->runMiddleware($user);
+
+        $this->assertSame(302, $response->getStatusCode());
+        $this->assertSame(route('sekolah.profile'), $response->headers->get('Location'));
+        $this->assertStringContainsString('Profil Sekolah', session('error'));
     }
 
     public function test_ajax_submission_receives_validation_response_and_profile_redirect(): void
@@ -108,6 +128,22 @@ class InitialStudentCountsMiddlewareTest extends TestCase
         $this->assertSame(route('sekolah.profile'), $response->getData(true)['redirect']);
     }
 
+    public function test_mutation_revision_routes_also_require_complete_school_data(): void
+    {
+        foreach ([
+            'mutasi.keluar.revision',
+            'mutasi.keluar.revision.submit',
+            'mutasi.masuk.revision',
+            'mutasi.masuk.revision.submit',
+        ] as $routeName) {
+            $route = collect(app('router')->getRoutes()->getRoutes())
+                ->first(fn ($route) => $route->getName() === $routeName);
+
+            $this->assertNotNull($route, $routeName);
+            $this->assertContains('student-counts.complete', $route->gatherMiddleware(), $routeName);
+        }
+    }
+
     public function test_dinas_is_not_blocked(): void
     {
         $user = new User(['role' => 'Dinas']);
@@ -122,6 +158,9 @@ class InitialStudentCountsMiddlewareTest extends TestCase
         $schoolId = DB::table('satuan_pendidikan')->insertGetId([
             'npsn' => '12345678',
             'nama' => 'SMP Pengujian',
+            'kepala_sekolah_nama' => 'Kepala Sekolah, M.Pd.',
+            'kepala_sekolah_nip' => '-',
+            'kop_surat_path' => 'uploads/kop_surat/contoh.jpg',
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -133,6 +172,28 @@ class InitialStudentCountsMiddlewareTest extends TestCase
         ]);
 
         return [$school, $user];
+    }
+
+    private function insertCounts(SatuanPendidikan $school, bool $withClosing): void
+    {
+        $academicYear = AcademicYear::query()->where('is_active', true)->firstOrFail();
+        $now = now();
+
+        foreach ([7, 8, 9] as $grade) {
+            DB::table('satuan_pendidikan_student_counts')->insert([
+                'satuan_pendidikan_id' => $school->id,
+                'academic_year_id' => $academicYear->id,
+                'grade' => $grade,
+                'male_count' => 0,
+                'female_count' => 0,
+                'confirmed_at' => $grade === 7 ? $now : null,
+                'closing_male_count' => $withClosing ? 0 : null,
+                'closing_female_count' => $withClosing ? 0 : null,
+                'closing_confirmed_at' => $withClosing ? $now : null,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+        }
     }
 
     private function runMiddleware(User $user)

@@ -141,8 +141,8 @@ Route::middleware(['auth', EnsurePasswordChanged::class])->group(function () {
         Route::get('/{id}', [MutasiController::class, 'show'])->name('show');
 
         // Revision Routes (with workday restriction on submit)
-        Route::get('/{id}/revision', [MutasiController::class, 'revisionEdit'])->name('revision');
-        Route::put('/{id}/revision', [MutasiController::class, 'revisionResubmit'])->middleware('workday')->name('revision.submit');
+        Route::get('/{id}/revision', [MutasiController::class, 'revisionEdit'])->middleware('student-counts.complete')->name('revision');
+        Route::put('/{id}/revision', [MutasiController::class, 'revisionResubmit'])->middleware(['student-counts.complete', 'workday'])->name('revision.submit');
     });
 
     // Mutasi Masuk
@@ -159,8 +159,8 @@ Route::middleware(['auth', EnsurePasswordChanged::class])->group(function () {
         Route::get('/{id}', [MutasiMasukController::class, 'show'])->name('show');
 
         // Revision Routes (with workday restriction on submit)
-        Route::get('/{id}/revision', [MutasiMasukController::class, 'revisionEdit'])->name('revision');
-        Route::put('/{id}/revision', [MutasiMasukController::class, 'revisionResubmit'])->middleware('workday')->name('revision.submit');
+        Route::get('/{id}/revision', [MutasiMasukController::class, 'revisionEdit'])->middleware('student-counts.complete')->name('revision');
+        Route::put('/{id}/revision', [MutasiMasukController::class, 'revisionResubmit'])->middleware(['student-counts.complete', 'workday'])->name('revision.submit');
 
         // Draft API Routes (Auto-Save Feature)
         Route::post('/draft', [MutasiMasukController::class, 'createDraft'])->middleware('student-counts.complete')->name('draft.create');

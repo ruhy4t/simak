@@ -5,6 +5,11 @@
     @php($canEditGrade7 = $canEditStudentCounts)
     <div class="max-w-full mx-auto space-y-8">
 
+        <div class="rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900" role="status">
+            <p class="font-bold"><i class="bi bi-exclamation-triangle-fill mr-2"></i>Prasyarat pengajuan mutasi</p>
+            <p class="mt-1">Sekolah atau Operator dapat mengusulkan mutasi setelah profil sekolah, Data Murid Awal, dan Data Akhir tahun pelajaran aktif sudah lengkap.</p>
+        </div>
+
         <!-- Header Page -->
         <div class="flex items-center justify-between border-b-2 border-slate-200 pb-6 mb-8">
             <div>
