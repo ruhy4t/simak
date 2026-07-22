@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Statistik publik mutasi siswa Kota Bogor.">
+    <meta name="description" content="Statistik publik mutasi murid Kota Bogor.">
     <meta name="theme-color" content="#0f172a">
     <title>@yield('title', 'Statistik Publik SIMAK')</title>
 

@@ -81,7 +81,7 @@ class NonMutationStudentExitController extends Controller
         $this->forgetCohortCache((int) $validated['academic_year_id'], $school);
 
         return redirect()->route('non-mutation-exits.index', ['academic_year' => $validated['academic_year_id']])
-            ->with('success', 'Data siswa keluar non-mutasi berhasil disimpan.');
+            ->with('success', 'Data murid keluar non-mutasi berhasil disimpan.');
     }
 
     public function edit(NonMutationStudentExit $nonMutationExit)
@@ -110,7 +110,7 @@ class NonMutationStudentExitController extends Controller
         $this->forgetCohortCache((int) $validated['academic_year_id'], $nonMutationExit->school);
 
         return redirect()->route('non-mutation-exits.index', ['academic_year' => $validated['academic_year_id']])
-            ->with('success', 'Data siswa keluar non-mutasi berhasil diperbarui.');
+            ->with('success', 'Data murid keluar non-mutasi berhasil diperbarui.');
     }
 
     public function destroy(NonMutationStudentExit $nonMutationExit)
@@ -120,7 +120,7 @@ class NonMutationStudentExitController extends Controller
         $nonMutationExit->delete();
         $this->forgetCohortCache((int) $yearId, $nonMutationExit->school);
 
-        return back()->with('success', 'Data siswa keluar non-mutasi berhasil dihapus.');
+        return back()->with('success', 'Data murid keluar non-mutasi berhasil dihapus.');
     }
 
     private function validateRecord(

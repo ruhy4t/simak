@@ -175,10 +175,10 @@
                     </div>
                 </div>
 
-                <!-- Jumlah Siswa Section -->
+                <!-- Jumlah Murid Section -->
                 <div class="border-t pt-6">
                     <h3 class="text-lg font-medium text-gray-900 mb-4">
-                        <i class="bi bi-people text-blue-600 mr-2"></i>Jumlah Siswa Awal
+                        <i class="bi bi-people text-blue-600 mr-2"></i>Jumlah Murid Awal
                     </h3>
                     @if($activeAcademicYear)
                         <input type="hidden" name="academic_year_id" value="{{ $activeAcademicYear->id }}">

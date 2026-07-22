@@ -17,9 +17,9 @@
         <!-- Header -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-                <p class="text-xs font-semibold uppercase tracking-[0.18em] text-sky-600">Pengajuan Siswa</p>
+                <p class="text-xs font-semibold uppercase tracking-[0.18em] text-sky-600">Pengajuan Murid</p>
                 <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-950">Mutasi Masuk</h1>
-                <p class="mt-1 text-sm text-slate-500">Daftar pengajuan siswa pindahan masuk ke sekolah</p>
+                <p class="mt-1 text-sm text-slate-500">Daftar pengajuan murid pindahan masuk ke sekolah</p>
             </div>
             @if(in_array(Auth::user()->role, ['Sekolah', 'Operator', 'Dinas', 'SuperAdmin']))
                 <a href="{{ route('mutasi.masuk.create') }}"
@@ -97,7 +97,7 @@
                                 <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
                                     Sekolah Asal</th>
                                 <th class="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">
-                                    Jumlah Siswa</th>
+                                    Jumlah Murid</th>
                             @else
                                 <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">ID
                                     Mutasi</th>
@@ -107,7 +107,7 @@
                                     Surat</th>
                                 <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
                                     Sekolah Asal</th>
-                                <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Siswa
+                                <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Murid
                                 </th>
                             @endif
 
@@ -187,7 +187,7 @@
                                                     </span>
                                                 @endif
                                                 @if($siswaCount > 1)
-                                                     <span class="text-xs italic text-slate-500 mt-1">(+{{ $siswaCount - 1 }} siswa lain)</span>
+                                                     <span class="text-xs italic text-slate-500 mt-1">(+{{ $siswaCount - 1 }} murid lain)</span>
                                                 @endif
                                             @else
                                                 <span class="text-slate-500 italic">Data Sekolah Asal Tidak Tersedia</span>
@@ -320,7 +320,7 @@
                                 <i class="bi bi-people-fill text-indigo-600 text-lg"></i>
                             </div>
                             <div>
-                                <h3 class="font-bold text-slate-900">Daftar Siswa Pindah</h3>
+                                <h3 class="font-bold text-slate-900">Daftar Murid Pindah</h3>
                                 <p class="text-sm text-slate-500" x-text="'ID: ' + modalTitle"></p>
                             </div>
                         </div>
@@ -338,7 +338,7 @@
                                     class="w-12 h-12 mx-auto mb-3 rounded-full bg-slate-100 flex items-center justify-center">
                                     <i class="bi bi-person-x text-2xl text-slate-400"></i>
                                 </div>
-                                Tidak ada data siswa.
+                                Tidak ada data murid.
                             </div>
                         </template>
 

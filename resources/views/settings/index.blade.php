@@ -53,7 +53,7 @@
         <div class="p-6">
             @if($academicYears->isEmpty())
                 <div class="rounded-xl bg-amber-50 border border-amber-200 p-4 text-amber-800">
-                    Migrasi tahun pelajaran belum dijalankan. Aplikasi masih menggunakan data siswa lama.
+                    Migrasi tahun pelajaran belum dijalankan. Aplikasi masih menggunakan data murid lama.
                 </div>
             @else
                 @if($dueAcademicYear)

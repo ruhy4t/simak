@@ -24,7 +24,7 @@ return new class extends Migration {
             $table->index('nama_sekolah_tujuan');
         });
 
-        // Mutasi Masuk Siswa Indexes (Searching students within Mutasi Masuk)
+        // Mutasi Masuk Murid Indexes (Searching students within Mutasi Masuk)
         Schema::table('mutasi_masuk_siswa', function (Blueprint $table) {
             $table->index('nama_murid');
         });

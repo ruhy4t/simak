@@ -301,7 +301,7 @@ class MutasiMasukController extends Controller
             DB::table('mutasi_masuk')->where('id_mutasi', $id)->delete();
 
             return redirect()->route('mutasi.masuk.index')
-                ->with('success', 'Usulan mutasi masuk dan data siswa berhasil dihapus permanen.');
+                ->with('success', 'Usulan mutasi masuk dan data murid berhasil dihapus permanen.');
         });
     }
 
@@ -340,7 +340,7 @@ class MutasiMasukController extends Controller
 
         // Validate jumlah_siswa (Limit Removed, now just > 0)
         if ($jumlahSiswa < 1) {
-            return back()->withErrors(['jumlah_siswa' => 'Jumlah siswa minimal 1'])->withInput();
+            return back()->withErrors(['jumlah_siswa' => 'Jumlah murid minimal 1'])->withInput();
         }
 
         // Base validation with custom messages
@@ -373,10 +373,10 @@ class MutasiMasukController extends Controller
             'file_surat_permohonan.max' => 'File Surat Permohonan maksimal 1MB. Silakan kompres file PDF Anda.',
 
             // Header Data
-            'jumlah_siswa.required' => 'Jumlah siswa wajib diisi.',
-            'jumlah_siswa.integer' => 'Jumlah siswa harus berupa angka.',
-            'jumlah_siswa.min' => 'Jumlah siswa minimal 1.',
-            'jumlah_siswa.max' => 'Jumlah siswa maksimal 5 per pengajuan.',
+            'jumlah_siswa.required' => 'Jumlah murid wajib diisi.',
+            'jumlah_siswa.integer' => 'Jumlah murid harus berupa angka.',
+            'jumlah_siswa.min' => 'Jumlah murid minimal 1.',
+            'jumlah_siswa.max' => 'Jumlah murid maksimal 5 per pengajuan.',
             'nomor_surat.required' => 'Nomor Surat Permohonan wajib diisi.',
             'nomor_surat.max' => 'Nomor Surat maksimal 50 karakter.',
             'tanggal_surat.required' => 'Tanggal Surat Permohonan wajib diisi.',
@@ -464,9 +464,9 @@ class MutasiMasukController extends Controller
             }
 
             // Per-siswa validation messages
-            $messages["siswa.{$i}.nama_murid.required"] = "Nama Siswa #{$siswaNum} wajib diisi.";
+            $messages["siswa.{$i}.nama_murid.required"] = "Nama Murid #{$siswaNum} wajib diisi.";
             // ... (keep generic messages, they apply to both file and string presence)
-            $messages["siswa.{$i}.file_rapor.required"] = "Rapor Siswa #{$siswaNum} wajib diunggah.";
+            $messages["siswa.{$i}.file_rapor.required"] = "Rapor Murid #{$siswaNum} wajib diunggah.";
         }
 
         $validator = Validator::make($request->all(), $rules, $messages);
@@ -550,7 +550,7 @@ class MutasiMasukController extends Controller
                 'updated_at' => now(),
             ]);
 
-            // Insert per siswa with sanitization
+            // Insert per murid with sanitization
             $siswaData = $request->input('siswa', []);
             $uploadPathKey = $this->fileUploadService->getDateBasedPath('masuk');
 
@@ -689,7 +689,7 @@ class MutasiMasukController extends Controller
                                 $this->fileUploadService->getDateBasedPath('masuk')
                             );
                         } else {
-                            throw new \Exception("File Rekam Didik siswa #" . ($idx + 1) . " harus berformat PDF, JPEG, atau PNG.");
+                            throw new \Exception("File Rekam Didik murid #" . ($idx + 1) . " harus berformat PDF, JPEG, atau PNG.");
                         }
                     }
                 }
@@ -760,7 +760,7 @@ class MutasiMasukController extends Controller
             Log::info("Mutasi Masuk created: {$idMutasi} by {$user->username}");
 
             return redirect()->route('mutasi.masuk.index')
-                ->with('success', "Mutasi Masuk {$idMutasi} berhasil dibuat ({$jumlahSiswa} siswa)");
+                ->with('success', "Mutasi Masuk {$idMutasi} berhasil dibuat ({$jumlahSiswa} murid)");
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -833,7 +833,7 @@ class MutasiMasukController extends Controller
         $action = $request->input('action');
         $status = $action === 'approve' ? 'Disetujui Dinas' : 'Perlu Perbaikan';
 
-        // Save verification status for each document per siswa
+        // Save verification status for each document per murid
         $siswaList = DB::table('mutasi_masuk_siswa')->where('id_mutasi', $id)->get();
         $verifikasiInput = $request->input('verifikasi', []);
 
@@ -1379,7 +1379,7 @@ class MutasiMasukController extends Controller
             $uploadPathKey = $this->fileUploadService->getRelativeDateBasedPath('masuk');
 
             foreach ($siswaData as $siswaId => $data) {
-                // Ensure siswa exists & belongs to this mutasi
+                // Ensure murid exists & belongs to this mutasi
                 $existingSiswa = DB::table('mutasi_masuk_siswa')->where('id', $siswaId)->where('id_mutasi', $id)->first();
                 if (!$existingSiswa)
                     continue;
@@ -1405,7 +1405,7 @@ class MutasiMasukController extends Controller
                         // Upload new secure
                         // Note: fileUploadService->uploadPdf expects UploadedFile
                         $file = $request->file($inputKey);
-                        // Using a manual call to uploadPdf to handle the specific naming convention for existing siswa ID
+                        // Using a manual call to uploadPdf to handle the specific naming convention for existing murid ID
                         // Naming: {idMutasi}_siswa{idx}_{field} OR we can stick to {idMutasi}_{siswaID}_{field} for revision validity
                         // The original uploader uses index. Here we have ID. Let's use ID to be safe and specific.
 
@@ -1975,13 +1975,13 @@ class MutasiMasukController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Siswa #' . ($studentIndex + 1) . ' berhasil ' . $actionMsg,
+                'message' => 'Murid #' . ($studentIndex + 1) . ' berhasil ' . $actionMsg,
                 'student_count' => $actualCount
             ]);
 
         } catch (\Exception $e) {
             Log::error("Add Student to Draft Error: " . $e->getMessage());
-            return $this->safeJsonError('Gagal menyimpan siswa', $e);
+            return $this->safeJsonError('Gagal menyimpan murid', $e);
         }
     }
 
@@ -2006,7 +2006,7 @@ class MutasiMasukController extends Controller
         // Verify at least one student exists
         $studentCount = DB::table('mutasi_masuk_siswa')->where('id_mutasi', $id)->count();
         if ($studentCount < 1) {
-            return response()->json(['success' => false, 'message' => 'Minimal 1 siswa harus diisi'], 400);
+            return response()->json(['success' => false, 'message' => 'Minimal 1 murid harus diisi'], 400);
         }
 
         try {
@@ -2104,7 +2104,7 @@ class MutasiMasukController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => "Mutasi Masuk {$id} berhasil dikirim ({$studentCount} siswa)",
+                'message' => "Mutasi Masuk {$id} berhasil dikirim ({$studentCount} murid)",
                 'redirect' => route('mutasi.masuk.index')
             ]);
 

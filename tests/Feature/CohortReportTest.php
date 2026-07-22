@@ -481,8 +481,8 @@ class CohortReportTest extends TestCase
             ['id_mutasi' => 'K-LONG-3', 'tanggal_pengajuan' => '2027-10-01', 'npsn_sekolah_asal' => '12345678', 'kelas' => '9', 'jenis_kelamin' => 'P', 'status' => 'Selesai'],
         ]);
         DB::table('non_mutation_student_exits')->insert([
-            ['satuan_pendidikan_id' => $schoolId, 'academic_year_id' => $gradeEightYear->id, 'student_name' => 'Siswa Satu', 'nisn' => '1000000001', 'grade' => 8, 'gender' => 'L', 'exit_date' => '2026-10-01', 'reason' => 'Lainnya', 'created_at' => now(), 'updated_at' => now()],
-            ['satuan_pendidikan_id' => $schoolId, 'academic_year_id' => $gradeEightYear->id, 'student_name' => 'Siswa Dua', 'nisn' => '1000000002', 'grade' => 8, 'gender' => 'P', 'exit_date' => '2026-10-02', 'reason' => 'Lainnya', 'created_at' => now(), 'updated_at' => now()],
+            ['satuan_pendidikan_id' => $schoolId, 'academic_year_id' => $gradeEightYear->id, 'student_name' => 'Murid Satu', 'nisn' => '1000000001', 'grade' => 8, 'gender' => 'L', 'exit_date' => '2026-10-01', 'reason' => 'Lainnya', 'created_at' => now(), 'updated_at' => now()],
+            ['satuan_pendidikan_id' => $schoolId, 'academic_year_id' => $gradeEightYear->id, 'student_name' => 'Murid Dua', 'nisn' => '1000000002', 'grade' => 8, 'gender' => 'P', 'exit_date' => '2026-10-02', 'reason' => 'Lainnya', 'created_at' => now(), 'updated_at' => now()],
         ]);
 
         $report = app(LongitudinalCohortService::class)->report($entryYear, $schoolId);
@@ -528,7 +528,7 @@ class CohortReportTest extends TestCase
 
         $payload = [
             'academic_year_id' => $year->id,
-            'student_name' => 'Siswa Uji Rahasia',
+            'student_name' => 'Murid Uji Rahasia',
             'grade' => 7,
             'gender' => 'L',
             'exit_date' => '2026-10-10',
@@ -551,7 +551,7 @@ class CohortReportTest extends TestCase
             ->assertSessionHasErrors('nisn');
 
         $this->assertDatabaseHas('non_mutation_student_exits', [
-            'student_name' => 'Siswa Uji Rahasia',
+            'student_name' => 'Murid Uji Rahasia',
             'nisn' => '0012345678',
         ]);
 
@@ -567,7 +567,7 @@ class CohortReportTest extends TestCase
         $this->get('/statistik-mutasi?year=2026&academic_year='.$year->id)
             ->assertOk()
             ->assertSee('Keluar non-mutasi terdata')
-            ->assertDontSee('Siswa Uji Rahasia')
+            ->assertDontSee('Murid Uji Rahasia')
             ->assertDontSee('0012345678');
     }
 

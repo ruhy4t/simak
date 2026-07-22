@@ -41,7 +41,7 @@ class WordDocumentServiceTest extends TestCase
     {
         $path = app(WordDocumentService::class)->createMutasiKeluar($this->outgoingTransfer(), $this->signer());
 
-        $document = $this->assertNativeDocx($path, ['SURAT KETERANGAN', 'DATA SISWA', 'Budi Santoso']);
+        $document = $this->assertNativeDocx($path, ['SURAT KETERANGAN', 'DATA MURID', 'Budi Santoso']);
         $this->assertSingleLineZeroParagraphSpacing($path);
         $this->assertDocxTablesHaveNoVisibleBorders($path);
         $this->assertCount(1, $document->getSections());
@@ -92,7 +92,7 @@ class WordDocumentServiceTest extends TestCase
 
         $path = app(WordDocumentService::class)->createMutasiMasuk($this->incomingTransfer(), $students, $this->signer());
 
-        $document = $this->assertNativeDocx($path, ['Izin Mutasi Siswa', 'DAFTAR SISWA MUTASI MASUK', 'Siti Aminah']);
+        $document = $this->assertNativeDocx($path, ['Izin Mutasi Murid', 'DAFTAR MURID MUTASI MASUK', 'Siti Aminah']);
         $this->assertSingleLineZeroParagraphSpacing($path);
         $this->assertDocxTablesHaveNoVisibleBorders($path);
         $this->assertCount(2, $document->getSections());

@@ -108,7 +108,7 @@ class TelegramDeliveryTest extends TestCase
         $mutation = (object) [
             'id_mutasi' => 'MK-001',
             'pengusul' => 'operator',
-            'nama_murid' => 'Siswa Uji',
+            'nama_murid' => 'Murid Uji',
         ];
 
         NotificationHelper::notifyPengusulOnStatusChange(
@@ -133,7 +133,7 @@ class TelegramDeliveryTest extends TestCase
         $mutation = (object) [
             'id_mutasi' => 'MK-001',
             'pengusul' => 'operator',
-            'nama_murid' => 'Siswa Uji',
+            'nama_murid' => 'Murid Uji',
         ];
 
         NotificationHelper::notifyPengusulOnStatusChange(

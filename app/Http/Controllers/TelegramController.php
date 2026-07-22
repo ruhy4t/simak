@@ -71,19 +71,22 @@ class TelegramController extends Controller
      * Set webhook URL for Telegram bot
      * Call this once to configure your bot to send updates to your webhook
      * 
-     * GET /telegram/set-webhook?url=https://yourdomain.com/telegram/webhook
+     * POST /telegram/set-webhook with url=https://yourdomain.com/telegram/webhook
      */
     public function setWebhook(Request $request)
     {
         $this->ensureAdminAccess($request);
 
-        $webhookUrl = $request->input('url');
+        $validated = $request->validate([
+            'url' => ['required', 'url', 'starts_with:https://', 'max:2048'],
+        ]);
+        $webhookUrl = $validated['url'];
 
-        if (empty($webhookUrl)) {
+        if (parse_url($webhookUrl, PHP_URL_PATH) !== '/telegram/webhook') {
             return response()->json([
                 'success' => false,
-                'message' => 'URL parameter is required'
-            ], 400);
+                'message' => 'URL harus mengarah tepat ke /telegram/webhook.',
+            ], 422);
         }
 
         $botToken = config('services.telegram.bot_token');
@@ -103,7 +106,7 @@ class TelegramController extends Controller
             ];
 
             $webhookSecret = config('services.telegram.webhook_secret');
-            if (!empty($webhookSecret)) {
+            if (! empty($webhookSecret)) {
                 $payload['secret_token'] = $webhookSecret;
             }
 
@@ -125,10 +128,9 @@ class TelegramController extends Controller
                 ], 400);
             }
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 500);
+            Log::error('Failed to configure Telegram webhook.', ['exception' => $e]);
+
+            return $this->safeJsonError('Gagal mengatur webhook Telegram', $e);
         }
     }
 
@@ -156,10 +158,9 @@ class TelegramController extends Controller
 
             return response()->json($response->json());
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 500);
+            Log::error('Failed to read Telegram webhook information.', ['exception' => $e]);
+
+            return $this->safeJsonError('Gagal membaca informasi webhook Telegram', $e);
         }
     }
 }

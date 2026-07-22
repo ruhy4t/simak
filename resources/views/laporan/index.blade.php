@@ -70,7 +70,7 @@
                         </div>
                         <div>
                             <h3 class="text-xl font-extrabold text-orange-900">Daftar Nominatif</h3>
-                            <p class="text-orange-800/80 text-sm mt-1 font-medium">Detail data siswa by NISN.</p>
+                            <p class="text-orange-800/80 text-sm mt-1 font-medium">Detail data murid by NISN.</p>
                         </div>
                     </div>
                 </a>

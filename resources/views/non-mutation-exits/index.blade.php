@@ -1,25 +1,25 @@
 @extends('layouts.app')
 
-@section('title', 'Siswa Keluar Non-Mutasi')
+@section('title', 'Murid Keluar Non-Mutasi')
 
 @section('content')
     @php($canEnter = in_array(Auth::user()->role, ['Sekolah', 'Operator'], true))
     <div class="space-y-6">
         <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
             <div>
-                <p class="text-xs font-bold uppercase tracking-[0.16em] text-rose-600">Pendataan Per Siswa</p>
-                <h1 class="mt-1 text-3xl font-black tracking-tight text-slate-950">Siswa Keluar Non-Mutasi</h1>
-                <p class="mt-1 max-w-3xl text-sm leading-6 text-slate-500">Catat siswa yang keluar tetapi tidak memiliki pengajuan mutasi resmi. Data langsung masuk laporan tanpa persetujuan Dinas.</p>
+                <p class="text-xs font-bold uppercase tracking-[0.16em] text-rose-600">Pendataan Per Murid</p>
+                <h1 class="mt-1 text-3xl font-black tracking-tight text-slate-950">Murid Keluar Non-Mutasi</h1>
+                <p class="mt-1 max-w-3xl text-sm leading-6 text-slate-500">Catat murid yang keluar tetapi tidak memiliki pengajuan mutasi resmi. Data langsung masuk laporan tanpa persetujuan Dinas.</p>
             </div>
             @if($canEnter)
                 <a href="{{ route('non-mutation-exits.create') }}" class="inline-flex items-center justify-center gap-2 rounded-xl bg-rose-600 px-5 py-3 font-bold text-white hover:bg-rose-700">
-                    <i class="bi bi-person-plus-fill"></i> Tambah Data Siswa
+                    <i class="bi bi-person-plus-fill"></i> Tambah Data Murid
                 </a>
             @endif
         </div>
 
         <section class="rounded-2xl border border-rose-100 bg-rose-50 p-5 text-rose-900 sm:max-w-sm">
-            <p class="text-sm font-semibold text-rose-700">Total Siswa Tercatat</p>
+            <p class="text-sm font-semibold text-rose-700">Total Murid Tercatat</p>
             <p class="mt-1 text-3xl font-black">{{ number_format($total) }}</p>
             <p class="mt-1 text-xs text-rose-600">Sesuai tahun pelajaran dan sekolah pada filter.</p>
         </section>
@@ -52,7 +52,7 @@
                 <table class="w-full min-w-[72rem] text-sm">
                     <thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
                         <tr>
-                            <th class="px-4 py-3 text-left">Siswa</th><th class="px-4 py-3 text-left">Sekolah</th>
+                            <th class="px-4 py-3 text-left">Murid</th><th class="px-4 py-3 text-left">Sekolah</th>
                             <th class="px-4 py-3 text-center">Kelas/JK</th><th class="px-4 py-3 text-left">Tanggal</th>
                             <th class="px-4 py-3 text-left">Alasan</th>
                             <th class="px-4 py-3 text-right">Tindakan</th>
@@ -77,7 +77,7 @@
                                 </td>
                             </tr>
                         @empty
-                            <tr><td colspan="6" class="px-5 py-16 text-center text-slate-500"><i class="bi bi-person-check text-3xl"></i><p class="mt-3 font-semibold">Belum ada data siswa keluar non-mutasi pada filter ini.</p></td></tr>
+                            <tr><td colspan="6" class="px-5 py-16 text-center text-slate-500"><i class="bi bi-person-check text-3xl"></i><p class="mt-3 font-semibold">Belum ada data murid keluar non-mutasi pada filter ini.</p></td></tr>
                         @endforelse
                     </tbody>
                 </table>

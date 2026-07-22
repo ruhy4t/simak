@@ -150,7 +150,7 @@
                     'total_unit' => 'Pengajuan',
                     'student_total' => $statsMasuk['total_siswa'] ?? 0,
                     'student_completed' => $statsMasuk['selesai_siswa'] ?? 0,
-                    'student_completed_label' => 'Siswa mutasi masuk berstatus selesai',
+                    'student_completed_label' => 'Murid mutasi masuk berstatus selesai',
                     'icon' => 'bi-box-arrow-in-right',
                     'iconClass' => 'bg-sky-50 text-sky-600',
                     'statuses' => [
@@ -165,9 +165,9 @@
                     'label' => 'Mutasi Keluar',
                     'description' => 'Pengajuan perpindahan keluar',
                     'total' => $statsKeluar['total'] ?? 0,
-                    'total_unit' => 'Siswa/Pengajuan',
+                    'total_unit' => 'Murid/Pengajuan',
                     'student_completed' => $statsKeluar['selesai'] ?? 0,
-                    'student_completed_label' => 'Siswa mutasi keluar berstatus selesai',
+                    'student_completed_label' => 'Murid mutasi keluar berstatus selesai',
                     'icon' => 'bi-box-arrow-right',
                     'iconClass' => 'bg-indigo-50 text-indigo-600',
                     'statuses' => [
@@ -228,7 +228,7 @@
                             @if(isset($summary['student_total']))
                                 <div class="border-l border-slate-200 pl-5">
                                     <p class="text-2xl font-bold tracking-tight text-sky-700">{{ number_format($summary['student_total']) }}</p>
-                                    <p class="text-[11px] font-medium uppercase tracking-wider text-slate-400">Siswa</p>
+                                    <p class="text-[11px] font-medium uppercase tracking-wider text-slate-400">Murid</p>
                                 </div>
                             @endif
                         </div>
@@ -409,7 +409,7 @@
             <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
                 <div>
                      <h2 class="text-lg font-bold text-slate-800">Statistik Mutasi Per Sekolah</h2>
-                     <p class="text-sm text-slate-500 mt-1">Data perpindahan siswa berdasarkan sekolah · {{ $dateFilter['label'] }}</p>
+                     <p class="text-sm text-slate-500 mt-1">Data perpindahan murid berdasarkan sekolah · {{ $dateFilter['label'] }}</p>
                 </div>
             </div>
 
@@ -427,7 +427,7 @@
                                     <tr>
                                         <th class="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider w-12">#</th>
                                         <th class="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Sekolah Tujuan</th>
-                                        <th class="px-4 py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider w-24">Siswa</th>
+                                        <th class="px-4 py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider w-24">Murid</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100 bg-white">
@@ -472,7 +472,7 @@
                                     <tr>
                                         <th class="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider w-12">#</th>
                                         <th class="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Sekolah Asal</th>
-                                        <th class="px-4 py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider w-24">Siswa</th>
+                                        <th class="px-4 py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider w-24">Murid</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100 bg-white">

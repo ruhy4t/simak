@@ -8,7 +8,7 @@
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
                 <h1 class="text-2xl font-bold text-gray-900">Laporan Daftar Nominatif</h1>
-                <p class="text-gray-500 mt-1">Daftar detail siswa mutasi periode
+                <p class="text-gray-500 mt-1">Daftar detail murid mutasi periode
                     {{ \Carbon\Carbon::parse($start_date)->translatedFormat('d M Y') }} -
                     {{ \Carbon\Carbon::parse($end_date)->translatedFormat('d M Y') }}.
                 </p>
@@ -77,7 +77,7 @@
                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 L/P</th>
                             <th scope="col"
-                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Siswa
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Murid
                             </th>
                             <th scope="col"
                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Asal

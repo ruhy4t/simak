@@ -1,6 +1,6 @@
 # SIMAK
 
-SIMAK adalah aplikasi Sistem Informasi Mutasi Masuk dan Keluar siswa untuk Dinas Pendidikan Kota Bogor.
+SIMAK adalah aplikasi Sistem Informasi Mutasi Masuk dan Keluar murid untuk Dinas Pendidikan Kota Bogor.
 
 ## Versi Aplikasi
 
@@ -13,7 +13,7 @@ Perubahan utama versi 2.3.3:
 
 Perubahan utama versi 2.2.0:
 - Menambahkan grafik kohort data awal, mutasi, data akhir aktual, dan selisih rekonsiliasi.
-- Menambahkan pendataan individual siswa keluar non-mutasi tanpa unggah dokumen atau persetujuan Dinas.
+- Menambahkan pendataan individual murid keluar non-mutasi tanpa unggah dokumen atau persetujuan Dinas.
 - Mewajibkan NISN 10 digit dan mencegah duplikasi per sekolah serta tahun pelajaran.
 - Menampilkan data individual hanya untuk sekolah terkait dan Dinas; publik tetap menerima agregat.
 

@@ -80,7 +80,7 @@ class PdfService
     }
 
     /**
-     * Get and map siswa list for Mutasi Masuk PDF
+     * Get and map murid list for Mutasi Masuk PDF
      * 
      * @param string $idMutasi
      * @return \Illuminate\Support\Collection

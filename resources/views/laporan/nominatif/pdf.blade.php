@@ -70,7 +70,7 @@
 
 <body>
     <div class="header">
-        <h1>DAFTAR NOMINATIF MUTASI {{ strtoupper($type) }} SISWA</h1>
+        <h1>DAFTAR NOMINATIF MUTASI {{ strtoupper($type) }} MURID</h1>
         @if(!in_array($user->role, ['Sekolah', 'Operator']))
             <h2>DINAS PENDIDIKAN KOTA</h2>
         @else
@@ -99,7 +99,7 @@
                 <th width="30">No</th>
                 <th width="70">Tanggal</th>
                 <th width="30">L/P</th>
-                <th>Nama Siswa</th>
+                <th>Nama Murid</th>
                 <th width="80">NISN</th>
                 <th width="40">Kelas</th>
                 <th>Sekolah Asal</th>

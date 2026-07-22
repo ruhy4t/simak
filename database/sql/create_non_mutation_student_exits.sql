@@ -1,5 +1,5 @@
 -- =============================================================
--- SIMAK 2.2.0 - Pendataan Siswa Keluar Non-Mutasi per Individu
+-- SIMAK 2.2.0 - Pendataan Murid Keluar Non-Mutasi per Individu
 -- Target database: MySQL 8+ / MariaDB 10.5+
 -- Aman diimpor ulang.
 --

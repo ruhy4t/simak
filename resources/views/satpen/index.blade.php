@@ -215,7 +215,7 @@
                             <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Kepala Sekolah</th>
                             <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Bentuk</th>
                             <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Status</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Siswa</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Murid</th>
                             <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Kota</th>
                             <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Sumber</th>
                             <th class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Aksi</th>

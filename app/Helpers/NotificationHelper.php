@@ -117,7 +117,7 @@ class NotificationHelper
     {
         $jenis = $type === 'masuk' ? 'Mutasi Masuk' : 'Mutasi Keluar';
         $id = self::escape((string) ($mutasi->id_mutasi ?? '-'));
-        $namaSiswa = self::escape((string) ($mutasi->nama_murid ?? $mutasi->nama_siswa ?? 'Siswa'));
+        $namaSiswa = self::escape((string) ($mutasi->nama_murid ?? $mutasi->nama_siswa ?? 'Murid'));
         $escapedStatus = self::escape($status);
 
         $statusEmoji = match ($status) {
@@ -131,7 +131,7 @@ class NotificationHelper
         $message = "{$statusEmoji} <b>UPDATE STATUS MUTASI</b>\n\n"
             ."📋 Jenis: {$jenis}\n"
             ."🆔 ID: {$id}\n"
-            ."👤 Siswa: {$namaSiswa}\n\n"
+            ."👤 Murid: {$namaSiswa}\n\n"
             ."📊 Status: <b>{$escapedStatus}</b>\n";
 
         // Add specific instructions based on status

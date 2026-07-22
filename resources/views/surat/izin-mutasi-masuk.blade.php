@@ -308,9 +308,9 @@
         $tglTtd = isset($mutasi->tanggal_surat_izin) ? \Carbon\Carbon::parse($mutasi->tanggal_surat_izin)->format('d/m/Y') : now()->format('d/m/Y');
         $namaPejabat = $penandatangan?->nama ?? '-';
 
-        // SAFETY: Convert Siswa List to Array of Arrays to prevent "Call to member function on array" 
+        // SAFETY: Convert Murid List to Array of Arrays to prevent "Call to member function on array"
         // or "Cannot use object as array" errors.
-        // SAFETY: Convert Siswa List to Array of Arrays.
+        // SAFETY: Convert Murid List to Array of Arrays.
         // PdfService returns Collection of stdClass. ->toArray() keeps items as objects!
         // We MUST cast each item to (array) manually to support $siswa['key'] syntax.
         $siswaListArr = [];
@@ -380,7 +380,7 @@
                     <tr>
                         <td class="col-label">Hal</td>
                         <td class="col-colon">:</td>
-                        <td><strong>Izin Mutasi Siswa</strong></td>
+                        <td><strong>Izin Mutasi Murid</strong></td>
                     </tr>
                 </table>
             </div>
@@ -412,7 +412,7 @@
                 Berdasarkan surat dari Kepala {!! html_entity_decode($mutasi->sekolah_tujuan ?? '-') !!} nomor :
                 {!! html_entity_decode($mutasi->nomor_surat_permohonan ?? '-') !!} tanggal
                 {{ isset($mutasi->tanggal_surat_permohonan) ? \Carbon\Carbon::parse($mutasi->tanggal_surat_permohonan)->translatedFormat('j F Y') : '-' }}
-                perihal Permohonan Izin Mutasi Masuk, dengan ini memberikan izin untuk menerima siswa mutasi masuk
+                perihal Permohonan Izin Mutasi Masuk, dengan ini memberikan izin untuk menerima murid mutasi masuk
                 sebagaimana terlampir.
             </p>
         </div>
@@ -420,8 +420,8 @@
         <div class="catatan-section">
             <p><strong>Dengan catatan :</strong></p>
             <ol>
-                <li>proses perpindahan siswa berpedoman kepada ketentuan yang berlaku;</li>
-                <li>Kuota siswa per rombel tidak melebihi ketentuan yang sudah ditetapkan;</li>
+                <li>proses perpindahan murid berpedoman kepada ketentuan yang berlaku;</li>
+                <li>Kuota murid per rombel tidak melebihi ketentuan yang sudah ditetapkan;</li>
                 <li>Satuan Pendidikan wajib memperbaharui data di Dapodik.</li>
             </ol>
         </div>
@@ -554,7 +554,7 @@
                     </div>
 
                     <div class="lampiran-title">
-                        DAFTAR SISWA MUTASI MASUK<br>
+                        DAFTAR MURID MUTASI MASUK<br>
                         KE {!! html_entity_decode($mutasi->sekolah_tujuan ?? '-') !!}
                     </div>
                 @endif
@@ -563,7 +563,7 @@
                     <thead>
                         <tr>
                             <th width="25">No</th>
-                            <th width="170">Nama Siswa</th>
+                            <th width="170">Nama Murid</th>
                             <th width="90">NISN</th>
                             <th width="25">L/P</th>
                             <th width="140">Tempat, Tanggal Lahir</th>

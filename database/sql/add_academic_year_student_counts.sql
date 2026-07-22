@@ -1,5 +1,5 @@
 -- =============================================================
--- SIMAK - Migrasi Manual Tahun Pelajaran dan Data Siswa Tahunan
+-- SIMAK - Migrasi Manual Tahun Pelajaran dan Data Murid Tahunan
 -- Target database: MySQL 8+ / MariaDB 10.5+
 -- Dibuat agar aman diimpor ulang (idempotent).
 --

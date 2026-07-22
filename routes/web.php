@@ -29,8 +29,11 @@ use Illuminate\Support\Facades\Route;
 
 // Official Telegram webhook. This exact path is the only Telegram CSRF exception.
 Route::post('/telegram/webhook', [TelegramController::class, 'webhook']);
-Route::get('/telegram/set-webhook', [TelegramController::class, 'setWebhook']);
-Route::get('/telegram/webhook-info', [TelegramController::class, 'webhookInfo']);
+Route::middleware(['auth', EnsurePasswordChanged::class, 'role:Dinas,SuperAdmin', 'throttle:6,1'])
+    ->group(function (): void {
+        Route::post('/telegram/set-webhook', [TelegramController::class, 'setWebhook']);
+        Route::get('/telegram/webhook-info', [TelegramController::class, 'webhookInfo']);
+    });
 
 // Cron Routes (For external cron service like cron-job.org)
 Route::get('/cron/reminder', [CronController::class, 'revisionReminder'])->middleware('cron.auth');

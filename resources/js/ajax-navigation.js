@@ -208,6 +208,20 @@
         navigate(url);
     });
 
+    document.addEventListener('change', (event) => {
+        const select = event.target instanceof HTMLSelectElement
+            ? event.target.closest('select[data-navigation-url]')
+            : null;
+        if (!select) return;
+
+        const url = new URL(select.dataset.navigationUrl, window.location.href);
+        const parameter = select.dataset.navigationParam || select.name;
+        if (!parameter) return;
+
+        url.searchParams.set(parameter, select.value);
+        navigate(url);
+    });
+
     window.addEventListener('popstate', (event) => {
         const url = new URL(window.location.href);
         if (!event.state?.simakNavigation || !currentPageIsSafe() || !urlIsSafe(url)) {

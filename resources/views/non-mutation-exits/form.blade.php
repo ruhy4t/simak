@@ -1,12 +1,12 @@
 @extends('layouts.app')
 
-@section('title', $record->exists ? 'Edit Siswa Keluar Non-Mutasi' : 'Tambah Siswa Keluar Non-Mutasi')
+@section('title', $record->exists ? 'Edit Murid Keluar Non-Mutasi' : 'Tambah Murid Keluar Non-Mutasi')
 
 @section('content')
     <div class="mx-auto max-w-4xl space-y-6">
         <div>
             <a href="{{ route('non-mutation-exits.index') }}" class="text-sm font-bold text-slate-500 hover:text-rose-700"><i class="bi bi-arrow-left"></i> Kembali</a>
-            <h1 class="mt-3 text-3xl font-black tracking-tight text-slate-950">{{ $record->exists ? 'Perbaiki Data Siswa' : 'Tambah Siswa Keluar Non-Mutasi' }}</h1>
+            <h1 class="mt-3 text-3xl font-black tracking-tight text-slate-950">{{ $record->exists ? 'Perbaiki Data Murid' : 'Tambah Murid Keluar Non-Mutasi' }}</h1>
             <p class="mt-1 text-sm text-slate-500">Pendataan individual tanpa dokumen pendukung dan tanpa proses persetujuan Dinas.</p>
         </div>
 
@@ -23,7 +23,7 @@
                     @error('academic_year_id')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
                 </div>
                 <div>
-                    <label for="student-name" class="mb-2 block text-sm font-bold text-slate-700">Nama Siswa <span class="text-rose-600">*</span></label>
+                    <label for="student-name" class="mb-2 block text-sm font-bold text-slate-700">Nama Murid <span class="text-rose-600">*</span></label>
                     <input id="student-name" name="student_name" required maxlength="150" value="{{ old('student_name', $record->student_name) }}" class="w-full rounded-xl border-slate-300 focus:border-rose-500 focus:ring-rose-500">
                     @error('student_name')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
                 </div>

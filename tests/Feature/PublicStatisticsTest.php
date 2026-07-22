@@ -77,16 +77,16 @@ class PublicStatisticsTest extends TestCase
         $response
             ->assertOk()
             ->assertViewIs('public.statistics')
-            ->assertSee('Statistik Publik Mutasi Siswa')
+            ->assertSee('Statistik Publik Mutasi Murid')
             ->assertSee('Tentang data')
             ->assertSee('Mutasi per Kelas')
             ->assertSee('Kelas VII')
             ->assertSee('Masuk 1')
             ->assertSee('Keluar 1')
             ->assertDontSee('Tidak terklasifikasi')
-            ->assertDontSee('Nama Siswa')
+            ->assertDontSee('Nama Murid')
             ->assertDontSee('NISN')
-            ->assertHeader('Cache-Control', 'max-age=0, must-revalidate, public')
+            ->assertHeader('Cache-Control', 'max-age=60, public, s-maxage=300, stale-while-revalidate=600')
             ->assertViewHas('chartData', function (array $data) {
                 return count($data['labels']) === 31
                     && array_sum($data['masuk']['dalam']) === 1

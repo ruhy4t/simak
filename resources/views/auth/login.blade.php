@@ -254,7 +254,7 @@
 
                 <h2 class="text-3xl font-bold text-white mb-4 tracking-tight">SIMAK Kota Bogor</h2>
                 <p class="text-slate-300 text-lg leading-relaxed font-light">
-                    Sistem Informasi Mutasi masuk dan keluar siswa untuk pengelolaan data pendidikan yang lebih
+                    Sistem Informasi Mutasi masuk dan keluar murid untuk pengelolaan data pendidikan yang lebih
                     transparan dan efisien.
                 </p>
 

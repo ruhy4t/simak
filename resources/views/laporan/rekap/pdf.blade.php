@@ -66,7 +66,7 @@
 </head>
 <body>
     <div class="header">
-        <h1>LAPORAN REKAPITULASI MUTASI SISWA JENJANG SMP</h1>
+        <h1>LAPORAN REKAPITULASI MUTASI MURID JENJANG SMP</h1>
         @if(!in_array($user->role, ['Sekolah', 'Operator']))
             <h2>DINAS PENDIDIKAN KOTA</h2>
         @else

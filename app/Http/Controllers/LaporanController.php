@@ -319,7 +319,55 @@ class LaporanController extends Controller
             // For Sekolah: Group by Month with Kelas breakdown
             $npsn = $user->sekolah->npsn ?? $user->npsn;
             $school = $user->sekolah; // Get school profile data
-            $period = CarbonPeriod::create($start_date, '1 month', $end_date);
+            $period = CarbonPeriod::create(
+                Carbon::parse($start_date)->startOfMonth(),
+                '1 month',
+                Carbon::parse($end_date)->startOfMonth(),
+            );
+
+            $driver = DB::connection()->getDriverName();
+            $masukPeriodExpression = match ($driver) {
+                'sqlite' => "strftime('%Y-%m', mutasi_masuk.tanggal_pengajuan)",
+                'pgsql' => "TO_CHAR(mutasi_masuk.tanggal_pengajuan, 'YYYY-MM')",
+                default => "DATE_FORMAT(mutasi_masuk.tanggal_pengajuan, '%Y-%m')",
+            };
+            $keluarPeriodExpression = match ($driver) {
+                'sqlite' => "strftime('%Y-%m', tanggal_pengajuan)",
+                'pgsql' => "TO_CHAR(tanggal_pengajuan, 'YYYY-MM')",
+                default => "DATE_FORMAT(tanggal_pengajuan, '%Y-%m')",
+            };
+
+            // Aggregate the complete range once. The previous implementation ran
+            // two queries for every month, which is expensive on serverless DBs.
+            $masukByPeriod = DB::table('mutasi_masuk')
+                ->join('mutasi_masuk_siswa', 'mutasi_masuk.id_mutasi', '=', 'mutasi_masuk_siswa.id_mutasi')
+                ->where('mutasi_masuk.npsn_sekolah_tujuan', $npsn)
+                ->whereBetween('mutasi_masuk.tanggal_pengajuan', [$start_date, $end_date])
+                ->where('mutasi_masuk.status', 'Selesai')
+                ->selectRaw("{$masukPeriodExpression} as period,
+                    SUM(CASE WHEN mutasi_masuk_siswa.kelas IN ('7', 'VII') AND mutasi_masuk_siswa.jenis_kelamin = 'L' THEN 1 ELSE 0 END) as vii_l,
+                    SUM(CASE WHEN mutasi_masuk_siswa.kelas IN ('7', 'VII') AND mutasi_masuk_siswa.jenis_kelamin = 'P' THEN 1 ELSE 0 END) as vii_p,
+                    SUM(CASE WHEN mutasi_masuk_siswa.kelas IN ('8', 'VIII') AND mutasi_masuk_siswa.jenis_kelamin = 'L' THEN 1 ELSE 0 END) as viii_l,
+                    SUM(CASE WHEN mutasi_masuk_siswa.kelas IN ('8', 'VIII') AND mutasi_masuk_siswa.jenis_kelamin = 'P' THEN 1 ELSE 0 END) as viii_p,
+                    SUM(CASE WHEN mutasi_masuk_siswa.kelas IN ('9', 'IX') AND mutasi_masuk_siswa.jenis_kelamin = 'L' THEN 1 ELSE 0 END) as ix_l,
+                    SUM(CASE WHEN mutasi_masuk_siswa.kelas IN ('9', 'IX') AND mutasi_masuk_siswa.jenis_kelamin = 'P' THEN 1 ELSE 0 END) as ix_p")
+                ->groupByRaw($masukPeriodExpression)
+                ->get()
+                ->keyBy('period');
+
+            $keluarByPeriod = MutasiKeluar::where('npsn_sekolah_asal', $npsn)
+                ->whereBetween('tanggal_pengajuan', [$start_date, $end_date])
+                ->where('status', 'Selesai')
+                ->selectRaw("{$keluarPeriodExpression} as period,
+                    SUM(CASE WHEN kelas IN ('7', 'VII') AND jenis_kelamin = 'L' THEN 1 ELSE 0 END) as vii_l,
+                    SUM(CASE WHEN kelas IN ('7', 'VII') AND jenis_kelamin = 'P' THEN 1 ELSE 0 END) as vii_p,
+                    SUM(CASE WHEN kelas IN ('8', 'VIII') AND jenis_kelamin = 'L' THEN 1 ELSE 0 END) as viii_l,
+                    SUM(CASE WHEN kelas IN ('8', 'VIII') AND jenis_kelamin = 'P' THEN 1 ELSE 0 END) as viii_p,
+                    SUM(CASE WHEN kelas IN ('9', 'IX') AND jenis_kelamin = 'L' THEN 1 ELSE 0 END) as ix_l,
+                    SUM(CASE WHEN kelas IN ('9', 'IX') AND jenis_kelamin = 'P' THEN 1 ELSE 0 END) as ix_p")
+                ->groupByRaw($keluarPeriodExpression)
+                ->get()
+                ->keyBy('period');
 
             foreach ($period as $dt) {
                 $monthStart = $dt->copy()->startOfMonth()->format('Y-m-d');
@@ -335,21 +383,8 @@ class LaporanController extends Controller
                     continue;
                 }
 
-                // Mutasi Masuk per kelas & gender
-                $masukStats = DB::table('mutasi_masuk')
-                    ->join('mutasi_masuk_siswa', 'mutasi_masuk.id_mutasi', '=', 'mutasi_masuk_siswa.id_mutasi')
-                    ->where('mutasi_masuk.npsn_sekolah_tujuan', $npsn)
-                    ->whereBetween('mutasi_masuk.tanggal_pengajuan', [$monthStart, $monthEnd])
-                    ->where('mutasi_masuk.status', 'Selesai')
-                    ->selectRaw('
-                        SUM(CASE WHEN mutasi_masuk_siswa.kelas IN ("7", "VII") AND mutasi_masuk_siswa.jenis_kelamin = "L" THEN 1 ELSE 0 END) as vii_l,
-                        SUM(CASE WHEN mutasi_masuk_siswa.kelas IN ("7", "VII") AND mutasi_masuk_siswa.jenis_kelamin = "P" THEN 1 ELSE 0 END) as vii_p,
-                        SUM(CASE WHEN mutasi_masuk_siswa.kelas IN ("8", "VIII") AND mutasi_masuk_siswa.jenis_kelamin = "L" THEN 1 ELSE 0 END) as viii_l,
-                        SUM(CASE WHEN mutasi_masuk_siswa.kelas IN ("8", "VIII") AND mutasi_masuk_siswa.jenis_kelamin = "P" THEN 1 ELSE 0 END) as viii_p,
-                        SUM(CASE WHEN mutasi_masuk_siswa.kelas IN ("9", "IX") AND mutasi_masuk_siswa.jenis_kelamin = "L" THEN 1 ELSE 0 END) as ix_l,
-                        SUM(CASE WHEN mutasi_masuk_siswa.kelas IN ("9", "IX") AND mutasi_masuk_siswa.jenis_kelamin = "P" THEN 1 ELSE 0 END) as ix_p
-                    ')
-                    ->first();
+                $periodKey = $dt->format('Y-m');
+                $masukStats = $masukByPeriod->get($periodKey);
 
                 $m_vii_l = (int) ($masukStats->vii_l ?? 0);
                 $m_vii_p = (int) ($masukStats->vii_p ?? 0);
@@ -359,19 +394,7 @@ class LaporanController extends Controller
                 $m_ix_p = (int) ($masukStats->ix_p ?? 0);
                 $masukTotal = $m_vii_l + $m_vii_p + $m_viii_l + $m_viii_p + $m_ix_l + $m_ix_p;
 
-                // Mutasi Keluar per kelas & gender
-                $keluarStats = MutasiKeluar::where('npsn_sekolah_asal', $npsn)
-                    ->whereBetween('tanggal_pengajuan', [$monthStart, $monthEnd])
-                    ->where('status', 'Selesai')
-                    ->selectRaw('
-                        SUM(CASE WHEN kelas IN ("7", "VII") AND jenis_kelamin = "L" THEN 1 ELSE 0 END) as vii_l,
-                        SUM(CASE WHEN kelas IN ("7", "VII") AND jenis_kelamin = "P" THEN 1 ELSE 0 END) as vii_p,
-                        SUM(CASE WHEN kelas IN ("8", "VIII") AND jenis_kelamin = "L" THEN 1 ELSE 0 END) as viii_l,
-                        SUM(CASE WHEN kelas IN ("8", "VIII") AND jenis_kelamin = "P" THEN 1 ELSE 0 END) as viii_p,
-                        SUM(CASE WHEN kelas IN ("9", "IX") AND jenis_kelamin = "L" THEN 1 ELSE 0 END) as ix_l,
-                        SUM(CASE WHEN kelas IN ("9", "IX") AND jenis_kelamin = "P" THEN 1 ELSE 0 END) as ix_p
-                    ')
-                    ->first();
+                $keluarStats = $keluarByPeriod->get($periodKey);
 
                 $k_vii_l = (int) ($keluarStats->vii_l ?? 0);
                 $k_vii_p = (int) ($keluarStats->vii_p ?? 0);
@@ -620,7 +643,9 @@ class LaporanController extends Controller
                 'cohortEntryYears', 'cohortEntryYear', 'longitudinalCohort',
                 'schoolStatus', 'npsn', 'selectedSchool'
             ))
-            ->header('Cache-Control', 'public, max-age=0, must-revalidate');
+            // Let Vercel's edge cache absorb repeated public traffic while the
+            // browser refreshes frequently and stale content remains bounded.
+            ->header('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600');
     }
 
     /**
@@ -847,7 +872,7 @@ class LaporanController extends Controller
             fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF)); // BOM
 
             // Header
-            fputcsv($file, ['No', 'Tanggal', 'Jenis', 'Nama Siswa', 'NISN', 'L/P', 'Kelas', 'Asal Sekolah', 'Tujuan Sekolah', 'Status']);
+            fputcsv($file, ['No', 'Tanggal', 'Jenis', 'Nama Murid', 'NISN', 'L/P', 'Kelas', 'Asal Sekolah', 'Tujuan Sekolah', 'Status']);
 
             foreach ($data as $index => $item) {
                 fputcsv($file, [

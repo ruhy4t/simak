@@ -80,4 +80,17 @@ class AlpineCspCompatibilityTest extends TestCase
             $this->assertStringNotContainsString('<script', strtolower($contents), $view);
         }
     }
+
+    public function test_ajax_safe_views_do_not_depend_on_inline_event_handlers(): void
+    {
+        foreach (config('ajax_navigation.safe_views') as $view) {
+            $contents = File::get(base_path($view));
+
+            $this->assertDoesNotMatchRegularExpression(
+                '/\son(?:click|submit|input|change)\s*=/i',
+                $contents,
+                $view,
+            );
+        }
+    }
 }

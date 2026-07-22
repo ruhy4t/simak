@@ -16,7 +16,8 @@
                     <i class="bi bi-plus-lg"></i> Tambah Manual
                 </button>
                 <form action="{{ route('admin.regions.sync') }}" method="POST"
-                    onsubmit="return confirm('Proses ini akan mengambil data terbaru dari API dan memperbarui database lokal. Mungkin butuh waktu beberapa menit. Lanjutkan?');">
+                    data-confirm="Proses ini akan mengambil data terbaru dari API dan memperbarui database lokal. Mungkin butuh waktu beberapa menit. Lanjutkan?"
+                    data-confirm-title="Sinkronisasi Data Wilayah">
                     @csrf
                     <button type="submit"
                         class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition flex items-center gap-2">

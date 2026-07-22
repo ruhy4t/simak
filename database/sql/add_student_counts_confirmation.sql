@@ -1,12 +1,12 @@
 -- =============================================================
--- SIMAK - Penanda Konfirmasi Data Siswa Awal
+-- SIMAK - Penanda Konfirmasi Data Murid Awal
 -- Target database: MySQL 8+ / MariaDB 10.5+
 -- Aman diimpor ulang (idempotent).
 --
 -- Prasyarat:
 -- Tabel `satuan_pendidikan_student_counts` sudah tersedia.
 -- Data lama sengaja tidak dikonfirmasi otomatis. Sekolah harus
--- membuka Profil Sekolah dan menyimpan Data Siswa Awal tahun aktif.
+-- membuka Profil Sekolah dan menyimpan Data Murid Awal tahun aktif.
 -- =============================================================
 
 SET NAMES utf8mb4;

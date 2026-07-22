@@ -38,17 +38,17 @@
             @csrf
             @method('PUT')
 
-            <!-- Data Siswa -->
+            <!-- Data Murid -->
             <div class="bg-white rounded-2xl shadow-xs border border-slate-100 p-6 sm:p-8">
                 <h2 class="text-lg font-bold text-slate-900 mb-6 flex items-center gap-3">
                     <div class="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
                         <i class="bi bi-person-fill text-blue-600"></i>
                     </div>
-                    Data Siswa
+                    Data Murid
                 </h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-2">Nama Siswa <span
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Nama Murid <span
                                 class="text-rose-500">*</span></label>
                         <input type="text" name="nama_murid" value="{{ old('nama_murid', $mutasi->nama_murid) }}" required
                             class="w-full px-4 py-2.5 bg-slate-50 border-0 rounded-xl focus:ring-2 focus:ring-sky-100 focus:bg-white transition text-slate-900 placeholder:text-slate-400">

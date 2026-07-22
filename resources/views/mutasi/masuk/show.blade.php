@@ -15,7 +15,7 @@
                 <div class="flex items-center gap-2 mt-1 text-sm text-slate-500">
                     <span class="px-2 py-0.5 bg-slate-100 rounded-sm text-slate-600 font-mono">#{{ $mutasi->id_mutasi }}</span>
                     <span>•</span>
-                    <span>{{ $mutasi->jumlah_siswa }} Siswa</span>
+                    <span>{{ $mutasi->jumlah_siswa }} Murid</span>
                 </div>
             </div>
 
@@ -29,7 +29,7 @@
             @endphp
             @if($canCancel)
                 <form action="{{ route('mutasi.masuk.cancel', $mutasi->id_mutasi) }}" method="POST"
-                    data-confirm="PERINGATAN: Apakah Anda yakin ingin MENGHAPUS usulan mutasi ini? Tindakan ini akan MENGHAPUS SELURUH data siswa dan dokumen secara PERMANEN dan tidak dapat dikembalikan."
+                    data-confirm="PERINGATAN: Apakah Anda yakin ingin MENGHAPUS usulan mutasi ini? Tindakan ini akan MENGHAPUS SELURUH data murid dan dokumen secara PERMANEN dan tidak dapat dikembalikan."
                     data-confirm-title="Hapus Usulan Secara Permanen" data-confirm-type="danger">
                     @csrf
                     @method('PUT')
@@ -173,7 +173,7 @@
                 </div>
             @elseif(in_array(auth()->user()->role, ['Dinas', 'SuperAdmin']) && $mutasi->status === 'Menunggu Verifikasi Dinas')
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" x-data="incomingVerification">
-                    <!-- Kiri: Data Siswa & Preview Dokumen -->
+                    <!-- Kiri: Data Murid & Preview Dokumen -->
                     <div class="space-y-4">
                         {{-- Sekolah Tujuan Info Card --}}
                         <div class="bg-linear-to-r from-emerald-50 to-green-50 border border-emerald-200 rounded-xl p-4">
@@ -229,14 +229,14 @@
                             </div>
                         @endif
 
-                        <!-- Tab Siswa -->
+                        <!-- Tab Murid -->
                         <div class="bg-white rounded-xl shadow-xs border p-4">
                             <div class="flex flex-wrap gap-2 mb-4">
                                 @foreach($siswaList as $idx => $siswa)
                                     <button type="button" @click="selectStudent({{ $idx }})"
                                         :class="activeTab === {{ $idx }} ? 'bg-primary-600 text-white' : 'bg-gray-100 hover:bg-gray-200'"
                                         class="px-3 py-1.5 rounded-lg text-sm font-medium transition">
-                                        Siswa {{ $idx + 1 }}
+                                        Murid {{ $idx + 1 }}
                                     </button>
                                 @endforeach
                             </div>
@@ -247,7 +247,7 @@
                                     $age = $birthDate->diff(now());
                                 @endphp
                                 <div x-show="activeTab === {{ $idx }}" x-transition class="space-y-3">
-                                    {{-- Header Siswa --}}
+                                    {{-- Header Murid --}}
                                     <div class="flex items-start gap-3 bg-linear-to-r from-blue-50 to-slate-50 rounded-lg p-3">
                                         <div
                                             class="w-11 h-11 bg-blue-600 rounded-lg flex items-center justify-center shadow-md shadow-blue-200 shrink-0">
@@ -325,9 +325,9 @@
                                         </div>
                                     </div>
 
-                                    <!-- Dokumen Siswa -->
+                                    <!-- Dokumen Murid -->
                                     <div class="space-y-2">
-                                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Dokumen Siswa</p>
+                                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Dokumen Murid</p>
                                         <div class="grid grid-cols-2 gap-2">
                                             @php
                                                 $docs = [
@@ -393,7 +393,7 @@
                                 </label>
                             </div>
 
-                            <!-- Checklist per Siswa -->
+                            <!-- Checklist per Murid -->
                             @foreach($siswaList as $idx => $siswa)
                                 <div class="border rounded-lg p-3" x-show="activeTab === {{ $idx }}" x-transition>
                                     <h4 class="font-medium text-gray-900 mb-2 text-sm">
@@ -477,13 +477,13 @@
                         </div>
                     @endif
 
-                    <!-- Data Siswa dengan Tab -->
+                    <!-- Data Murid dengan Tab -->
                     <div class="bg-white rounded-2xl shadow-xs border border-slate-100 p-4 sm:p-6">
                         <h2 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-3">
                             <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
                                 <i class="bi bi-people-fill text-blue-600 text-xl"></i>
                             </div>
-                            Data Siswa
+                            Data Murid
                         </h2>
 
                         @if(count($siswaList) > 1)
@@ -492,7 +492,7 @@
                                     <button type="button" @click="activeTab = {{ $idx }}"
                                         :class="activeTab === {{ $idx }} ? 'bg-primary-600 text-white' : 'bg-gray-100 hover:bg-gray-200'"
                                         class="px-4 py-2 rounded-lg font-medium transition text-sm">
-                                        Siswa {{ $idx + 1 }}
+                                        Murid {{ $idx + 1 }}
                                     </button>
                                 @endforeach
                             </div>
@@ -505,7 +505,7 @@
                                 <div>
                                     <h4 class="font-bold text-amber-800 text-sm">Perlu Perbaikan</h4>
                                     <p class="text-sm text-amber-700 mt-1">Mohon perbaiki data atau dokumen sesuai catatan dari
-                                        verifikator. Cek catatan pada setiap siswa atau dokumen.</p>
+                                        verifikator. Cek catatan pada setiap murid atau dokumen.</p>
                                     @if($mutasi->catatan_berkas)
                                         <div
                                             class="mt-2 bg-white/60 p-2 rounded-sm text-xs font-mono text-amber-900 border border-amber-100">
@@ -523,7 +523,7 @@
                             @endphp
                             <div x-show="activeTab === {{ $idx }}" x-transition class="space-y-6">
 
-                                {{-- Card Data Siswa (High Clarity) --}}
+                                {{-- Card Data Murid (High Clarity) --}}
                                 <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-xs">
 
                                     {{-- Header: Identitas --}}
@@ -556,7 +556,7 @@
                                     <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
                                         {{-- Kolom Kiri: Biodata Vital --}}
                                         <div class="space-y-6">
-                                            <h4 class="font-bold text-slate-900 border-b border-slate-200 pb-2 mb-4">Biodata Siswa
+                                            <h4 class="font-bold text-slate-900 border-b border-slate-200 pb-2 mb-4">Biodata Murid
                                             </h4>
 
                                             <div class="grid grid-cols-2 gap-6">
@@ -691,7 +691,7 @@
                                 <button @click="previousStudent()" :disabled="activeTab === 0"
                                     :class="activeTab === 0 ? 'opacity-50' : 'hover:bg-gray-200'"
                                     class="px-4 py-2 bg-gray-100 rounded-lg text-sm">← Sebelumnya</button>
-                                <span class="text-sm text-gray-500">Siswa <span x-text="activeTab + 1"></span> /
+                                <span class="text-sm text-gray-500">Murid <span x-text="activeTab + 1"></span> /
                                     {{ count($siswaList) }}</span>
                                 <button @click="nextStudent({{ count($siswaList) - 1 }})"
                                     :disabled="activeTab === {{ count($siswaList) - 1 }}"

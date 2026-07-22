@@ -8,7 +8,7 @@
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
                 <h1 class="text-2xl font-bold text-gray-900">Daftar Mutasi Keluar</h1>
-                <p class="text-gray-500 mt-1">Kelola data mutasi siswa</p>
+                <p class="text-gray-500 mt-1">Kelola data mutasi murid</p>
             </div>
             <a href="{{ route('mutasi.create') }}"
                 class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white font-medium px-5 py-2.5 rounded-lg transition shadow-xs">
@@ -67,7 +67,7 @@
                         <thead class="bg-gray-50 border-b">
                             <tr>
                                 <th class="px-4 py-3 text-left font-semibold text-gray-700">Tanggal</th>
-                                <th class="px-4 py-3 text-left font-semibold text-gray-700">Nama Siswa</th>
+                                <th class="px-4 py-3 text-left font-semibold text-gray-700">Nama Murid</th>
                                 <th class="px-4 py-3 text-left font-semibold text-gray-700">NISN</th>
                                 <th class="px-4 py-3 text-left font-semibold text-gray-700">Sekolah Asal</th>
                                 <th class="px-4 py-3 text-left font-semibold text-gray-700">Tujuan</th>

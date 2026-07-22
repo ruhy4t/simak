@@ -118,7 +118,7 @@ class MutasiService
 
         if ($existingMutation) {
             throw \Illuminate\Validation\ValidationException::withMessages([
-                'nisn' => "Siswa dengan NISN {$nisn} sedang dalam proses mutasi aktif (ID: {$existingMutation->id_mutasi}). Mohon selesaikan atau batalkan pengajuan sebelumnya."
+                'nisn' => "Murid dengan NISN {$nisn} sedang dalam proses mutasi aktif (ID: {$existingMutation->id_mutasi}). Mohon selesaikan atau batalkan pengajuan sebelumnya."
             ]);
         }
     }
@@ -226,7 +226,7 @@ class MutasiService
         ]);
         MutationStatisticsCache::invalidate();
 
-        // Get siswa list and build student names
+        // Get murid list and build student names
         $siswaList = DB::table('mutasi_masuk_siswa')->where('id_mutasi', $id)->get();
         $namaSiswa = $siswaList->pluck('nama_murid')->implode(', ');
         $mutasiWithSiswa = (object) array_merge((array) $mutasi, ['nama_siswa' => $namaSiswa]);
@@ -315,7 +315,7 @@ class MutasiService
             'npsn_sekolah_tujuan.max' => 'NPSN Sekolah Tujuan maksimal 8 karakter.',
 
             // Student Data
-            'nama_murid.required' => 'Nama Siswa wajib diisi.',
+            'nama_murid.required' => 'Nama Murid wajib diisi.',
             'tempat_lahir.required' => 'Tempat Lahir wajib diisi.',
             'tanggal_lahir.required' => 'Tanggal Lahir wajib diisi.',
             'tanggal_lahir.before' => 'Tanggal Lahir harus sebelum hari ini.',

@@ -20,7 +20,7 @@
                     </p>
                 @else
                     <h1 class="text-2xl font-bold text-slate-900">Buat Mutasi Keluar</h1>
-                    <p class="text-slate-500 mt-1">Ajukan permohonan mutasi siswa keluar</p>
+                    <p class="text-slate-500 mt-1">Ajukan permohonan mutasi murid keluar</p>
                 @endif
             </div>
         </div>
@@ -54,21 +54,21 @@
                 </div>
             @endif
 
-            <!-- Data Siswa -->
+            <!-- Data Murid -->
             <div class="bg-white rounded-2xl shadow-xs border border-slate-100 p-6 sm:p-8">
                 <h2 class="text-lg font-bold text-slate-900 mb-6 flex items-center gap-3">
                     <div class="w-8 h-8 rounded-lg bg-sky-100 flex items-center justify-center">
                         <i class="bi bi-person-fill text-sky-600"></i>
                     </div>
-                    Data Siswa
+                    Data Murid
                 </h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-2">Nama Siswa *</label>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Nama Murid *</label>
                         <input type="text" name="nama_murid"
                             value="{{ old('nama_murid', optional($draft)->nama_murid ?? '') }}" required
                             class="w-full px-4 py-2.5 bg-slate-50 border-0 rounded-xl focus:ring-2 focus:ring-sky-100 focus:bg-white transition text-slate-800 placeholder:text-slate-400 @error('nama_murid') ring-2 ring-rose-100 @enderror"
-                            placeholder="Nama lengkap siswa">
+                            placeholder="Nama lengkap murid">
                         @error('nama_murid')<p class="text-rose-500 text-xs mt-1 font-medium">{{ $message }}</p>@enderror
                     </div>
                     <!-- NISN & NIS -->
@@ -79,7 +79,7 @@
                             </label>
                             <input type="text" name="nisn" value="{{ old('nisn', optional($draft)->nisn ?? '') }}" required
                                 class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition"
-                                placeholder="Nomor Induk Siswa Nasional" minlength="10" maxlength="10">
+                                placeholder="Nomor Induk Murid Nasional" minlength="10" maxlength="10">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-1">
@@ -87,7 +87,7 @@
                             </label>
                             <input type="text" name="nis" value="{{ old('nis', optional($draft)->nis ?? '') }}" required
                                 class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition"
-                                placeholder="Nomor Induk Siswa / Peserta Didik">
+                                placeholder="Nomor Induk Murid / Peserta Didik">
                         </div>
                     </div>
                     <div>
@@ -268,7 +268,7 @@
                                 onchange="toggleTujuanLuarNegeri()">
                             <div>
                                 <span class="text-sm font-semibold text-slate-700">Sekolah Tujuan di Luar Negeri</span>
-                                <p class="text-xs text-slate-500 mt-0.5">Centang jika siswa pindah ke sekolah di luar
+                                <p class="text-xs text-slate-500 mt-0.5">Centang jika murid pindah ke sekolah di luar
                                     negeri. NPSN menjadi opsional.</p>
                             </div>
                         </label>

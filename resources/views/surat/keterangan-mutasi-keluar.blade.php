@@ -494,7 +494,7 @@
 
 
 
-            <p class="section-title">DATA SISWA :</p>
+            <p class="section-title">DATA MURID :</p>
 
 
 

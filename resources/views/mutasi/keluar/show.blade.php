@@ -193,7 +193,7 @@
             <div class="space-y-4">
                 <!-- Student Info Detail -->
                 <div class="bg-white rounded-xl shadow-xs border border-slate-200 p-5">
-                    <h4 class="font-bold text-slate-800 mb-3 border-b border-slate-200 pb-2">Informasi Siswa</h4>
+                    <h4 class="font-bold text-slate-800 mb-3 border-b border-slate-200 pb-2">Informasi Murid</h4>
                     <div class="flex items-start gap-4">
                         <div
                             class="w-14 h-14 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold shadow-xs shrink-0 text-xl">

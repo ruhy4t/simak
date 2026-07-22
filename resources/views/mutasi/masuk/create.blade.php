@@ -19,7 +19,7 @@
                     <p class="text-slate-500 mt-1">Melanjutkan draft: <strong class="font-mono">{{ $draft->id_mutasi }}</strong></p>
                 @else
                     <h1 class="text-2xl font-bold text-slate-900">Buat Mutasi Masuk</h1>
-                    <p class="text-slate-500 mt-1">Input data siswa pindahan masuk ke sekolah Anda</p>
+                    <p class="text-slate-500 mt-1">Input data murid pindahan masuk ke sekolah Anda</p>
                 @endif
             </div>
         </div>
@@ -109,8 +109,8 @@
                     <div>
                         <h4 class="font-bold text-blue-900 text-sm">Informasi Pengajuan</h4>
                         <p class="text-sm text-blue-800 mt-1 leading-relaxed">
-                            Silakan masukkan jumlah siswa yang akan diajukan mutasi masuk.
-                            Pastikan data setiap siswa lengkap dan valid.
+                            Silakan masukkan jumlah murid yang akan diajukan mutasi masuk.
+                            Pastikan data setiap murid lengkap dan valid.
                         </p>
                     </div>
                 </div>
@@ -123,11 +123,11 @@
                 </h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-2">Jumlah Siswa *</label>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Jumlah Murid *</label>
                         <input type="number" name="jumlah_siswa" id="jumlah_siswa" min="1"
                             value="{{ old('jumlah_siswa', $draft->jumlah_siswa ?? 1) }}" required
                             class="w-full px-4 py-2.5 bg-slate-50 border-0 rounded-xl focus:ring-2 focus:ring-sky-100 focus:bg-white transition text-slate-800 placeholder:text-slate-400">
-                        <p class="text-xs text-slate-500 mt-2"><i class="bi bi-info-circle mr-1"></i>Jumlah siswa yang diajukan.</p>
+                        <p class="text-xs text-slate-500 mt-2"><i class="bi bi-info-circle mr-1"></i>Jumlah murid yang diajukan.</p>
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Nomor Surat *</label>
@@ -265,7 +265,7 @@
                 </div>
             </div>
 
-            <!-- Tab Navigation untuk Siswa -->
+            <!-- Tab Navigation untuk Murid -->
             <div class="bg-white rounded-2xl shadow-xs border border-slate-100 overflow-hidden">
                 <!-- Tab Header -->
                 <div class="border-b border-slate-100 bg-slate-50/50 px-6 py-4">
@@ -274,7 +274,7 @@
                             <div class="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center">
                                 <i class="bi bi-people-fill text-indigo-600"></i>
                             </div>
-                            Data Siswa
+                            Data Murid
                         </h2>
                         <div id="siswaTabNav" class="flex items-center gap-2 overflow-x-auto no-scrollbar">
                             <!-- Tabs akan di-generate oleh JavaScript -->
@@ -284,7 +284,7 @@
 
                 <!-- Tab Content -->
                 <div id="siswaContainer" class="p-6 sm:p-8">
-                    <!-- Form siswa akan di-generate oleh JavaScript -->
+                    <!-- Form murid akan di-generate oleh JavaScript -->
                 </div>
 
                 <!-- Navigation Buttons -->
@@ -292,11 +292,11 @@
                     class="border-t border-slate-100 bg-slate-50 px-6 py-4 flex justify-between hidden">
                     <button type="button" id="prevSiswa"
                         class="px-5 py-2.5 border border-slate-200 bg-white text-slate-600 rounded-xl hover:bg-slate-50 hover:text-slate-800 transition font-medium">
-                        <i class="bi bi-chevron-left mr-1"></i> Siswa Sebelumnya
+                        <i class="bi bi-chevron-left mr-1"></i> Murid Sebelumnya
                     </button>
                     <button type="button" id="nextSiswa"
                         class="px-5 py-2.5 bg-sky-500 text-white rounded-xl hover:bg-sky-600 transition font-medium shadow-lg shadow-sky-500/20">
-                        Siswa Berikutnya <i class="bi bi-chevron-right ml-1"></i>
+                        Murid Berikutnya <i class="bi bi-chevron-right ml-1"></i>
                     </button>
                 </div>
             </div>

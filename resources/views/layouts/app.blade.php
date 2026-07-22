@@ -238,7 +238,7 @@
                                 <div class="p-1 rounded-sm bg-white/5 group-hover:bg-sky-500/20 transition-colors">
                                     <i class="bi bi-arrow-left-right text-sky-400"></i>
                                 </div>
-                                <span class="text-sm font-medium">Mutasi Siswa</span>
+                                <span class="text-sm font-medium">Mutasi Murid</span>
                             </div>
                             <i class="bi bi-chevron-down text-xs transition-transform duration-300 text-slate-500"
                                 :class="open ? 'rotate-180' : ''"></i>

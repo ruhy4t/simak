@@ -1,6 +1,6 @@
 @extends('layouts.public')
 
-@section('title', 'Statistik Mutasi Siswa - SIMAK Kota Bogor')
+@section('title', 'Statistik Mutasi Murid - SIMAK Kota Bogor')
 
 @section('content')
     @php
@@ -22,7 +22,7 @@
                 </span>
                 <span>
                     <span class="block font-bold tracking-tight">SIMAK Kota Bogor</span>
-                    <span class="block text-xs text-slate-400">Statistik Publik Mutasi Siswa</span>
+                    <span class="block text-xs text-slate-400">Statistik Publik Mutasi Murid</span>
                 </span>
             </a>
             <a href="{{ route('login') }}"
@@ -38,11 +38,11 @@
         <section class="overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-900 to-sky-950 px-5 py-7 text-white sm:px-8 sm:py-9">
             <div class="max-w-3xl">
                 <p class="text-xs font-bold uppercase tracking-[0.2em] text-sky-400">Data Terbuka</p>
-                <h1 class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Tren Mutasi Siswa Kota Bogor</h1>
+                <h1 class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Tren Mutasi Murid Kota Bogor</h1>
                 <details class="mt-4 max-w-2xl text-sm text-slate-300">
                     <summary class="w-fit cursor-pointer font-semibold text-sky-300">Tentang data</summary>
                     <p class="mt-2 leading-6">
-                        Ringkasan hanya memuat data agregat tanpa identitas siswa, dokumen, atau rincian akun sekolah.
+                        Ringkasan hanya memuat data agregat tanpa identitas murid, dokumen, atau rincian akun sekolah.
                     </p>
                 </details>
             </div>

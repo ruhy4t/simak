@@ -97,7 +97,7 @@ class WordDocumentService
         );
         $section->addText($opening, [], $this->paragraph(['indentation' => ['firstLine' => 709]]));
 
-        $section->addText('DATA SISWA :', ['bold' => true], ['indentation' => ['left' => 709], 'spaceAfter' => 0]);
+        $section->addText('DATA MURID :', ['bold' => true], ['indentation' => ['left' => 709], 'spaceAfter' => 0]);
         $this->addKeyValueTable($section, [
             ['Nama', $mutasi->nama_siswa ?? '-', true],
             ['Tempat, Tanggal Lahir', $this->text($mutasi->tempat_lahir ?? '-').', '.$this->date($mutasi->tanggal_lahir ?? null)],
@@ -162,7 +162,7 @@ class WordDocumentService
         $section->addText('di Bogor', [], ['indentation' => ['left' => 500], 'spaceBefore' => 0, 'spaceAfter' => 0]);
 
         $body = sprintf(
-            'Berdasarkan surat dari Kepala %s nomor : %s tanggal %s perihal Permohonan Izin Mutasi Masuk, dengan ini memberikan izin untuk menerima siswa mutasi masuk sebagaimana terlampir.',
+            'Berdasarkan surat dari Kepala %s nomor : %s tanggal %s perihal Permohonan Izin Mutasi Masuk, dengan ini memberikan izin untuk menerima murid mutasi masuk sebagaimana terlampir.',
             $this->text($mutasi->sekolah_tujuan ?? '-'),
             $this->text($mutasi->nomor_surat_permohonan ?? '-'),
             $this->date($mutasi->tanggal_surat_permohonan ?? null)
@@ -170,8 +170,8 @@ class WordDocumentService
         $section->addText($body, [], $this->paragraph(['indentation' => ['firstLine' => 567]]));
         $section->addText('Dengan catatan :', ['bold' => true], ['spaceAfter' => 0]);
         foreach ([
-            'proses perpindahan siswa berpedoman kepada ketentuan yang berlaku;',
-            'Kuota siswa per rombel tidak melebihi ketentuan yang sudah ditetapkan;',
+            'proses perpindahan murid berpedoman kepada ketentuan yang berlaku;',
+            'Kuota murid per rombel tidak melebihi ketentuan yang sudah ditetapkan;',
             'Satuan Pendidikan wajib memperbaharui data di Dapodik.',
         ] as $note) {
             $section->addListItem($note, 0, [], 'numberedList', ['spaceBefore' => 0, 'spaceAfter' => 0, 'lineHeight' => 1]);
@@ -206,7 +206,7 @@ class WordDocumentService
                         ['Nomor', $mutasi->nomor_surat_izin ?? '-'],
                         ['Tanggal', $this->date($mutasi->tanggal_surat_izin ?? null)],
                     ], 4500, 0, 1000);
-                    $landscape->addText('DAFTAR SISWA MUTASI MASUK', ['bold' => true], [
+                    $landscape->addText('DAFTAR MURID MUTASI MASUK', ['bold' => true], [
                         'alignment' => Jc::CENTER,
                         'spaceBefore' => 0,
                         'spaceAfter' => 0,
@@ -309,7 +309,7 @@ class WordDocumentService
             ['Nomor', $mutasi->nomor_surat_izin ?? '-'],
             ['Sifat', 'Biasa'],
             ['Lampiran', '1 (satu) berkas'],
-            ['Hal', 'Izin Mutasi Siswa', true],
+            ['Hal', 'Izin Mutasi Murid', true],
         ], (int) ($width * 0.58), 1000);
         $row->addCell((int) ($width * 0.42))->addText(
             'Bogor, '.$this->date($mutasi->tanggal_surat_izin ?? null),
@@ -355,7 +355,7 @@ class WordDocumentService
             'layout' => 'fixed',
         ]);
         $header = $table->addRow(null, ['tblHeader' => true]);
-        foreach (['No', 'Nama Siswa', 'NISN', 'L/P', 'Tempat, Tanggal Lahir', 'Kelas', 'Sekolah Asal', 'Tgl Diterima'] as $index => $heading) {
+        foreach (['No', 'Nama Murid', 'NISN', 'L/P', 'Tempat, Tanggal Lahir', 'Kelas', 'Sekolah Asal', 'Tgl Diterima'] as $index => $heading) {
             $header->addCell($widths[$index], ['valign' => 'center'])->addText($heading, ['bold' => true, 'size' => 10], [
                 'alignment' => Jc::CENTER,
                 'spaceAfter' => 0,

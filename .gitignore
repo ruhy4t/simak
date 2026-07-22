@@ -12,6 +12,7 @@
 /vendor
 /storage/framework/views
 /backups/*.zip
+/database/sql/backup_*.sql
 
 .env
 .env.backup

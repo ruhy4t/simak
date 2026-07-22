@@ -379,8 +379,8 @@ class MutasiController extends Controller
 
         $messages = [
             // Student Data
-            'nama_murid.required' => 'Nama Siswa wajib diisi.',
-            'nama_murid.max' => 'Nama Siswa maksimal 100 karakter.',
+            'nama_murid.required' => 'Nama Murid wajib diisi.',
+            'nama_murid.max' => 'Nama Murid maksimal 100 karakter.',
             'nisn.required' => 'NISN wajib diisi.',
             'nisn.size' => 'NISN harus tepat 10 digit angka. Contoh: 0012345678.',
             'kelas.required' => 'Kelas wajib dipilih.',
@@ -629,8 +629,8 @@ class MutasiController extends Controller
             'nis.max' => 'NIS/NIPD maksimal 20 karakter.',
 
             // Student Data
-            'nama_murid.required' => 'Nama Siswa wajib diisi.',
-            'nama_murid.max' => 'Nama Siswa maksimal 100 karakter.',
+            'nama_murid.required' => 'Nama Murid wajib diisi.',
+            'nama_murid.max' => 'Nama Murid maksimal 100 karakter.',
             'tempat_lahir.required' => 'Tempat Lahir wajib diisi.',
             'tempat_lahir.max' => 'Tempat Lahir maksimal 50 karakter.',
             'tanggal_lahir.required' => 'Tanggal Lahir wajib diisi.',
@@ -723,7 +723,7 @@ class MutasiController extends Controller
             if ($existingMutation) {
                 // Manually throw ValidationException to return proper error to form
                 throw \Illuminate\Validation\ValidationException::withMessages([
-                    'nisn' => "Siswa dengan NISN {$request->nisn} sedang dalam proses mutasi aktif (ID: {$existingMutation->id_mutasi}). Mohon selesaikan atau batalkan pengajuan sebelumnya."
+                    'nisn' => "Murid dengan NISN {$request->nisn} sedang dalam proses mutasi aktif (ID: {$existingMutation->id_mutasi}). Mohon selesaikan atau batalkan pengajuan sebelumnya."
                 ]);
             }
             // ----------------------------------------

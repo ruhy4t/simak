@@ -142,13 +142,13 @@
                 </div>
             </div>
 
-            <!-- Data Siswa -->
+            <!-- Data Murid -->
             <div class="bg-white rounded-2xl shadow-xs border border-slate-100 p-6 sm:p-8">
                 <h3 class="text-lg font-bold text-slate-900 mb-8 flex items-center gap-3">
                     <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
                         <i class="bi bi-people-fill text-blue-600 text-xl"></i>
                     </div>
-                    Data Siswa
+                    Data Murid
                 </h3>
 
                 <div class="space-y-8">
@@ -160,9 +160,9 @@
                                 </div>
 
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <!-- Identitas Siswa -->
+                                    <!-- Identitas Murid -->
                                     <div>
-                                        <label class="block text-sm font-semibold text-slate-700 mb-2">Nama Siswa</label>
+                                        <label class="block text-sm font-semibold text-slate-700 mb-2">Nama Murid</label>
                                         <input type="text" name="siswa[{{ $siswa->id }}][nama_murid]"
                                             value="{{ old("siswa.{$siswa->id}.nama_murid", $siswa->nama_murid) }}"
                                             class="w-full px-4 py-2.5 bg-white border-0 rounded-xl focus:ring-2 focus:ring-sky-100 transition text-slate-900 shadow-xs"
@@ -207,7 +207,7 @@
                                     </div>
                                 </div>
 
-                                <!-- Dokumen Siswa -->
+                                <!-- Dokumen Murid -->
                                 <div class="mt-6 border-t pt-4">
                                     <h4 class="text-sm font-semibold text-gray-900 mb-3">Dokumen Pendukung yang Perlu Diperbaiki
                                     </h4>
@@ -328,7 +328,7 @@
                                         <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-4 flex items-center gap-3 text-emerald-700">
                                             <i class="bi bi-check-circle-fill text-2xl text-emerald-500"></i>
                                             <p class="text-sm font-medium">
-                                                Semua dokumen siswa ini telah lolos verifikasi.
+                                                Semua dokumen murid ini telah lolos verifikasi.
                                             </p>
                                         </div>
                                     @endif

@@ -35,7 +35,7 @@ class SecurityHeaders
             : " 'unsafe-hashes' ".implode(' ', $handlerHashes);
 
         $csp = "default-src 'self'; ".
-            "script-src 'self' 'nonce-{$nonce}'{$hashSources} https://cdn.jsdelivr.net https://vercel.live; ".
+            "script-src 'self' 'nonce-{$nonce}'{$hashSources} https://vercel.live; ".
             "style-src 'self' 'unsafe-inline' https://fonts.bunny.net https://cdn.jsdelivr.net; ".
             "font-src 'self' https://fonts.bunny.net https://cdn.jsdelivr.net; ".
             "img-src 'self' data: https://images.unsplash.com https://www.transparenttextures.com https://*.backblazeb2.com; ".
@@ -54,12 +54,14 @@ class SecurityHeaders
         // 4. Standard Security Headers
         $response->headers->set('X-Content-Type-Options', 'nosniff');
         $response->headers->set('X-Frame-Options', 'SAMEORIGIN'); // Fallback for older browsers
-        $response->headers->set('X-XSS-Protection', '1; mode=block');
+        $response->headers->set('X-XSS-Protection', '0');
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
+        $response->headers->set('Cross-Origin-Opener-Policy', 'same-origin');
+        $response->headers->set('Cross-Origin-Resource-Policy', 'same-origin');
         $response->headers->remove('X-Powered-By');
 
-        // 5. Cache Control for sensitive pages
-        if ($request->is('login', 'dashboard', 'mutasi/*', 'dinas/*', 'profile')) {
+        // 5. Never let browsers or shared proxies retain authenticated HTML.
+        if ($request->user() !== null || $request->is('login')) {
             $response->headers->set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
             $response->headers->set('Pragma', 'no-cache');
         }

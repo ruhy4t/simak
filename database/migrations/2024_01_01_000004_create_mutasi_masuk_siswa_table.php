@@ -11,7 +11,7 @@ return new class extends Migration {
             $table->id();
             $table->string('id_mutasi', 20);
 
-            // Data Siswa
+            // Data Murid
             $table->string('nama_murid', 100);
             $table->string('nisn', 10)->index();
             $table->string('nis', 20)->nullable();
@@ -19,9 +19,9 @@ return new class extends Migration {
             $table->date('tanggal_lahir');
             $table->enum('jenis_kelamin', ['L', 'P']);
             $table->string('kelas', 10);
-            $table->date('tanggal_diterima'); // Tanggal diterima per siswa
+            $table->date('tanggal_diterima'); // Tanggal diterima per murid
 
-            // Sekolah Asal (per siswa, bisa beda-beda)
+            // Sekolah Asal (per murid, bisa beda-beda)
             $table->string('npsn_sekolah_asal', 8)->nullable();
             $table->string('nama_sekolah_asal', 150);
             $table->text('alamat_sekolah_asal');
@@ -30,7 +30,7 @@ return new class extends Migration {
             $table->boolean('npsn_ditemukan')->default(false); // Untuk logika Rekomendasi
             $table->boolean('asal_luar_negeri')->default(false); // Untuk logika Surat Penyaluran
 
-            // Dokumen (per siswa)
+            // Dokumen (per murid)
             $table->string('file_surat_pindah')->nullable(); // Wajib
             $table->string('file_surat_dapodik')->nullable(); // Wajib
             $table->string('file_rekomendasi')->nullable(); // Wajib jika NPSN tidak ditemukan

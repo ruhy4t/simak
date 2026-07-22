@@ -15,7 +15,7 @@
                 <div class="flex items-center gap-2 mt-1 text-sm text-slate-500">
                     <span class="px-2 py-0.5 bg-slate-100 rounded-sm text-slate-600 font-mono">#{{ $mutasi->id_mutasi }}</span>
                     <span>•</span>
-                    <span>{{ $mutasi->jumlah_siswa }} Siswa</span>
+                    <span>{{ $mutasi->jumlah_siswa }} Murid</span>
                 </div>
             </div>
         </div>
@@ -117,19 +117,19 @@
                 </div>
             </div>
 
-            <!-- Daftar Siswa (Read Only) -->
+            <!-- Daftar Murid (Read Only) -->
             <div class="bg-white rounded-2xl shadow-xs border border-slate-100 p-6 sm:p-8">
                 <h2 class="text-lg font-bold text-slate-900 mb-6 flex items-center gap-3">
                     <div class="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
                         <i class="bi bi-people-fill text-blue-600"></i>
                     </div>
-                    Daftar Siswa ({{ count($siswaList) }} siswa)
+                    Daftar Murid ({{ count($siswaList) }} murid)
                 </h2>
                 <div
                     class="bg-slate-50 rounded-xl p-4 text-sm text-slate-600 mb-6 border border-slate-100 flex items-start gap-3">
                     <i class="bi bi-info-circle-fill text-slate-400 mt-0.5 text-lg"></i>
                     <div>
-                        Data siswa tidak dapat diubah di halaman ini. Untuk mengubah data siswa, silakan buat pengajuan
+                        Data murid tidak dapat diubah di halaman ini. Untuk mengubah data murid, silakan buat pengajuan
                         baru.
                     </div>
                 </div>

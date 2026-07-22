@@ -34,7 +34,7 @@ class EnsureInitialStudentCountsCompleted
         }
 
         $message = $academicYear
-            ? "Lengkapi dan simpan Data Siswa Awal tahun pelajaran {$academicYear->name} pada Profil Sekolah sebelum mengajukan mutasi."
+            ? "Lengkapi dan simpan Data Murid Awal tahun pelajaran {$academicYear->name} pada Profil Sekolah sebelum mengajukan mutasi."
             : 'Tahun pelajaran aktif belum tersedia. Hubungi Dinas sebelum mengajukan mutasi.';
 
         if ($request->expectsJson()) {

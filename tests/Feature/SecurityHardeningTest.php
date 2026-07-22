@@ -56,6 +56,21 @@ class SecurityHardeningTest extends TestCase
         $this->postJson('/api/telegram/webhook')->assertNotFound();
     }
 
+    public function test_telegram_management_routes_are_admin_only_and_state_changes_use_post(): void
+    {
+        $routes = collect(Route::getRoutes()->getRoutes());
+        $setWebhook = $routes->first(fn ($route) => $route->uri() === 'telegram/set-webhook');
+        $webhookInfo = $routes->first(fn ($route) => $route->uri() === 'telegram/webhook-info');
+
+        $this->assertNotNull($setWebhook);
+        $this->assertSame(['POST'], $setWebhook->methods());
+        $this->assertContains('auth', $setWebhook->gatherMiddleware());
+        $this->assertContains('role:Dinas,SuperAdmin', $setWebhook->gatherMiddleware());
+        $this->assertContains('throttle:6,1', $setWebhook->gatherMiddleware());
+        $this->assertNotNull($webhookInfo);
+        $this->assertContains('auth', $webhookInfo->gatherMiddleware());
+    }
+
     public function test_telegram_clients_never_disable_tls_verification(): void
     {
         $files = [

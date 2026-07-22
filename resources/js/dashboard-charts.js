@@ -204,7 +204,7 @@ const initializeClassDistributionChart = (Chart, canvas) => {
                 tooltip: {
                     ...sharedOptions.plugins.tooltip,
                     callbacks: {
-                        label: (context) => `${context.dataset.label}: ${context.parsed.y.toLocaleString('id-ID')} siswa`,
+                        label: (context) => `${context.dataset.label}: ${context.parsed.y.toLocaleString('id-ID')} murid`,
                     },
                 },
             },
@@ -229,7 +229,7 @@ const initializeCohortChart = (Chart, canvas) => {
         data: {
             labels: data.labels,
             datasets: [{
-                label: 'Jumlah siswa',
+                label: 'Jumlah murid',
                 data: data.values,
                     backgroundColor: ['#64748b', '#2563eb', '#0ea5e9', '#f97316', '#e11d48', '#6366f1', '#10b981'],
                 borderRadius: 8,
@@ -245,7 +245,7 @@ const initializeCohortChart = (Chart, canvas) => {
                 tooltip: {
                     ...sharedOptions.plugins.tooltip,
                     callbacks: {
-                        label: (context) => `${Math.abs(context.parsed.y).toLocaleString('id-ID')} siswa`,
+                        label: (context) => `${Math.abs(context.parsed.y).toLocaleString('id-ID')} murid`,
                     },
                 },
             },

@@ -106,47 +106,34 @@
         });
     };
 
-    // Helper to intercept form submissions with data-confirm attribute
-    document.addEventListener('DOMContentLoaded', function () {
-        // Handle forms with data-confirm
-        document.querySelectorAll('form[data-confirm]').forEach(form => {
-            form.addEventListener('submit', async function (e) {
-                e.preventDefault();
-                const message = this.dataset.confirm;
-                const type = this.dataset.confirmType || 'warning';
-                const title = this.dataset.confirmTitle || 'Konfirmasi';
+    // Delegation keeps confirmations working after AJAX page swaps.
+    document.addEventListener('submit', async function (event) {
+        const form = event.target instanceof HTMLFormElement ? event.target : null;
+        if (!form || !form.dataset.confirm) return;
 
-                const confirmed = await showConfirm({
-                    title: title,
-                    message: message,
-                    type: type
-                });
-
-                if (confirmed) {
-                    // Remove the listener and submit
-                    this.removeAttribute('data-confirm');
-                    this.submit();
-                }
-            });
+        event.preventDefault();
+        const confirmed = await showConfirm({
+            title: form.dataset.confirmTitle || 'Konfirmasi',
+            message: form.dataset.confirm,
+            type: form.dataset.confirmType || 'warning'
         });
 
-        // Handle buttons with data-confirm
-        document.querySelectorAll('button[data-confirm]').forEach(btn => {
-            btn.addEventListener('click', async function (e) {
-                e.preventDefault();
-                const message = this.dataset.confirm;
-                const type = this.dataset.confirmType || 'warning';
-                const title = this.dataset.confirmTitle || 'Konfirmasi';
+        if (confirmed) {
+            form.removeAttribute('data-confirm');
+            form.submit();
+        }
+    });
 
-                const confirmed = await showConfirm({
-                    title: title,
-                    message: message,
-                    type: type
-                });
+    document.addEventListener('click', async function (event) {
+        const target = event.target instanceof Element ? event.target.closest('button[data-confirm]') : null;
+        if (!target) return;
 
-                if (confirmed && this.form) {
-                    this.form.submit();
-                }
-            });
+        event.preventDefault();
+        const confirmed = await showConfirm({
+            title: target.dataset.confirmTitle || 'Konfirmasi',
+            message: target.dataset.confirm,
+            type: target.dataset.confirmType || 'warning'
         });
+
+        if (confirmed && target.form) target.form.submit();
     });</script>

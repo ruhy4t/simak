@@ -8,7 +8,7 @@
             <div>
                 <p class="text-xs font-bold uppercase tracking-[0.16em] text-emerald-600">Rekonsiliasi Kohort</p>
                 <h1 class="mt-1 text-3xl font-black tracking-tight text-slate-950">Data Akhir Aktual</h1>
-                <p class="mt-1 text-sm text-slate-500">Isi jumlah siswa aktual per kelas dan jenis kelamin tanpa data nama siswa.</p>
+                <p class="mt-1 text-sm text-slate-500">Isi jumlah murid aktual per kelas dan jenis kelamin tanpa data nama murid.</p>
             </div>
             <a href="{{ route('sekolah.profile') }}" class="inline-flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-blue-700">
                 <i class="bi bi-arrow-left"></i> Kembali ke Profil
@@ -20,7 +20,7 @@
                 <i class="bi bi-shield-lock-fill mt-0.5 text-xl"></i>
                 <div>
                     <p class="font-bold">Data akan dikunci setelah disimpan.</p>
-                    <p class="mt-1 text-sm leading-6">Periksa seluruh angka dengan teliti. Tidak diperlukan dokumen atau identitas siswa.</p>
+                    <p class="mt-1 text-sm leading-6">Periksa seluruh angka dengan teliti. Tidak diperlukan dokumen atau identitas murid.</p>
                 </div>
             </div>
         </div>

@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Laporan Komprehensif Mutasi Siswa</title>
+    <title>Laporan Komprehensif Mutasi Murid</title>
     <style>
         @media print {
             @page { size: A4 landscape; margin: 10mm; }
@@ -120,7 +120,7 @@
         @endif
     </div>
 
-    <div class="report-title">LAPORAN REKAPITULASI MUTASI SISWA</div>
+    <div class="report-title">LAPORAN REKAPITULASI MUTASI MURID</div>
     <div class="report-subtitle">
         Periode: {{ \Carbon\Carbon::parse($start_date)->translatedFormat('d F Y') }} s.d. {{ \Carbon\Carbon::parse($end_date)->translatedFormat('d F Y') }}
     </div>
@@ -133,10 +133,10 @@
                 <tr>
                     <th rowspan="2" width="20">No</th>
                     <th rowspan="2" width="130">{{ in_array($user->role, ['Dinas', 'SuperAdmin']) ? 'Nama Sekolah' : 'Bulan' }}</th>
-                    <th colspan="4" style="background-color: #cbd5e1;">Data Siswa Awal</th>
+                    <th colspan="4" style="background-color: #cbd5e1;">Data Murid Awal</th>
                     <th colspan="4" style="background-color: #e0f2fe;">Mutasi Masuk</th>
                     <th colspan="4" style="background-color: #fff7ed;">Mutasi Keluar</th>
-                    <th colspan="4" style="background-color: #dcfce7;">Data Siswa Akhir</th>
+                    <th colspan="4" style="background-color: #dcfce7;">Data Murid Akhir</th>
                 </tr>
                 <tr>
                     {{-- Awal --}}
@@ -436,14 +436,14 @@
 
     {{-- 4. DEMOGRAFI --}}
     <div class="section">
-        <h3>D. Demografi Siswa (Gender & Kelas)</h3>
+        <h3>D. Demografi Murid (Gender & Kelas)</h3>
         <table>
              <thead>
                 <tr>
                     <th rowspan="2">Jenis Mutasi</th>
                     <th colspan="3">Jenis Kelamin</th>
                     <th colspan="4">Jenjang Kelas</th>
-                    <th rowspan="2">Total Siswa</th>
+                    <th rowspan="2">Total Murid</th>
                 </tr>
                 <tr>
                     <th>Laki-laki</th><th>Perempuan</th><th>Ratio L:P</th>
@@ -484,8 +484,8 @@
         
         <div style="font-size: 8pt; color: #555; background-color: #f9f9f9; padding: 5px; border: 1px solid #ddd; margin-top: 5px;">
             <strong>Keterangan:</strong><br>
-            <span style="display: inline-block; width: 80px;">- Ratio L:P</span> : Perbandingan persentase siswa Laki-laki dan Perempuan (Contoh: 71:29 artinya 71% Laki-laki, 29% Perempuan).<br>
-            <span style="display: inline-block; width: 80px;">- Ratio Kelas</span> : Distribusi jumlah siswa per jenjang kelas beserta persentasenya.
+            <span style="display: inline-block; width: 80px;">- Ratio L:P</span> : Perbandingan persentase murid Laki-laki dan Perempuan (Contoh: 71:29 artinya 71% Laki-laki, 29% Perempuan).<br>
+            <span style="display: inline-block; width: 80px;">- Ratio Kelas</span> : Distribusi jumlah murid per jenjang kelas beserta persentasenya.
         </div>
     </div>
     
@@ -499,7 +499,7 @@
                 <tr>
                     <th width="30">No</th>
                     <th width="80">Tanggal</th>
-                    <th>Nama Siswa</th>
+                    <th>Nama Murid</th>
                     <th width="80">NISN</th>
                     <th>Sekolah Asal</th>
                     <th>Tujuan (Sekolah Ini)</th>
@@ -529,7 +529,7 @@
                  <tr>
                     <th width="30">No</th>
                     <th width="80">Tanggal</th>
-                    <th>Nama Siswa</th>
+                    <th>Nama Murid</th>
                     <th width="80">NISN</th>
                     <th>Asal (Sekolah Ini)</th>
                     <th>Sekolah Tujuan</th>

@@ -728,7 +728,7 @@ class SatuanPendidikanController extends Controller
                 ? redirect()->route('sekolah.profile', ['academic_year' => $academicYear->name])
                 : back();
 
-            return $redirect->with('success', 'Profil sekolah dan data siswa berhasil diperbarui.');
+            return $redirect->with('success', 'Profil sekolah dan data murid berhasil diperbarui.');
 
         } catch (\Exception $e) {
             \Log::error('Update Profile Failed: '.$e->getMessage());
@@ -827,7 +827,7 @@ class SatuanPendidikanController extends Controller
 
             if ($rows->count() !== 3) {
                 throw ValidationException::withMessages([
-                    'academic_year_id' => 'Data siswa awal kelas VII, VIII, dan IX belum lengkap.',
+                    'academic_year_id' => 'Data murid awal kelas VII, VIII, dan IX belum lengkap.',
                 ]);
             }
 

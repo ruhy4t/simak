@@ -39,14 +39,14 @@
             <div class="mb-4 pb-3 border-b">
                 <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
                     <span class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm font-bold">${index + 1}</span>
-                    Data Siswa #${index + 1}
+                    Data Murid #${index + 1}
                 </h3>
             </div>
 
-            <!-- Data Siswa -->
+            <!-- Data Murid -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Nama Siswa *</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nama Murid *</label>
                     <input type="text" name="siswa[${index}][nama_murid]" required
                         class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none">
                 </div>
@@ -60,7 +60,7 @@
                     <label class="block text-sm font-medium text-gray-700 mb-1">NIS/NIPD *</label>
                     <input type="text" name="siswa[${index}][nis]" required
                         class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none"
-                        placeholder="Nomor Induk Siswa">
+                        placeholder="Nomor Induk Murid">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-red-500 mb-1">Tanggal Diterima Disekolah *</label>
@@ -150,7 +150,7 @@
                     <label class="flex items-center gap-2 cursor-pointer">
                         <input type="checkbox" name="siswa[${index}][asal_luar_negeri]" id="luar_negeri_${index}" value="1"
                             class="w-5 h-5 rounded text-primary-600" onchange="window.toggleLuarNegeri(${index})">
-                        <span class="text-sm font-medium text-gray-700">Siswa berasal dari Luar Negeri</span>
+                        <span class="text-sm font-medium text-gray-700">Murid berasal dari Luar Negeri</span>
                     </label>
                 </div>
             </div>
@@ -158,7 +158,7 @@
             <!-- Dokumen -->
             <div class="p-4 bg-red-50 rounded-lg border border-red-200">
                 <h4 class="text-md font-semibold text-red-800 mb-3 flex items-center gap-2">
-                    <i class="bi bi-file-earmark-pdf"></i> ${isDinasEntry ? 'Konfirmasi Berkas' : 'Dokumen'} Siswa #${index + 1}
+                    <i class="bi bi-file-earmark-pdf"></i> ${isDinasEntry ? 'Konfirmasi Berkas' : 'Dokumen'} Murid #${index + 1}
                 </h4>
                 ${isDinasEntry ? `
                 <!-- Mode Dinas: Checkbox -->
@@ -227,7 +227,7 @@
                         <label class="block text-sm font-medium text-gray-700 mb-1">Surat Penyaluran Kemdikdasmen *</label>
                         <input type="file" name="siswa[${index}][file_surat_penyaluran]" id="file_surat_penyaluran_${index}" accept=".pdf"
                             class="w-full px-4 py-2 border rounded-lg bg-white" onchange="window.validateFile(this, 1)">
-                        <p class="text-xs text-gray-500 italic mt-1">Wajib untuk siswa luar negeri. Maks 1MB.</p>
+                        <p class="text-xs text-gray-500 italic mt-1">Wajib untuk murid luar negeri. Maks 1MB.</p>
                     </div>
                     <div id="rekam_didik_container_${index}">
                         <label class="block text-sm font-medium text-gray-700 mb-1">
@@ -835,7 +835,7 @@
 
                     if (npsnDitemukanEl) npsnDitemukanEl.value = '1';
 
-                    // Rekomendasi tetap WAJIB untuk semua siswa dalam negeri
+                    // Rekomendasi tetap WAJIB untuk semua murid dalam negeri
                     // (tidak perlu toggle berdasarkan lokasi lagi)
 
                     if (statusIconEl) statusIconEl.innerHTML = '<i class="bi bi-check-circle text-green-600"></i>';
@@ -1236,7 +1236,7 @@
 
             // Basic student info - always required for all roles
             const basicFields = [
-                { name: 'nama_murid', label: 'Nama Siswa' },
+                { name: 'nama_murid', label: 'Nama Murid' },
                 { name: 'nisn', label: 'NISN' },
                 { name: 'tempat_lahir', label: 'Tempat Lahir' },
                 { name: 'tanggal_lahir', label: 'Tanggal Lahir' },
@@ -1325,11 +1325,11 @@
          */
         function showValidationError(errors, studentIndex) {
             const errorList = errors.map(e => `• ${e}`).join('\n');
-            const message = `Data Siswa #${studentIndex + 1} belum lengkap!\n\nField yang harus diisi:\n${errorList}\n\nSilakan lengkapi data sebelum melanjutkan ke siswa berikutnya.`;
+            const message = `Data Murid #${studentIndex + 1} belum lengkap!\n\nField yang harus diisi:\n${errorList}\n\nSilakan lengkapi data sebelum melanjutkan ke murid berikutnya.`;
 
             // Show using existing notification system or alert
             if (typeof showSaveIndicator === 'function') {
-                showSaveIndicator(`❌ Data Siswa #${studentIndex + 1} belum lengkap!`, 'error');
+                showSaveIndicator(`❌ Data Murid #${studentIndex + 1} belum lengkap!`, 'error');
             }
 
             alert(message);
@@ -1737,7 +1737,7 @@
 
                 // If draft mode and reducing count, warn user
                 if (draftId && newCount < totalSiswa) {
-                    if (!confirm(`Mengurangi jumlah siswa dari ${totalSiswa} ke ${newCount}. Data siswa #${newCount + 1} dst akan tersimpan di database tapi tidak ditampilkan. Lanjutkan?`)) {
+                    if (!confirm(`Mengurangi jumlah murid dari ${totalSiswa} ke ${newCount}. Data murid #${newCount + 1} dst akan tersimpan di database tapi tidak ditampilkan. Lanjutkan?`)) {
                         this.value = totalSiswa;
                         return;
                     }
@@ -1916,7 +1916,7 @@
         }
 
         isSaving = true;
-        showSaveIndicator('Menyimpan Siswa #' + (index + 1) + '...');
+        showSaveIndicator('Menyimpan Murid #' + (index + 1) + '...');
 
         try {
             const formData = new FormData();
@@ -2062,14 +2062,14 @@
                 });
 
                 if (!response.ok) {
-                    throw new Error(await readErrorMessage(response) || 'Gagal menyimpan siswa');
+                    throw new Error(await readErrorMessage(response) || 'Gagal menyimpan murid');
                 }
 
                 const result = await response.json();
                 if (result.success) {
                     savedStudents.add(index);
                     markTabAsSaved(index);
-                    showSaveIndicator('Siswa #' + (index + 1) + ' tersimpan ✓', 'success');
+                    showSaveIndicator('Murid #' + (index + 1) + ' tersimpan ✓', 'success');
                     return true;
                 } else {
                     throw new Error(result.message || 'Failed to save student');
@@ -2077,9 +2077,9 @@
             }
         } catch (e) {
             console.error('Save student error:', e);
-            const errorMsg = e.message === 'Failed to save student' ? 'Gagal menyimpan siswa' : e.message;
+            const errorMsg = e.message === 'Failed to save student' ? 'Gagal menyimpan murid' : e.message;
             showSaveIndicator(errorMsg, 'error');
-            alert(`Gagal menyimpan data siswa #${index + 1}:\n${errorMsg}`);
+            alert(`Gagal menyimpan data murid #${index + 1}:\n${errorMsg}`);
             if (typeof window.resetMutasiMasukSubmitting === 'function') {
                 window.resetMutasiMasukSubmitting();
             }
@@ -2107,7 +2107,7 @@
                 modal.classList.add('hidden');
                 modal.classList.remove('flex');
             }
-            alert('Pengajuan belum dikirim karena data siswa terakhir gagal disimpan. Mohon perbaiki pesan error yang tampil, lalu klik Kirim Pengajuan lagi.');
+            alert('Pengajuan belum dikirim karena data murid terakhir gagal disimpan. Mohon perbaiki pesan error yang tampil, lalu klik Kirim Pengajuan lagi.');
             if (typeof window.resetMutasiMasukSubmitting === 'function') {
                 window.resetMutasiMasukSubmitting();
             }
@@ -2225,7 +2225,7 @@
             await createDraftIfNeeded(true);
 
             if (!draftId) {
-                alert('Gagal membuat draft. Pastikan data header sudah diisi (Jumlah Siswa, NPSN, Nama Sekolah, Alamat).');
+                alert('Gagal membuat draft. Pastikan data header sudah diisi (Jumlah Murid, NPSN, Nama Sekolah, Alamat).');
                 if (btn) {
                     btn.innerHTML = '<i class="bi bi-save mr-2"></i><span>Simpan Draft</span>';
                     btn.disabled = false;
@@ -2259,7 +2259,7 @@
 
                     const saved = await saveCurrentStudent(i);
                     if (!saved) {
-                        throw new Error(`Data siswa #${i + 1} gagal disimpan.`);
+                        throw new Error(`Data murid #${i + 1} gagal disimpan.`);
                     }
                 }
             }

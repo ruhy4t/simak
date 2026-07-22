@@ -8,7 +8,7 @@
             <div>
                 <h1 class="text-2xl font-bold text-gray-900">Grafik Tren Mutasi</h1>
                 <p class="mt-1 text-gray-500">
-                    Statistik mutasi siswa
+                    Statistik mutasi murid
                     {{ $month ? 'harian bulan '.\Carbon\Carbon::createFromDate(null, $month)->translatedFormat('F') : 'per bulan' }}
                     tahun {{ $year }}.
                 </p>

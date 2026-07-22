@@ -105,14 +105,14 @@
                         </div>
                     </div>
                 </div>
-                <!-- Total Siswa -->
+                <!-- Total Murid -->
                 <div class="bg-indigo-50 rounded-xl p-4 border border-indigo-100">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
                             <i class="bi bi-people text-indigo-600"></i>
                         </div>
                         <div>
-                            <p class="text-xs text-gray-500 font-medium">Siswa</p>
+                            <p class="text-xs text-gray-500 font-medium">Murid</p>
                             <p class="text-2xl font-bold text-indigo-600">{{ number_format($statsMasuk['total_siswa']) }}
                             </p>
                         </div>
@@ -353,7 +353,7 @@
                                     <tr>
                                         <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">#</th>
                                         <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">Sekolah Tujuan</th>
-                                        <th class="px-3 py-2 text-center text-xs font-medium text-gray-600">Siswa</th>
+                                        <th class="px-3 py-2 text-center text-xs font-medium text-gray-600">Murid</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y">
@@ -429,7 +429,7 @@
                 <div>
                     <h3 class="font-semibold text-gray-900">Informasi</h3>
                     <p class="text-sm text-gray-600 mt-1">
-                        SIMAK adalah Sistem Informasi Mutasi untuk mengelola perpindahan siswa antar sekolah di Kota Bogor.
+                        SIMAK adalah Sistem Informasi Mutasi untuk mengelola perpindahan murid antar sekolah di Kota Bogor.
                         Pastikan semua dokumen yang diupload lengkap dan jelas untuk mempercepat proses verifikasi.
                     </p>
                 </div>

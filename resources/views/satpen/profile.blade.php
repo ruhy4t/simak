@@ -9,7 +9,7 @@
         <div class="flex items-center justify-between border-b-2 border-slate-200 pb-6 mb-8">
             <div>
                 <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Profil Sekolah</h1>
-                <p class="text-slate-500 text-lg mt-1">Kelola data identitas, siswa, dan kepala sekolah.</p>
+                <p class="text-slate-500 text-lg mt-1">Kelola data identitas, murid, dan kepala sekolah.</p>
             </div>
             <div>
                 <span
@@ -70,12 +70,12 @@
                         </div>
                     </div>
 
-                    <!-- 2. Data Siswa Awal (Blue Theme) -->
+                    <!-- 2. Data Murid Awal (Blue Theme) -->
                     <div class="bg-white rounded-xl shadow-md border-t-4 border-blue-500 overflow-hidden">
                         <div class="px-6 py-4 bg-white border-b border-slate-100 flex items-center justify-between">
                             <div class="flex items-center gap-3">
                                 <i class="bi bi-people-fill text-blue-600 text-xl"></i>
-                                <h2 class="font-extrabold text-slate-800 text-lg uppercase tracking-wide">Data Siswa Awal
+                                <h2 class="font-extrabold text-slate-800 text-lg uppercase tracking-wide">Data Murid Awal
                                 </h2>
                             </div>
                         </div>
@@ -85,7 +85,8 @@
                             <div class="bg-blue-50 border border-blue-100 rounded-lg p-5">
                                 <label class="block text-sm font-bold text-blue-900 mb-2">Tahun Pelajaran</label>
                                 <select name="academic_year_selector"
-                                    onchange="window.location.href='{{ route('sekolah.profile') }}?academic_year=' + encodeURIComponent(this.value)"
+                                    data-navigation-url="{{ route('sekolah.profile') }}"
+                                    data-navigation-param="academic_year"
                                     class="w-full border-2 border-blue-300 bg-white text-blue-900 font-bold rounded-lg px-4 py-3 focus:outline-hidden focus:ring-4 focus:ring-blue-500/20 cursor-pointer text-lg">
                                     @forelse($academicYears as $academicYear)
                                         <option value="{{ $academicYear->name }}" @selected($selectedAcademicYear?->id === $academicYear->id)>
@@ -189,7 +190,7 @@
                         class="flex w-full items-center justify-between rounded-xl border-2 border-emerald-200 bg-emerald-50 p-5 text-emerald-900 transition hover:border-emerald-400 hover:bg-emerald-100">
                         <span>
                             <span class="block font-extrabold">Isi Data Akhir Aktual</span>
-                            <span class="mt-1 block text-xs text-emerald-700">Rekonsiliasi kohort tanpa nama siswa atau dokumen.</span>
+                            <span class="mt-1 block text-xs text-emerald-700">Rekonsiliasi kohort tanpa nama murid atau dokumen.</span>
                         </span>
                         <i class="bi bi-arrow-right-circle-fill text-2xl"></i>
                     </a>
@@ -207,7 +208,7 @@
                             <li class="flex items-start gap-3">
                                 <span
                                     class="bg-blue-200 text-blue-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold shrink-0">1</span>
-                                <p class="text-sm text-blue-800 leading-relaxed"><strong>Data Siswa Awal</strong> digunakan
+                                <p class="text-sm text-blue-800 leading-relaxed"><strong>Data Murid Awal</strong> digunakan
                                     sebagai saldo awal laporan mutasi bulanan. Wajib diisi di awal tahun.</p>
                             </li>
                             <li class="flex items-start gap-3">

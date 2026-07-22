@@ -452,7 +452,7 @@ class FileUploadService
                 if ($file instanceof UploadedFile) {
                     $mimeType = $file->getMimeType();
                     if ($mimeType !== 'application/pdf') {
-                        throw new \Exception("File {$field} siswa #" . ($studentIndex + 1) . " harus berformat PDF.");
+                        throw new \Exception("File {$field} murid #" . ($studentIndex + 1) . " harus berformat PDF.");
                     }
                 }
 

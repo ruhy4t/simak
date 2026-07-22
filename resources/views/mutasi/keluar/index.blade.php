@@ -17,9 +17,9 @@
         <!-- Header -->
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-                <p class="text-xs font-semibold uppercase tracking-[0.18em] text-sky-600">Pengajuan Siswa</p>
+                <p class="text-xs font-semibold uppercase tracking-[0.18em] text-sky-600">Pengajuan Murid</p>
                 <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-950">Mutasi Keluar</h1>
-                <p class="mt-1 text-sm text-slate-500">Kelola data mutasi siswa keluar</p>
+                <p class="mt-1 text-sm text-slate-500">Kelola data mutasi murid keluar</p>
             </div>
             <a href="{{ route('mutasi.keluar.create') }}"
                 class="inline-flex items-center gap-2 rounded-lg bg-sky-600 px-4 py-2.5 font-semibold text-white transition-colors hover:bg-sky-700">
@@ -35,7 +35,7 @@
                     <i class="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
                     <input type="text" name="search" id="searchInput" value="{{ request('search') }}"
                         class="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-11 pr-4 text-sm text-slate-700 placeholder:text-slate-400 focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
-                        placeholder="Cari nama siswa, sekolah...">
+                        placeholder="Cari nama murid, sekolah...">
                 </div>
 
                 <div class="relative sm:w-64">
@@ -94,7 +94,7 @@
                                     Aktivitas Terakhir</th>
                                 <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">ID
                                     Mutasi</th>
-                                <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Siswa
+                                <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Murid
                                 </th>
                                 @if(!in_array(Auth::user()->role, ['Operator', 'Sekolah']))
                                     <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">

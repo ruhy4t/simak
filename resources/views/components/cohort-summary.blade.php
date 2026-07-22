@@ -133,7 +133,7 @@
         <div class="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1fr)_18rem]">
             <div class="relative h-72 min-w-0 sm:h-80">
                 <canvas data-cohort-chart data-chart="{{ json_encode($chartPayload) }}"
-                    role="img" aria-label="Grafik perubahan jumlah siswa dari data awal hingga data akhir aktual"></canvas>
+                    role="img" aria-label="Grafik perubahan jumlah murid dari data awal hingga data akhir aktual"></canvas>
             </div>
             <div class="grid content-start gap-3">
                 <article class="rounded-xl border border-rose-100 bg-rose-50 p-4">
