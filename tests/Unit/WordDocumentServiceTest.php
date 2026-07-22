@@ -24,6 +24,10 @@ class WordDocumentServiceTest extends TestCase
             'MM202607150001_SMP Negeri 3 Bogor_4 Murid.docx',
             $service->mutasiMasukFilename($this->incomingTransfer(), 4)
         );
+        $this->assertSame(
+            'MK202607150001_Budi Santoso_SMP Negeri 1 Bogor_SRIKANDI.docx',
+            $service->mutasiKeluarSrikandiFilename($this->outgoingTransfer())
+        );
 
         $unsafe = (object) [
             'id_mutasi' => 'MK/2026:002',
@@ -42,6 +46,30 @@ class WordDocumentServiceTest extends TestCase
         $this->assertDocxTablesHaveNoVisibleBorders($path);
         $this->assertCount(1, $document->getSections());
         $this->assertRequestedMargins($document);
+
+        unlink($path);
+    }
+
+    public function test_it_creates_srikandi_outgoing_transfer_with_exact_placeholders(): void
+    {
+        $path = app(WordDocumentService::class)->createMutasiKeluarSrikandi($this->outgoingTransfer());
+
+        $document = $this->assertNativeDocx($path, [
+            'SURAT KETERANGAN',
+            'Budi Santoso',
+            '${nomor_naskah}',
+            '${tanggal_naskah}',
+            '${ttd_pengirim}',
+            '${nama_pengirim}',
+            '${pangkat_pengirim}',
+            '${nip_pengirim}',
+        ]);
+        $this->assertSingleLineZeroParagraphSpacing($path);
+        $this->assertDocxTablesHaveNoVisibleBorders($path);
+        $this->assertCount(1, $document->getSections());
+        $this->assertRequestedMargins($document);
+        $this->assertSame('Times New Roman', $document->getDefaultFontName());
+        $this->assertSrikandiPlaceholdersOccurExactlyOnce($path);
 
         unlink($path);
     }
@@ -124,6 +152,28 @@ class WordDocumentServiceTest extends TestCase
         );
         $this->assertDoesNotMatchRegularExpression('/w:(?:before|after)="(?!0")[^"]+"/', $documentXml);
         $this->assertDoesNotMatchRegularExpression('/w:line="(?!240")[^"]+"/', $documentXml);
+    }
+
+    private function assertSrikandiPlaceholdersOccurExactlyOnce(string $path): void
+    {
+        $zip = new ZipArchive;
+        $this->assertTrue($zip->open($path) === true);
+        $documentXml = (string) $zip->getFromName('word/document.xml');
+        $zip->close();
+
+        foreach ([
+            '${nomor_naskah}',
+            '${tanggal_naskah}',
+            '${ttd_pengirim}',
+            '${nama_pengirim}',
+            '${pangkat_pengirim}',
+            '${nip_pengirim}',
+        ] as $placeholder) {
+            $this->assertSame(1, substr_count($documentXml, $placeholder), $placeholder);
+        }
+
+        $this->assertStringNotContainsString('400.3/123-SMP', $documentXml);
+        $this->assertStringNotContainsString('Drs. Pejabat Dinas', $documentXml);
     }
 
     private function assertRequestedMargins(PhpWord $document): void

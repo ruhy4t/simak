@@ -12,7 +12,7 @@ class ConfigurationTest extends TestCase
         $this->assertArrayHasKey('b2', config('filesystems.disks'));
         $this->assertSame('s3', config('filesystems.disks.b2.driver'));
         $this->assertSame('Asia/Jakarta', config('app.timezone'));
-        $this->assertSame('2.3.3', config('app.version'));
+        $this->assertSame('2.3.4', config('app.version'));
         $this->assertArrayHasKey('database', config('cache.stores'));
     }
 

@@ -20,6 +20,8 @@ class WordDocumentService
 
     private const FONT = 'Arial';
 
+    private const SRIKANDI_FONT = 'Times New Roman';
+
     public function mutasiKeluarFilename(object $mutasi): string
     {
         return sprintf(
@@ -28,6 +30,11 @@ class WordDocumentService
             $this->filenamePart($mutasi->nama_siswa ?? 'Murid'),
             $this->filenamePart($mutasi->sekolah_asal ?? 'Asal Sekolah')
         );
+    }
+
+    public function mutasiKeluarSrikandiFilename(object $mutasi): string
+    {
+        return pathinfo($this->mutasiKeluarFilename($mutasi), PATHINFO_FILENAME).'_SRIKANDI.docx';
     }
 
     public function mutasiMasukFilename(object $mutasi, int $studentCount): string
@@ -42,7 +49,20 @@ class WordDocumentService
 
     public function createMutasiKeluar(object $mutasi, ?object $penandatangan): string
     {
-        $word = $this->newDocument('Surat Keterangan Mutasi Keluar');
+        return $this->createMutasiKeluarDocument($mutasi, $penandatangan, false);
+    }
+
+    public function createMutasiKeluarSrikandi(object $mutasi): string
+    {
+        return $this->createMutasiKeluarDocument($mutasi, null, true);
+    }
+
+    private function createMutasiKeluarDocument(object $mutasi, ?object $penandatangan, bool $srikandi): string
+    {
+        $word = $this->newDocument(
+            'Surat Keterangan Mutasi Keluar'.($srikandi ? ' SRIKANDI' : ''),
+            $srikandi ? self::SRIKANDI_FONT : self::FONT
+        );
         $section = $word->addSection([
             'pageSizeW' => self::A4_WIDTH,
             'pageSizeH' => self::A4_HEIGHT,
@@ -53,14 +73,18 @@ class WordDocumentService
         ]);
         $contentWidth = self::A4_WIDTH - Converter::cmToTwip(5);
 
-        $this->addLetterhead($section, $contentWidth, false);
+        if ($srikandi) {
+            $this->addSrikandiLetterhead($section, $contentWidth);
+        } else {
+            $this->addLetterhead($section, $contentWidth, false);
+        }
 
         $section->addText('SURAT KETERANGAN', ['bold' => true, 'underline' => 'single'], [
             'alignment' => Jc::CENTER,
             'spaceBefore' => 0,
             'spaceAfter' => 0,
         ]);
-        $section->addText('Nomor : '.$this->text($mutasi->nomor_surat_izin ?? '______'), [], [
+        $section->addText('Nomor : '.($srikandi ? '${nomor_naskah}' : $this->text($mutasi->nomor_surat_izin ?? '______')), [], [
             'alignment' => Jc::CENTER,
             'spaceAfter' => 0,
         ]);
@@ -103,9 +127,13 @@ class WordDocumentService
             [],
             $this->paragraph(['indentation' => ['firstLine' => 709]])
         );
-        $this->addSignature($section, $penandatangan, 'Bogor, '.$this->date($mutasi->tanggal_surat_izin ?? null), $contentWidth);
+        if ($srikandi) {
+            $this->addSrikandiSignature($section, $contentWidth);
+        } else {
+            $this->addSignature($section, $penandatangan, 'Bogor, '.$this->date($mutasi->tanggal_surat_izin ?? null), $contentWidth);
+        }
 
-        return $this->save($word, 'surat-mutasi-keluar');
+        return $this->save($word, $srikandi ? 'surat-mutasi-keluar-srikandi' : 'surat-mutasi-keluar');
     }
 
     public function createMutasiMasuk(object $mutasi, Collection|array $siswaList, ?object $penandatangan): string
@@ -200,10 +228,10 @@ class WordDocumentService
         return $this->save($word, 'surat-mutasi-masuk');
     }
 
-    private function newDocument(string $title): PhpWord
+    private function newDocument(string $title, string $font = self::FONT): PhpWord
     {
         $word = new PhpWord;
-        $word->setDefaultFontName(self::FONT);
+        $word->setDefaultFontName($font);
         $word->setDefaultFontSize(12);
         $word->addParagraphStyle('Normal', [
             'spaceBefore' => 0,
@@ -245,6 +273,31 @@ class WordDocumentService
         $textCell->addText('Jl. Padjajaran No. 125, Bantarjati, Bogor Utara, Kota Bogor, Jawa Barat 16153', ['size' => $compact ? 9 : 11], ['alignment' => Jc::CENTER, 'spaceAfter' => 0]);
         $textCell->addText('Telp. 0251-8341101 Faksimile 0251-8341101', ['size' => $compact ? 9 : 11], ['alignment' => Jc::CENTER, 'spaceAfter' => 0]);
         $textCell->addText('www.disdik.kotabogor.go.id', ['size' => $compact ? 9 : 11], ['alignment' => Jc::CENTER, 'spaceAfter' => 0]);
+    }
+
+    private function addSrikandiLetterhead(Section $section, int $width): void
+    {
+        $table = $section->addTable([
+            'width' => $width,
+            'unit' => TblWidth::TWIP,
+            'borderSize' => 0,
+            'cellMargin' => 40,
+        ]);
+        $row = $table->addRow();
+        $logoCell = $row->addCell(1200, ['valign' => 'center']);
+        $logo = public_path('images/logo_Kota_Bogor.png');
+        if (is_file($logo)) {
+            $logoCell->addImage($logo, ['width' => 65, 'height' => 80, 'alignment' => Jc::LEFT]);
+        }
+        $textCell = $row->addCell($width - 1200, ['valign' => 'center']);
+        $textCell->addText('PEMERINTAH KOTA BOGOR', ['bold' => true, 'size' => 11], ['alignment' => Jc::CENTER, 'spaceAfter' => 0]);
+        $textCell->addText('DINAS PENDIDIKAN', ['bold' => true, 'size' => 11], ['alignment' => Jc::CENTER, 'spaceAfter' => 0]);
+        $textCell->addText(
+            'Jl. Pajajaran No. 125 Kecamatan Bogor Utara, Kota Bogor Telepon (0251) 8341101 Faksimile (0251) 8341101',
+            ['size' => 9],
+            ['alignment' => Jc::CENTER, 'spaceAfter' => 0]
+        );
+        $textCell->addText('Situs web disdik.kotabogor.go.id', ['size' => 8], ['alignment' => Jc::CENTER, 'spaceAfter' => 0]);
     }
 
     private function addIncomingLetterInfo(Section $section, object $mutasi, int $width): void
@@ -368,6 +421,29 @@ class WordDocumentService
             $signatureRow = $signature->addRow();
             $signatureRow->addCell(500);
             $signatureRow->addCell((int) ($width * 0.47) - 500)->addText($line[0], ['bold' => $line[1]], ['spaceAfter' => 0]);
+        }
+    }
+
+    private function addSrikandiSignature(Section $section, int $width): void
+    {
+        $outer = $section->addTable(['width' => $width, 'unit' => TblWidth::TWIP, 'borderSize' => 0]);
+        $row = $outer->addRow();
+        $row->addCell((int) ($width * 0.53));
+        $cell = $row->addCell((int) ($width * 0.47));
+        foreach ([
+            'Bogor, ${tanggal_naskah}',
+            'a.n. Kepala Dinas,',
+            'Sekretaris,',
+            'u.b. Kabid SMP,',
+            '${ttd_pengirim}',
+            '${nama_pengirim}',
+            '${pangkat_pengirim}',
+            'NIP. ${nip_pengirim}',
+        ] as $index => $line) {
+            $cell->addText($line, ['bold' => $index === 5], [
+                'spaceBefore' => 0,
+                'spaceAfter' => 0,
+            ]);
         }
     }
 

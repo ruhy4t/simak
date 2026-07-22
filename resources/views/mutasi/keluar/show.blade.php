@@ -374,6 +374,11 @@
                                                         class="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition border-t border-slate-100">
                                                         <i class="bi bi-file-earmark-word text-blue-500"></i> Unduh Word
                                                     </a>
+                                                    <a href="{{ route('mutasi.keluar.word-srikandi', $mutasi->id_mutasi) }}"
+                                                        target="_blank"
+                                                        class="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 transition border-t border-slate-100">
+                                                        <i class="bi bi-file-earmark-word text-indigo-500"></i> Unduh Word SRIKANDI
+                                                    </a>
                                                 </div>
                                             </div>
                                         @endif

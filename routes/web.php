@@ -9,6 +9,7 @@ use App\Http\Controllers\DinasUserController;
 use App\Http\Controllers\HolidayController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\MutasiController;
+use App\Http\Controllers\MutasiKeluarSrikandiController;
 use App\Http\Controllers\MutasiMasukController;
 use App\Http\Controllers\NonMutationStudentExitController;
 use App\Http\Controllers\PenandatanganController;
@@ -182,6 +183,7 @@ Route::middleware(['auth', EnsurePasswordChanged::class])->group(function () {
         Route::post('/mutasi-keluar/{id}/issue-letter', [MutasiController::class, 'issueLetter'])->middleware('workday')->name('mutasi.keluar.issue-letter');
         Route::post('/mutasi-keluar/{id}/complete-letter', [MutasiController::class, 'completeLetter'])->middleware('workday')->name('mutasi.keluar.complete-letter');
         Route::get('/mutasi-keluar/{id}/print-letter', [MutasiController::class, 'printLetter'])->name('mutasi.keluar.print-letter');
+        Route::get('/mutasi-keluar/{id}/word-srikandi', MutasiKeluarSrikandiController::class)->name('mutasi.keluar.word-srikandi');
         Route::get('/mutasi-keluar/{id}/edit', [MutasiController::class, 'edit'])->name('mutasi.keluar.edit');
         Route::put('/mutasi-keluar/{id}', [MutasiController::class, 'update'])->name('mutasi.keluar.update');
 
