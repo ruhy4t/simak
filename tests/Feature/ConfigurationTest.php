@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use Barryvdh\DomPDF\Facade\Pdf;
 use Tests\TestCase;
 
 class ConfigurationTest extends TestCase
@@ -12,7 +13,7 @@ class ConfigurationTest extends TestCase
         $this->assertArrayHasKey('b2', config('filesystems.disks'));
         $this->assertSame('s3', config('filesystems.disks.b2.driver'));
         $this->assertSame('Asia/Jakarta', config('app.timezone'));
-        $this->assertSame('2.3.4', config('app.version'));
+        $this->assertSame('2.3.5', config('app.version'));
         $this->assertArrayHasKey('database', config('cache.stores'));
     }
 
@@ -109,7 +110,7 @@ class ConfigurationTest extends TestCase
         $this->assertStringContainsString("document.querySelectorAll('[data-report-trend-chart]')", $chartScript);
         $this->assertStringContainsString("import('chart.js/auto')", $chartScript);
 
-        $pdfOutput = \Barryvdh\DomPDF\Facade\Pdf::loadView('laporan.rekap.pdf', [
+        $pdfOutput = Pdf::loadView('laporan.rekap.pdf', [
             'data' => collect(),
             'start_date' => '2026-07-01',
             'end_date' => '2026-07-31',

@@ -70,11 +70,7 @@
         </div>
 
         <!-- Table -->
-        <div class="overflow-hidden rounded-xl border border-slate-200/80 bg-white" x-data="{
-                                 showModal: false,
-                                 modalTitle: '',
-                                 siswaList: []
-                             }">
+        <div class="overflow-hidden rounded-xl border border-slate-200/80 bg-white" x-data="incomingStudentModal">
             <div class="flex flex-col gap-2 border-b border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h2 class="font-bold text-slate-900">Daftar Pengajuan</h2>
@@ -154,16 +150,11 @@
                                                         @endif
                                                     </td>
                                                     <td class="px-6 py-4 text-center">
-                                                        <button
-                                                            @click="
-                                                                                                                                                                showModal = true; 
-                                                                                                                                                                modalTitle = '#{{ $mutasi->id_mutasi }}'; 
-                                                                                                                                                                siswaList = {{ json_encode($mutasi->siswa->map(fn($s) => [
+                                                        <button @click="openStudents('#{{ $mutasi->id_mutasi }}', {{ json_encode($mutasi->siswa->map(fn($s) => [
                                         'nama' => $s->nama_murid,
                                         'nisn' => $s->nisn,
                                         'asal' => $s->nama_sekolah_asal
-                                    ])) }}
-                                                                                                                                                            "
+                                    ])) }})"
                                                             class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold bg-indigo-50 text-indigo-700 hover:bg-indigo-600 hover:text-white transition-all ring-1 ring-inset ring-indigo-600/10 hover:ring-indigo-600">
                                                             <i class="bi bi-people-fill"></i>
                                                             {{ $mutasi->jumlah_siswa }}
@@ -204,16 +195,11 @@
                                         </div>
                                     </td>
                                     <td class="px-6 py-4 text-center">
-                                        <button
-                                            @click="
-                                                showModal = true; 
-                                                modalTitle = '#{{ $mutasi->id_mutasi }}'; 
-                                                siswaList = {{ json_encode($mutasi->siswa->map(fn($s) => [
+                                        <button @click="openStudents('#{{ $mutasi->id_mutasi }}', {{ json_encode($mutasi->siswa->map(fn($s) => [
                                                     'nama' => $s->nama_murid,
                                                     'nisn' => $s->nisn,
                                                     'asal' => $s->nama_sekolah_asal
-                                                ])) }}
-                                            "
+                                                ])) }})"
                                             class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 hover:bg-indigo-600 hover:text-white transition-all ring-1 ring-inset ring-indigo-600/10 hover:ring-indigo-600">
                                             <i class="bi bi-people-fill"></i> {{ $mutasi->jumlah_siswa }}
                                         </button>

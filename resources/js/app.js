@@ -15,8 +15,10 @@ import './autosave.js';
 import './dashboard-charts.js';
 import './public-statistics-filters.js';
 import './ajax-navigation.js';
+import { registerAlpineComponents } from './alpine-components.js';
 
 // Initialize Alpine
 Alpine.plugin(collapse);
+registerAlpineComponents(Alpine);
 window.Alpine = Alpine;
 Alpine.start();

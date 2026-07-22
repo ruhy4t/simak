@@ -3,7 +3,7 @@
 @section('title', 'Detail Mutasi Masuk')
 
 @section('content')
-    <div class="space-y-8 animate-fade-in-up" x-data="{ activeTab: 0, activeDoc: null }">
+    <div class="space-y-8 animate-fade-in-up" x-data="incomingDetail">
         <!-- Header -->
         <div class="flex items-center gap-4">
             <a href="{{ route('mutasi.masuk.index') }}"
@@ -172,7 +172,7 @@
                     </div>
                 </div>
             @elseif(in_array(auth()->user()->role, ['Dinas', 'SuperAdmin']) && $mutasi->status === 'Menunggu Verifikasi Dinas')
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" x-data="verifikasiMasuk()">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" x-data="incomingVerification">
                     <!-- Kiri: Data Siswa & Preview Dokumen -->
                     <div class="space-y-4">
                         {{-- Sekolah Tujuan Info Card --}}
@@ -213,8 +213,7 @@
                                             <p class="text-xs text-sky-700">Diunggah oleh Pengusul</p>
                                         </div>
                                     </div>
-                                    <button type="button"
-                                        @click="loadedDocs['surat_permohonan'] = true; activeDoc = activeDoc === 'surat_permohonan' ? null : 'surat_permohonan'"
+                                    <button type="button" @click="toggleDocument('surat_permohonan')"
                                         :style="activeDoc === 'surat_permohonan' ? 'background-color: #0284c7 !important; color: white !important;' : ''"
                                         :class="activeDoc === 'surat_permohonan' ? 'bg-sky-600! text-white! ring-2 ring-offset-1 ring-sky-500 font-bold shadow-md' : 'bg-white text-sky-700 hover:bg-sky-100 border border-sky-300'"
                                         class="px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">
@@ -234,7 +233,7 @@
                         <div class="bg-white rounded-xl shadow-xs border p-4">
                             <div class="flex flex-wrap gap-2 mb-4">
                                 @foreach($siswaList as $idx => $siswa)
-                                    <button type="button" @click="activeTab = {{ $idx }}; activeDoc = null"
+                                    <button type="button" @click="selectStudent({{ $idx }})"
                                         :class="activeTab === {{ $idx }} ? 'bg-primary-600 text-white' : 'bg-gray-100 hover:bg-gray-200'"
                                         class="px-3 py-1.5 rounded-lg text-sm font-medium transition">
                                         Siswa {{ $idx + 1 }}
@@ -342,8 +341,7 @@
                                             @endphp
                                             @foreach($docs as $doc)
                                                 @if($doc['file'])
-                                                    <button type="button"
-                                                        @click="loadedDocs['{{ $doc['key'] }}'] = true; activeDoc = activeDoc === '{{ $doc['key'] }}' ? null : '{{ $doc['key'] }}'"
+                                                    <button type="button" @click="toggleDocument('{{ $doc['key'] }}')"
                                                         :class="activeDoc === '{{ $doc['key'] }}' ? 'bg-blue-600 text-white ring-2 ring-offset-1 ring-blue-500' : 'bg-blue-50 text-blue-700 hover:bg-blue-100'"
                                                         class="px-3 py-2 rounded-lg text-xs font-medium transition flex items-center justify-center gap-2 border border-transparent">
                                                         <i class="bi bi-file-earmark-pdf"></i> {{ $doc['label'] }}
@@ -446,63 +444,6 @@
                                 </button>
                             </div>
                         </form>
-                        <script>
-                            function verifikasiMasuk() {
-                                return {
-                                    activeTab: 0,
-                                    activeDoc: null,
-                                    loadedDocs: {},  // Lazy-load: dokumen hanya di-load setelah klik
-                                    catatan: '',
-                                    init() {
-                                        // Auto-generate catatan untuk dokumen yang tidak ada (checkbox disabled)
-                                        this.$nextTick(() => {
-                                            this.generateInitialNotes();
-                                        });
-                                    },
-                                    generateInitialNotes() {
-                                        const missingDocs = [];
-                                        // Scan for disabled checkboxes (no file uploaded)
-                                        document.querySelectorAll('input[type="checkbox"][disabled]').forEach(cb => {
-                                            const labelEl = cb.closest('label');
-                                            if (labelEl) {
-                                                const labelText = labelEl.querySelector('span.text-sm');
-                                                if (labelText) {
-                                                    missingDocs.push(`- ${labelText.textContent.trim()} tidak diunggah`);
-                                                }
-                                            }
-                                        });
-                                        if (missingDocs.length > 0) {
-                                            this.catatan = missingDocs.join('\n');
-                                        }
-                                    },
-                                    updateNote(checked, label) {
-                                        // Default message to add
-                                        const errorSuffix = "tidak sesuai,";
-                                        const defaultMsg = `- ${label} ${errorSuffix}`;
-
-                                        if (!checked) {
-                                            // Unchecked: Add error note
-                                            // We append default message. User can edit it later.
-                                            if (!this.catatan.includes(defaultMsg)) {
-                                                this.catatan = this.catatan ? this.catatan + '\n' + defaultMsg : defaultMsg;
-                                            }
-                                        } else {
-                                            // Checked: Remove ANY line related to this label (even if edited)
-                                            // We look for lines starting with "- {Label}"
-
-                                            const escapedLabel = label.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-                                            // Regex: Start of line, hyphen, space, label, any char until end of line
-                                            const regex = new RegExp(`^-\\s+${escapedLabel}.*$`, 'gm');
-
-                                            this.catatan = this.catatan.replace(regex, '');
-
-                                            // Clean up empty lines
-                                            this.catatan = this.catatan.replace(/^\s*[\r\n]/gm, '').trim();
-                                        }
-                                    }
-                                }
-                            }
-                        </script>
                     </div>
                 </div>
             @else
@@ -747,12 +688,12 @@
 
                         @if(count($siswaList) > 1)
                             <div class="flex items-center justify-between pt-4 border-t mt-4">
-                                <button @click="if(activeTab > 0) activeTab--" :disabled="activeTab === 0"
+                                <button @click="previousStudent()" :disabled="activeTab === 0"
                                     :class="activeTab === 0 ? 'opacity-50' : 'hover:bg-gray-200'"
                                     class="px-4 py-2 bg-gray-100 rounded-lg text-sm">← Sebelumnya</button>
                                 <span class="text-sm text-gray-500">Siswa <span x-text="activeTab + 1"></span> /
                                     {{ count($siswaList) }}</span>
-                                <button @click="if(activeTab < {{ count($siswaList) - 1 }}) activeTab++"
+                                <button @click="nextStudent({{ count($siswaList) - 1 }})"
                                     :disabled="activeTab === {{ count($siswaList) - 1 }}"
                                     :class="activeTab === {{ count($siswaList) - 1 }} ? 'opacity-50' : 'hover:bg-gray-200'"
                                     class="px-4 py-2 bg-gray-100 rounded-lg text-sm">Berikutnya →</button>

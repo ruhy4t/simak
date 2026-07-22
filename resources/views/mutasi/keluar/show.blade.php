@@ -187,7 +187,7 @@
 
         <!-- Main Layout - 2-Column for Dinas, Single-Column for Others -->
         <div class="{{ $isDinas ? 'grid grid-cols-1 lg:grid-cols-2 gap-6' : '' }}"
-            x-data="verifikasiKeluar('{{ $firstDocKey }}')">
+            x-data="outgoingVerification('{{ $firstDocKey }}')">
 
             <!-- Kiri: Student Info & Dokumen Viewer -->
             <div class="space-y-4">
@@ -230,7 +230,7 @@
                         @foreach($docs as $doc)
                             @if($doc['file'])
                                 <button type="button"
-                                    @click="loadedDocs['{{ $doc['key'] }}'] = true; activeDoc = activeDoc === '{{ $doc['key'] }}' ? null : '{{ $doc['key'] }}'"
+                                    @click="toggleDocument('{{ $doc['key'] }}')"
                                     :class="activeDoc === '{{ $doc['key'] }}' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'"
                                     class="px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-2">
                                     <i class="bi bi-file-earmark-pdf"></i>
@@ -464,24 +464,4 @@
             @endif {{-- End @if($isDinas) --}}
         </div> {{-- Close grid --}}
     </div> {{-- Close main space-y container --}}
-    <!-- Script moved inside the section -->
-    <script>
-        function verifikasiKeluar(initialDoc) {
-            return {
-                activeDoc: initialDoc,
-                loadedDocs: {},  // Lazy-load: dokumen hanya di-load setelah klik
-                catatan: '',
-                updateNote(checked, label) {
-                    const line = '- ' + label + ' tidak sesuai';
-                    if (!checked) {
-                        if (!this.catatan.includes(line)) {
-                            this.catatan = this.catatan ? this.catatan + '\n' + line : line;
-                        }
-                    } else {
-                        const regex = new RegExp('^-\\s+' + label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '.*$', 'gm');
-                        this.catatan = this.catatan.replace(regex, '').trim();
-                    }
-                }
-            }
-        }
-</script>@endsection
+@endsection
