@@ -21,10 +21,11 @@ class LoginRateLimitTest extends TestCase
 
         Schema::create('users', function (Blueprint $table): void {
             $table->id();
-            $table->string('username')->unique();
+            $table->string('username');
             $table->string('password');
             $table->string('role');
             $table->string('nama_pengguna');
+            $table->string('npsn', 8)->nullable();
             $table->string('status')->default('Aktif');
             $table->boolean('must_change_password')->default(false);
             $table->unsignedInteger('failed_login_attempts')->default(0);
@@ -32,6 +33,7 @@ class LoginRateLimitTest extends TestCase
             $table->timestamp('last_login_at')->nullable();
             $table->rememberToken();
             $table->timestamps();
+            $table->unique(['username', 'npsn']);
         });
 
         Schema::create('audit_logs', function (Blueprint $table): void {
@@ -48,6 +50,7 @@ class LoginRateLimitTest extends TestCase
             'password' => Hash::make('correct-password'),
             'role' => 'Operator',
             'nama_pengguna' => 'Victim',
+            'npsn' => '20200001',
             'status' => 'Aktif',
             'failed_login_attempts' => 0,
             'created_at' => now(),
@@ -58,7 +61,7 @@ class LoginRateLimitTest extends TestCase
     protected function tearDown(): void
     {
         Auth::logout();
-        RateLimiter::clear('login_credential:' . hash('sha256', 'victim|10.0.0.1'));
+        RateLimiter::clear('login_credential:' . hash('sha256', 'operator:victim@20200001|10.0.0.1'));
         RateLimiter::clear('login_ip:' . hash('sha256', '10.0.0.1'));
         DB::purge('sqlite');
         parent::tearDown();
@@ -69,6 +72,8 @@ class LoginRateLimitTest extends TestCase
         for ($attempt = 0; $attempt < 5; $attempt++) {
             $this->withServerVariables(['REMOTE_ADDR' => '10.0.0.1'])->post('/login', [
                 'username' => 'victim',
+                'login_role' => 'operator',
+                'npsn' => '20200001',
                 'password' => 'wrong-password',
             ])->assertSessionHasErrors('username');
         }
@@ -81,6 +86,8 @@ class LoginRateLimitTest extends TestCase
 
         $this->withServerVariables(['REMOTE_ADDR' => '10.0.0.2'])->post('/login', [
             'username' => 'victim',
+            'login_role' => 'operator',
+            'npsn' => '20200001',
             'password' => 'correct-password',
         ])->assertRedirect('/dashboard');
 
@@ -96,6 +103,8 @@ class LoginRateLimitTest extends TestCase
 
         $this->withServerVariables(['REMOTE_ADDR' => '10.0.0.2'])->post('/login', [
             'username' => 'victim',
+            'login_role' => 'operator',
+            'npsn' => '20200001',
             'password' => 'correct-password',
         ])->assertRedirect('/dashboard');
 
@@ -113,6 +122,8 @@ class LoginRateLimitTest extends TestCase
 
         $response = $this->post('/login', [
             'username' => 'victim',
+            'login_role' => 'operator',
+            'npsn' => '20200001',
             'password' => 'correct-password',
             'remember_credentials' => '1',
         ]);
@@ -134,13 +145,109 @@ class LoginRateLimitTest extends TestCase
 
         $this->post('/login', [
             'username' => 'victim',
+            'login_role' => 'operator',
+            'npsn' => '20200001',
             'password' => 'correct-password',
         ])->assertRedirect()->assertSessionHasErrors('username');
 
         $this->assertGuest();
         $this->assertDatabaseHas('audit_logs', [
             'event_type' => 'LOGIN_INVALID_PASSWORD_HASH',
-            'username' => 'victim',
+            'username' => 'operator:victim@20200001',
         ]);
+    }
+
+    public function test_duplicate_operator_username_is_resolved_by_npsn(): void
+    {
+        DB::table('users')->where('username', 'victim')->update(['npsn' => '20200001']);
+        DB::table('users')->insert([
+            'username' => 'victim',
+            'password' => Hash::make('second-password'),
+            'role' => 'Operator',
+            'nama_pengguna' => 'Second Operator',
+            'npsn' => '20200002',
+            'status' => 'Aktif',
+            'failed_login_attempts' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->post('/login', [
+            'username' => 'victim',
+            'login_role' => 'operator',
+            'npsn' => '20200002',
+            'password' => 'second-password',
+        ])->assertRedirect('/dashboard');
+
+        $this->assertAuthenticatedAs(\App\Models\User::where('npsn', '20200002')->first());
+    }
+
+    public function test_duplicate_operator_username_requires_npsn(): void
+    {
+        DB::table('users')->where('username', 'victim')->update(['npsn' => '20200001']);
+        DB::table('users')->insert([
+            'username' => 'victim',
+            'password' => Hash::make('second-password'),
+            'role' => 'Operator',
+            'nama_pengguna' => 'Second Operator',
+            'npsn' => '20200002',
+            'status' => 'Aktif',
+            'failed_login_attempts' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->post('/login', [
+            'username' => 'victim',
+            'login_role' => 'operator',
+            'password' => 'second-password',
+        ])->assertSessionHasErrors('npsn');
+
+        $this->assertGuest();
+    }
+
+    public function test_selected_role_must_match_the_account_role(): void
+    {
+        $this->post('/login', [
+            'username' => 'victim',
+            'login_role' => 'sekolah',
+            'npsn' => '20200001',
+            'password' => 'correct-password',
+        ])->assertSessionHasErrors('username');
+
+        $this->assertGuest();
+    }
+
+    public function test_dinas_admin_login_does_not_require_npsn(): void
+    {
+        DB::table('users')->insert([
+            'username' => 'staff',
+            'password' => Hash::make('staff-password'),
+            'role' => 'Dinas',
+            'nama_pengguna' => 'Dinas Staff',
+            'npsn' => null,
+            'status' => 'Aktif',
+            'failed_login_attempts' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->post('/login', [
+            'username' => 'staff',
+            'login_role' => 'admin',
+            'password' => 'staff-password',
+        ])->assertRedirect('/dashboard');
+
+        $this->assertAuthenticatedAs(\App\Models\User::where('username', 'staff')->first());
+    }
+
+    public function test_login_page_offers_all_account_types(): void
+    {
+        $this->get('/login')
+            ->assertOk()
+            ->assertSee('Dinas / Admin')
+            ->assertSee('Sekolah')
+            ->assertSee('Operator')
+            ->assertSee('NPSN wajib diisi sesuai sekolah akun Anda.');
     }
 }

@@ -72,6 +72,10 @@
             -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
+
+        [x-cloak] {
+            display: none !important;
+        }
     </style>
 </head>
 
@@ -126,10 +130,27 @@
                 @endif
 
                 <!-- Form -->
-                <form method="POST" action="{{ route('login') }}" class="space-y-6" autocomplete="on">
+                <form method="POST" action="{{ route('login') }}" class="space-y-6" autocomplete="on"
+                    x-data="{ loginRole: @js(old('login_role', '')) }">
                     @csrf
 
                     <div class="space-y-5">
+                        <div class="space-y-1.5">
+                            <label for="login_role" class="text-sm font-medium text-slate-700">Jenis Akun</label>
+                            <div class="relative group">
+                                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <i class="bi bi-person-badge text-slate-400 group-hover:text-sky-500 transition-colors"></i>
+                                </div>
+                                <select id="login_role" name="login_role" x-model="loginRole" required
+                                    class="modern-input block w-full pl-11 pr-10 py-3.5 bg-slate-50 border-gray-200 border rounded-xl text-slate-900 text-sm focus:bg-white focus:outline-hidden">
+                                    <option value="" disabled>Pilih jenis akun</option>
+                                    <option value="admin">Dinas / Admin</option>
+                                    <option value="sekolah">Sekolah</option>
+                                    <option value="operator">Operator</option>
+                                </select>
+                            </div>
+                        </div>
+
                         <div class="space-y-1.5">
                             <label for="username" class="text-sm font-medium text-slate-700">Username</label>
                             <div class="relative group">
@@ -144,6 +165,21 @@
                                     class="modern-input block w-full pl-11 pr-4 py-3.5 bg-slate-50 border-gray-200 border rounded-xl text-slate-900 text-sm placeholder:text-slate-400 focus:bg-white focus:outline-hidden"
                                     placeholder="Masukkan username Anda">
                             </div>
+                        </div>
+
+                        <div class="space-y-1.5" x-show="loginRole === 'sekolah' || loginRole === 'operator'" x-cloak>
+                            <label for="npsn" class="text-sm font-medium text-slate-700">NPSN</label>
+                            <div class="relative group">
+                                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <i class="bi bi-building text-slate-400 group-hover:text-sky-500 transition-colors"></i>
+                                </div>
+                                <input type="text" id="npsn" name="npsn" value="{{ old('npsn') }}"
+                                    inputmode="numeric" maxlength="8" pattern="[0-9]{8}" autocomplete="off"
+                                    :required="loginRole === 'sekolah' || loginRole === 'operator'"
+                                    class="modern-input block w-full pl-11 pr-4 py-3.5 bg-slate-50 border-gray-200 border rounded-xl text-slate-900 text-sm placeholder:text-slate-400 focus:bg-white focus:outline-hidden"
+                                    placeholder="8 digit NPSN">
+                            </div>
+                            <p class="text-xs text-slate-400">NPSN wajib diisi sesuai sekolah akun Anda.</p>
                         </div>
 
                         <div class="space-y-1.5" x-data="{ show: false }">

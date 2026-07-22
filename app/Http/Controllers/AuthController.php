@@ -23,15 +23,27 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $request->validate([
+            'login_role' => 'required|in:admin,sekolah,operator',
             'username' => 'required|string|max:50',
+            'npsn' => 'nullable|required_if:login_role,sekolah,operator|digits:8',
             'password' => 'required|string|min:6',
+        ], [
+            'login_role.required' => 'Pilih jenis akun yang akan digunakan.',
+            'login_role.in' => 'Jenis akun tidak valid.',
+            'npsn.required_if' => 'NPSN wajib diisi untuk akun Sekolah dan Operator.',
+            'npsn.digits' => 'NPSN harus terdiri dari 8 digit angka.',
         ]);
 
+        $loginRole = (string) $request->login_role;
         $username = strtolower(trim($request->username));
+        $npsn = $request->filled('npsn') ? trim((string) $request->npsn) : null;
+        $loginIdentity = $npsn
+            ? "{$loginRole}:{$username}@{$npsn}"
+            : "{$loginRole}:{$username}";
 
         // Limit each username+IP pair without allowing an attacker to lock the
         // account globally. The IP limiter also slows credential stuffing.
-        $credentialKey = 'login_credential:' . hash('sha256', $username . '|' . $request->ip());
+        $credentialKey = 'login_credential:' . hash('sha256', $loginIdentity . '|' . $request->ip());
         $ipKey = 'login_ip:' . hash('sha256', (string) $request->ip());
         if (RateLimiter::tooManyAttempts($credentialKey, 5)
             || RateLimiter::tooManyAttempts($ipKey, 20)) {
@@ -39,20 +51,34 @@ class AuthController extends Controller
                 RateLimiter::availableIn($credentialKey),
                 RateLimiter::availableIn($ipKey),
             );
-            AuditLog::log('LOGIN_RATE_LIMITED', $username, "Locked for {$seconds}s");
+            AuditLog::log('LOGIN_RATE_LIMITED', $loginIdentity, "Locked for {$seconds}s");
 
             return back()->withErrors([
                 'username' => "Terlalu banyak percobaan. Coba lagi dalam {$seconds} detik.",
             ])->withInput();
         }
 
-        // Find user
-        $user = User::where('username', $username)->first();
+        $userQuery = User::where('username', $username);
+
+        $user = match ($loginRole) {
+            'admin' => $userQuery
+                ->whereIn('role', ['Dinas', 'SuperAdmin'])
+                ->whereNull('npsn')
+                ->first(),
+            'sekolah' => $userQuery
+                ->where('role', 'Sekolah')
+                ->where('npsn', $npsn)
+                ->first(),
+            'operator' => $userQuery
+                ->where('role', 'Operator')
+                ->where('npsn', $npsn)
+                ->first(),
+        };
 
         if (!$user) {
             RateLimiter::hit($credentialKey, 300);
             RateLimiter::hit($ipKey, 300);
-            AuditLog::log('LOGIN_FAILED', $username, 'User not found');
+            AuditLog::log('LOGIN_FAILED', $loginIdentity, 'User not found');
 
             $retries = RateLimiter::attempts($credentialKey);
             $remaining = max(0, 5 - $retries);
@@ -62,7 +88,7 @@ class AuthController extends Controller
 
         // Check status using accessor for consistency
         if (!$user->is_active) {
-            AuditLog::log('LOGIN_INACTIVE', $username, 'Account inactive');
+            AuditLog::log('LOGIN_INACTIVE', $loginIdentity, 'Account inactive');
             return back()->withErrors(['username' => 'Akun tidak aktif.'])->withInput();
         }
 
@@ -76,7 +102,7 @@ class AuthController extends Controller
             RateLimiter::hit($ipKey, 300);
             AuditLog::log(
                 $usesBcrypt ? 'LOGIN_FAILED' : 'LOGIN_INVALID_PASSWORD_HASH',
-                $username,
+                $loginIdentity,
                 $usesBcrypt ? 'Wrong password' : 'Unsupported password hash',
             );
 
@@ -93,7 +119,7 @@ class AuthController extends Controller
         Auth::login($user);
         $request->session()->regenerate();
 
-        AuditLog::log('LOGIN_SUCCESS', $username);
+        AuditLog::log('LOGIN_SUCCESS', $loginIdentity);
 
         $response = redirect()->intended(route('dashboard'));
 
