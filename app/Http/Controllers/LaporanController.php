@@ -21,6 +21,8 @@ use Illuminate\Validation\ValidationException;
 
 class LaporanController extends Controller
 {
+    private ?array $eligibleBogorJuniorHighNpsns = null;
+
     /**
      * Display the main reporting dashboard/menu.
      */
@@ -1158,8 +1160,12 @@ class LaporanController extends Controller
         ];
     }
 
-    private function eligibleBogorJuniorHighNpsns()
+    private function eligibleBogorJuniorHighNpsns(): array
     {
-        return SatuanPendidikan::eligibleBogorJuniorHigh()->select('npsn');
+        return $this->eligibleBogorJuniorHighNpsns ??= SatuanPendidikan::eligibleBogorJuniorHigh()
+            ->pluck('npsn')
+            ->filter()
+            ->values()
+            ->all();
     }
 }

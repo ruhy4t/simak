@@ -25,22 +25,40 @@ class LaporanRekapPerformanceTest extends TestCase
             $table->string('id_mutasi')->primary();
             $table->date('tanggal_pengajuan');
             $table->string('npsn_sekolah_tujuan');
+            $table->string('nama_sekolah_tujuan')->nullable();
             $table->string('status');
         });
         Schema::create('mutasi_masuk_siswa', function (Blueprint $table): void {
             $table->id();
             $table->string('id_mutasi');
+            $table->string('nama_murid')->nullable();
+            $table->string('nisn')->nullable();
             $table->string('kelas');
             $table->string('jenis_kelamin');
+            $table->string('nama_sekolah_asal')->nullable();
+            $table->string('npsn_sekolah_asal')->nullable();
         });
         Schema::create('mutasi_keluar', function (Blueprint $table): void {
             $table->string('id_mutasi')->primary();
             $table->date('tanggal_pengajuan');
             $table->string('npsn_sekolah_asal');
+            $table->string('npsn_sekolah_tujuan')->nullable();
+            $table->string('nama_murid')->nullable();
+            $table->string('nisn')->nullable();
+            $table->string('nama_sekolah_asal')->nullable();
+            $table->string('nama_sekolah_tujuan')->nullable();
             $table->string('kelas');
             $table->string('jenis_kelamin');
             $table->string('status');
             $table->softDeletes();
+        });
+        Schema::create('satuan_pendidikan', function (Blueprint $table): void {
+            $table->id();
+            $table->string('npsn')->unique();
+            $table->boolean('is_local')->default(true);
+            $table->string('kota');
+            $table->string('bentuk_pendidikan');
+            $table->string('status_sp');
         });
 
         DB::table('mutasi_masuk')->insert([
@@ -58,6 +76,13 @@ class LaporanRekapPerformanceTest extends TestCase
             'kelas' => 'VIII',
             'jenis_kelamin' => 'P',
             'status' => 'Selesai',
+        ]);
+        DB::table('satuan_pendidikan')->insert([
+            'npsn' => '12345678',
+            'is_local' => true,
+            'kota' => 'KOTA BOGOR',
+            'bentuk_pendidikan' => 'SMP',
+            'status_sp' => 'Negeri',
         ]);
     }
 
@@ -94,5 +119,52 @@ class LaporanRekapPerformanceTest extends TestCase
         $this->assertSame(1, $report[0]['masuk']);
         $this->assertSame(1, $report[1]['keluar']);
         $this->assertSame(1, $report[2]['masuk']);
+    }
+
+    public function test_eligible_npsns_are_materialized_once_for_cross_collation_safe_queries(): void
+    {
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+
+        $controller = app(LaporanController::class);
+        $method = new ReflectionMethod(LaporanController::class, 'eligibleBogorJuniorHighNpsns');
+
+        $this->assertSame(['12345678'], $method->invoke($controller));
+        $this->assertSame(['12345678'], $method->invoke($controller));
+
+        $eligibleSchoolQueries = collect(DB::getQueryLog())
+            ->filter(fn (array $query): bool => str_contains($query['query'], 'satuan_pendidikan'));
+
+        $this->assertCount(1, $eligibleSchoolQueries);
+    }
+
+    public function test_school_nominative_queries_use_materialized_eligible_npsns(): void
+    {
+        $school = new SatuanPendidikan(['npsn' => '12345678']);
+        $user = new User(['role' => 'Operator', 'npsn' => '12345678']);
+        $user->setRelation('sekolah', $school);
+
+        $controller = app(LaporanController::class);
+        $method = new ReflectionMethod(LaporanController::class, 'getNominatifData');
+
+        $incoming = $method->invoke(
+            $controller,
+            '2026-01-01',
+            '2026-03-31',
+            'masuk',
+            $user,
+        );
+        $outgoing = $method->invoke(
+            $controller,
+            '2026-01-01',
+            '2026-03-31',
+            'keluar',
+            $user,
+        );
+
+        $this->assertCount(2, $incoming);
+        $this->assertCount(1, $outgoing);
+        $this->assertTrue($incoming->every(fn (object $item): bool => $item->jenis === 'masuk'));
+        $this->assertTrue($outgoing->every(fn (object $item): bool => $item->jenis === 'keluar'));
     }
 }
