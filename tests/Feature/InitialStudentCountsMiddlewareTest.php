@@ -55,9 +55,18 @@ class InitialStudentCountsMiddlewareTest extends TestCase
         });
 
         AcademicYear::create([
+            'name' => '2025/2026',
+            'status' => AcademicYear::STATUS_CLOSED,
+            'is_active' => false,
+            'starts_on' => '2025-07-15',
+            'ends_on' => '2026-07-14',
+        ]);
+        AcademicYear::create([
             'name' => '2026/2027',
             'status' => AcademicYear::STATUS_ACTIVE,
             'is_active' => true,
+            'starts_on' => '2026-07-15',
+            'ends_on' => '2027-07-14',
         ]);
     }
 
@@ -78,10 +87,11 @@ class InitialStudentCountsMiddlewareTest extends TestCase
         $this->assertStringContainsString('2026/2027', session('error'));
     }
 
-    public function test_school_can_submit_mutations_while_final_data_is_not_yet_available(): void
+    public function test_school_can_submit_mutations_without_active_year_final_data(): void
     {
         [$school, $user] = $this->schoolUser();
-        $this->insertCounts($school, withClosing: false);
+        $this->insertCounts($school, '2025/2026', withClosing: true);
+        $this->insertCounts($school, '2026/2027', withClosing: false);
 
         $response = $this->runMiddleware($user);
 
@@ -92,7 +102,8 @@ class InitialStudentCountsMiddlewareTest extends TestCase
     public function test_complete_profile_initial_and_final_zero_counts_allow_mutations(): void
     {
         [$school, $user] = $this->schoolUser();
-        $this->insertCounts($school, withClosing: true);
+        $this->insertCounts($school, '2025/2026', withClosing: true);
+        $this->insertCounts($school, '2026/2027', withClosing: true);
 
         $response = $this->runMiddleware($user);
 
@@ -103,7 +114,8 @@ class InitialStudentCountsMiddlewareTest extends TestCase
     public function test_incomplete_profile_blocks_submission_even_when_counts_are_complete(): void
     {
         [$school, $user] = $this->schoolUser();
-        $this->insertCounts($school, withClosing: true);
+        $this->insertCounts($school, '2025/2026', withClosing: true);
+        $this->insertCounts($school, '2026/2027', withClosing: true);
         DB::table('satuan_pendidikan')->where('id', $school->id)->update(['kop_surat_path' => null]);
 
         $response = $this->runMiddleware($user);
@@ -111,6 +123,23 @@ class InitialStudentCountsMiddlewareTest extends TestCase
         $this->assertSame(302, $response->getStatusCode());
         $this->assertSame(route('sekolah.profile'), $response->headers->get('Location'));
         $this->assertStringContainsString('Profil Sekolah', session('error'));
+    }
+
+    public function test_previous_year_final_data_is_required_instead_of_active_year_final_data(): void
+    {
+        [$school, $user] = $this->schoolUser();
+        $this->insertCounts($school, '2025/2026', withClosing: false);
+        $this->insertCounts($school, '2026/2027', withClosing: true);
+
+        $response = $this->runMiddleware($user);
+
+        $this->assertSame(302, $response->getStatusCode());
+        $this->assertSame(
+            route('sekolah.closing-counts', ['academic_year' => '2025/2026']),
+            $response->headers->get('Location')
+        );
+        $this->assertStringContainsString('Data Akhir kelas VII, VIII, dan IX tahun pelajaran 2025/2026', session('error'));
+        $this->assertStringNotContainsString('Data Akhir kelas VII, VIII, dan IX tahun pelajaran 2026/2027', session('error'));
     }
 
     public function test_ajax_submission_receives_validation_response_and_profile_redirect(): void
@@ -173,9 +202,9 @@ class InitialStudentCountsMiddlewareTest extends TestCase
         return [$school, $user];
     }
 
-    private function insertCounts(SatuanPendidikan $school, bool $withClosing): void
+    private function insertCounts(SatuanPendidikan $school, string $academicYearName, bool $withClosing): void
     {
-        $academicYear = AcademicYear::query()->where('is_active', true)->firstOrFail();
+        $academicYear = AcademicYear::query()->where('name', $academicYearName)->firstOrFail();
         $now = now();
 
         foreach ([7, 8, 9] as $grade) {
