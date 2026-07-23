@@ -78,16 +78,15 @@ class InitialStudentCountsMiddlewareTest extends TestCase
         $this->assertStringContainsString('2026/2027', session('error'));
     }
 
-    public function test_school_is_redirected_to_closing_counts_when_only_final_data_is_missing(): void
+    public function test_school_can_submit_mutations_while_final_data_is_not_yet_available(): void
     {
         [$school, $user] = $this->schoolUser();
         $this->insertCounts($school, withClosing: false);
 
         $response = $this->runMiddleware($user);
 
-        $this->assertSame(302, $response->getStatusCode());
-        $this->assertSame(route('sekolah.closing-counts'), $response->headers->get('Location'));
-        $this->assertStringContainsString('Data Akhir', session('error'));
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame('allowed', $response->getContent());
     }
 
     public function test_complete_profile_initial_and_final_zero_counts_allow_mutations(): void

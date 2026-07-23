@@ -8,9 +8,7 @@ use Illuminate\Support\Facades\DB;
 
 class CohortReportService
 {
-    public function __construct(private readonly ReportingSchema $reportingSchema)
-    {
-    }
+    public function __construct(private readonly ReportingSchema $reportingSchema) {}
 
     public function available(): bool
     {
@@ -53,6 +51,7 @@ class CohortReportService
                 'counts.closing_male_count',
                 'counts.closing_female_count',
                 'counts.closing_confirmed_at',
+                'counts.closing_locked_early',
             ]);
 
         if ($schoolId) {
@@ -106,7 +105,10 @@ class CohortReportService
                 $outgoingCount = (int) ($outgoing[$mutationKey] ?? 0);
                 $nonMutationOutgoingCount = (int) ($nonMutationOutgoing[$mutationKey] ?? 0);
                 $expected = $opening + $incomingCount - $outgoingCount - $nonMutationOutgoingCount;
-                $isReported = $count->closing_confirmed_at !== null && $count->{$closingColumn} !== null;
+                $isEarlyLock = (bool) $count->closing_locked_early;
+                $isReported = ! $isEarlyLock
+                    && $count->closing_confirmed_at !== null
+                    && $count->{$closingColumn} !== null;
 
                 $row['opening'] += $opening;
                 $row['incoming'] += $incomingCount;
@@ -194,8 +196,17 @@ class CohortReportService
         $reportedSchoolCount = $countRows
             ->groupBy('satuan_pendidikan_id')
             ->filter(fn (Collection $schoolRows) => $schoolRows->count() === 3
-                && $schoolRows->every(fn (object $row) => $row->closing_confirmed_at !== null))
+                && $schoolRows->every(fn (object $row) => $row->closing_confirmed_at !== null
+                    && ! $row->closing_locked_early))
             ->count();
+        $earlyLockedSchoolCount = $academicYear->ends_on
+            ? $countRows
+                ->groupBy('satuan_pendidikan_id')
+                ->filter(fn (Collection $schoolRows) => $schoolRows->count() === 3
+                    && $schoolRows->every(fn (object $row) => $row->closing_confirmed_at !== null)
+                    && $schoolRows->contains(fn (object $row) => (bool) $row->closing_locked_early))
+                ->count()
+            : 0;
 
         return [
             'rows' => $rows->all(),
@@ -207,6 +218,7 @@ class CohortReportService
             'is_provisional' => $isProvisional,
             'school_count' => $schoolCount,
             'reported_school_count' => $reportedSchoolCount,
+            'early_locked_school_count' => $earlyLockedSchoolCount,
             'missing_school_count' => max(0, $schoolCount - $reportedSchoolCount),
             'is_complete' => $schoolCount > 0 && $reportedSchoolCount === $schoolCount,
         ];
@@ -338,6 +350,7 @@ class CohortReportService
             'is_provisional' => false,
             'school_count' => 0,
             'reported_school_count' => 0,
+            'early_locked_school_count' => 0,
             'missing_school_count' => 0,
             'is_complete' => false,
         ];

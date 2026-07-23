@@ -15,12 +15,20 @@
             </a>
         </div>
 
-        <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-amber-900">
+        <div class="rounded-2xl border {{ $selectedAcademicYear && !$canFinalize ? 'border-blue-200 bg-blue-50 text-blue-900' : 'border-amber-200 bg-amber-50 text-amber-900' }} p-5">
             <div class="flex gap-3">
-                <i class="bi bi-shield-lock-fill mt-0.5 text-xl"></i>
+                <i class="bi {{ $selectedAcademicYear && !$canFinalize ? 'bi-calendar-event' : 'bi-shield-lock-fill' }} mt-0.5 text-xl"></i>
                 <div>
-                    <p class="font-bold">Data akan dikunci setelah disimpan.</p>
-                    <p class="mt-1 text-sm leading-6">Periksa seluruh angka dengan teliti. Tidak diperlukan dokumen atau identitas murid.</p>
+                    @if($selectedAcademicYear && !$canFinalize)
+                        <p class="font-bold">Pengisian data akhir belum dibuka.</p>
+                        <p class="mt-1 text-sm leading-6">
+                            Tahun pelajaran masih berjalan. Penguncian tersedia mulai
+                            {{ $selectedAcademicYear->ends_on?->translatedFormat('d F Y') ?? 'setelah periode ditutup oleh Dinas' }}.
+                        </p>
+                    @else
+                        <p class="font-bold">Data akan dikunci setelah disimpan.</p>
+                        <p class="mt-1 text-sm leading-6">Periksa seluruh angka dengan teliti. Tidak diperlukan dokumen atau identitas murid.</p>
+                    @endif
                 </div>
             </div>
         </div>
@@ -49,7 +57,9 @@
                             <h2 class="font-bold text-slate-900">{{ $satpen->nama }}</h2>
                             <p class="text-xs text-slate-500">Tahun Pelajaran {{ $selectedAcademicYear->name }}</p>
                         </div>
-                        @if($isLocked)
+                        @if($isLockedEarly)
+                            <span class="rounded-full bg-rose-100 px-3 py-1 text-xs font-bold text-rose-800"><i class="bi bi-exclamation-triangle-fill"></i> Dikunci lebih awal</span>
+                        @elseif($isLocked)
                             <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800"><i class="bi bi-lock-fill"></i> Terkunci</span>
                         @else
                             <span class="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800"><i class="bi bi-pencil-fill"></i> Belum dikunci</span>
@@ -76,13 +86,13 @@
                                     <td class="px-6 py-4 text-center font-bold text-slate-500">{{ number_format($row?->male_count ?? 0) }}</td>
                                     <td class="px-6 py-4">
                                         <input type="number" min="0" max="99999" required name="closing_{{ $grade }}_male"
-                                            value="{{ old("closing_{$grade}_male", $row?->closing_male_count) }}" @readonly($isLocked)
+                                            value="{{ old("closing_{$grade}_male", $row?->closing_male_count) }}" @readonly($isLocked || !$canFinalize)
                                             class="w-full rounded-xl border-2 border-blue-200 px-3 py-2.5 text-center text-lg font-bold focus:border-blue-500 focus:ring-blue-500">
                                     </td>
                                     <td class="px-6 py-4 text-center font-bold text-slate-500">{{ number_format($row?->female_count ?? 0) }}</td>
                                     <td class="px-6 py-4">
                                         <input type="number" min="0" max="99999" required name="closing_{{ $grade }}_female"
-                                            value="{{ old("closing_{$grade}_female", $row?->closing_female_count) }}" @readonly($isLocked)
+                                            value="{{ old("closing_{$grade}_female", $row?->closing_female_count) }}" @readonly($isLocked || !$canFinalize)
                                             class="w-full rounded-xl border-2 border-pink-200 px-3 py-2.5 text-center text-lg font-bold focus:border-pink-500 focus:ring-pink-500">
                                     </td>
                                 </tr>
@@ -91,7 +101,14 @@
                     </table>
                 </div>
 
-                @unless($isLocked)
+                @if($isLockedEarly)
+                    <div class="border-t border-rose-200 bg-rose-50 px-5 py-4 text-sm text-rose-900 sm:px-6">
+                        <p class="font-bold">Data ini dikunci sebelum periode tahun pelajaran berakhir.</p>
+                        <p class="mt-1">Data ditampilkan sebagai data sementara. Hubungi Dinas jika perlu dibuka kembali untuk dikoreksi.</p>
+                    </div>
+                @endif
+
+                @if(!$isLocked && $canFinalize)
                     <div class="space-y-4 border-t border-slate-200 bg-slate-50 px-5 py-5 sm:px-6">
                         <label class="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-white p-4">
                             <input type="checkbox" name="confirmation" value="1" required class="mt-0.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500">
@@ -101,7 +118,11 @@
                             <i class="bi bi-lock-fill"></i> Simpan dan Kunci Data Akhir
                         </button>
                     </div>
-                @endunless
+                @elseif(!$isLocked)
+                    <div class="border-t border-slate-200 bg-slate-50 px-5 py-5 text-center text-sm font-semibold text-slate-600 sm:px-6">
+                        Formulir tetap hanya-baca sampai periode pengisian data akhir dibuka.
+                    </div>
+                @endif
             </form>
         @else
             <div class="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-slate-500">Tahun pelajaran belum tersedia.</div>

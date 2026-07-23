@@ -16,6 +16,7 @@ class SatuanPendidikanStudentCount extends Model
         'closing_male_count',
         'closing_female_count',
         'closing_confirmed_at',
+        'closing_locked_early',
     ];
 
     protected $casts = [
@@ -26,6 +27,7 @@ class SatuanPendidikanStudentCount extends Model
         'closing_male_count' => 'integer',
         'closing_female_count' => 'integer',
         'closing_confirmed_at' => 'datetime',
+        'closing_locked_early' => 'boolean',
     ];
 
     public function school()

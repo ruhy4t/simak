@@ -105,9 +105,33 @@ class CohortReportTest extends TestCase
             ->assertDontSee('Data akhir aktual belum tersedia.');
     }
 
+    public function test_early_locked_counts_are_flagged_and_excluded_from_final_totals(): void
+    {
+        [$year, $schoolId] = $this->seedSchoolAndYear(true);
+        $year->update(['ends_on' => now()->addYear()->toDateString()]);
+        DB::table('satuan_pendidikan_student_counts')
+            ->where('satuan_pendidikan_id', $schoolId)
+            ->where('academic_year_id', $year->id)
+            ->update([
+                'closing_confirmed_at' => now(),
+                'closing_locked_early' => true,
+            ]);
+
+        $report = app(CohortReportService::class)->report($year, $schoolId);
+
+        $this->assertSame(1, $report['early_locked_school_count']);
+        $this->assertSame(0, $report['reported_school_count']);
+        $this->assertSame(0, $report['summary']['actual']);
+        $this->assertFalse($report['is_complete']);
+    }
+
     public function test_school_can_submit_closing_counts_once_and_values_are_locked(): void
     {
         [$year, $schoolId] = $this->seedSchoolAndYear(false);
+        $year->update([
+            'status' => AcademicYear::STATUS_CLOSED,
+            'is_active' => false,
+        ]);
         $userId = DB::table('users')->insertGetId([
             'username' => 'operator-test',
             'password' => Hash::make('secret-value'),
@@ -152,6 +176,102 @@ class CohortReportTest extends TestCase
         $this->assertDatabaseHas('satuan_pendidikan_student_counts', [
             'grade' => 7,
             'closing_male_count' => 9,
+        ]);
+    }
+
+    public function test_active_year_cannot_be_locked_before_its_end_date(): void
+    {
+        [$year, $schoolId] = $this->seedSchoolAndYear(false);
+        $year->update(['ends_on' => now()->addYear()->toDateString()]);
+        $user = $this->createUser('operator-active-year', 'Operator', '12345678');
+
+        $response = $this->actingAs($user)->post(route('sekolah.closing-counts.store'), [
+            'academic_year_id' => $year->id,
+            'confirmation' => '1',
+            'closing_7_male' => 9,
+            'closing_7_female' => 8,
+            'closing_8_male' => 11,
+            'closing_8_female' => 10,
+            'closing_9_male' => 7,
+            'closing_9_female' => 6,
+        ]);
+
+        $response
+            ->assertRedirect(route('sekolah.closing-counts', ['academic_year' => $year->name]))
+            ->assertSessionHas('error');
+        $this->assertDatabaseHas('satuan_pendidikan_student_counts', [
+            'satuan_pendidikan_id' => $schoolId,
+            'academic_year_id' => $year->id,
+            'grade' => 7,
+            'closing_confirmed_at' => null,
+        ]);
+        $this->assertDatabaseHas('audit_logs', [
+            'event_type' => 'closing_counts_blocked',
+            'username' => $user->username,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('sekolah.closing-counts'))
+            ->assertOk()
+            ->assertSee('Pengisian data akhir belum dibuka.')
+            ->assertDontSee('Simpan dan Kunci Data Akhir');
+    }
+
+    public function test_active_year_can_be_locked_when_its_end_date_is_reached(): void
+    {
+        [$year, $schoolId] = $this->seedSchoolAndYear(false);
+        $year->update(['ends_on' => now()->toDateString()]);
+        $user = $this->createUser('operator-closing-day', 'Operator', '12345678');
+
+        $this->actingAs($user)->post(route('sekolah.closing-counts.store'), [
+            'academic_year_id' => $year->id,
+            'confirmation' => '1',
+            'closing_7_male' => 9,
+            'closing_7_female' => 8,
+            'closing_8_male' => 11,
+            'closing_8_female' => 10,
+            'closing_9_male' => 7,
+            'closing_9_female' => 6,
+        ])->assertSessionHas('success');
+
+        $this->assertDatabaseHas('satuan_pendidikan_student_counts', [
+            'satuan_pendidikan_id' => $schoolId,
+            'academic_year_id' => $year->id,
+            'grade' => 7,
+            'closing_male_count' => 9,
+        ]);
+    }
+
+    public function test_only_dinas_can_reopen_locked_closing_counts_with_a_reason(): void
+    {
+        [$year, $schoolId] = $this->seedSchoolAndYear(true);
+        $schoolUser = $this->createUser('operator-reopen-denied', 'Operator', '12345678');
+        $dinasUser = $this->createUser('dinas-reopen', 'Dinas');
+        $route = route('closing-counts.reopen', [$schoolId, $year->id]);
+
+        $this->actingAs($schoolUser)
+            ->patch($route, ['reason' => 'Data perlu diperiksa ulang.'])
+            ->assertForbidden();
+
+        $this->actingAs($dinasUser)
+            ->patch($route, ['reason' => 'Data dikunci sebelum rekonsiliasi selesai.'])
+            ->assertRedirect(route('laporan.kohort', [
+                'academic_year' => $year->id,
+                'school' => $schoolId,
+            ]))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('satuan_pendidikan_student_counts', [
+            'satuan_pendidikan_id' => $schoolId,
+            'academic_year_id' => $year->id,
+            'grade' => 7,
+            'closing_male_count' => null,
+            'closing_female_count' => null,
+            'closing_confirmed_at' => null,
+        ]);
+        $this->assertDatabaseHas('audit_logs', [
+            'event_type' => 'closing_counts_reopened',
+            'username' => $dinasUser->username,
         ]);
     }
 
@@ -601,7 +721,8 @@ class CohortReportTest extends TestCase
                 'confirmed_at' => now(),
                 'closing_male_count' => $withClosing ? ($grade === 7 ? 8 : 0) : null,
                 'closing_female_count' => $withClosing ? ($grade === 7 ? 9 : 0) : null,
-                'closing_confirmed_at' => $withClosing ? now() : null,
+                'closing_confirmed_at' => $withClosing ? $year->ends_on : null,
+                'closing_locked_early' => false,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -627,7 +748,8 @@ class CohortReportTest extends TestCase
                 'confirmed_at' => now(),
                 'closing_male_count' => $openingPerGrade,
                 'closing_female_count' => $openingPerGrade,
-                'closing_confirmed_at' => now(),
+                'closing_confirmed_at' => $year->ends_on ?? now(),
+                'closing_locked_early' => false,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -664,6 +786,14 @@ class CohortReportTest extends TestCase
             $table->boolean('must_change_password')->default(false);
             $table->rememberToken();
             $table->timestamps();
+        });
+        Schema::create('audit_logs', function (Blueprint $table) {
+            $table->id();
+            $table->string('event_type', 50);
+            $table->string('username', 50)->nullable();
+            $table->string('ip_address', 45)->nullable();
+            $table->text('details')->nullable();
+            $table->timestamp('created_at')->useCurrent();
         });
         Schema::create('satuan_pendidikan', function (Blueprint $table) {
             $table->id();
@@ -703,6 +833,7 @@ class CohortReportTest extends TestCase
             $table->unsignedInteger('closing_male_count')->nullable();
             $table->unsignedInteger('closing_female_count')->nullable();
             $table->timestamp('closing_confirmed_at')->nullable();
+            $table->boolean('closing_locked_early')->default(false);
             $table->timestamps();
             $table->unique(['satuan_pendidikan_id', 'academic_year_id', 'grade']);
         });

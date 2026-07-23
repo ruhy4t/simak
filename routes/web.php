@@ -198,6 +198,10 @@ Route::middleware(['auth', EnsurePasswordChanged::class])->group(function () {
         Route::get('/mutasi-masuk/{id}/word-srikandi', MutasiMasukSrikandiController::class)->name('mutasi.masuk.word-srikandi');
         Route::get('/mutasi-masuk/{id}/edit', [MutasiMasukController::class, 'edit'])->name('mutasi.masuk.edit');
         Route::put('/mutasi-masuk/{id}', [MutasiMasukController::class, 'update'])->name('mutasi.masuk.update');
+        Route::patch(
+            '/satuan-pendidikan/{schoolId}/data-akhir/{academicYearId}/buka-kembali',
+            [SatuanPendidikanController::class, 'reopenClosingCounts']
+        )->middleware('throttle:6,1')->name('closing-counts.reopen');
 
         // Digital Archive Upload
         Route::post('/mutasi-keluar/{id}/upload-arsip', [MutasiController::class, 'uploadArsip'])->name('mutasi.keluar.upload-arsip');

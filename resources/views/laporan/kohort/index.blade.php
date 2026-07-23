@@ -73,6 +73,26 @@
                     ? 'Ringkasan sementara tahun berjalan berdasarkan data awal dan perubahan murid yang telah tercatat.'
                     : 'Perbandingan data awal, perubahan murid, dan data akhir aktual pada satu tahun pelajaran.'" />
 
+            @if($school && in_array(auth()->user()->role, ['Dinas', 'SuperAdmin'], true) && ($cohort['reported_school_count'] > 0 || ($cohort['early_locked_school_count'] ?? 0) > 0))
+                <details class="rounded-2xl border border-rose-200 bg-rose-50 p-5">
+                    <summary class="cursor-pointer font-bold text-rose-900">
+                        <i class="bi bi-unlock-fill mr-1"></i> Buka Kembali Data Akhir
+                    </summary>
+                    <form method="POST" action="{{ route('closing-counts.reopen', [$school->id, $academicYear->id]) }}" class="mt-4 space-y-3">
+                        @csrf
+                        @method('PATCH')
+                        <label for="reopen-reason" class="block text-sm font-bold text-rose-900">Alasan pembukaan kembali</label>
+                        <textarea id="reopen-reason" name="reason" required minlength="10" maxlength="500" rows="3"
+                            class="w-full rounded-xl border-rose-300 bg-white text-sm focus:border-rose-500 focus:ring-rose-500"
+                            placeholder="Contoh: Data dikunci sebelum proses rekonsiliasi sekolah selesai.">{{ old('reason') }}</textarea>
+                        <p class="text-xs leading-5 text-rose-700">Tindakan ini tercatat dalam audit. Sekolah dapat mengunci ulang hanya setelah periode penutupan dibuka.</p>
+                        <button type="submit" class="rounded-xl bg-rose-700 px-5 py-2.5 text-sm font-bold text-white hover:bg-rose-800">
+                            Buka Kembali
+                        </button>
+                    </form>
+                </details>
+            @endif
+
             <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white">
                 <div class="border-b border-slate-200 px-5 py-4">
                     <h2 class="font-bold text-slate-900">Rincian per Kelas dan Jenis Kelamin</h2>

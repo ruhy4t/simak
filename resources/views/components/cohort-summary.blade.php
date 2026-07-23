@@ -77,6 +77,12 @@
                 <p class="mt-1 leading-5">Perkiraan saat ini dihitung dari data awal, mutasi masuk, mutasi keluar, dan keluar non-mutasi yang telah tercatat.</p>
             </div>
         @endif
+        @if(($cohort['early_locked_school_count'] ?? 0) > 0)
+            <div class="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
+                <p class="font-bold">{{ number_format($cohort['early_locked_school_count']) }} sekolah mengunci data sebelum periode berakhir.</p>
+                <p class="mt-1 leading-5">Data tersebut ditandai untuk pemeriksaan dan tidak dihitung sebagai laporan final sampai dikunci ulang pada periode yang sah.</p>
+            </div>
+        @endif
 
         @if($usesCalculatedOpening)
             <details class="mt-6 rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900" @if(!$compact) open @endif>

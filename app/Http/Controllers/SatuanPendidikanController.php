@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AcademicYear;
+use App\Models\AuditLog;
 use App\Models\SatuanPendidikan;
 use App\Services\FileUploadService;
 use App\Services\MutationStatisticsCache;
@@ -758,6 +759,7 @@ class SatuanPendidikanController extends Controller
             Schema::hasTable('academic_years')
                 && Schema::hasColumns('satuan_pendidikan_student_counts', [
                     'closing_male_count', 'closing_female_count', 'closing_confirmed_at',
+                    'closing_locked_early',
                 ]),
             503,
             'Fitur data akhir belum siap. Jalankan migrasi database terlebih dahulu.'
@@ -777,13 +779,18 @@ class SatuanPendidikanController extends Controller
             : collect();
         $isLocked = $countRows->count() === 3
             && $countRows->every(fn ($row) => $row->closing_confirmed_at !== null);
+        $isLockedEarly = $isLocked
+            && $countRows->contains(fn ($row) => $row->closing_locked_early);
+        $canFinalize = $selectedAcademicYear?->acceptsClosingCounts() ?? false;
 
         return view('satpen.closing-counts', compact(
             'satpen',
             'academicYears',
             'selectedAcademicYear',
             'countRows',
-            'isLocked'
+            'isLocked',
+            'isLockedEarly',
+            'canFinalize'
         ));
     }
 
@@ -816,6 +823,22 @@ class SatuanPendidikanController extends Controller
         if ($academicYear->status === AcademicYear::STATUS_UPCOMING) {
             return back()->withErrors(['academic_year_id' => 'Data akhir belum dapat diisi untuk tahun pelajaran mendatang.'])->withInput();
         }
+        if (! $academicYear->acceptsClosingCounts()) {
+            AuditLog::log(
+                'closing_counts_blocked',
+                $user->username,
+                json_encode([
+                    'school_id' => (int) $satpen->id,
+                    'academic_year_id' => (int) $academicYear->id,
+                    'reason' => 'period_not_ended',
+                ])
+            );
+
+            return redirect()
+                ->route('sekolah.closing-counts', ['academic_year' => $academicYear->name])
+                ->with('error', "Data akhir belum dapat dikunci. Tahun pelajaran {$academicYear->name} berakhir pada "
+                    .($academicYear->ends_on?->translatedFormat('d F Y') ?? 'tanggal yang belum ditentukan').'.');
+        }
 
         $alreadyLocked = false;
         DB::transaction(function () use ($satpen, $academicYear, $validated, &$alreadyLocked) {
@@ -843,6 +866,7 @@ class SatuanPendidikanController extends Controller
                     'closing_male_count' => $validated["closing_{$row->grade}_male"],
                     'closing_female_count' => $validated["closing_{$row->grade}_female"],
                     'closing_confirmed_at' => $confirmedAt,
+                    'closing_locked_early' => false,
                 ]);
             }
 
@@ -872,10 +896,89 @@ class SatuanPendidikanController extends Controller
         }
 
         MutationStatisticsCache::invalidate();
+        AuditLog::log(
+            'closing_counts_locked',
+            $user->username,
+            json_encode([
+                'school_id' => (int) $satpen->id,
+                'academic_year_id' => (int) $academicYear->id,
+            ])
+        );
 
         return redirect()
             ->route('sekolah.closing-counts', ['academic_year' => $academicYear->name])
             ->with('success', "Data akhir tahun pelajaran {$academicYear->name} berhasil disimpan dan dikunci.");
+    }
+
+    public function reopenClosingCounts(Request $request, int $schoolId, int $academicYearId)
+    {
+        $user = Auth::user();
+        if (! in_array($user->role, ['Dinas', 'SuperAdmin'], true)) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'reason' => ['required', 'string', 'min:10', 'max:500'],
+        ], [
+            'reason.required' => 'Alasan pembukaan kembali wajib diisi.',
+            'reason.min' => 'Alasan pembukaan kembali minimal 10 karakter.',
+        ]);
+
+        $school = SatuanPendidikan::findOrFail($schoolId);
+        $academicYear = AcademicYear::findOrFail($academicYearId);
+        $wasLocked = false;
+
+        DB::transaction(function () use ($school, $academicYear, &$wasLocked): void {
+            $rows = $school->studentCounts()
+                ->where('academic_year_id', $academicYear->id)
+                ->whereIn('grade', [7, 8, 9])
+                ->lockForUpdate()
+                ->get();
+
+            if ($rows->count() !== 3) {
+                throw ValidationException::withMessages([
+                    'reason' => 'Data murid kelas VII, VIII, dan IX belum lengkap.',
+                ]);
+            }
+
+            $wasLocked = $rows->contains(fn ($row) => $row->closing_confirmed_at !== null);
+            if (! $wasLocked) {
+                return;
+            }
+
+            $school->studentCounts()
+                ->where('academic_year_id', $academicYear->id)
+                ->whereIn('grade', [7, 8, 9])
+                ->update([
+                    'closing_male_count' => null,
+                    'closing_female_count' => null,
+                    'closing_confirmed_at' => null,
+                    'closing_locked_early' => false,
+                    'updated_at' => now(),
+                ]);
+        });
+
+        if (! $wasLocked) {
+            return back()->with('error', 'Data akhir tersebut sudah dalam keadaan terbuka.');
+        }
+
+        MutationStatisticsCache::invalidate();
+        AuditLog::log(
+            'closing_counts_reopened',
+            $user->username,
+            json_encode([
+                'school_id' => (int) $school->id,
+                'academic_year_id' => (int) $academicYear->id,
+                'reason' => $validated['reason'],
+            ], JSON_UNESCAPED_UNICODE)
+        );
+
+        return redirect()
+            ->route('laporan.kohort', [
+                'academic_year' => $academicYear->id,
+                'school' => $school->id,
+            ])
+            ->with('success', "Data akhir {$school->nama} untuk {$academicYear->name} berhasil dibuka kembali.");
     }
 
     private function legacyStudentCounts(SatuanPendidikan $satpen): array

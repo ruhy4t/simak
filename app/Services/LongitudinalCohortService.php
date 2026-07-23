@@ -8,9 +8,7 @@ use Illuminate\Support\Facades\DB;
 
 class LongitudinalCohortService
 {
-    public function __construct(private readonly ReportingSchema $reportingSchema)
-    {
-    }
+    public function __construct(private readonly ReportingSchema $reportingSchema) {}
 
     public function available(): bool
     {
@@ -144,7 +142,8 @@ class LongitudinalCohortService
         $opening = (int) $countRows->sum(fn (object $row) => (int) $row->male_count + (int) $row->female_count);
         $reportedRows = $countRows->filter(fn (object $row) => $row->closing_confirmed_at !== null
             && $row->closing_male_count !== null
-            && $row->closing_female_count !== null);
+            && $row->closing_female_count !== null
+            && ! $row->closing_locked_early);
         $reportedSchoolCount = $reportedRows->pluck('satuan_pendidikan_id')->unique()->count();
         $schoolCount = $schoolIds->count();
         $incoming = $this->incomingTotal($academicYear, $grade, $npsns);
@@ -194,6 +193,7 @@ class LongitudinalCohortService
                 'counts.closing_male_count',
                 'counts.closing_female_count',
                 'counts.closing_confirmed_at',
+                'counts.closing_locked_early',
             ]);
     }
 

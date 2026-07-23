@@ -17,8 +17,14 @@ class ClosingCountsMigrationTest extends TestCase
         config()->set('database.connections.sqlite.database', ':memory:');
         DB::purge('sqlite');
 
+        Schema::create('academic_years', function (Blueprint $table) {
+            $table->id();
+            $table->boolean('is_active')->default(false);
+            $table->date('ends_on')->nullable();
+        });
         Schema::create('satuan_pendidikan_student_counts', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('academic_year_id')->nullable();
             $table->unsignedInteger('female_count')->default(0);
             $table->timestamp('confirmed_at')->nullable();
         });
@@ -43,5 +49,39 @@ class ClosingCountsMigrationTest extends TestCase
 
         $migration->down();
         $this->assertFalse(Schema::hasColumn('satuan_pendidikan_student_counts', 'closing_male_count'));
+    }
+
+    public function test_active_year_closing_counts_locked_before_the_end_are_marked_early(): void
+    {
+        $closingMigration = require database_path('migrations/2026_07_17_120000_add_closing_counts_to_student_counts.php');
+        $closingMigration->up();
+
+        $yearId = DB::table('academic_years')->insertGetId([
+            'is_active' => true,
+            'ends_on' => now()->addMonth()->toDateString(),
+        ]);
+        DB::table('satuan_pendidikan_student_counts')->insert([
+            'academic_year_id' => $yearId,
+            'closing_confirmed_at' => now(),
+        ]);
+
+        $markerMigration = require database_path('migrations/2026_07_23_130000_add_early_lock_marker_to_student_counts.php');
+        $markerMigration->up();
+        $markerMigration->up();
+
+        $this->assertTrue(Schema::hasColumn(
+            'satuan_pendidikan_student_counts',
+            'closing_locked_early'
+        ));
+        $this->assertDatabaseHas('satuan_pendidikan_student_counts', [
+            'academic_year_id' => $yearId,
+            'closing_locked_early' => true,
+        ]);
+
+        $markerMigration->down();
+        $this->assertFalse(Schema::hasColumn(
+            'satuan_pendidikan_student_counts',
+            'closing_locked_early'
+        ));
     }
 }

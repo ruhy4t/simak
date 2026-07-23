@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 
 class ReportingSchema
 {
-    private const CACHE_KEY = 'reporting.schema.capabilities.v1';
+    private const CACHE_KEY = 'reporting.schema.capabilities.v2';
 
     private ?array $capabilities = null;
 
@@ -49,7 +49,7 @@ class ReportingSchema
         $hasStudentCounts = Schema::hasTable('satuan_pendidikan_student_counts');
         $hasClosingCounts = $hasStudentCounts && Schema::hasColumns(
             'satuan_pendidikan_student_counts',
-            ['closing_male_count', 'closing_female_count', 'closing_confirmed_at']
+            ['closing_male_count', 'closing_female_count', 'closing_confirmed_at', 'closing_locked_early']
         );
         $hasIncoming = Schema::hasTable('mutasi_masuk');
         $hasIncomingStudents = Schema::hasTable('mutasi_masuk_siswa');
@@ -59,6 +59,7 @@ class ReportingSchema
             'cohort' => $hasAcademicYears && $hasStudentCounts && $hasClosingCounts,
             'longitudinal' => $hasAcademicYears
                 && $hasStudentCounts
+                && $hasClosingCounts
                 && $hasIncoming
                 && $hasIncomingStudents
                 && $hasOutgoing,

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Model;
 
 class AcademicYear extends Model
@@ -42,5 +43,20 @@ class AcademicYear extends Model
     public function isClosed(): bool
     {
         return $this->status === self::STATUS_CLOSED;
+    }
+
+    public function acceptsClosingCounts(?CarbonInterface $date = null): bool
+    {
+        if ($this->isClosed()) {
+            return true;
+        }
+
+        if (! $this->ends_on) {
+            return false;
+        }
+
+        $comparisonDate = ($date ?? now())->copy()->startOfDay();
+
+        return $comparisonDate->greaterThanOrEqualTo($this->ends_on->copy()->startOfDay());
     }
 }

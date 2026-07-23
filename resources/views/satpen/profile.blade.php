@@ -7,7 +7,7 @@
 
         <div class="rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900" role="status">
             <p class="font-bold"><i class="bi bi-exclamation-triangle-fill mr-2"></i>Prasyarat pengajuan mutasi</p>
-            <p class="mt-1">Sekolah atau Operator dapat mengusulkan mutasi setelah profil sekolah, Data Murid Awal, dan Data Akhir tahun pelajaran aktif sudah lengkap.</p>
+            <p class="mt-1">Sekolah atau Operator dapat mengusulkan mutasi setelah profil sekolah dan Data Murid Awal tahun pelajaran aktif sudah lengkap. Data Akhir diisi pada periode penutupan.</p>
         </div>
 
         <!-- Header Page -->

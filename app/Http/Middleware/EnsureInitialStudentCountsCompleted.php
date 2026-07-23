@@ -45,18 +45,6 @@ class EnsureInitialStudentCountsCompleted
             $missing[] = 'Data Murid Awal kelas VII, VIII, dan IX';
         }
 
-        $closingCountsComplete = $counts->count() === 3
-            && $counts->every(fn (SatuanPendidikanStudentCount $count) => $count->closing_confirmed_at !== null
-                && $count->closing_male_count !== null
-                && $count->closing_female_count !== null
-            );
-        if (! $closingCountsComplete) {
-            $missing[] = 'Data Akhir kelas VII, VIII, dan IX';
-            if ($initialCountsComplete && $school && $this->profileIsComplete($school)) {
-                $redirectRoute = 'sekolah.closing-counts';
-            }
-        }
-
         if ($academicYear && $missing === []) {
             return $next($request);
         }
@@ -89,9 +77,6 @@ class EnsureInitialStudentCountsCompleted
             || ! Schema::hasTable('satuan_pendidikan_student_counts')
             || ! Schema::hasColumns('satuan_pendidikan_student_counts', [
                 'confirmed_at',
-                'closing_male_count',
-                'closing_female_count',
-                'closing_confirmed_at',
             ])) {
             return null;
         }

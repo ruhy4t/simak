@@ -23,6 +23,7 @@ class StudentCountRolloverService
             ->where('academic_year_id', $fromYear->id)
             ->whereIn('grade', [7, 8])
             ->whereNotNull('closing_confirmed_at')
+            ->where('closing_locked_early', false)
             ->get()
             ->keyBy('grade');
 
@@ -86,6 +87,7 @@ class StudentCountRolloverService
             'closing_male_count',
             'closing_female_count',
             'closing_confirmed_at',
+            'closing_locked_early',
         ]);
 
         $incoming = $this->incomingTotals($fromYear);
@@ -104,7 +106,8 @@ class StudentCountRolloverService
                     $closingColumn = $gender === 'L' ? 'closing_male_count' : 'closing_female_count';
                     $hasConfirmedClosing = $hasClosingCounts
                         && $countRow?->closing_confirmed_at !== null
-                        && $countRow?->{$closingColumn} !== null;
+                        && $countRow?->{$closingColumn} !== null
+                        && ! $countRow?->closing_locked_early;
                     $final = $hasConfirmedClosing
                         ? (int) $countRow->{$closingColumn}
                         : max(
