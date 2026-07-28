@@ -24,6 +24,7 @@
     let draftId = CONFIG.draftId || null;
     let isSaving = false;
     let savedStudents = new Set();
+    let lastDraftError = '';
 
     // API Endpoints
     const API = {
@@ -1790,6 +1791,7 @@
      */
     async function createDraftIfNeeded(force = false) {
         if (draftId) return draftId; // Already created
+        lastDraftError = '';
 
         const jumlah = parseInt(document.getElementById('jumlah_siswa')?.value) || 1;
         if (!force && jumlah <= 1) return null; // Auto-save only needs multi-student drafts
@@ -1851,6 +1853,15 @@
                     form.appendChild(hiddenInput);
                 }
                 hiddenInput.value = draftId;
+
+                // createDraft mempromosikan upload sementara ke storage
+                // permanen. Pertahankan referensinya untuk form, tetapi jangan
+                // kirim ulang path temp yang sudah dipindahkan saat update header.
+                if (uploadedHeader && result.file_surat_permohonan) {
+                    uploadedHeader.value = result.file_surat_permohonan;
+                    uploadedHeader.dataset.tempPath = 'false';
+                }
+
                 showSaveIndicator('Draft dibuat: ' + draftId, 'success');
                 console.log('Draft created:', draftId);
                 return draftId;
@@ -1859,7 +1870,8 @@
             }
         } catch (e) {
             console.error('Create draft error:', e);
-            showSaveIndicator('Gagal membuat draft', 'error');
+            lastDraftError = e.message || 'Gagal membuat draft';
+            showSaveIndicator(lastDraftError, 'error');
             return null;
         } finally {
             isSaving = false;
@@ -2225,7 +2237,7 @@
             await createDraftIfNeeded(true);
 
             if (!draftId) {
-                alert('Gagal membuat draft. Pastikan data header sudah diisi (Jumlah Murid, NPSN, Nama Sekolah, Alamat).');
+                alert(lastDraftError || 'Gagal membuat draft. Pastikan data header sudah diisi (Jumlah Murid, NPSN, Nama Sekolah, Alamat).');
                 if (btn) {
                     btn.innerHTML = '<i class="bi bi-save mr-2"></i><span>Simpan Draft</span>';
                     btn.disabled = false;

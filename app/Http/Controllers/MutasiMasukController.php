@@ -1579,6 +1579,9 @@ class MutasiMasukController extends Controller
             'npsn_sekolah_tujuan' => 'required|string|size:8',
             'nama_sekolah_tujuan' => 'required|string|max:150',
             'alamat_sekolah_tujuan' => 'required|string|max:500',
+            'file_surat_permohonan' => $request->hasFile('file_surat_permohonan')
+                ? 'sometimes|file|mimes:pdf|max:1024'
+                : 'sometimes|string|max:255|starts_with:temp_uploads/',
         ]);
 
         if ($validator->fails()) {
@@ -1618,7 +1621,9 @@ class MutasiMasukController extends Controller
                 'alamat_sekolah_tujuan' => $this->sanitize($request->alamat_sekolah_tujuan),
                 'status' => 'Draft',
                 'pengusul' => $user->username,
-                'is_dinas_entry' => $request->has('is_dinas_entry') ? 1 : 0,
+                // Mode entri Dinas adalah atribut otorisasi. Jangan percaya flag
+                // dari browser karena dapat dimanipulasi oleh pengguna biasa.
+                'is_dinas_entry' => in_array($user->role, ['Dinas', 'SuperAdmin'], true) ? 1 : 0,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -1628,7 +1633,10 @@ class MutasiMasukController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Draft berhasil dibuat',
-                'id_mutasi' => $idMutasi
+                'id_mutasi' => $idMutasi,
+                // Frontend perlu mengetahui bahwa upload sementara sudah
+                // dipromosikan agar path lama tidak dikirim untuk kedua kalinya.
+                'file_surat_permohonan' => $fileSuratPermohonan,
             ]);
 
         } catch (\Exception $e) {
@@ -1651,6 +1659,26 @@ class MutasiMasukController extends Controller
 
         if ($draft->pengusul !== $user->username && !in_array($user->role, ['Dinas', 'SuperAdmin'])) {
             return response()->json(['success' => false, 'message' => 'Akses ditolak'], 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'jumlah_siswa' => 'sometimes|integer|min:1|max:20',
+            'nomor_surat' => 'sometimes|nullable|string|max:50',
+            'tanggal_surat' => 'sometimes|nullable|date',
+            'npsn_sekolah_tujuan' => 'sometimes|string|size:8',
+            'nama_sekolah_tujuan' => 'sometimes|string|max:150',
+            'alamat_sekolah_tujuan' => 'sometimes|string|max:500',
+            'file_surat_permohonan' => $request->hasFile('file_surat_permohonan')
+                ? 'sometimes|file|mimes:pdf|max:1024'
+                : 'sometimes|string|max:255|starts_with:temp_uploads/',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal',
+                'errors' => $validator->errors(),
+            ], 422);
         }
 
         try {

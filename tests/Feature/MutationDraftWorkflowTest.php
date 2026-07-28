@@ -167,10 +167,50 @@ class MutationDraftWorkflowTest extends TestCase
         $response = app(MutasiMasukController::class)->createDraft($request);
 
         $this->assertTrue($response->getData(true)['success']);
+        $this->assertSame(
+            DB::table('mutasi_masuk')->value('file_surat_permohonan'),
+            $response->getData(true)['file_surat_permohonan']
+        );
         $savedPath = DB::table('mutasi_masuk')->value('file_surat_permohonan');
         $this->assertNotEmpty($savedPath);
         Storage::disk('private_docs')->assertExists($savedPath);
         Storage::disk('local')->assertMissing($temporaryPath);
+    }
+
+    public function test_incoming_draft_mode_is_derived_from_authenticated_role(): void
+    {
+        $operatorRequest = $this->jsonRequest('/mutasi-masuk/draft', [
+            'jumlah_siswa' => 1,
+            'npsn_sekolah_tujuan' => '12345678',
+            'nama_sekolah_tujuan' => 'SMP Pengujian',
+            'alamat_sekolah_tujuan' => 'Kota Bogor',
+            'is_dinas_entry' => '1',
+        ]);
+
+        $operatorResponse = app(MutasiMasukController::class)->createDraft($operatorRequest);
+
+        $this->assertTrue($operatorResponse->getData(true)['success']);
+        $this->assertDatabaseHas('mutasi_masuk', [
+            'id_mutasi' => $operatorResponse->getData(true)['id_mutasi'],
+            'is_dinas_entry' => 0,
+        ]);
+    }
+
+    public function test_incoming_draft_rejects_untrusted_persistent_file_reference(): void
+    {
+        $request = $this->jsonRequest('/mutasi-masuk/draft', [
+            'jumlah_siswa' => 1,
+            'npsn_sekolah_tujuan' => '12345678',
+            'nama_sekolah_tujuan' => 'SMP Pengujian',
+            'alamat_sekolah_tujuan' => 'Kota Bogor',
+            'file_surat_permohonan' => 'mutasi_masuk/dokumen-pengguna-lain.pdf',
+        ]);
+
+        $response = app(MutasiMasukController::class)->createDraft($request);
+
+        $this->assertSame(422, $response->getStatusCode());
+        $this->assertFalse($response->getData(true)['success']);
+        $this->assertDatabaseCount('mutasi_masuk', 0);
     }
 
     public function test_outgoing_temporary_upload_is_promoted_and_kept_by_draft(): void
@@ -211,6 +251,7 @@ class MutationDraftWorkflowTest extends TestCase
 
         $incomingScript = file_get_contents(public_path('js/mutasi-masuk.js'));
         $this->assertStringContainsString('createDraftIfNeeded(true)', $incomingScript);
+        $this->assertStringContainsString("uploadedHeader.dataset.tempPath = 'false'", $incomingScript);
 
         $outgoingView = file_get_contents(resource_path('views/mutasi/keluar/create.blade.php'));
         $this->assertStringContainsString("route('api.upload-temp')", $outgoingView);
