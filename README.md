@@ -4,7 +4,12 @@ SIMAK adalah aplikasi Sistem Informasi Mutasi Masuk dan Keluar murid untuk Dinas
 
 ## Versi Aplikasi
 
-Versi saat ini: **2.5.0**
+Versi saat ini: **2.6.0**
+
+Perubahan utama versi 2.6.0:
+- Menambahkan prefill data mutasi masuk berdasarkan NISN dari mutasi keluar Kota Bogor.
+- Membatasi sumber prefill hanya pada data mutasi keluar berstatus `Selesai`.
+- Mengisi identitas murid dan sekolah asal secara otomatis dengan data referensi yang tervalidasi.
 
 Perubahan utama versi 2.5.0:
 - Menambahkan template Word SRIKANDI untuk mutasi masuk dengan placeholder bertanda `$`.
@@ -50,7 +55,7 @@ Dasar versi 2.0.0:
 Versi aplikasi dikontrol lewat environment variable:
 
 ```env
-APP_VERSION=2.5.0
+APP_VERSION=2.6.0
 ```
 
 Jika tidak diisi, aplikasi memakai default dari `config/app.php`.
@@ -111,7 +116,7 @@ Environment variable penting di Vercel:
 
 ```env
 APP_NAME=SIMAK
-APP_VERSION=2.5.0
+APP_VERSION=2.6.0
 APP_ENV=production
 APP_DEBUG=false
 APP_KEY=base64:...

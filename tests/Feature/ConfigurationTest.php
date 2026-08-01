@@ -13,7 +13,7 @@ class ConfigurationTest extends TestCase
         $this->assertArrayHasKey('b2', config('filesystems.disks'));
         $this->assertSame('s3', config('filesystems.disks.b2.driver'));
         $this->assertSame('Asia/Jakarta', config('app.timezone'));
-        $this->assertSame('2.5.0', config('app.version'));
+        $this->assertSame('2.6.0', config('app.version'));
         $this->assertArrayHasKey('database', config('cache.stores'));
     }
 
@@ -27,7 +27,7 @@ class ConfigurationTest extends TestCase
         $this->assertSame(30, $vercel['functions']['api/*.php']['maxDuration']);
         $this->assertArrayNotHasKey('APP_URL', $vercel['env']);
         $this->assertArrayNotHasKey('ASSET_URL', $vercel['env']);
-        $this->assertSame('2.5.0', $vercel['env']['APP_VERSION']);
+        $this->assertSame('2.6.0', $vercel['env']['APP_VERSION']);
         $this->assertSame('true', $vercel['env']['SESSION_SECURE_COOKIE']);
         $this->assertSame('true', $vercel['env']['SESSION_ENCRYPT']);
         $this->assertSame('database', $vercel['env']['CACHE_DRIVER']);
