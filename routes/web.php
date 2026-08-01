@@ -151,6 +151,7 @@ Route::middleware(['auth', EnsurePasswordChanged::class])->group(function () {
         Route::get('/', [MutasiMasukController::class, 'index'])->name('index');
         Route::get('/create', [MutasiMasukController::class, 'create'])->middleware('student-counts.complete')->name('create');
         Route::post('/', [MutasiMasukController::class, 'store'])->middleware(['student-counts.complete', 'workday'])->name('store');
+        Route::get('/api/nisn/{nisn}', [MutasiMasukController::class, 'lookupStudentByNisn'])->middleware('throttle:lookups')->name('api.nisn');
         Route::get('/api/npsn/{npsn}', [MutasiMasukController::class, 'lookupNpsn'])->middleware('throttle:lookups')->name('api.npsn');
         // Reuse SatuanPendidikanController for consistent region data
         Route::get('/api/provinces', [SatuanPendidikanController::class, 'getProvinces'])->middleware('throttle:lookups')->name('api.provinces');

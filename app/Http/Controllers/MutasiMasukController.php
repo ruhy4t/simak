@@ -2142,6 +2142,112 @@ class MutasiMasukController extends Controller
         }
     }
 
+    /**
+     * Prefill a mutasi masuk student from a completed outgoing mutation whose
+     * origin is an eligible Kota Bogor school.
+     */
+    public function lookupStudentByNisn(string $nisn)
+    {
+        $nisn = preg_replace('/[^0-9]/', '', $nisn);
+
+        if (strlen($nisn) !== 10) {
+            return response()->json([
+                'success' => false,
+                'found' => false,
+                'message' => 'NISN tidak valid (harus 10 digit).',
+                'data' => null,
+            ], 422);
+        }
+
+        try {
+            $query = DB::table('mutasi_keluar as mk')
+                ->join('satuan_pendidikan as sp', 'sp.npsn', '=', 'mk.npsn_sekolah_asal')
+                ->where('mk.nisn', $nisn)
+                ->where('mk.status', 'Selesai')
+                ->where('sp.is_local', true)
+                ->whereRaw('UPPER(TRIM(sp.kota)) = ?', ['KOTA BOGOR']);
+
+            if (Schema::hasColumn('mutasi_keluar', 'deleted_at')) {
+                $query->whereNull('mk.deleted_at');
+            }
+
+            $student = $query
+                ->select([
+                    'mk.id_mutasi',
+                    'mk.status',
+                    'mk.nama_murid',
+                    'mk.nisn',
+                    'mk.nis',
+                    'mk.tempat_lahir',
+                    'mk.tanggal_lahir',
+                    'mk.jenis_kelamin',
+                    'mk.kelas',
+                    'mk.npsn_sekolah_asal',
+                    'sp.nama as nama_sekolah_asal',
+                    'sp.alamat_lengkap as alamat_sekolah_asal',
+                    'sp.alamat_jalan',
+                    'sp.kelurahan',
+                    'sp.kecamatan',
+                    'sp.kota as kabupaten_kota_asal',
+                    'sp.provinsi as provinsi_asal',
+                ])
+                ->orderByDesc('mk.tanggal_pengajuan')
+                ->orderByDesc('mk.created_at')
+                ->first();
+
+            if (!$student) {
+                return response()->json([
+                    'success' => true,
+                    'found' => false,
+                    'message' => 'NISN belum ditemukan pada mutasi keluar Kota Bogor yang berstatus Selesai.',
+                    'data' => null,
+                ]);
+            }
+
+            $address = $student->alamat_sekolah_asal;
+            if (empty($address)) {
+                $address = implode(', ', array_filter([
+                    $student->alamat_jalan,
+                    $student->kelurahan ? "Kel. {$student->kelurahan}" : null,
+                    $student->kecamatan ? "Kec. {$student->kecamatan}" : null,
+                    $student->kabupaten_kota_asal,
+                    $student->provinsi_asal,
+                ]));
+            }
+
+            return response()->json([
+                'success' => true,
+                'found' => true,
+                'message' => 'Data murid ditemukan dan dapat digunakan sebagai prefill.',
+                'data' => [
+                    'source_id' => $student->id_mutasi,
+                    'source_status' => $student->status,
+                    'nama_murid' => $student->nama_murid,
+                    'nisn' => $student->nisn,
+                    'nis' => $student->nis,
+                    'tempat_lahir' => $student->tempat_lahir,
+                    'tanggal_lahir' => $student->tanggal_lahir,
+                    'jenis_kelamin' => $student->jenis_kelamin,
+                    'kelas' => $student->kelas,
+                    'npsn_sekolah_asal' => $student->npsn_sekolah_asal,
+                    'nama_sekolah_asal' => $student->nama_sekolah_asal,
+                    'alamat_sekolah_asal' => $address,
+                    'kabupaten_kota_asal' => $student->kabupaten_kota_asal,
+                    'provinsi_asal' => $student->provinsi_asal,
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('NISN Prefill Lookup Error: '.$e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'found' => false,
+                'message' => 'Pencarian data murid sedang bermasalah. Silakan isi data secara manual.',
+                'data' => null,
+            ], 500);
+        }
+    }
+
     private function supportsSubmissionTimeline(): bool
     {
         return Schema::hasColumns('mutasi_masuk', ['last_submitted_at', 'revision_count']);

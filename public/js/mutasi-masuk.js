@@ -53,9 +53,10 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">NISN *</label>
-                    <input type="text" name="siswa[${index}][nisn]" maxlength="10" required
+                    <input type="text" name="siswa[${index}][nisn]" maxlength="10" inputmode="numeric" pattern="[0-9]{10}" required
                         class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none"
-                        placeholder="10 digit">
+                        placeholder="10 digit" oninput="window.lookupStudentByNisn(${index}, this.value)">
+                    <p id="nisn_prefill_status_${index}" class="text-xs mt-1 text-gray-500">Masukkan 10 digit untuk mencari data SIMAK.</p>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">NIS/NIPD *</label>
@@ -747,6 +748,87 @@
 
     // NPSN Lookup
     let npsnTimeouts = {};
+
+    // NISN Lookup for student prefill from a completed Kota Bogor outgoing mutation
+    const nisnTimeouts = {};
+    const nisnLookupTokens = {};
+
+    window.lookupStudentByNisn = function (index, rawNisn) {
+        const nisn = String(rawNisn || '').replace(/\D/g, '').slice(0, 10);
+        const input = document.querySelector(`[name="siswa[${index}][nisn]"]`);
+        const statusEl = document.getElementById(`nisn_prefill_status_${index}`);
+
+        if (input && input.value !== nisn) input.value = nisn;
+        clearTimeout(nisnTimeouts[index]);
+        nisnLookupTokens[index] = (nisnLookupTokens[index] || 0) + 1;
+        const lookupToken = nisnLookupTokens[index];
+
+        if (nisn.length !== 10) {
+            if (statusEl) {
+                statusEl.className = 'text-xs mt-1 text-gray-500';
+                statusEl.textContent = 'Masukkan 10 digit untuk mencari data SIMAK.';
+            }
+            return;
+        }
+
+        if (statusEl) {
+            statusEl.className = 'text-xs mt-1 text-blue-600';
+            statusEl.textContent = 'Mencari data NISN di SIMAK...';
+        }
+
+        nisnTimeouts[index] = setTimeout(async () => {
+            try {
+                const endpoint = CONFIG.routes?.apiNisn || '/mutasi-masuk/api/nisn';
+                const response = await fetch(`${endpoint}/${encodeURIComponent(nisn)}`, {
+                    headers: { 'Accept': 'application/json' }
+                });
+                const result = await response.json();
+
+                if (lookupToken !== nisnLookupTokens[index]) return;
+
+                if (!response.ok || !result.success) {
+                    throw new Error(result.message || 'Pencarian NISN gagal.');
+                }
+
+                if (!result.found || !result.data) {
+                    if (statusEl) {
+                        statusEl.className = 'text-xs mt-1 text-gray-500';
+                        statusEl.textContent = result.message || 'Data tidak ditemukan. Silakan isi manual.';
+                    }
+                    return;
+                }
+
+                const student = result.data;
+                const fields = ['nama_murid', 'nis', 'tempat_lahir', 'tanggal_lahir', 'jenis_kelamin', 'kelas'];
+                fields.forEach(field => {
+                    const fieldEl = document.querySelector(`[name="siswa[${index}][${field}]"]`);
+                    if (fieldEl && student[field] !== null && student[field] !== undefined) {
+                        fieldEl.value = student[field];
+                        fieldEl.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                });
+
+                const npsnEl = document.getElementById(`npsn_asal_${index}`);
+                if (npsnEl && student.npsn_sekolah_asal) {
+                    npsnEl.value = student.npsn_sekolah_asal;
+                    window.lookupNpsnAsal(index, student.npsn_sekolah_asal);
+                }
+
+                if (statusEl) {
+                    statusEl.className = 'text-xs mt-1 text-emerald-600 font-medium';
+                    statusEl.textContent = `Data diambil dari mutasi keluar ${student.source_id}. Silakan periksa kembali.`;
+                }
+            } catch (error) {
+                console.error('NISN Prefill Lookup Error:', error);
+                if (lookupToken !== nisnLookupTokens[index]) return;
+                if (statusEl) {
+                    statusEl.className = 'text-xs mt-1 text-amber-600';
+                    statusEl.textContent = 'Data SIMAK tidak dapat diambil. Silakan isi manual.';
+                }
+            }
+        }, 500);
+    };
+
     window.lookupNpsnAsal = function (index, npsn) {
         const statusIconEl = document.getElementById(`npsn_status_icon_${index}`);
         const statusEl = document.getElementById(`npsn_status_${index}`);

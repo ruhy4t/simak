@@ -423,6 +423,7 @@
             students: @json(isset($students) ? $students : []),
             routes: {
                 index: '{{ route('mutasi.masuk.index') }}',
+                apiNisn: '{{ url('/mutasi-masuk/api/nisn') }}',
                 apiNpsn: '{{ url('/mutasi-masuk/api/npsn') }}',
                 apiProvinces: '{{ route('wilayah.provinces') }}',
                 apiRegencies: '{{ route('wilayah.regencies', ['provinceId' => ':provinceId']) }}',
