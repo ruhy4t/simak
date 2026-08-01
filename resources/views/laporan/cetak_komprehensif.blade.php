@@ -553,23 +553,7 @@
     </div>
 
     {{-- SIGNATURE --}}
-    <div class="ttd-container">
-        <div class="ttd-box">
-            <p>Kota Bogor, {{ now()->translatedFormat('d F Y') }}</p>
-            
-            @if(!in_array($user->role, ['Dinas', 'SuperAdmin']) && !empty($user->sekolah->kepala_sekolah_nama))
-                <p>Kepala Sekolah,</p>
-                <p style="margin-bottom: 60px;"></p> {{-- Space for signature --}}
-                <p style="text-decoration: underline; font-weight: bold;">{{ $user->sekolah->kepala_sekolah_nama }}</p>
-                @if(!empty($user->sekolah->kepala_sekolah_nip))
-                    <p>NIP. {{ $user->sekolah->kepala_sekolah_nip }}</p>
-                @endif
-            @else
-                {{-- Fallback if no Principal data --}}
-                <p>Waktu Cetak: {{ now()->translatedFormat('H:i') }} WIB</p>
-            @endif
-        </div>
-    </div>
+    @include('laporan.partials.print-signatures')
 
 </body>
 </html>

@@ -72,13 +72,13 @@ Route::middleware(['auth', EnsurePasswordChanged::class])->group(function () {
     Route::prefix('laporan')->name('laporan.')->group(function () {
         Route::get('/', [LaporanController::class, 'index'])->name('index');
         Route::get('/rekap', [LaporanController::class, 'rekap'])->name('rekap');
-        Route::get('/rekap/print', [LaporanController::class, 'printRekap'])->name('rekap.print');
+        Route::match(['get', 'post'], '/rekap/print', [LaporanController::class, 'printRekap'])->name('rekap.print');
         Route::get('/rekap/excel', [LaporanController::class, 'exportRekapExcel'])->name('rekap.excel');
         Route::get('/tren', [LaporanController::class, 'tren'])->name('tren');
         Route::get('/kohort', [LaporanController::class, 'kohort'])->name('kohort');
-        Route::get('/komprehensif/print', [LaporanController::class, 'printKomprehensif'])->name('cetak-komprehensif');
+        Route::match(['get', 'post'], '/komprehensif/print', [LaporanController::class, 'printKomprehensif'])->name('cetak-komprehensif');
         Route::get('/nominatif', [LaporanController::class, 'nominatif'])->name('nominatif');
-        Route::get('/nominatif/print', [LaporanController::class, 'printNominatif'])->name('nominatif.print');
+        Route::match(['get', 'post'], '/nominatif/print', [LaporanController::class, 'printNominatif'])->name('nominatif.print');
         Route::get('/nominatif/excel', [LaporanController::class, 'exportNominatifExcel'])->name('nominatif.excel');
     });
 

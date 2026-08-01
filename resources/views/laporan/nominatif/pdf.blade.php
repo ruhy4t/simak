@@ -130,10 +130,7 @@
         </tbody>
     </table>
 
-    <div class="footer">
-        <p>Kota Bogor, {{ now()->translatedFormat('j F Y') }}</p>
-        <p>Dicetak oleh: {{ $user->nama_pengguna ?? $user->username }}</p>
-    </div>
+    @include('laporan.partials.print-signatures')
 </body>
 
 </html>

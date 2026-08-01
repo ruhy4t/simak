@@ -39,12 +39,6 @@
                     </button>
                 </div>
                 <div class="flex gap-2">
-                    <!-- Print PDF Button -->
-                    <a href="{{ route('laporan.rekap.print', ['start_date' => $start_date, 'end_date' => $end_date]) }}"
-                        target="_blank"
-                        class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition flex-1 flex items-center justify-center gap-2">
-                        <i class="bi bi-file-earmark-pdf"></i> PDF
-                    </a>
                     <!-- Export Excel Button -->
                     <a href="{{ route('laporan.rekap.excel', ['start_date' => $start_date, 'end_date' => $end_date]) }}"
                         class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition flex-1 flex items-center justify-center gap-2">
@@ -53,6 +47,20 @@
                 </div>
             </form>
         </div>
+
+        <form action="{{ route('laporan.rekap.print') }}" method="POST" target="_blank"
+                class="space-y-4 rounded-xl border bg-white p-6 shadow-xs">
+                @csrf
+                <input type="hidden" name="start_date" value="{{ $start_date }}">
+                <input type="hidden" name="end_date" value="{{ $end_date }}">
+                @include('laporan.partials.print-identity-fields')
+                <div class="flex justify-end">
+                    <button type="submit"
+                        class="flex items-center gap-2 rounded-lg bg-red-600 px-5 py-2.5 font-medium text-white transition hover:bg-red-700">
+                        <i class="bi bi-file-earmark-pdf"></i> Cetak PDF
+                    </button>
+                </div>
+        </form>
 
         <!-- Data Table -->
         <div class="bg-white rounded-xl shadow-xs border overflow-hidden">

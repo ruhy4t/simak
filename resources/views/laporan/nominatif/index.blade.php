@@ -19,16 +19,27 @@
                     class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
                     Kembali
                 </a>
-                <a href="{{ route('laporan.nominatif.print', request()->all()) }}" target="_blank"
-                    class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 shadow-xs flex items-center gap-2">
-                    <i class="bi bi-file-pdf"></i> PDF
-                </a>
                 <a href="{{ route('laporan.nominatif.excel', request()->all()) }}"
                     class="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 shadow-xs flex items-center gap-2">
                     <i class="bi bi-file-excel"></i> Excel
                 </a>
             </div>
         </div>
+
+        <form action="{{ route('laporan.nominatif.print') }}" method="POST" target="_blank"
+                class="space-y-4 rounded-xl border bg-white p-6 shadow-xs">
+                @csrf
+                <input type="hidden" name="start_date" value="{{ $start_date }}">
+                <input type="hidden" name="end_date" value="{{ $end_date }}">
+                <input type="hidden" name="type" value="{{ $type }}">
+                @include('laporan.partials.print-identity-fields')
+                <div class="flex justify-end">
+                    <button type="submit"
+                        class="flex items-center gap-2 rounded-lg bg-red-600 px-5 py-2.5 font-medium text-white transition hover:bg-red-700">
+                        <i class="bi bi-file-pdf"></i> Cetak PDF
+                    </button>
+                </div>
+        </form>
 
         <!-- Filter -->
         <div class="bg-white rounded-xl shadow-xs border p-4">

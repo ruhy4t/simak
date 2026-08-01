@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\AcademicYear;
 use App\Models\MutasiKeluar;
-use App\Models\Penandatangan;
 use App\Models\SatuanPendidikan;
 use App\Services\CohortReportService;
 use App\Services\LongitudinalCohortService;
@@ -51,12 +50,13 @@ class LaporanController extends Controller
     public function printRekap(Request $request)
     {
         $user = Auth::user();
+        $printIdentity = $this->printIdentity($request, $user);
         $start_date = $request->input('start_date', now()->startOfMonth()->format('Y-m-d'));
         $end_date = $request->input('end_date', now()->endOfMonth()->format('Y-m-d'));
 
         $data = $this->getRekapData($start_date, $end_date, $user);
 
-        $pdf = Pdf::loadView('laporan.rekap.pdf', compact('data', 'start_date', 'end_date', 'user'))
+        $pdf = Pdf::loadView('laporan.rekap.pdf', compact('data', 'start_date', 'end_date', 'user', 'printIdentity'))
             ->setPaper('a4', 'landscape');
 
         return $pdf->stream('Laporan_Rekapitulasi_Mutasi.pdf');
@@ -285,7 +285,9 @@ class LaporanController extends Controller
                 // Data Akhir (Awal + Masuk - Keluar)
                 $akhirTotal = $awalTotal + $masukTotal - $keluarTotal;
 
-                if ($masukTotal > 0 || $keluarTotal > 0 || $awalTotal > 0) {
+                // Laporan mutasi hanya menampilkan sekolah yang benar-benar
+                // memiliki mutasi berstatus Selesai pada rentang laporan.
+                if ($masukTotal > 0 || $keluarTotal > 0) {
                     $data[] = [
                         'nama_sekolah' => $school->nama,
                         // Awal Structure [Total, L, P]
@@ -839,13 +841,14 @@ class LaporanController extends Controller
     public function printNominatif(Request $request)
     {
         $user = Auth::user();
+        $printIdentity = $this->printIdentity($request, $user);
         $start_date = $request->input('start_date', now()->startOfMonth()->format('Y-m-d'));
         $end_date = $request->input('end_date', now()->endOfMonth()->format('Y-m-d'));
         $type = $request->input('type', 'masuk');
 
         $data = $this->getNominatifData($start_date, $end_date, $type, $user);
 
-        $pdf = Pdf::loadView('laporan.nominatif.pdf', compact('data', 'start_date', 'end_date', 'type', 'user'))
+        $pdf = Pdf::loadView('laporan.nominatif.pdf', compact('data', 'start_date', 'end_date', 'type', 'user', 'printIdentity'))
             ->setPaper('a4', 'landscape');
 
         return $pdf->stream('Daftar_Nominatif_Mutasi.pdf');
@@ -920,6 +923,7 @@ class LaporanController extends Controller
                     'mutasi_masuk.npsn_sekolah_tujuan'
                 )
                 ->whereBetween('mutasi_masuk.tanggal_pengajuan', [$start, $end])
+                ->where('mutasi_masuk.status', 'Selesai')
                 ->whereIn('mutasi_masuk.npsn_sekolah_tujuan', $this->eligibleBogorJuniorHighNpsns());
 
             if (in_array($role, ['Sekolah', 'Operator'])) {
@@ -948,6 +952,7 @@ class LaporanController extends Controller
                 'npsn_sekolah_asal'
             )
                 ->whereBetween('tanggal_pengajuan', [$start, $end])
+                ->where('status', 'Selesai')
                 ->whereIn('npsn_sekolah_asal', $this->eligibleBogorJuniorHighNpsns());
 
             if (in_array($role, ['Sekolah', 'Operator'])) {
@@ -972,6 +977,7 @@ class LaporanController extends Controller
     {
         try {
             $user = Auth::user();
+            $printIdentity = $this->printIdentity($request, $user);
             // Default to current year if no input, or use date range if provided
             $year = $request->input('year', date('Y'));
             $month = $request->input('month'); // Optional
@@ -1004,9 +1010,6 @@ class LaporanController extends Controller
             // Chart generation removed as per request
             $chartImage = null;
 
-            // Penandatangan (Optional, take first available or specific logic)
-            $penandatangan = null;
-
             // Browser Print Version
             return view('laporan.cetak_komprehensif', compact(
                 'user',
@@ -1020,8 +1023,8 @@ class LaporanController extends Controller
                 'demografiData',
                 'nominatifMasuk',
                 'nominatifKeluar',
-                'penandatangan',
-                'chartImage'
+                'chartImage',
+                'printIdentity'
             ));
 
             /*
@@ -1167,5 +1170,44 @@ class LaporanController extends Controller
             ->filter()
             ->values()
             ->all();
+    }
+
+    /**
+     * Build a one-time print identity snapshot. Supervisor fields are optional;
+     * blank values intentionally produce handwriting space in the printout.
+     */
+    private function printIdentity(Request $request, $user): array
+    {
+        $isDinas = in_array($user->role, ['Dinas', 'SuperAdmin'], true);
+        $validated = $request->validate([
+            'atasan_jabatan' => 'nullable|string|max:100',
+            'atasan_nama' => 'nullable|string|max:100',
+            'atasan_nip' => 'nullable|string|max:30',
+        ]);
+
+        $supervisor = [
+            'jabatan' => $this->nullableTrim($validated['atasan_jabatan'] ?? null),
+            'nama' => $this->nullableTrim($validated['atasan_nama'] ?? null),
+            'nip' => $this->nullableTrim($validated['atasan_nip'] ?? null),
+        ];
+
+        return [
+            'is_dinas' => $isDinas,
+            'is_school' => in_array($user->role, ['Sekolah', 'Operator'], true),
+            'printed_at' => now(),
+            'printer' => [
+                'nama' => $user->nama_pengguna ?: $user->username,
+                'username' => $user->username,
+                'role' => $user->role,
+            ],
+            'supervisor' => $supervisor,
+        ];
+    }
+
+    private function nullableTrim(?string $value): ?string
+    {
+        $value = trim((string) $value);
+
+        return $value === '' ? null : $value;
     }
 }

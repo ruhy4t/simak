@@ -13,7 +13,7 @@ class ConfigurationTest extends TestCase
         $this->assertArrayHasKey('b2', config('filesystems.disks'));
         $this->assertSame('s3', config('filesystems.disks.b2.driver'));
         $this->assertSame('Asia/Jakarta', config('app.timezone'));
-        $this->assertSame('2.6.0', config('app.version'));
+        $this->assertSame('2.7.0', config('app.version'));
         $this->assertArrayHasKey('database', config('cache.stores'));
     }
 
@@ -119,6 +119,19 @@ class ConfigurationTest extends TestCase
                 'role' => 'Dinas',
                 'nama_pengguna' => 'Petugas Verifikasi',
                 'username' => 'verifikator',
+            ],
+            'printIdentity' => [
+                'printed_at' => now(),
+                'printer' => [
+                    'nama' => 'Petugas Verifikasi',
+                    'username' => 'verifikator',
+                    'role' => 'Dinas',
+                ],
+                'supervisor' => [
+                    'jabatan' => null,
+                    'nama' => null,
+                    'nip' => null,
+                ],
             ],
         ])->setPaper('a4', 'landscape')->output();
 

@@ -95,8 +95,9 @@
                         </div>
 
                         <div class="bg-white rounded-2xl p-8 border border-emerald-100 shadow-xs">
-                            <form action="{{ route('laporan.cetak-komprehensif') }}" method="GET" target="_blank"
+                            <form action="{{ route('laporan.cetak-komprehensif') }}" method="POST" target="_blank"
                                 class="space-y-6">
+                                @csrf
 
                                 <div>
                                     <label
@@ -120,6 +121,8 @@
                                         </select>
                                     </div>
                                 </div>
+
+                                @include('laporan.partials.print-identity-fields')
 
                                 <button type="submit"
                                     class="w-full py-4 bg-emerald-600 text-white font-extrabold text-xl rounded-xl shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3 group">
