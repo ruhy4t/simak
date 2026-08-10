@@ -13,7 +13,7 @@ class ConfigurationTest extends TestCase
         $this->assertArrayHasKey('b2', config('filesystems.disks'));
         $this->assertSame('s3', config('filesystems.disks.b2.driver'));
         $this->assertSame('Asia/Jakarta', config('app.timezone'));
-        $this->assertSame('2.7.4', config('app.version'));
+        $this->assertSame('2.7.5', config('app.version'));
         $this->assertArrayHasKey('database', config('cache.stores'));
         $this->assertArrayHasKey('redis', config('cache.stores'));
         $this->assertSame(['redis', 'database'], config('cache.stores.redis_failover.stores'));
@@ -30,7 +30,7 @@ class ConfigurationTest extends TestCase
         $this->assertSame(30, $vercel['functions']['api/*.php']['maxDuration']);
         $this->assertArrayNotHasKey('APP_URL', $vercel['env']);
         $this->assertArrayNotHasKey('ASSET_URL', $vercel['env']);
-        $this->assertSame('2.7.4', $vercel['env']['APP_VERSION']);
+        $this->assertSame('2.7.5', $vercel['env']['APP_VERSION']);
         $this->assertSame('true', $vercel['env']['SESSION_SECURE_COOKIE']);
         $this->assertSame('true', $vercel['env']['SESSION_ENCRYPT']);
         $this->assertSame('database', $vercel['env']['CACHE_DRIVER']);
@@ -156,5 +156,31 @@ class ConfigurationTest extends TestCase
 
         $this->assertSame(2, substr_count($renderedTrend, 'data-report-trend-chart'));
         $this->assertStringContainsString('&quot;Dalam Kota (Bogor)&quot;', $renderedTrend);
+    }
+
+    public function test_frontend_entrypoints_are_scoped_to_each_page_type(): void
+    {
+        $viteConfig = (string) file_get_contents(base_path('vite.config.js'));
+        $appScript = (string) file_get_contents(resource_path('js/app.js'));
+        $loginScript = (string) file_get_contents(resource_path('js/login.js'));
+        $publicScript = (string) file_get_contents(resource_path('js/public.js'));
+        $loginView = (string) file_get_contents(resource_path('views/auth/login.blade.php'));
+        $publicLayout = (string) file_get_contents(resource_path('views/layouts/public.blade.php'));
+
+        foreach (['app.js', 'login.js', 'public.js'] as $entrypoint) {
+            $this->assertStringContainsString("resources/js/{$entrypoint}", $viteConfig);
+        }
+
+        $this->assertStringContainsString('resources/js/login.js', $loginView);
+        $this->assertStringNotContainsString('resources/js/app.js', $loginView);
+        $this->assertStringContainsString('resources/js/public.js', $publicLayout);
+        $this->assertStringNotContainsString('resources/js/app.js', $publicLayout);
+
+        $this->assertStringContainsString('./autosave.js', $appScript);
+        $this->assertStringNotContainsString('./autosave.js', $loginScript);
+        $this->assertStringNotContainsString('./autosave.js', $publicScript);
+        $this->assertStringNotContainsString('alpine-components', $loginScript);
+        $this->assertStringContainsString('./public-statistics-filters.js', $publicScript);
+        $this->assertStringNotContainsString('./public-statistics-filters.js', $appScript);
     }
 }
