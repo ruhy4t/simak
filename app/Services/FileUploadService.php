@@ -484,22 +484,6 @@ class FileUploadService
         return $this->uploadPdf($file, $prefix, $safeId, $subDir);
     }
 
-    // Legacy methods kept for backward compatibility
-    public function getUploadPath(): string
-    {
-        return storage_path('app/dokumen_rahasia');
-    }
-
-    public function getFullDateBasedPath(string $type = 'keluar'): string
-    {
-        $subDir = $this->getDateBasedPath($type);
-        $fullPath = storage_path('app/dokumen_rahasia/' . $subDir);
-        if (!file_exists($fullPath)) {
-            mkdir($fullPath, 0755, true);
-        }
-        return $fullPath;
-    }
-
     public function getRelativeDateBasedPath(string $type = 'keluar'): string
     {
         return 'dokumen/' . $this->getDateBasedPath($type);

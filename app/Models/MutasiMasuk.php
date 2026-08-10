@@ -70,11 +70,6 @@ class MutasiMasuk extends Model
 
     // ========== HELPERS ==========
 
-    public static function generateId(): string
-    {
-        return app(\App\Services\MutasiService::class)->generateMutasiMasukId();
-    }
-
     public function getStatusBadgeClass(): string
     {
         return match ($this->status) {

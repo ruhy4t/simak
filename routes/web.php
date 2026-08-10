@@ -68,7 +68,6 @@ Route::middleware(['auth', EnsurePasswordChanged::class])->group(function () {
     });
 
     // Laporan Routes
-    // Laporan Routes
     Route::prefix('laporan')->name('laporan.')->group(function () {
         Route::get('/', [LaporanController::class, 'index'])->name('index');
         Route::get('/rekap', [LaporanController::class, 'rekap'])->name('rekap');

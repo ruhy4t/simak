@@ -113,11 +113,6 @@ class MutasiKeluar extends Model
 
     // ========== HELPERS ==========
 
-    public static function generateId(): string
-    {
-        return app(\App\Services\MutasiService::class)->generateMutasiKeluarId();
-    }
-
     public function getStatusBadgeClass(): string
     {
         return match ($this->status) {
