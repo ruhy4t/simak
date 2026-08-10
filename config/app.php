@@ -5,7 +5,7 @@ use Illuminate\Support\ServiceProvider;
 
 return [
     'name' => env('APP_NAME', 'SIMAK'),
-    'version' => env('APP_VERSION', '2.7.5'),
+    'version' => env('APP_VERSION', '2.7.6'),
     'env' => env('APP_ENV', 'production'),
     'debug' => (bool) env('APP_DEBUG', false),
     'url' => env('APP_URL', 'http://localhost'),
