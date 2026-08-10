@@ -71,6 +71,7 @@ class ConfigurationTest extends TestCase
 
         $this->assertStringContainsString('gitleaks/gitleaks-action@v2', $workflow);
         $this->assertStringContainsString('composer audit --locked', $workflow);
+        $this->assertStringContainsString('mkdir -p bootstrap/cache storage/framework/cache/data', $workflow);
         $this->assertStringContainsString('composer install --no-interaction --prefer-dist --no-progress', $workflow);
         $this->assertStringContainsString('php artisan test', $workflow);
         $this->assertStringContainsString('npm ci', $workflow);
