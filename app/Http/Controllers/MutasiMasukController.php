@@ -478,15 +478,7 @@ class MutasiMasukController extends Controller
         try {
             DB::beginTransaction();
 
-            // Generate unique ID with timestamp for extra uniqueness
-            $count = DB::table('mutasi_masuk')->count() + 1;
-            $idMutasi = 'MM' . date('Ymd') . str_pad($count, 4, '0', STR_PAD_LEFT);
-
-            // Ensure unique
-            while (DB::table('mutasi_masuk')->where('id_mutasi', $idMutasi)->exists()) {
-                $count++;
-                $idMutasi = 'MM' . date('Ymd') . str_pad($count, 4, '0', STR_PAD_LEFT);
-            }
+            $idMutasi = $this->mutasiService->generateMutasiMasukId();
 
             // Upload surat permohonan
             $fileSuratPermohonan = null;
@@ -1593,13 +1585,7 @@ class MutasiMasukController extends Controller
         }
 
         try {
-            // Generate unique ID
-            $count = DB::table('mutasi_masuk')->count() + 1;
-            $idMutasi = 'MM' . date('Ymd') . str_pad($count, 4, '0', STR_PAD_LEFT);
-            while (DB::table('mutasi_masuk')->where('id_mutasi', $idMutasi)->exists()) {
-                $count++;
-                $idMutasi = 'MM' . date('Ymd') . str_pad($count, 4, '0', STR_PAD_LEFT);
-            }
+            $idMutasi = $this->mutasiService->generateMutasiMasukId();
 
             $fileSuratPermohonan = null;
             if ($request->hasFile('file_surat_permohonan') || $request->filled('file_surat_permohonan')) {

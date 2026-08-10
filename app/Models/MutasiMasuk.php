@@ -72,7 +72,7 @@ class MutasiMasuk extends Model
 
     public static function generateId(): string
     {
-        return 'MM-' . time();
+        return app(\App\Services\MutasiService::class)->generateMutasiMasukId();
     }
 
     public function getStatusBadgeClass(): string

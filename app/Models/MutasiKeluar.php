@@ -115,7 +115,7 @@ class MutasiKeluar extends Model
 
     public static function generateId(): string
     {
-        return 'MK-' . time();
+        return app(\App\Services\MutasiService::class)->generateMutasiKeluarId();
     }
 
     public function getStatusBadgeClass(): string

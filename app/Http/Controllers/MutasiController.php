@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\SatuanPendidikan;
 use App\Services\FileUploadService;
+use App\Services\MutasiService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -15,14 +16,16 @@ use Illuminate\Support\Facades\Validator;
 class MutasiController extends Controller
 {
     protected FileUploadService $fileUploadService;
+    protected MutasiService $mutasiService;
 
     private const DRAFT_EMPTY_NISN = '0000000000';
     private const DRAFT_EMPTY_NPSN = '00000000';
     private const DRAFT_EMPTY_DATE = '1900-01-02';
 
-    public function __construct(FileUploadService $fileUploadService)
+    public function __construct(FileUploadService $fileUploadService, MutasiService $mutasiService)
     {
         $this->fileUploadService = $fileUploadService;
+        $this->mutasiService = $mutasiService;
     }
 
     public function uploadArsip(Request $request, $id)
@@ -731,15 +734,7 @@ class MutasiController extends Controller
             if ($draft) {
                 $idMutasi = $draft->id_mutasi;
             } else {
-                // Generate ID
-                $count = DB::table('mutasi_keluar')->count() + 1;
-                $idMutasi = 'MK' . date('Ymd') . str_pad($count, 4, '0', STR_PAD_LEFT);
-
-                // Ensure unique ID loop (though locking helps, ID generation might need its own lock or retry, ensuring unique here simply)
-                while (DB::table('mutasi_keluar')->where('id_mutasi', $idMutasi)->exists()) {
-                    $count++;
-                    $idMutasi = 'MK' . date('Ymd') . str_pad($count, 4, '0', STR_PAD_LEFT);
-                }
+                $idMutasi = $this->mutasiService->generateMutasiKeluarId();
             }
 
             // Upload files using Service (handling date-based folders)
@@ -1294,7 +1289,7 @@ class MutasiController extends Controller
 
                 $id = $existingDraftId;
             } else {
-                $id = 'MK-' . date('ymd') . '-' . strtoupper(substr(uniqid(), -5));
+                $id = $this->mutasiService->generateMutasiKeluarId();
             }
 
             // File dipromosikan dari upload sementara ke penyimpanan permanen

@@ -126,6 +126,10 @@ class MutationDraftWorkflowTest extends TestCase
 
         $this->assertSame(200, $response->getStatusCode());
         $this->assertTrue($response->getData(true)['success']);
+        $this->assertMatchesRegularExpression(
+            '/^MK'.now()->format('Ymd').'\d{4}$/',
+            DB::table('mutasi_keluar')->value('id_mutasi')
+        );
         $this->assertDatabaseHas('mutasi_keluar', [
             'status' => 'Draft',
             'pengusul' => 'operator-draft',
@@ -234,6 +238,10 @@ class MutationDraftWorkflowTest extends TestCase
         $response = app(MutasiMasukController::class)->createDraft($request);
 
         $this->assertSame(200, $response->getStatusCode());
+        $this->assertMatchesRegularExpression(
+            '/^MM'.now()->format('Ymd').'\d{4}$/',
+            $response->getData(true)['id_mutasi']
+        );
         $this->assertTrue($response->getData(true)['success']);
         $this->assertDatabaseHas('mutasi_masuk', [
             'jumlah_siswa' => 1,

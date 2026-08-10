@@ -55,7 +55,7 @@ Dasar versi 2.0.0:
 Versi aplikasi dikontrol lewat environment variable:
 
 ```env
-APP_VERSION=2.6.0
+APP_VERSION=2.7.1
 ```
 
 Jika tidak diisi, aplikasi memakai default dari `config/app.php`.
@@ -116,7 +116,7 @@ Environment variable penting di Vercel:
 
 ```env
 APP_NAME=SIMAK
-APP_VERSION=2.6.0
+APP_VERSION=2.7.1
 APP_ENV=production
 APP_DEBUG=false
 APP_KEY=base64:...
