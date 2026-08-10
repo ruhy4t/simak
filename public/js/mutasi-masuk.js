@@ -25,6 +25,7 @@
     let isSaving = false;
     let savedStudents = new Set();
     let lastDraftError = '';
+    let lastDraftErrorWasShown = false;
 
     // API Endpoints
     const API = {
@@ -719,13 +720,30 @@
             const contentType = response.headers.get('content-type') || '';
             if (contentType.includes('application/json')) {
                 const payload = await response.json();
-                return payload.message || (payload.errors ? Object.values(payload.errors).flat()[0] : null);
+                const validationMessages = payload.errors
+                    ? [...new Set(Object.values(payload.errors).flat().filter(Boolean))]
+                    : [];
+
+                if (validationMessages.length > 0) {
+                    return validationMessages.map(message => `• ${message}`).join('\n');
+                }
+
+                return payload.message || null;
             }
             const text = await response.text();
-            return text.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().substring(0, 180);
+            const cleanText = text.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().substring(0, 180);
+            if (cleanText) return cleanText;
         } catch (e) {
-            return null;
+            console.warn('Tidak dapat membaca respons kegagalan draft:', e);
         }
+
+        if (response.status === 413) return 'Ukuran total dokumen terlalu besar untuk diterima server.';
+        if (response.status === 419) return 'Sesi Anda telah berakhir. Muat ulang halaman, lalu coba kembali.';
+        if (response.status === 422) return 'Data belum lengkap atau belum valid. Periksa kembali kolom yang wajib diisi.';
+        if (response.status === 429) return 'Terlalu banyak percobaan. Tunggu sebentar, lalu coba kembali.';
+        if (response.status >= 500) return 'Server mengalami gangguan saat menyimpan draft. Silakan coba kembali.';
+
+        return `Gagal menyimpan draft (HTTP ${response.status}).`;
     }
 
     function updateTotalSize() {
@@ -1975,17 +1993,20 @@
                 body: JSON.stringify(data)
             });
             if (!response.ok) {
-                console.warn('Failed to update draft header:', await readErrorMessage(response));
+                lastDraftError = await readErrorMessage(response) || 'Data utama gagal disimpan ke draft.';
+                console.warn('Failed to update draft header:', lastDraftError);
                 return false;
             }
             const result = await response.json();
             if (!result.success) {
-                console.warn('Failed to update draft header:', result.message);
+                lastDraftError = result.message || 'Data utama gagal disimpan ke draft.';
+                console.warn('Failed to update draft header:', lastDraftError);
                 return false;
             }
             return true;
         } catch (e) {
             console.error('Update header error:', e);
+            lastDraftError = e.message || 'Koneksi terputus saat menyimpan data utama.';
             return false;
         }
     }
@@ -2172,8 +2193,10 @@
         } catch (e) {
             console.error('Save student error:', e);
             const errorMsg = e.message === 'Failed to save student' ? 'Gagal menyimpan murid' : e.message;
+            lastDraftError = errorMsg;
             showSaveIndicator(errorMsg, 'error');
             alert(`Gagal menyimpan data murid #${index + 1}:\n${errorMsg}`);
+            lastDraftErrorWasShown = true;
             if (typeof window.resetMutasiMasukSubmitting === 'function') {
                 window.resetMutasiMasukSubmitting();
             }
@@ -2307,6 +2330,8 @@
      * Called by "Simpan Draft" button
      */
     window.saveDraftAndRedirect = async function () {
+        lastDraftError = '';
+        lastDraftErrorWasShown = false;
         const btn = document.getElementById('btnSaveDraft');
         if (btn) {
             const originalText = btn.innerHTML;
@@ -2341,7 +2366,7 @@
             }
 
             if (!await updateDraftHeader(draftId, headerData)) {
-                throw new Error('Data utama atau Surat Permohonan gagal disimpan ke draft.');
+                throw new Error(lastDraftError || 'Data utama atau Surat Permohonan gagal disimpan ke draft.');
             }
 
             // Save ALL students to ensure nothing is missed (Fix for Missing 5th Student)
@@ -2369,6 +2394,9 @@
         } catch (error) {
             console.error('Draft save failed:', error);
             showSaveIndicator('❌ Gagal menyimpan draft', 'error');
+            if (!lastDraftErrorWasShown) {
+                alert(`Gagal menyimpan draft:\n${error.message || lastDraftError || 'Silakan coba kembali.'}`);
+            }
             if (btn) {
                 btn.innerHTML = '<i class="bi bi-save mr-2"></i><span>Simpan Draft</span>';
                 btn.disabled = false;

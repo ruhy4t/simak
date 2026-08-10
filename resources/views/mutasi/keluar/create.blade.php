@@ -709,10 +709,23 @@
                 const result = await response.json().catch(() => ({}));
 
                 if (!response.ok || !result.success) {
-                    const validationMessage = result.errors
-                        ? Object.values(result.errors).flat().join('\n')
+                    const validationMessages = result.errors
+                        ? [...new Set(Object.values(result.errors).flat().filter(Boolean))]
+                        : [];
+                    const validationMessage = validationMessages.length > 0
+                        ? validationMessages.map(message => `• ${message}`).join('\n')
                         : null;
-                    throw new Error(validationMessage || result.message || 'Gagal menyimpan draft.');
+                    const statusMessages = {
+                        413: 'Ukuran total dokumen terlalu besar untuk diterima server.',
+                        419: 'Sesi Anda telah berakhir. Muat ulang halaman, lalu coba kembali.',
+                        422: 'Data belum lengkap atau belum valid. Periksa kembali kolom yang diisi.',
+                        429: 'Terlalu banyak percobaan. Tunggu sebentar, lalu coba kembali.',
+                    };
+                    const fallbackMessage = response.status >= 500
+                        ? 'Server mengalami gangguan saat menyimpan draft. Silakan coba kembali.'
+                        : (statusMessages[response.status] || `Gagal menyimpan draft (HTTP ${response.status}).`);
+
+                    throw new Error(validationMessage || result.message || fallbackMessage);
                 }
 
                 btn.innerHTML = '<i class="bi bi-check-lg mr-2"></i> Draft Tersimpan';

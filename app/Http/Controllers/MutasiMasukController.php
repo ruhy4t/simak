@@ -1722,6 +1722,78 @@ class MutasiMasukController extends Controller
             return response()->json(['success' => false, 'message' => 'Akses ditolak'], 403);
         }
 
+        $studentRules = [
+            'student_index' => 'required|integer|min:0|max:19',
+            'nama_murid' => 'required|string|max:100',
+            'nisn' => ['required', 'string', 'regex:/^\d{10}$/'],
+            'nis' => 'nullable|string|max:20',
+            'tempat_lahir' => 'required|string|max:50',
+            'tanggal_lahir' => 'required|date',
+            'jenis_kelamin' => 'required|in:L,P',
+            'kelas' => 'required|in:VII,VIII,IX',
+            'tanggal_diterima' => 'required|date',
+            'npsn_sekolah_asal' => 'nullable|string|size:8',
+            'nama_sekolah_asal' => 'required|string|max:150',
+            'alamat_sekolah_asal' => 'required|string|max:1000',
+            'provinsi_asal' => 'required|string|max:100',
+            'kabupaten_kota_asal' => 'required|string|max:100',
+            'npsn_ditemukan' => 'nullable|boolean',
+            'asal_luar_negeri' => 'nullable|boolean',
+        ];
+
+        foreach (['file_surat_pindah', 'file_surat_dapodik', 'file_rekomendasi', 'file_ijazah_sd', 'file_surat_penyaluran'] as $field) {
+            $studentRules[$field] = $request->hasFile($field)
+                ? 'nullable|file|mimes:pdf|max:1024'
+                : 'nullable|string|max:255';
+        }
+        $studentRules['file_rapor'] = $request->hasFile('file_rapor')
+            ? 'nullable|file|mimes:pdf|max:2048'
+            : 'nullable|string|max:255';
+        $studentRules['file_rekam_didik'] = $request->hasFile('file_rekam_didik')
+            ? 'nullable|file|mimes:pdf,jpg,jpeg,png|max:1024'
+            : 'nullable|string|max:255';
+
+        $validator = Validator::make($request->all(), $studentRules, [
+            'required' => ':attribute wajib diisi untuk menyimpan data murid ke draft.',
+            'date' => ':attribute harus berupa tanggal yang valid.',
+            'in' => ':attribute yang dipilih tidak valid.',
+            'regex' => ':attribute harus terdiri dari 10 digit angka.',
+            'size' => ':attribute harus terdiri dari :size karakter.',
+            'max.string' => ':attribute terlalu panjang (maksimal :max karakter).',
+            'max.file' => 'Ukuran :attribute melebihi batas yang diizinkan.',
+            'mimes' => 'Format :attribute harus berupa :values.',
+        ], [
+            'student_index' => 'Urutan murid',
+            'nama_murid' => 'Nama murid',
+            'nisn' => 'NISN',
+            'nis' => 'NIS/NIPD',
+            'tempat_lahir' => 'Tempat lahir',
+            'tanggal_lahir' => 'Tanggal lahir',
+            'jenis_kelamin' => 'Jenis kelamin',
+            'kelas' => 'Kelas',
+            'tanggal_diterima' => 'Tanggal diterima di sekolah',
+            'npsn_sekolah_asal' => 'NPSN sekolah asal',
+            'nama_sekolah_asal' => 'Nama sekolah asal',
+            'alamat_sekolah_asal' => 'Alamat sekolah asal',
+            'provinsi_asal' => 'Provinsi asal',
+            'kabupaten_kota_asal' => 'Kabupaten/kota asal',
+            'file_surat_pindah' => 'Surat pindah',
+            'file_surat_dapodik' => 'Surat mutasi Dapodik/EMIS',
+            'file_rekomendasi' => 'Rekomendasi Dinas/Kemenag',
+            'file_ijazah_sd' => 'Ijazah SD',
+            'file_rapor' => 'Rapor',
+            'file_surat_penyaluran' => 'Surat penyaluran',
+            'file_rekam_didik' => 'Rekam didik',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data murid belum lengkap atau belum valid.',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
         $studentIndex = (int) $request->input('student_index', 0);
         $requestNisn = $this->sanitizeNisn($request->nisn);
 

@@ -1223,6 +1223,21 @@ class MutasiController extends Controller
             'nama_murid' => 'nullable|string|max:100',
             'nisn' => 'nullable|string|max:10',
             'nis' => 'nullable|string|max:20',
+            'kelas' => 'nullable|in:VII,VIII,IX',
+            'jenis_kelamin' => 'nullable|in:L,P',
+            'tempat_lahir' => 'nullable|string|max:50',
+            'tanggal_lahir' => 'nullable|date',
+            'npsn_sekolah_asal' => 'nullable|string|max:8',
+            'nama_sekolah_asal' => 'nullable|string|max:150',
+            'alamat_sekolah_asal' => 'nullable|string|max:1000',
+            'npsn_sekolah_tujuan' => 'nullable|string|max:8',
+            'nama_sekolah_tujuan' => 'nullable|string|max:150',
+            'alamat_sekolah_tujuan' => 'nullable|string|max:1000',
+            'provinsi_tujuan' => 'nullable|string|max:100',
+            'kabupaten_kota_tujuan' => 'nullable|string|max:100',
+            'alasan_pindah' => 'nullable|string|max:2000',
+            'nomor_surat_sekolah' => 'nullable|string|max:50',
+            'tanggal_surat_sekolah' => 'nullable|date',
             'draft_id' => 'nullable|string|max:50', // For updating existing draft
         ];
 
@@ -1235,7 +1250,48 @@ class MutasiController extends Controller
             ? 'nullable|file|mimes:pdf|max:2048'
             : 'nullable|string|max:255';
 
-        $request->validate($draftRules);
+        $validator = Validator::make($request->all(), $draftRules, [
+            'date' => ':attribute harus berupa tanggal yang valid.',
+            'in' => ':attribute yang dipilih tidak valid.',
+            'max.string' => ':attribute terlalu panjang (maksimal :max karakter).',
+            'max.file' => 'Ukuran :attribute melebihi batas yang diizinkan.',
+            'mimes' => 'Format :attribute harus berupa :values.',
+        ], [
+            'nama_murid' => 'Nama murid',
+            'nisn' => 'NISN',
+            'nis' => 'NIS/NIPD',
+            'kelas' => 'Kelas',
+            'jenis_kelamin' => 'Jenis kelamin',
+            'tempat_lahir' => 'Tempat lahir',
+            'tanggal_lahir' => 'Tanggal lahir',
+            'npsn_sekolah_asal' => 'NPSN sekolah asal',
+            'nama_sekolah_asal' => 'Nama sekolah asal',
+            'alamat_sekolah_asal' => 'Alamat sekolah asal',
+            'npsn_sekolah_tujuan' => 'NPSN sekolah tujuan',
+            'nama_sekolah_tujuan' => 'Nama sekolah tujuan',
+            'alamat_sekolah_tujuan' => 'Alamat sekolah tujuan',
+            'provinsi_tujuan' => 'Provinsi tujuan',
+            'kabupaten_kota_tujuan' => 'Kabupaten/kota tujuan',
+            'alasan_pindah' => 'Alasan pindah',
+            'nomor_surat_sekolah' => 'Nomor surat sekolah',
+            'tanggal_surat_sekolah' => 'Tanggal surat sekolah',
+            'file_suket_keluar' => 'Surat keterangan pindah',
+            'file_suket_dapo' => 'Surat mutasi Dapodik',
+            'file_suket_diterima' => 'Surat diterima sekolah tujuan',
+            'file_rapor' => 'Rapor',
+        ]);
+
+        if ($validator->fails()) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Data draft belum valid.',
+                    'errors' => $validator->errors(),
+                ], 422);
+            }
+
+            return back()->withErrors($validator)->withInput();
+        }
 
         // Check if updating existing draft
         $existingDraftId = $request->input('draft_id');

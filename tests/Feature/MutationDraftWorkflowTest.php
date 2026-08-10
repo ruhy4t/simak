@@ -143,6 +143,29 @@ class MutationDraftWorkflowTest extends TestCase
         Storage::disk('private_docs')->assertExists($savedPath);
     }
 
+    public function test_outgoing_draft_reports_invalid_fields_instead_of_database_error(): void
+    {
+        $request = $this->jsonRequest('/mutasi-keluar/draft', [
+            'nama_murid' => 'Budi Santoso',
+            'kelas' => 'X',
+            'tanggal_lahir' => 'bukan-tanggal',
+            'npsn_sekolah_asal' => '12345678',
+            'nama_sekolah_asal' => 'SMP Pengujian',
+            'alamat_sekolah_asal' => 'Kota Bogor',
+        ]);
+
+        $response = app(MutasiController::class)->saveDraft($request);
+        $payload = $response->getData(true);
+
+        $this->assertSame(422, $response->getStatusCode());
+        $this->assertFalse($payload['success']);
+        $this->assertSame('Data draft belum valid.', $payload['message']);
+        $this->assertArrayHasKey('kelas', $payload['errors']);
+        $this->assertArrayHasKey('tanggal_lahir', $payload['errors']);
+        $this->assertStringContainsString('Kelas', $payload['errors']['kelas'][0]);
+        $this->assertDatabaseCount('mutasi_keluar', 0);
+    }
+
     public function test_incoming_nisn_lookup_prefills_from_completed_bogor_outgoing_mutation(): void
     {
         DB::table('satuan_pendidikan')->insert([
@@ -249,6 +272,40 @@ class MutationDraftWorkflowTest extends TestCase
             'status' => 'Draft',
             'pengusul' => 'operator-draft',
         ]);
+    }
+
+    public function test_incoming_student_draft_reports_every_missing_required_field(): void
+    {
+        $draftResponse = app(MutasiMasukController::class)->createDraft(
+            $this->jsonRequest('/mutasi-masuk/draft', [
+                'jumlah_siswa' => 1,
+                'npsn_sekolah_tujuan' => '12345678',
+                'nama_sekolah_tujuan' => 'SMP Pengujian',
+                'alamat_sekolah_tujuan' => 'Kota Bogor',
+            ])
+        );
+        $draftId = $draftResponse->getData(true)['id_mutasi'];
+
+        $response = app(MutasiMasukController::class)->addStudentToDraft(
+            $this->jsonRequest("/mutasi-masuk/draft/{$draftId}/siswa", [
+                'student_index' => 0,
+                'nama_murid' => 'Afiqa Febiana Ayundi',
+                'nisn' => '123',
+            ]),
+            $draftId
+        );
+        $payload = $response->getData(true);
+
+        $this->assertSame(422, $response->getStatusCode());
+        $this->assertFalse($payload['success']);
+        $this->assertSame('Data murid belum lengkap atau belum valid.', $payload['message']);
+        $this->assertArrayHasKey('nisn', $payload['errors']);
+        $this->assertArrayHasKey('tanggal_lahir', $payload['errors']);
+        $this->assertArrayHasKey('tanggal_diterima', $payload['errors']);
+        $this->assertArrayHasKey('nama_sekolah_asal', $payload['errors']);
+        $this->assertStringContainsString('NISN', $payload['errors']['nisn'][0]);
+        $this->assertStringContainsString('Tanggal lahir', $payload['errors']['tanggal_lahir'][0]);
+        $this->assertStringNotContainsString('hubungi administrator', json_encode($payload));
     }
 
     public function test_incoming_header_upload_is_promoted_and_kept_by_draft(): void
