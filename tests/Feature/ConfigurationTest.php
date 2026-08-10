@@ -81,6 +81,10 @@ class ConfigurationTest extends TestCase
         $this->assertStringContainsString('pull_request:', $workflow);
         $this->assertStringContainsString('schedule:', $workflow);
         $this->assertStringContainsString('<env name="APP_KEY" value="base64:', $phpunit);
+        $this->assertTrue(
+            strpos($workflow, 'npm run build') < strpos($workflow, 'php artisan test'),
+            'Aset frontend harus dibangun sebelum tes Laravel yang merender view.'
+        );
     }
 
     public function test_dashboard_does_not_trigger_daily_maintenance(): void

@@ -56,9 +56,6 @@ jobs:
       - name: Audit Composer lockfile
         run: composer audit --locked
 
-      - name: Run Laravel test suite
-        run: php artisan test
-
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -73,3 +70,6 @@ jobs:
 
       - name: Build production assets
         run: npm run build
+
+      - name: Run Laravel test suite
+        run: php artisan test
