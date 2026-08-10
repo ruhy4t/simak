@@ -68,6 +68,7 @@ class ConfigurationTest extends TestCase
     public function test_ci_runs_secret_and_dependency_security_checks(): void
     {
         $workflow = (string) file_get_contents(base_path('.github/workflows/security.yml'));
+        $phpunit = (string) file_get_contents(base_path('phpunit.xml'));
 
         $this->assertStringContainsString('gitleaks/gitleaks-action@v2', $workflow);
         $this->assertStringContainsString('composer audit --locked', $workflow);
@@ -79,6 +80,7 @@ class ConfigurationTest extends TestCase
         $this->assertStringContainsString('npm run build', $workflow);
         $this->assertStringContainsString('pull_request:', $workflow);
         $this->assertStringContainsString('schedule:', $workflow);
+        $this->assertStringContainsString('<env name="APP_KEY" value="base64:', $phpunit);
     }
 
     public function test_dashboard_does_not_trigger_daily_maintenance(): void
