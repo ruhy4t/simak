@@ -13,8 +13,11 @@ class ConfigurationTest extends TestCase
         $this->assertArrayHasKey('b2', config('filesystems.disks'));
         $this->assertSame('s3', config('filesystems.disks.b2.driver'));
         $this->assertSame('Asia/Jakarta', config('app.timezone'));
-        $this->assertSame('2.7.3', config('app.version'));
+        $this->assertSame('2.7.4', config('app.version'));
         $this->assertArrayHasKey('database', config('cache.stores'));
+        $this->assertArrayHasKey('redis', config('cache.stores'));
+        $this->assertSame(['redis', 'database'], config('cache.stores.redis_failover.stores'));
+        $this->assertSame('predis', config('database.redis.client'));
     }
 
     public function test_vercel_deployment_configuration_matches_laravel_build(): void
@@ -27,7 +30,7 @@ class ConfigurationTest extends TestCase
         $this->assertSame(30, $vercel['functions']['api/*.php']['maxDuration']);
         $this->assertArrayNotHasKey('APP_URL', $vercel['env']);
         $this->assertArrayNotHasKey('ASSET_URL', $vercel['env']);
-        $this->assertSame('2.7.3', $vercel['env']['APP_VERSION']);
+        $this->assertSame('2.7.4', $vercel['env']['APP_VERSION']);
         $this->assertSame('true', $vercel['env']['SESSION_SECURE_COOKIE']);
         $this->assertSame('true', $vercel['env']['SESSION_ENCRYPT']);
         $this->assertSame('database', $vercel['env']['CACHE_DRIVER']);
@@ -68,7 +71,11 @@ class ConfigurationTest extends TestCase
 
         $this->assertStringContainsString('gitleaks/gitleaks-action@v2', $workflow);
         $this->assertStringContainsString('composer audit --locked', $workflow);
-        $this->assertStringContainsString('npm audit --omit=dev', $workflow);
+        $this->assertStringContainsString('composer install --no-interaction --prefer-dist --no-progress', $workflow);
+        $this->assertStringContainsString('php artisan test', $workflow);
+        $this->assertStringContainsString('npm ci', $workflow);
+        $this->assertStringContainsString('npm audit', $workflow);
+        $this->assertStringContainsString('npm run build', $workflow);
         $this->assertStringContainsString('pull_request:', $workflow);
         $this->assertStringContainsString('schedule:', $workflow);
     }

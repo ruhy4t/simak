@@ -4,7 +4,7 @@ SIMAK adalah aplikasi Sistem Informasi Mutasi Masuk dan Keluar murid untuk Dinas
 
 ## Versi Aplikasi
 
-Versi saat ini: **2.7.3**
+Versi saat ini: **2.7.4**
 
 Perubahan utama versi 2.6.0:
 - Menambahkan prefill data mutasi masuk berdasarkan NISN dari mutasi keluar Kota Bogor.
@@ -55,7 +55,7 @@ Dasar versi 2.0.0:
 Versi aplikasi dikontrol lewat environment variable:
 
 ```env
-APP_VERSION=2.7.3
+APP_VERSION=2.7.4
 ```
 
 Jika tidak diisi, aplikasi memakai default dari `config/app.php`.
@@ -67,7 +67,7 @@ Jika tidak diisi, aplikasi memakai default dari `config/app.php`.
 - Node.js: `22.x`
 - Vite: `^8.0.13`
 - Tailwind CSS: `^4.3.0`
-- PHPUnit: `^12.0`
+- PHPUnit: `^11.5`
 - Database: MySQL compatible, termasuk Aiven MySQL
 - Storage: local atau Backblaze B2 melalui S3-compatible driver
 - Deploy target: Vercel dengan `vercel-php@0.9.0` (PHP 8.5.x)
@@ -116,7 +116,7 @@ Environment variable penting di Vercel:
 
 ```env
 APP_NAME=SIMAK
-APP_VERSION=2.7.3
+APP_VERSION=2.7.4
 APP_ENV=production
 APP_DEBUG=false
 APP_KEY=base64:...
@@ -135,6 +135,24 @@ B2_REGION=
 B2_BUCKET=
 B2_ENDPOINT=
 ```
+
+### Redis opsional di Vercel
+
+Vercel mendukung Redis melalui integrasi Marketplace seperti Upstash Redis atau Redis Cloud. Aplikasi tetap memakai cache database secara default agar deployment lama tidak berubah.
+
+Setelah Redis dibuat, hubungkan resource tersebut ke project Vercel, pastikan URL koneksi TLS tersedia sebagai `REDIS_URL`, lalu tambahkan:
+
+```env
+REDIS_CLIENT=predis
+CACHE_STORE=redis_failover
+REDIS_URL=rediss://default:password@host:port
+REDIS_CACHE_CONNECTION=cache
+REDIS_CACHE_DB=0
+REDIS_CONNECT_TIMEOUT=2
+REDIS_READ_TIMEOUT=2
+```
+
+Gunakan region Redis yang dekat dengan region Function dan database. Uji koneksi pada Preview Deployment sebelum mengubah environment Production. Mode `redis_failover` akan menggunakan cache database jika Redis tidak tersedia.
 
 ## Backup Stabil
 

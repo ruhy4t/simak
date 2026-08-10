@@ -29,8 +29,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  dependency-audit:
-    name: Dependency audit
+  application-checks:
+    name: Application checks (PHP 8.2 / Node 22)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -40,11 +40,21 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
+          extensions: ctype, curl, dom, fileinfo, gd, mbstring, openssl, pdo_sqlite, tokenizer, xml
           coverage: none
           tools: composer:v2
 
+      - name: Validate Composer configuration
+        run: composer validate --strict
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
       - name: Audit Composer lockfile
         run: composer audit --locked
+
+      - name: Run Laravel test suite
+        run: php artisan test
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -52,5 +62,11 @@ jobs:
           node-version: '22'
           cache: npm
 
-      - name: Audit npm production dependencies
-        run: npm audit --omit=dev
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Audit npm dependencies
+        run: npm audit
+
+      - name: Build production assets
+        run: npm run build
