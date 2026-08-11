@@ -406,6 +406,101 @@ class AcademicYearTest extends TestCase
         $this->assertSame('2027-07-14', $academicYear->ends_on->format('Y-m-d'));
     }
 
+    public function test_dinas_can_correct_locked_opening_counts_for_the_active_year(): void
+    {
+        $schoolId = $this->insertSchool();
+        $this->runAcademicYearMigrations();
+
+        $academicYear = AcademicYear::where('is_active', true)->firstOrFail();
+        DB::table('satuan_pendidikan_student_counts')
+            ->where('satuan_pendidikan_id', $schoolId)
+            ->where('academic_year_id', $academicYear->id)
+            ->update(['confirmed_at' => now()]);
+
+        $this->authenticateDinas();
+        app(SatuanPendidikanController::class)->updateAnnualStudentCounts(
+            Request::create('/satuan-pendidikan/'.$schoolId.'/jumlah-murid', 'PATCH', [
+                'academic_year_id' => $academicYear->id,
+                'jumlah_siswa_7_l' => 20,
+                'jumlah_siswa_7_p' => 21,
+                'jumlah_siswa_8_l' => 22,
+                'jumlah_siswa_8_p' => 23,
+                'jumlah_siswa_9_l' => 24,
+                'jumlah_siswa_9_p' => 25,
+                'reason' => 'Koreksi berdasarkan rekap resmi sekolah.',
+            ]),
+            $schoolId
+        );
+
+        $this->assertDatabaseHas('satuan_pendidikan_student_counts', [
+            'satuan_pendidikan_id' => $schoolId,
+            'academic_year_id' => $academicYear->id,
+            'grade' => 9,
+            'male_count' => 24,
+            'female_count' => 25,
+        ]);
+        $this->assertDatabaseHas('satuan_pendidikan', [
+            'id' => $schoolId,
+            'jumlah_siswa_7_l' => 20,
+            'jumlah_siswa_7_p' => 21,
+            'jumlah_siswa_awal_7' => 41,
+            'jumlah_siswa_awal_9' => 49,
+        ]);
+    }
+
+    public function test_correcting_a_closed_year_preserves_locked_closing_counts_and_active_legacy_values(): void
+    {
+        $schoolId = $this->insertSchool();
+        $this->runAcademicYearMigrations();
+        $closingMigration = require database_path('migrations/2026_07_17_120000_add_closing_counts_to_student_counts.php');
+        $closingMigration->up();
+
+        $closedYear = AcademicYear::where('is_active', true)->firstOrFail();
+        $closedYear->update([
+            'status' => AcademicYear::STATUS_CLOSED,
+            'is_active' => false,
+        ]);
+        DB::table('satuan_pendidikan_student_counts')
+            ->where('satuan_pendidikan_id', $schoolId)
+            ->where('academic_year_id', $closedYear->id)
+            ->update([
+                'closing_male_count' => 9,
+                'closing_female_count' => 8,
+                'closing_confirmed_at' => now(),
+            ]);
+
+        $this->authenticateDinas();
+        app(SatuanPendidikanController::class)->updateAnnualStudentCounts(
+            Request::create('/satuan-pendidikan/'.$schoolId.'/jumlah-murid', 'PATCH', [
+                'academic_year_id' => $closedYear->id,
+                'jumlah_siswa_7_l' => 30,
+                'jumlah_siswa_7_p' => 31,
+                'jumlah_siswa_8_l' => 32,
+                'jumlah_siswa_8_p' => 33,
+                'jumlah_siswa_9_l' => 34,
+                'jumlah_siswa_9_p' => 35,
+                'reason' => 'Perbaikan data historis dari dokumen sekolah.',
+            ]),
+            $schoolId
+        );
+
+        $this->assertDatabaseHas('satuan_pendidikan_student_counts', [
+            'satuan_pendidikan_id' => $schoolId,
+            'academic_year_id' => $closedYear->id,
+            'grade' => 7,
+            'male_count' => 30,
+            'female_count' => 31,
+            'closing_male_count' => 9,
+            'closing_female_count' => 8,
+        ]);
+        $this->assertDatabaseHas('satuan_pendidikan', [
+            'id' => $schoolId,
+            'jumlah_siswa_7_l' => 10,
+            'jumlah_siswa_7_p' => 12,
+            'jumlah_siswa_awal_7' => 22,
+        ]);
+    }
+
     private function insertSchool(): int
     {
         return DB::table('satuan_pendidikan')->insertGetId([
@@ -423,6 +518,17 @@ class AcademicYearTest extends TestCase
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+    }
+
+    private function authenticateDinas(): void
+    {
+        $user = new User([
+            'username' => 'dinas-test',
+            'role' => 'Dinas',
+            'status' => 'Aktif',
+        ]);
+        $user->id = 999;
+        Auth::setUser($user);
     }
 
     private function runAcademicYearMigrations(): void

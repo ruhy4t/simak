@@ -414,6 +414,140 @@ class SatuanPendidikanController extends Controller
     }
 
     /**
+     * Show the Dinas correction form for opening student counts in any year.
+     */
+    public function editAnnualStudentCounts(Request $request, int $id)
+    {
+        abort_unless(in_array(Auth::user()?->role, ['Dinas', 'SuperAdmin'], true), 403);
+
+        abort_unless(
+            Schema::hasTable('academic_years')
+                && Schema::hasTable('satuan_pendidikan_student_counts'),
+            503,
+            'Fitur data jumlah murid tahunan belum siap. Jalankan migrasi database terlebih dahulu.'
+        );
+
+        $school = SatuanPendidikan::findOrFail($id);
+        $academicYears = AcademicYear::query()->orderByDesc('name')->get();
+        $selectedAcademicYear = $academicYears->firstWhere('id', $request->integer('academic_year_id'))
+            ?? $academicYears->firstWhere('is_active', true)
+            ?? $academicYears->first();
+
+        $countRows = $selectedAcademicYear
+            ? $school->studentCounts()
+                ->where('academic_year_id', $selectedAcademicYear->id)
+                ->whereIn('grade', [7, 8, 9])
+                ->get()
+                ->keyBy('grade')
+            : collect();
+
+        return view('satpen.student-counts-edit', compact(
+            'school',
+            'academicYears',
+            'selectedAcademicYear',
+            'countRows'
+        ));
+    }
+
+    /**
+     * Correct opening student counts even when the selected year is closed.
+     */
+    public function updateAnnualStudentCounts(Request $request, int $id)
+    {
+        abort_unless(in_array(Auth::user()?->role, ['Dinas', 'SuperAdmin'], true), 403);
+
+        abort_unless(
+            Schema::hasTable('academic_years')
+                && Schema::hasTable('satuan_pendidikan_student_counts'),
+            503
+        );
+
+        $rules = [
+            'academic_year_id' => ['required', 'integer', 'exists:academic_years,id'],
+            'reason' => ['required', 'string', 'min:10', 'max:500'],
+        ];
+        foreach ([7, 8, 9] as $grade) {
+            $rules["jumlah_siswa_{$grade}_l"] = ['required', 'integer', 'min:0', 'max:99999'];
+            $rules["jumlah_siswa_{$grade}_p"] = ['required', 'integer', 'min:0', 'max:99999'];
+        }
+
+        $validated = $request->validate($rules, [
+            'reason.required' => 'Alasan koreksi wajib diisi.',
+            'reason.min' => 'Alasan koreksi minimal 10 karakter.',
+        ]);
+
+        $school = SatuanPendidikan::findOrFail($id);
+        $academicYear = AcademicYear::findOrFail($validated['academic_year_id']);
+        $before = [];
+        $after = [];
+
+        DB::transaction(function () use ($school, $academicYear, $validated, &$before, &$after): void {
+            $existingRows = $school->studentCounts()
+                ->where('academic_year_id', $academicYear->id)
+                ->whereIn('grade', [7, 8, 9])
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('grade');
+
+            foreach ([7, 8, 9] as $grade) {
+                $existing = $existingRows->get($grade);
+                $before[$grade] = [
+                    'male' => (int) ($existing?->male_count ?? 0),
+                    'female' => (int) ($existing?->female_count ?? 0),
+                ];
+                $after[$grade] = [
+                    'male' => (int) $validated["jumlah_siswa_{$grade}_l"],
+                    'female' => (int) $validated["jumlah_siswa_{$grade}_p"],
+                ];
+
+                $school->studentCounts()->updateOrCreate(
+                    [
+                        'academic_year_id' => $academicYear->id,
+                        'grade' => $grade,
+                    ],
+                    [
+                        'male_count' => $after[$grade]['male'],
+                        'female_count' => $after[$grade]['female'],
+                        'confirmed_at' => $existing?->confirmed_at ?? now(),
+                    ]
+                );
+            }
+
+            if ($academicYear->is_active) {
+                $legacyValues = ['updated_at' => now()];
+                foreach ([7, 8, 9] as $grade) {
+                    $legacyValues["jumlah_siswa_{$grade}_l"] = $after[$grade]['male'];
+                    $legacyValues["jumlah_siswa_{$grade}_p"] = $after[$grade]['female'];
+                    $legacyValues["jumlah_siswa_awal_{$grade}"] = $after[$grade]['male'] + $after[$grade]['female'];
+                }
+                DB::table('satuan_pendidikan')->where('id', $school->id)->update($legacyValues);
+            }
+        });
+
+        MutationStatisticsCache::invalidate();
+        AuditLog::log(
+            'student_counts_corrected_by_dinas',
+            Auth::user()?->username,
+            json_encode([
+                'school_id' => (int) $school->id,
+                'school_npsn' => $school->npsn,
+                'academic_year_id' => (int) $academicYear->id,
+                'academic_year' => $academicYear->name,
+                'before' => $before,
+                'after' => $after,
+                'reason' => $validated['reason'],
+            ], JSON_UNESCAPED_UNICODE)
+        );
+
+        return redirect()
+            ->route('satpen.student-counts.edit', [
+                'id' => $school->id,
+                'academic_year_id' => $academicYear->id,
+            ])
+            ->with('success', "Jumlah murid {$school->nama} untuk tahun pelajaran {$academicYear->name} berhasil dikoreksi.");
+    }
+
+    /**
      * Update school data
      */
     public function update(Request $request, $id)

@@ -265,6 +265,11 @@
                                     @endif
                                 </td>
                                 <td class="px-4 py-3 text-center">
+                                    <a href="{{ route('satpen.student-counts.edit', $satpen->id) }}"
+                                        class="inline-flex items-center px-3 py-1.5 text-sm text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition"
+                                        title="Koreksi jumlah murid semua tahun pelajaran">
+                                        <i class="bi bi-people mr-1"></i> Jumlah Murid
+                                    </a>
                                     <a href="{{ route('satpen.edit', $satpen->id) }}"
                                         class="inline-flex items-center px-3 py-1.5 text-sm text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded-lg transition">
                                         <i class="bi bi-pencil mr-1"></i> Edit

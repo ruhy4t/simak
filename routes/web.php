@@ -263,6 +263,11 @@ Route::middleware(['auth', EnsurePasswordChanged::class])->group(function () {
             Route::get('/', [SatuanPendidikanController::class, 'manage'])->name('index');
             Route::get('/create', [SatuanPendidikanController::class, 'create'])->name('create');
             Route::post('/', [SatuanPendidikanController::class, 'store'])->name('store');
+            Route::get('/{id}/jumlah-murid', [SatuanPendidikanController::class, 'editAnnualStudentCounts'])
+                ->name('student-counts.edit');
+            Route::patch('/{id}/jumlah-murid', [SatuanPendidikanController::class, 'updateAnnualStudentCounts'])
+                ->middleware('throttle:12,1')
+                ->name('student-counts.update');
             Route::get('/{id}/edit', [SatuanPendidikanController::class, 'edit'])->name('edit');
             Route::put('/{id}', [SatuanPendidikanController::class, 'update'])->name('update');
         });
