@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Http\Controllers\MutasiController;
 use App\Http\Controllers\MutasiMasukController;
 use App\Models\User;
+use App\Services\MutasiService;
 use App\Services\TemporaryUploadService;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\Request;
@@ -24,6 +25,12 @@ class MutationDraftWorkflowTest extends TestCase
         config()->set('database.default', 'sqlite');
         config()->set('database.connections.sqlite.database', ':memory:');
         DB::purge('sqlite');
+
+        Schema::create('mutation_id_sequences', function (Blueprint $table) {
+            $table->string('type')->primary();
+            $table->unsignedBigInteger('last_value')->default(0);
+            $table->timestamps();
+        });
 
         Schema::create('mutasi_keluar', function (Blueprint $table) {
             $table->string('id_mutasi')->primary();
@@ -141,6 +148,39 @@ class MutationDraftWorkflowTest extends TestCase
         $savedPath = DB::table('mutasi_keluar')->value('file_suket_keluar');
         $this->assertNotEmpty($savedPath);
         Storage::disk('private_docs')->assertExists($savedPath);
+    }
+
+    public function test_incoming_mutation_id_is_not_reused_after_a_record_is_deleted(): void
+    {
+        DB::table('mutasi_masuk')->insert([
+            'id_mutasi' => 'MM202608100116',
+            'tanggal_pengajuan' => '2026-08-10',
+            'jumlah_siswa' => 1,
+            'nomor_surat' => 'TEST/116',
+            'tanggal_surat' => '2026-08-10',
+            'npsn_sekolah_tujuan' => '12345678',
+            'nama_sekolah_tujuan' => 'SMP Lama',
+            'alamat_sekolah_tujuan' => 'Bogor',
+            'status' => 'Draft',
+            'pengusul' => 'operator-draft',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $service = app(MutasiService::class);
+        $firstReservedId = $service->generateMutasiMasukId();
+
+        DB::table('mutasi_masuk')->where('id_mutasi', 'MM202608100116')->delete();
+
+        $secondReservedId = $service->generateMutasiMasukId();
+
+        $this->assertStringEndsWith('0117', $firstReservedId);
+        $this->assertStringEndsWith('0118', $secondReservedId);
+        $this->assertNotSame($firstReservedId, $secondReservedId);
+        $this->assertDatabaseHas('mutation_id_sequences', [
+            'type' => 'masuk',
+            'last_value' => 118,
+        ]);
     }
 
     public function test_outgoing_draft_reports_invalid_fields_instead_of_database_error(): void

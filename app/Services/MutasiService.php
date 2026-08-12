@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * MutasiService - Handles business logic for mutation operations
- * 
+ *
  * Extracted from MutasiController and MutasiMasukController to reduce fat controller issue.
  * Role/Authorization checks remain in controllers - this service only handles data operations.
  */
@@ -61,6 +61,7 @@ class MutasiService
         if ($nisn === null || $nisn === '') {
             return null;
         }
+
         // Remove non-digits and return
         return preg_replace('/[^0-9]/', '', $nisn);
     }
@@ -70,16 +71,7 @@ class MutasiService
      */
     public function generateMutasiKeluarId(): string
     {
-        $count = DB::table('mutasi_keluar')->count() + 1;
-        $idMutasi = 'MK' . date('Ymd') . str_pad($count, 4, '0', STR_PAD_LEFT);
-
-        // Ensure unique
-        while (DB::table('mutasi_keluar')->where('id_mutasi', $idMutasi)->exists()) {
-            $count++;
-            $idMutasi = 'MK' . date('Ymd') . str_pad($count, 4, '0', STR_PAD_LEFT);
-        }
-
-        return $idMutasi;
+        return $this->generateMutationId('keluar', 'mutasi_keluar', 'MK');
     }
 
     /**
@@ -87,15 +79,77 @@ class MutasiService
      */
     public function generateMutasiMasukId(): string
     {
-        $count = DB::table('mutasi_masuk')->count() + 1;
-        $idMutasi = 'MM' . date('Ymd') . str_pad($count, 4, '0', STR_PAD_LEFT);
+        return $this->generateMutationId('masuk', 'mutasi_masuk', 'MM');
+    }
 
-        // Ensure unique
-        while (DB::table('mutasi_masuk')->where('id_mutasi', $idMutasi)->exists()) {
-            $count++;
-            $idMutasi = 'MM' . date('Ymd') . str_pad($count, 4, '0', STR_PAD_LEFT);
-        }
+    /**
+     * Reserve a monotonically increasing number for a mutation ID.
+     *
+     * The sequence row is intentionally kept separate from mutation records so
+     * deleting a draft/submission can never make its number available again.
+     * lockForUpdate serializes concurrent requests for the same mutation type.
+     */
+    private function generateMutationId(string $type, string $table, string $prefix): string
+    {
+        return DB::transaction(function () use ($type, $table, $prefix): string {
+            $sequence = DB::table('mutation_id_sequences')
+                ->where('type', $type)
+                ->lockForUpdate()
+                ->first();
 
-        return $idMutasi;
+            if (! $sequence) {
+                DB::table('mutation_id_sequences')->insertOrIgnore([
+                    'type' => $type,
+                    'last_value' => $this->highestExistingSequence($table, $prefix),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                $sequence = DB::table('mutation_id_sequences')
+                    ->where('type', $type)
+                    ->lockForUpdate()
+                    ->first();
+            }
+
+            if (! $sequence) {
+                throw new \RuntimeException("Sequence ID mutasi {$type} tidak tersedia.");
+            }
+
+            $nextValue = (int) $sequence->last_value + 1;
+            $idMutasi = $prefix.date('Ymd').str_pad((string) $nextValue, 4, '0', STR_PAD_LEFT);
+
+            // Protect installations whose sequence table was initialized from an
+            // incomplete legacy dataset. The primary key remains the final guard.
+            while (DB::table($table)->where('id_mutasi', $idMutasi)->exists()) {
+                $nextValue++;
+                $idMutasi = $prefix.date('Ymd').str_pad((string) $nextValue, 4, '0', STR_PAD_LEFT);
+            }
+
+            if (strlen($idMutasi) > 20) {
+                throw new \RuntimeException("Kapasitas ID mutasi {$type} telah terlampaui.");
+            }
+
+            DB::table('mutation_id_sequences')
+                ->where('type', $type)
+                ->update([
+                    'last_value' => $nextValue,
+                    'updated_at' => now(),
+                ]);
+
+            return $idMutasi;
+        }, 5);
+    }
+
+    private function highestExistingSequence(string $table, string $prefix): int
+    {
+        return DB::table($table)
+            ->pluck('id_mutasi')
+            ->reduce(function (int $highest, string $id) use ($prefix): int {
+                if (preg_match('/^'.preg_quote($prefix, '/').'\d{8}(\d+)$/', $id, $matches) !== 1) {
+                    return $highest;
+                }
+
+                return max($highest, (int) $matches[1]);
+            }, 0);
     }
 }
