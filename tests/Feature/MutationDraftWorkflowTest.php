@@ -413,10 +413,18 @@ class MutationDraftWorkflowTest extends TestCase
         $incomingScript = file_get_contents(public_path('js/mutasi-masuk.js'));
         $this->assertStringContainsString('createDraftIfNeeded(true)', $incomingScript);
         $this->assertStringContainsString("uploadedHeader.dataset.tempPath = 'false'", $incomingScript);
+        $this->assertSame(1, substr_count($incomingScript, "form.addEventListener('submit'"));
+        $this->assertStringContainsString('if (draftId && totalSiswa > 1)', $incomingScript);
+        $this->assertStringContainsString('if (draftCreationPromise) return draftCreationPromise;', $incomingScript);
+        $this->assertStringContainsString('if (isFinalizing) return;', $incomingScript);
 
         $outgoingView = file_get_contents(resource_path('views/mutasi/keluar/create.blade.php'));
         $this->assertStringContainsString("route('api.upload-temp')", $outgoingView);
         $this->assertStringContainsString('File sudah tersimpan di draft', $outgoingView);
+
+        $outgoingController = file_get_contents(app_path('Http/Controllers/MutasiController.php'));
+        $this->assertStringContainsString('->lockForUpdate()', $outgoingController);
+        $this->assertStringContainsString("->whereNotIn('status', ['Draft', 'Dibatalkan', 'Ditolak'])", $outgoingController);
     }
 
     private function insertOutgoingMutation(array $overrides = []): void
