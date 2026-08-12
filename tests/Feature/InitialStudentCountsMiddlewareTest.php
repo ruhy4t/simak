@@ -140,6 +140,7 @@ class InitialStudentCountsMiddlewareTest extends TestCase
         );
         $this->assertStringContainsString('Data Akhir kelas VII, VIII, dan IX tahun pelajaran 2025/2026', session('error'));
         $this->assertStringNotContainsString('Data Akhir kelas VII, VIII, dan IX tahun pelajaran 2026/2027', session('error'));
+        $this->assertSame('http://localhost/mutasi-keluar/create', session('mutation.intended_url'));
     }
 
     public function test_ajax_submission_receives_validation_response_and_profile_redirect(): void
@@ -228,6 +229,7 @@ class InitialStudentCountsMiddlewareTest extends TestCase
     {
         $request = Request::create('/mutasi-keluar/create', 'GET');
         $request->setUserResolver(fn () => $user);
+        $request->setLaravelSession(app('session')->driver());
 
         return app(EnsureInitialStudentCountsCompleted::class)
             ->handle($request, fn () => response('allowed'));

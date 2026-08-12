@@ -179,6 +179,64 @@ class CohortReportTest extends TestCase
         ]);
     }
 
+    public function test_missing_opening_rows_are_repaired_when_closing_counts_are_submitted(): void
+    {
+        [$year, $schoolId] = $this->seedSchoolAndYear(false);
+        $year->update([
+            'status' => AcademicYear::STATUS_CLOSED,
+            'is_active' => false,
+        ]);
+        DB::table('satuan_pendidikan')->where('id', $schoolId)->update([
+            'jumlah_siswa_8_l' => 12,
+            'jumlah_siswa_8_p' => 13,
+            'jumlah_siswa_9_l' => 14,
+            'jumlah_siswa_9_p' => 15,
+        ]);
+        DB::table('satuan_pendidikan_student_counts')
+            ->where('satuan_pendidikan_id', $schoolId)
+            ->where('academic_year_id', $year->id)
+            ->whereIn('grade', [8, 9])
+            ->delete();
+        $user = $this->createUser('operator-incomplete-opening', 'Operator', '12345678');
+
+        $intendedUrl = route('mutasi.keluar.create');
+
+        $this->actingAs($user)
+            ->withSession(['mutation.intended_url' => $intendedUrl])
+            ->post(route('sekolah.closing-counts.store'), [
+                'academic_year_id' => $year->id,
+                'confirmation' => '1',
+                'closing_7_male' => 9,
+                'closing_7_female' => 8,
+                'closing_8_male' => 11,
+                'closing_8_female' => 10,
+                'closing_9_male' => 7,
+                'closing_9_female' => 6,
+            ])
+            ->assertRedirect($intendedUrl)
+            ->assertSessionHasNoErrors()
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('satuan_pendidikan_student_counts', [
+            'satuan_pendidikan_id' => $schoolId,
+            'academic_year_id' => $year->id,
+            'grade' => 8,
+            'male_count' => 12,
+            'female_count' => 13,
+            'closing_male_count' => 11,
+            'closing_female_count' => 10,
+        ]);
+        $this->assertDatabaseHas('satuan_pendidikan_student_counts', [
+            'satuan_pendidikan_id' => $schoolId,
+            'academic_year_id' => $year->id,
+            'grade' => 9,
+            'male_count' => 14,
+            'female_count' => 15,
+            'closing_male_count' => 7,
+            'closing_female_count' => 6,
+        ]);
+    }
+
     public function test_active_year_cannot_be_locked_before_its_end_date(): void
     {
         [$year, $schoolId] = $this->seedSchoolAndYear(false);

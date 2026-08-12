@@ -975,17 +975,33 @@ class SatuanPendidikanController extends Controller
         }
 
         $alreadyLocked = false;
-        DB::transaction(function () use ($satpen, $academicYear, $validated, &$alreadyLocked) {
+        $repairedGrades = [];
+        DB::transaction(function () use ($satpen, $academicYear, $validated, &$alreadyLocked, &$repairedGrades) {
             $rows = $satpen->studentCounts()
                 ->where('academic_year_id', $academicYear->id)
                 ->whereIn('grade', [7, 8, 9])
                 ->lockForUpdate()
-                ->get();
+                ->get()
+                ->keyBy('grade');
 
-            if ($rows->count() !== 3) {
-                throw ValidationException::withMessages([
-                    'academic_year_id' => 'Data murid awal kelas VII, VIII, dan IX belum lengkap.',
-                ]);
+            // Some schools migrated before all three opening-count rows were
+            // backfilled. Do not trap them in a loop: restore the missing rows
+            // from the legacy school totals (zero is a valid count), then save
+            // the closing values in the same transaction.
+            $legacyCounts = $this->legacyStudentCounts($satpen);
+            foreach ([7, 8, 9] as $grade) {
+                if ($rows->has($grade)) {
+                    continue;
+                }
+
+                $rows->put($grade, $satpen->studentCounts()->create([
+                    'academic_year_id' => $academicYear->id,
+                    'grade' => $grade,
+                    'male_count' => $legacyCounts[$grade]['male'],
+                    'female_count' => $legacyCounts[$grade]['female'],
+                    'confirmed_at' => $grade === 7 ? now() : null,
+                ]));
+                $repairedGrades[] = $grade;
             }
 
             if ($rows->contains(fn ($row) => $row->closing_confirmed_at !== null)) {
@@ -1036,11 +1052,14 @@ class SatuanPendidikanController extends Controller
             json_encode([
                 'school_id' => (int) $satpen->id,
                 'academic_year_id' => (int) $academicYear->id,
+                'repaired_opening_grades' => $repairedGrades,
             ])
         );
 
-        return redirect()
-            ->route('sekolah.closing-counts', ['academic_year' => $academicYear->name])
+        $intendedMutationUrl = $request->session()->pull('mutation.intended_url');
+
+        return redirect($intendedMutationUrl
+            ?: route('sekolah.closing-counts', ['academic_year' => $academicYear->name]))
             ->with('success', "Data akhir tahun pelajaran {$academicYear->name} berhasil disimpan dan dikunci.");
     }
 

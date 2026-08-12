@@ -89,6 +89,12 @@ class EnsureInitialStudentCountsCompleted
             ], 422);
         }
 
+        // Remember the mutation form that triggered the prerequisite check so
+        // the school can continue there immediately after completing its data.
+        if ($request->hasSession()) {
+            $request->session()->put('mutation.intended_url', $request->fullUrl());
+        }
+
         return redirect()->route($redirectRoute, $redirectParameters)->with('error', $message);
     }
 
