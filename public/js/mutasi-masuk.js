@@ -23,6 +23,8 @@
     // Draft API State
     let draftId = CONFIG.draftId || null;
     let isSaving = false;
+    let isFinalizing = false;
+    let draftCreationPromise = null;
     let savedStudents = new Set();
     let lastDraftError = '';
     let lastDraftErrorWasShown = false;
@@ -1230,6 +1232,13 @@
                     return;
                 }
 
+                // A multi-student submission already exists as one draft. Finalize
+                // that record only; a normal POST would create a duplicate record.
+                if (draftId && totalSiswa > 1) {
+                    await finalizeDraftSubmit();
+                    return;
+                }
+
                 if (isSaving) return; // Prevent double click
                 isSaving = true;
 
@@ -1862,24 +1871,6 @@
         if (prevBtn) prevBtn.addEventListener('click', () => { if (currentSiswa > 0) showSiswa(currentSiswa - 1); });
         if (nextBtn) nextBtn.addEventListener('click', () => { if (currentSiswa < totalSiswa - 1) showSiswa(currentSiswa + 1); });
 
-        // Prevent double submit
-        if (form) {
-            form.addEventListener('submit', function (e) {
-                // If draft mode and more than 1 student, use AJAX finalize
-                if (draftId && totalSiswa > 1) {
-                    e.preventDefault();
-                    finalizeDraftSubmit();
-                    return;
-                }
-
-                const btn = document.getElementById('btnSubmit');
-                if (btn) {
-                    btn.disabled = true;
-                    btn.innerHTML = '<i class="bi bi-arrow-repeat animate-spin mr-2"></i> Memproses...';
-                }
-            });
-        }
-
     });
 
     // ======================================================================
@@ -1891,6 +1882,18 @@
      */
     async function createDraftIfNeeded(force = false) {
         if (draftId) return draftId; // Already created
+        if (draftCreationPromise) return draftCreationPromise;
+
+        draftCreationPromise = performCreateDraft(force);
+        try {
+            return await draftCreationPromise;
+        } finally {
+            draftCreationPromise = null;
+        }
+    }
+
+    async function performCreateDraft(force = false) {
+        if (draftId) return draftId;
         lastDraftError = '';
 
         const jumlah = parseInt(document.getElementById('jumlah_siswa')?.value) || 1;
@@ -2210,15 +2213,20 @@
      * Finalize draft and submit for verification
      */
     async function finalizeDraftSubmit() {
+        if (isFinalizing) return;
+
         if (!draftId) {
             // Fallback to normal form submit
             form.requestSubmit ? form.requestSubmit() : form.submit();
             return;
         }
 
+        isFinalizing = true;
+
         // First, save current student
         const saved = await saveCurrentStudent(currentSiswa);
         if (!saved) {
+            isFinalizing = false;
             const modal = document.getElementById('loadingModal');
             if (modal) {
                 modal.classList.add('hidden');
@@ -2273,6 +2281,8 @@
             if (typeof window.resetMutasiMasukSubmitting === 'function') {
                 window.resetMutasiMasukSubmitting();
             }
+        } finally {
+            isFinalizing = false;
         }
     }
 
