@@ -222,6 +222,53 @@ class LaporanRekapPerformanceTest extends TestCase
         $this->assertSame(75, $february[0]['akhir']);
     }
 
+    public function test_dinas_report_uses_previous_period_closing_balance_as_opening(): void
+    {
+        Schema::create('academic_years', function (Blueprint $table): void {
+            $table->id();
+            $table->string('name');
+            $table->string('status')->default('active');
+            $table->boolean('is_active')->default(true);
+            $table->date('starts_on');
+            $table->date('ends_on');
+            $table->timestamps();
+        });
+        Schema::create('satuan_pendidikan_student_counts', function (Blueprint $table): void {
+            $table->id();
+            $table->unsignedBigInteger('satuan_pendidikan_id');
+            $table->unsignedBigInteger('academic_year_id');
+            $table->unsignedTinyInteger('grade');
+            $table->unsignedInteger('male_count');
+            $table->unsignedInteger('female_count');
+        });
+
+        $academicYearId = DB::table('academic_years')->insertGetId([
+            'name' => '2025/2026',
+            'starts_on' => '2025-07-01',
+            'ends_on' => '2026-06-30',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        DB::table('satuan_pendidikan_student_counts')->insert([
+            ['satuan_pendidikan_id' => 1, 'academic_year_id' => $academicYearId, 'grade' => 7, 'male_count' => 10, 'female_count' => 11],
+            ['satuan_pendidikan_id' => 1, 'academic_year_id' => $academicYearId, 'grade' => 8, 'male_count' => 12, 'female_count' => 13],
+            ['satuan_pendidikan_id' => 1, 'academic_year_id' => $academicYearId, 'grade' => 9, 'male_count' => 14, 'female_count' => 15],
+        ]);
+
+        $method = new ReflectionMethod(LaporanController::class, 'getRekapData');
+        $report = $method->invoke(
+            app(LaporanController::class),
+            '2026-02-01',
+            '2026-02-28',
+            new User(['role' => 'Dinas']),
+        );
+
+        $this->assertCount(1, $report);
+        $this->assertSame(76, $report[0]['awal']);
+        $this->assertSame(['t' => 22, 'l' => 11, 'p' => 11], $report[0]['awal_vii']);
+        $this->assertSame(75, $report[0]['akhir']);
+    }
+
     public function test_eligible_npsns_are_materialized_once_for_cross_collation_safe_queries(): void
     {
         DB::flushQueryLog();

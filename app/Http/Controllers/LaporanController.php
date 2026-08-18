@@ -239,6 +239,64 @@ class LaporanController extends Controller
             // Get schools and merge pre-aggregated data
             $schools = SatuanPendidikan::eligibleBogorJuniorHigh()->orderBy('nama')->get();
 
+            $annualCountsBySchool = collect();
+            $priorMasukStats = collect();
+            $priorKeluarStats = collect();
+            $reportStart = Carbon::parse($start_date)->startOfDay();
+
+            if (Schema::hasTable('academic_years') && Schema::hasTable('satuan_pendidikan_student_counts')) {
+                $academicYear = AcademicYear::query()
+                    ->whereDate('starts_on', '<=', $reportStart)
+                    ->whereDate('ends_on', '>=', $reportStart)
+                    ->orderByDesc('starts_on')
+                    ->first();
+
+                if ($academicYear) {
+                    $annualCountsBySchool = DB::table('satuan_pendidikan_student_counts')
+                        ->where('academic_year_id', $academicYear->id)
+                        ->whereIn('satuan_pendidikan_id', $schools->pluck('id'))
+                        ->whereIn('grade', [7, 8, 9])
+                        ->get()
+                        ->groupBy('satuan_pendidikan_id')
+                        ->map(fn ($rows) => $rows->keyBy('grade'));
+
+                    $academicYearStart = $academicYear->starts_on?->copy()->startOfDay();
+
+                    if ($academicYearStart && $academicYearStart->lt($reportStart)) {
+                        $priorStart = $academicYearStart->format('Y-m-d');
+                        $priorEnd = $reportStart->copy()->subDay()->format('Y-m-d');
+
+                        $priorMasukStats = DB::table('mutasi_masuk')
+                            ->join('mutasi_masuk_siswa', 'mutasi_masuk.id_mutasi', '=', 'mutasi_masuk_siswa.id_mutasi')
+                            ->whereBetween('mutasi_masuk.tanggal_pengajuan', [$priorStart, $priorEnd])
+                            ->where('mutasi_masuk.status', 'Selesai')
+                            ->selectRaw('mutasi_masuk.npsn_sekolah_tujuan as npsn,
+                                SUM(CASE WHEN mutasi_masuk_siswa.kelas IN ("7", "VII") AND mutasi_masuk_siswa.jenis_kelamin = "L" THEN 1 ELSE 0 END) as vii_l,
+                                SUM(CASE WHEN mutasi_masuk_siswa.kelas IN ("7", "VII") AND mutasi_masuk_siswa.jenis_kelamin = "P" THEN 1 ELSE 0 END) as vii_p,
+                                SUM(CASE WHEN mutasi_masuk_siswa.kelas IN ("8", "VIII") AND mutasi_masuk_siswa.jenis_kelamin = "L" THEN 1 ELSE 0 END) as viii_l,
+                                SUM(CASE WHEN mutasi_masuk_siswa.kelas IN ("8", "VIII") AND mutasi_masuk_siswa.jenis_kelamin = "P" THEN 1 ELSE 0 END) as viii_p,
+                                SUM(CASE WHEN mutasi_masuk_siswa.kelas IN ("9", "IX") AND mutasi_masuk_siswa.jenis_kelamin = "L" THEN 1 ELSE 0 END) as ix_l,
+                                SUM(CASE WHEN mutasi_masuk_siswa.kelas IN ("9", "IX") AND mutasi_masuk_siswa.jenis_kelamin = "P" THEN 1 ELSE 0 END) as ix_p')
+                            ->groupBy('mutasi_masuk.npsn_sekolah_tujuan')
+                            ->get()
+                            ->keyBy('npsn');
+
+                        $priorKeluarStats = MutasiKeluar::whereBetween('tanggal_pengajuan', [$priorStart, $priorEnd])
+                            ->where('status', 'Selesai')
+                            ->selectRaw('npsn_sekolah_asal as npsn,
+                                SUM(CASE WHEN kelas IN ("7", "VII") AND jenis_kelamin = "L" THEN 1 ELSE 0 END) as vii_l,
+                                SUM(CASE WHEN kelas IN ("7", "VII") AND jenis_kelamin = "P" THEN 1 ELSE 0 END) as vii_p,
+                                SUM(CASE WHEN kelas IN ("8", "VIII") AND jenis_kelamin = "L" THEN 1 ELSE 0 END) as viii_l,
+                                SUM(CASE WHEN kelas IN ("8", "VIII") AND jenis_kelamin = "P" THEN 1 ELSE 0 END) as viii_p,
+                                SUM(CASE WHEN kelas IN ("9", "IX") AND jenis_kelamin = "L" THEN 1 ELSE 0 END) as ix_l,
+                                SUM(CASE WHEN kelas IN ("9", "IX") AND jenis_kelamin = "P" THEN 1 ELSE 0 END) as ix_p')
+                            ->groupBy('npsn_sekolah_asal')
+                            ->get()
+                            ->keyBy('npsn');
+                    }
+                }
+            }
+
             foreach ($schools as $school) {
                 $masuk = $masukStats->get($school->npsn);
                 $keluar = $keluarStats->get($school->npsn);
@@ -269,14 +327,33 @@ class LaporanController extends Controller
                 $keluarIX = $keluarIX_L + $keluarIX_P;
                 $keluarTotal = $keluarVII + $keluarVIII + $keluarIX;
 
-                // Data Awal (From DB Profile)
-                // Use new fields if available, otherwise fallback is tricky but we'll assume new fields exist as per migration
+                // Use the official academic-year opening counts when available;
+                // legacy installations continue to use the school profile.
                 $awalVII_L = (int) $school->jumlah_siswa_7_l;
                 $awalVII_P = (int) $school->jumlah_siswa_7_p;
                 $awalVIII_L = (int) $school->jumlah_siswa_8_l;
                 $awalVIII_P = (int) $school->jumlah_siswa_8_p;
                 $awalIX_L = (int) $school->jumlah_siswa_9_l;
                 $awalIX_P = (int) $school->jumlah_siswa_9_p;
+
+                $schoolAnnualCounts = $annualCountsBySchool->get($school->id);
+                if ($schoolAnnualCounts?->isNotEmpty()) {
+                    $awalVII_L = (int) ($schoolAnnualCounts->get(7)->male_count ?? 0);
+                    $awalVII_P = (int) ($schoolAnnualCounts->get(7)->female_count ?? 0);
+                    $awalVIII_L = (int) ($schoolAnnualCounts->get(8)->male_count ?? 0);
+                    $awalVIII_P = (int) ($schoolAnnualCounts->get(8)->female_count ?? 0);
+                    $awalIX_L = (int) ($schoolAnnualCounts->get(9)->male_count ?? 0);
+                    $awalIX_P = (int) ($schoolAnnualCounts->get(9)->female_count ?? 0);
+
+                    $priorMasuk = $priorMasukStats->get($school->npsn);
+                    $priorKeluar = $priorKeluarStats->get($school->npsn);
+                    $awalVII_L += (int) ($priorMasuk->vii_l ?? 0) - (int) ($priorKeluar->vii_l ?? 0);
+                    $awalVII_P += (int) ($priorMasuk->vii_p ?? 0) - (int) ($priorKeluar->vii_p ?? 0);
+                    $awalVIII_L += (int) ($priorMasuk->viii_l ?? 0) - (int) ($priorKeluar->viii_l ?? 0);
+                    $awalVIII_P += (int) ($priorMasuk->viii_p ?? 0) - (int) ($priorKeluar->viii_p ?? 0);
+                    $awalIX_L += (int) ($priorMasuk->ix_l ?? 0) - (int) ($priorKeluar->ix_l ?? 0);
+                    $awalIX_P += (int) ($priorMasuk->ix_p ?? 0) - (int) ($priorKeluar->ix_p ?? 0);
+                }
 
                 $awalVII = $awalVII_L + $awalVII_P;
                 $awalVIII = $awalVIII_L + $awalVIII_P;
