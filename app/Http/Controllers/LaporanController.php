@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -373,6 +374,87 @@ class LaporanController extends Controller
                 ->get()
                 ->keyBy('period');
 
+            // Start from the official opening count for the academic year
+            // containing the report date. Legacy installations fall back to
+            // the values still stored on the school profile.
+            $balanceVII_L = (int) ($school->jumlah_siswa_7_l ?? 0);
+            $balanceVII_P = (int) ($school->jumlah_siswa_7_p ?? 0);
+            $balanceVIII_L = (int) ($school->jumlah_siswa_8_l ?? 0);
+            $balanceVIII_P = (int) ($school->jumlah_siswa_8_p ?? 0);
+            $balanceIX_L = (int) ($school->jumlah_siswa_9_l ?? 0);
+            $balanceIX_P = (int) ($school->jumlah_siswa_9_p ?? 0);
+
+            $reportStart = Carbon::parse($start_date)->startOfDay();
+            $academicYearStart = null;
+
+            if (Schema::hasTable('academic_years') && Schema::hasTable('satuan_pendidikan_student_counts')) {
+                $academicYear = AcademicYear::query()
+                    ->whereDate('starts_on', '<=', $reportStart)
+                    ->whereDate('ends_on', '>=', $reportStart)
+                    ->orderByDesc('starts_on')
+                    ->first();
+
+                if ($academicYear) {
+                    $annualCounts = DB::table('satuan_pendidikan_student_counts')
+                        ->where('satuan_pendidikan_id', $school->id)
+                        ->where('academic_year_id', $academicYear->id)
+                        ->whereIn('grade', [7, 8, 9])
+                        ->get()
+                        ->keyBy('grade');
+
+                    if ($annualCounts->isNotEmpty()) {
+                        $balanceVII_L = (int) ($annualCounts->get(7)->male_count ?? 0);
+                        $balanceVII_P = (int) ($annualCounts->get(7)->female_count ?? 0);
+                        $balanceVIII_L = (int) ($annualCounts->get(8)->male_count ?? 0);
+                        $balanceVIII_P = (int) ($annualCounts->get(8)->female_count ?? 0);
+                        $balanceIX_L = (int) ($annualCounts->get(9)->male_count ?? 0);
+                        $balanceIX_P = (int) ($annualCounts->get(9)->female_count ?? 0);
+                        $academicYearStart = $academicYear->starts_on?->copy()->startOfDay();
+                    }
+                }
+            }
+
+            // A report may contain only one selected month. Seed its opening
+            // balance with all completed mutations since the academic-year
+            // opening so it still equals the previous month's closing balance.
+            if ($academicYearStart && $academicYearStart->lt($reportStart)) {
+                $priorEnd = $reportStart->copy()->subDay()->format('Y-m-d');
+                $priorStart = $academicYearStart->format('Y-m-d');
+
+                $priorMasuk = DB::table('mutasi_masuk')
+                    ->join('mutasi_masuk_siswa', 'mutasi_masuk.id_mutasi', '=', 'mutasi_masuk_siswa.id_mutasi')
+                    ->where('mutasi_masuk.npsn_sekolah_tujuan', $npsn)
+                    ->whereBetween('mutasi_masuk.tanggal_pengajuan', [$priorStart, $priorEnd])
+                    ->where('mutasi_masuk.status', 'Selesai')
+                    ->selectRaw("SUM(CASE WHEN mutasi_masuk_siswa.kelas IN ('7', 'VII') AND mutasi_masuk_siswa.jenis_kelamin = 'L' THEN 1 ELSE 0 END) as vii_l,
+                        SUM(CASE WHEN mutasi_masuk_siswa.kelas IN ('7', 'VII') AND mutasi_masuk_siswa.jenis_kelamin = 'P' THEN 1 ELSE 0 END) as vii_p,
+                        SUM(CASE WHEN mutasi_masuk_siswa.kelas IN ('8', 'VIII') AND mutasi_masuk_siswa.jenis_kelamin = 'L' THEN 1 ELSE 0 END) as viii_l,
+                        SUM(CASE WHEN mutasi_masuk_siswa.kelas IN ('8', 'VIII') AND mutasi_masuk_siswa.jenis_kelamin = 'P' THEN 1 ELSE 0 END) as viii_p,
+                        SUM(CASE WHEN mutasi_masuk_siswa.kelas IN ('9', 'IX') AND mutasi_masuk_siswa.jenis_kelamin = 'L' THEN 1 ELSE 0 END) as ix_l,
+                        SUM(CASE WHEN mutasi_masuk_siswa.kelas IN ('9', 'IX') AND mutasi_masuk_siswa.jenis_kelamin = 'P' THEN 1 ELSE 0 END) as ix_p")
+                    ->first();
+
+                $priorKeluar = MutasiKeluar::where('npsn_sekolah_asal', $npsn)
+                    ->whereBetween('tanggal_pengajuan', [$priorStart, $priorEnd])
+                    ->where('status', 'Selesai')
+                    ->selectRaw("SUM(CASE WHEN kelas IN ('7', 'VII') AND jenis_kelamin = 'L' THEN 1 ELSE 0 END) as vii_l,
+                        SUM(CASE WHEN kelas IN ('7', 'VII') AND jenis_kelamin = 'P' THEN 1 ELSE 0 END) as vii_p,
+                        SUM(CASE WHEN kelas IN ('8', 'VIII') AND jenis_kelamin = 'L' THEN 1 ELSE 0 END) as viii_l,
+                        SUM(CASE WHEN kelas IN ('8', 'VIII') AND jenis_kelamin = 'P' THEN 1 ELSE 0 END) as viii_p,
+                        SUM(CASE WHEN kelas IN ('9', 'IX') AND jenis_kelamin = 'L' THEN 1 ELSE 0 END) as ix_l,
+                        SUM(CASE WHEN kelas IN ('9', 'IX') AND jenis_kelamin = 'P' THEN 1 ELSE 0 END) as ix_p")
+                    ->first();
+
+                $balanceVII_L += (int) ($priorMasuk->vii_l ?? 0) - (int) ($priorKeluar->vii_l ?? 0);
+                $balanceVII_P += (int) ($priorMasuk->vii_p ?? 0) - (int) ($priorKeluar->vii_p ?? 0);
+                $balanceVIII_L += (int) ($priorMasuk->viii_l ?? 0) - (int) ($priorKeluar->viii_l ?? 0);
+                $balanceVIII_P += (int) ($priorMasuk->viii_p ?? 0) - (int) ($priorKeluar->viii_p ?? 0);
+                $balanceIX_L += (int) ($priorMasuk->ix_l ?? 0) - (int) ($priorKeluar->ix_l ?? 0);
+                $balanceIX_P += (int) ($priorMasuk->ix_p ?? 0) - (int) ($priorKeluar->ix_p ?? 0);
+            }
+
+            // Keep carrying the balance forward across every displayed month.
+
             foreach ($period as $dt) {
                 $monthStart = $dt->copy()->startOfMonth()->format('Y-m-d');
                 $monthEnd = $dt->copy()->endOfMonth()->format('Y-m-d');
@@ -408,18 +490,30 @@ class LaporanController extends Controller
                 $k_ix_p = (int) ($keluarStats->ix_p ?? 0);
                 $keluarTotal = $k_vii_l + $k_vii_p + $k_viii_l + $k_viii_p + $k_ix_l + $k_ix_p;
 
-                // Data Awal (From DB Profile - Static)
-                $awalVII_L = (int) ($school->jumlah_siswa_7_l ?? 0);
-                $awalVII_P = (int) ($school->jumlah_siswa_7_p ?? 0);
-                $awalVIII_L = (int) ($school->jumlah_siswa_8_l ?? 0);
-                $awalVIII_P = (int) ($school->jumlah_siswa_8_p ?? 0);
-                $awalIX_L = (int) ($school->jumlah_siswa_9_l ?? 0);
-                $awalIX_P = (int) ($school->jumlah_siswa_9_p ?? 0);
+                // Data Awal bulan pertama sudah disesuaikan dengan seluruh
+                // mutasi sebelumnya. Bulan berikutnya memakai Data Akhir
+                // bulan yang tepat mendahuluinya.
+                $awalVII_L = $balanceVII_L;
+                $awalVII_P = $balanceVII_P;
+                $awalVIII_L = $balanceVIII_L;
+                $awalVIII_P = $balanceVIII_P;
+                $awalIX_L = $balanceIX_L;
+                $awalIX_P = $balanceIX_P;
 
                 $awalVII = $awalVII_L + $awalVII_P;
                 $awalVIII = $awalVIII_L + $awalVIII_P;
                 $awalIX = $awalIX_L + $awalIX_P;
                 $awalTotal = $awalVII + $awalVIII + $awalIX;
+
+                $akhirVII_L = $awalVII_L + $m_vii_l - $k_vii_l;
+                $akhirVII_P = $awalVII_P + $m_vii_p - $k_vii_p;
+                $akhirVIII_L = $awalVIII_L + $m_viii_l - $k_viii_l;
+                $akhirVIII_P = $awalVIII_P + $m_viii_p - $k_viii_p;
+                $akhirIX_L = $awalIX_L + $m_ix_l - $k_ix_l;
+                $akhirIX_P = $awalIX_P + $m_ix_p - $k_ix_p;
+                $akhirTotal = $akhirVII_L + $akhirVII_P
+                    + $akhirVIII_L + $akhirVIII_P
+                    + $akhirIX_L + $akhirIX_P;
 
                 $data[] = [
                     'periode' => $dt->translatedFormat('F Y'),
@@ -442,14 +536,21 @@ class LaporanController extends Controller
                     'keluar' => $keluarTotal,
 
                     // Akhir Structure [Total, L, P]
-                    'akhir_vii' => ['t' => ($awalVII_L + $m_vii_l - $k_vii_l) + ($awalVII_P + $m_vii_p - $k_vii_p), 'l' => ($awalVII_L + $m_vii_l - $k_vii_l), 'p' => ($awalVII_P + $m_vii_p - $k_vii_p)],
-                    'akhir_viii' => ['t' => ($awalVIII_L + $m_viii_l - $k_viii_l) + ($awalVIII_P + $m_viii_p - $k_viii_p), 'l' => ($awalVIII_L + $m_viii_l - $k_viii_l), 'p' => ($awalVIII_P + $m_viii_p - $k_viii_p)],
-                    'akhir_ix' => ['t' => ($awalIX_L + $m_ix_l - $k_ix_l) + ($awalIX_P + $m_ix_p - $k_ix_p), 'l' => ($awalIX_L + $m_ix_l - $k_ix_l), 'p' => ($awalIX_P + $m_ix_p - $k_ix_p)],
-                    'akhir' => $awalTotal + $masukTotal - $keluarTotal,
+                    'akhir_vii' => ['t' => $akhirVII_L + $akhirVII_P, 'l' => $akhirVII_L, 'p' => $akhirVII_P],
+                    'akhir_viii' => ['t' => $akhirVIII_L + $akhirVIII_P, 'l' => $akhirVIII_L, 'p' => $akhirVIII_P],
+                    'akhir_ix' => ['t' => $akhirIX_L + $akhirIX_P, 'l' => $akhirIX_L, 'p' => $akhirIX_P],
+                    'akhir' => $akhirTotal,
 
                     // Netto
                     'netto' => $masukTotal - $keluarTotal,
                 ];
+
+                $balanceVII_L = $akhirVII_L;
+                $balanceVII_P = $akhirVII_P;
+                $balanceVIII_L = $akhirVIII_L;
+                $balanceVIII_P = $akhirVIII_P;
+                $balanceIX_L = $akhirIX_L;
+                $balanceIX_P = $akhirIX_P;
             }
         }
 

@@ -142,6 +142,86 @@ class LaporanRekapPerformanceTest extends TestCase
         $this->assertSame(1, $report[2]['masuk']);
     }
 
+    public function test_school_monthly_opening_balance_matches_previous_month_closing_balance(): void
+    {
+        $school = new SatuanPendidikan([
+            'npsn' => '12345678',
+            'jumlah_siswa_7_l' => 10,
+            'jumlah_siswa_7_p' => 11,
+            'jumlah_siswa_8_l' => 12,
+            'jumlah_siswa_8_p' => 13,
+            'jumlah_siswa_9_l' => 14,
+            'jumlah_siswa_9_p' => 15,
+        ]);
+        $user = new User(['role' => 'Operator', 'npsn' => '12345678']);
+        $user->setRelation('sekolah', $school);
+
+        $method = new ReflectionMethod(LaporanController::class, 'getRekapData');
+        $report = $method->invoke(app(LaporanController::class), '2026-01-01', '2026-03-31', $user);
+
+        $this->assertSame($report[0]['akhir'], $report[1]['awal']);
+        $this->assertSame($report[1]['akhir'], $report[2]['awal']);
+
+        foreach (['vii', 'viii', 'ix'] as $grade) {
+            $this->assertSame($report[0]["akhir_{$grade}"], $report[1]["awal_{$grade}"]);
+            $this->assertSame($report[1]["akhir_{$grade}"], $report[2]["awal_{$grade}"]);
+        }
+
+        $this->assertSame(76, $report[0]['akhir']);
+        $this->assertSame(76, $report[1]['awal']);
+        $this->assertSame(75, $report[1]['akhir']);
+        $this->assertSame(75, $report[2]['awal']);
+        $this->assertSame(76, $report[2]['akhir']);
+    }
+
+    public function test_single_month_report_includes_completed_mutations_from_previous_months(): void
+    {
+        Schema::create('academic_years', function (Blueprint $table): void {
+            $table->id();
+            $table->string('name');
+            $table->string('status')->default('active');
+            $table->boolean('is_active')->default(true);
+            $table->date('starts_on');
+            $table->date('ends_on');
+            $table->timestamps();
+        });
+        Schema::create('satuan_pendidikan_student_counts', function (Blueprint $table): void {
+            $table->id();
+            $table->unsignedBigInteger('satuan_pendidikan_id');
+            $table->unsignedBigInteger('academic_year_id');
+            $table->unsignedTinyInteger('grade');
+            $table->unsignedInteger('male_count');
+            $table->unsignedInteger('female_count');
+        });
+
+        $academicYearId = DB::table('academic_years')->insertGetId([
+            'name' => '2025/2026',
+            'starts_on' => '2025-07-01',
+            'ends_on' => '2026-06-30',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        DB::table('satuan_pendidikan_student_counts')->insert([
+            ['satuan_pendidikan_id' => 1, 'academic_year_id' => $academicYearId, 'grade' => 7, 'male_count' => 10, 'female_count' => 11],
+            ['satuan_pendidikan_id' => 1, 'academic_year_id' => $academicYearId, 'grade' => 8, 'male_count' => 12, 'female_count' => 13],
+            ['satuan_pendidikan_id' => 1, 'academic_year_id' => $academicYearId, 'grade' => 9, 'male_count' => 14, 'female_count' => 15],
+        ]);
+
+        $school = SatuanPendidikan::findOrFail(1);
+        $user = new User(['role' => 'Operator', 'npsn' => '12345678']);
+        $user->setRelation('sekolah', $school);
+
+        $method = new ReflectionMethod(LaporanController::class, 'getRekapData');
+        $february = $method->invoke(app(LaporanController::class), '2026-02-01', '2026-02-28', $user);
+        $january = $method->invoke(app(LaporanController::class), '2026-01-01', '2026-01-31', $user);
+
+        $this->assertCount(1, $february);
+        $this->assertSame($january[0]['akhir'], $february[0]['awal']);
+        $this->assertSame($january[0]['akhir_vii'], $february[0]['awal_vii']);
+        $this->assertSame(76, $february[0]['awal']);
+        $this->assertSame(75, $february[0]['akhir']);
+    }
+
     public function test_eligible_npsns_are_materialized_once_for_cross_collation_safe_queries(): void
     {
         DB::flushQueryLog();
