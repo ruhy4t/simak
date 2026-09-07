@@ -1,4 +1,4 @@
-﻿-- IMPORT LANGSUNG HEIDISQL (MySQL/MariaDB). Pilih database aplikasi dahulu.
+-- IMPORT LANGSUNG HEIDISQL (MySQL/MariaDB). Pilih database aplikasi dahulu.
 -- Aman dijalankan berulang kali secara berurutan, tanpa stored procedure.
 -- Tidak menghapus atau mengganti data murid.
 
