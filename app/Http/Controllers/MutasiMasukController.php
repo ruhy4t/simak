@@ -307,6 +307,17 @@ class MutasiMasukController extends Controller
 
     public function store(Request $request)
     {
+        $incomingStudents = $request->input('siswa', []);
+        if (is_array($incomingStudents)) {
+            foreach ($incomingStudents as $index => &$student) {
+                if (is_array($student) && $request->boolean("siswa.{$index}.asal_luar_negeri")) {
+                    $student['provinsi_asal'] = 'Luar Negeri';
+                    $student['kabupaten_kota_asal'] = 'Luar Negeri';
+                }
+            }
+            unset($student);
+            $request->merge(['siswa' => $incomingStudents]);
+        }
         $user = Auth::user();
         $jumlahSiswa = (int) $request->jumlah_siswa;
         $isDinasEntry = $request->has('is_dinas_entry');
@@ -1720,6 +1731,13 @@ class MutasiMasukController extends Controller
         }
         if ($draft->pengusul !== $user->username && !in_array($user->role, ['Dinas', 'SuperAdmin'])) {
             return response()->json(['success' => false, 'message' => 'Akses ditolak'], 403);
+        }
+
+        if ($request->boolean('asal_luar_negeri')) {
+            $request->merge([
+                'provinsi_asal' => 'Luar Negeri',
+                'kabupaten_kota_asal' => 'Luar Negeri',
+            ]);
         }
 
         $studentRules = [

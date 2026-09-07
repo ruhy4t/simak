@@ -53,3 +53,43 @@ for (const dinas of [false, true]) {
         assert.equal(byName.get('siswa[0][has_surat_penyaluran]').required, false);
     });
 }
+
+for (const dinas of [false, true]) {
+    test(`draft navigation accepts foreign student with empty documents and repairs region (Dinas=${dinas})`, () => {
+        const fields = new Map();
+        for (const field of ['nama_murid', 'tempat_lahir', 'tanggal_lahir', 'jenis_kelamin',
+            'kelas', 'tanggal_diterima', 'nama_sekolah_asal', 'alamat_sekolah_asal']) {
+            fields.set(field, { value: 'Terisi' });
+        }
+        for (const field of ['nisn', 'provinsi_asal', 'kabupaten_kota_asal']) fields.set(field, { value: '' });
+        fields.set('asal_luar_negeri', { checked: true });
+        for (const field of ['file_surat_penyaluran', 'file_ijazah_sd', 'file_rapor',
+            'has_surat_penyaluran', 'has_ijazah_sd', 'has_rapor']) {
+            fields.set(field, { value: '', checked: false, files: [], getAttribute() { return null; } });
+        }
+        const card = { querySelector: selector => fields.get(selector.match(/\[([a-z_]+)\]/)?.[1]) || null };
+        const document = {
+            querySelector: selector => selector.startsWith('.siswa-card') ? card : null,
+            getElementById: id => ({
+                luar_negeri_0: fields.get('asal_luar_negeri'),
+                provinsi_asal_0: fields.get('provinsi_asal'),
+                kabkota_asal_0: fields.get('kabupaten_kota_asal'),
+            })[id] || null,
+            addEventListener() {},
+        };
+        const window = { MUTASI_CONFIG: { isDinasEntry: dinas } };
+        const source = fs.readFileSync(path.join(__dirname, '../../public/js/mutasi-masuk.js'), 'utf8');
+        const context = vm.createContext({ window, document, console, setTimeout, clearTimeout, isDinasEntry: dinas });
+        vm.runInContext(source, context);
+        const start = source.indexOf('        function validateCurrentStudent(');
+        const end = source.indexOf('        function showValidationError(', start);
+        vm.runInContext(source.slice(start, end), context);
+        const draft = vm.runInContext('validateCurrentStudent(0, true)', context);
+        assert.equal(draft.valid, true);
+        assert.equal(fields.get('provinsi_asal').value, 'Luar Negeri');
+        assert.equal(fields.get('kabupaten_kota_asal').value, 'Luar Negeri');
+        const submission = vm.runInContext('validateCurrentStudent(0)', context);
+        assert.equal(submission.valid, false);
+        assert.ok(submission.errors.includes(dinas ? 'Konfirmasi Surat Penyaluran' : 'Surat Penyaluran'));
+    });
+}

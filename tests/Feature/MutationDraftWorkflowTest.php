@@ -337,7 +337,7 @@ class MutationDraftWorkflowTest extends TestCase
                 'tempat_lahir' => 'Tokyo', 'tanggal_lahir' => '2012-01-02',
                 'jenis_kelamin' => 'L', 'kelas' => 'VII', 'tanggal_diterima' => '2026-08-01',
                 'nama_sekolah_asal' => 'Sekolah Tokyo', 'alamat_sekolah_asal' => 'Tokyo, Jepang',
-                'provinsi_asal' => 'Luar Negeri', 'kabupaten_kota_asal' => 'Luar Negeri',
+                'provinsi_asal' => '', 'kabupaten_kota_asal' => '',
                 'has_surat_pindah' => '0', 'has_surat_dapodik' => '0', 'has_surat_penyaluran' => '0',
             ];
             $save = fn (array $payload) => $controller->addStudentToDraft(
@@ -347,6 +347,7 @@ class MutationDraftWorkflowTest extends TestCase
             $this->assertSame(200, $response->getStatusCode(), json_encode($response->getData(true)));
             $this->assertDatabaseHas('mutasi_masuk_siswa', [
                 'id_mutasi' => $id, 'nisn' => null, 'asal_luar_negeri' => 1,
+                'provinsi_asal' => 'Luar Negeri', 'kabupaten_kota_asal' => 'Luar Negeri',
                 'has_surat_pindah' => 0, 'has_surat_dapodik' => 0, 'has_surat_penyaluran' => 0,
             ]);
             $this->assertSame(200, $save(array_replace($data, [

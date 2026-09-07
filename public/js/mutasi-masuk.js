@@ -286,6 +286,7 @@
 
         if (provSelect) {
             provSelect.addEventListener('change', async function () {
+                if (window.syncForeignOrigin(index)) return;
                 var val = this.value;
                 const selectedOption = this.options[this.selectedIndex];
                 const provId = selectedOption ? selectedOption.dataset.id : null;
@@ -388,6 +389,25 @@
     // --- Global Functions (Exposed to Window) ---
 
     // Toggle Luar Negeri Logic
+    window.syncForeignOrigin = function (index) {
+        if (!document.getElementById(`luar_negeri_${index}`)?.checked) return false;
+        for (const prefix of ['provinsi', 'kabkota']) {
+            const hidden = document.getElementById(`${prefix}_asal_${index}`);
+            const select = document.getElementById(`${prefix}_asal_select_${index}`);
+            if (hidden) hidden.value = 'Luar Negeri';
+            if (select) {
+                if (![...select.options].some(option => option.value === 'Luar Negeri')) {
+                    const option = document.createElement('option');
+                    option.value = option.textContent = 'Luar Negeri';
+                    select.appendChild(option);
+                }
+                select.value = 'Luar Negeri';
+                select.disabled = true;
+            }
+        }
+        return true;
+    };
+
     window.toggleLuarNegeri = function (index) {
         const checkbox = document.getElementById(`luar_negeri_${index}`);
         const nisnInput = document.querySelector(`[name="siswa[${index}][nisn]"]`);
@@ -472,6 +492,8 @@
             if (rekamDidikRequired) rekamDidikRequired.classList.add('hidden');
 
         } else {
+            if (provSelect) provSelect.disabled = false;
+            if (kabSelect) kabSelect.disabled = false;
             // Hide surat penyaluran
             if (container) container.classList.add('hidden');
             if (fileInput) fileInput.removeAttribute('required');
@@ -505,6 +527,7 @@
             setRequiredIfNoFile(fileRekamDidik);
             if (rekamDidikRequired) rekamDidikRequired.classList.remove('hidden');
         }
+        window.syncForeignOrigin(index);
     };
 
     // File Validation & Immediate Upload (Upload-on-Select Pattern)
@@ -1227,6 +1250,13 @@
                 e.preventDefault();
 
                 // Validate form (native HTML validation check)
+                for (let index = 0; index < totalSiswa; index++) {
+                    const validation = validateCurrentStudent(index);
+                    if (!validation.valid) {
+                        showValidationError(validation.errors, index);
+                        return;
+                    }
+                }
                 if (!form.checkValidity()) {
                     form.reportValidity();
                     return;
@@ -1297,7 +1327,7 @@
 
             // VALIDATION: Check if current student data is complete before switching forward
             if (index > currentSiswa && totalSiswa > 1) {
-                const validationResult = validateCurrentStudent(currentSiswa);
+                const validationResult = validateCurrentStudent(currentSiswa, true);
                 if (!validationResult.valid) {
                     showValidationError(validationResult.errors, currentSiswa);
                     return; // Block switch
@@ -1352,7 +1382,8 @@
          * Validate current student's required fields
          * Returns { valid: boolean, errors: string[] }
          */
-        function validateCurrentStudent(index) {
+        function validateCurrentStudent(index, forDraft = false) {
+            window.syncForeignOrigin(index);
             const card = document.querySelector(`.siswa-card[data-index="${index}"]`);
             if (!card) return { valid: true, errors: [] };
 
@@ -1396,6 +1427,9 @@
                     errors.push(field.label);
                 }
             });
+
+            // Navigation saves a draft; documents and confirmations can follow later.
+            if (forDraft) return { valid: errors.length === 0, errors };
 
             // File uploads - required for non-Dinas roles (Sekolah, Operator)
             if (!isDinasEntry) {
@@ -2046,6 +2080,7 @@
      * Save current student data to draft via AJAX
      */
     async function saveCurrentStudent(index) {
+        window.syncForeignOrigin(index);
         if (!draftId) {
             draftId = await createDraftIfNeeded();
             if (!draftId) return false;
