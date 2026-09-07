@@ -390,6 +390,20 @@
     // Toggle Luar Negeri Logic
     window.toggleLuarNegeri = function (index) {
         const checkbox = document.getElementById(`luar_negeri_${index}`);
+        const nisnInput = document.querySelector(`[name="siswa[${index}][nisn]"]`);
+        if (nisnInput) {
+            nisnInput.required = !checkbox.checked;
+            nisnInput.placeholder = checkbox.checked ? 'Kosongkan jika belum memiliki NISN' : '10 digit';
+            nisnInput.previousElementSibling.textContent = checkbox.checked ? 'NISN (jika ada)' : 'NISN *';
+        }
+        const nisnStatus = document.getElementById(`nisn_prefill_status_${index}`);
+        if (nisnStatus) nisnStatus.textContent = checkbox.checked
+            ? 'Murid luar negeri boleh disimpan tanpa NISN. Jika diisi, gunakan 10 digit.'
+            : 'Masukkan 10 digit untuk mencari data SIMAK.';
+        ['has_surat_pindah', 'has_surat_dapodik', 'has_surat_penyaluran'].forEach(field => {
+            const input = document.querySelector(`[name="siswa[${index}][${field}]"]`);
+            if (input) input.required = field === 'has_surat_penyaluran' ? checkbox.checked : !checkbox.checked;
+        });
         const container = document.getElementById(`penyaluran_container_${index}`);
         const fileInput = document.getElementById(`file_surat_penyaluran_${index}`);
         const npsnInput = document.getElementById(`npsn_asal_${index}`);
@@ -410,7 +424,7 @@
         if (checkbox.checked) {
             // Show surat penyaluran
             if (container) container.classList.remove('hidden');
-            if (fileInput) fileInput.setAttribute('required', 'required');
+            if (fileInput) fileInput.required = fileInput.getAttribute('data-has-file') !== 'true';
 
             // NPSN Optional
             if (npsnInput) {
@@ -1343,6 +1357,7 @@
             if (!card) return { valid: true, errors: [] };
 
             const errors = [];
+            const isLuarNegeri = card.querySelector(`[name*="[asal_luar_negeri]"]`)?.checked;
 
             // Basic student info - always required for all roles
             const basicFields = [
@@ -1356,6 +1371,7 @@
             ];
 
             basicFields.forEach(field => {
+                if (field.name === 'nisn' && isLuarNegeri) return;
                 const input = card.querySelector(`[name*="[${field.name}]"]`);
                 if (input && !input.value.trim()) {
                     errors.push(field.label);
@@ -1410,8 +1426,12 @@
             } else {
                 // Dinas Entry - check checkboxes
                 const requiredCheckboxes = [
-                    { name: 'has_surat_pindah', label: 'Konfirmasi Surat Pindah' },
-                    { name: 'has_surat_dapodik', label: 'Konfirmasi Surat Dapodik' },
+                    ...(isLuarNegeri ? [
+                        { name: 'has_surat_penyaluran', label: 'Konfirmasi Surat Penyaluran' }
+                    ] : [
+                        { name: 'has_surat_pindah', label: 'Konfirmasi Surat Pindah' },
+                        { name: 'has_surat_dapodik', label: 'Konfirmasi Surat Dapodik' }
+                    ]),
                     { name: 'has_ijazah_sd', label: 'Konfirmasi Ijazah SD' },
                     { name: 'has_rapor', label: 'Konfirmasi Rapor' }
                 ];
@@ -1640,6 +1660,14 @@
                     }
                 });
 
+                // Restore origin and confirmations before applying conditional requirements.
+                ['asal_luar_negeri', 'has_surat_pindah', 'has_surat_dapodik', 'has_rekomendasi',
+                    'has_ijazah_sd', 'has_rapor', 'has_surat_penyaluran'].forEach(field => {
+                    const input = document.querySelector(`[name="siswa[${idx}][${field}]"]`);
+                    if (input) input.checked = student[field] == 1;
+                });
+                if (student.asal_luar_negeri == 1) window.toggleLuarNegeri(idx);
+
                 // 1. TEXT FIELDS
                 const textFields = [
                     'nama_murid', 'nisn', 'nis', 'tempat_lahir', 'tanggal_lahir',
@@ -1705,7 +1733,7 @@
                 }
 
                 // 4. PROVINCE & CITY POPULATION (Async & Robust)
-                if (student.provinsi_asal) {
+                if (student.provinsi_asal && student.asal_luar_negeri != 1) {
                     const provSelect = document.getElementById(`provinsi_asal_select_${idx}`);
                     const provHidden = document.getElementById(`provinsi_asal_${idx}`);
 

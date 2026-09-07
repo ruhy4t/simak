@@ -229,7 +229,7 @@
                                             'file_rekomendasi' => [
                                                 'label' => 'Surat Rekomendasi (Dinas/Kemenag)', 
                                                 'verif' => 'verif_rekomendasi',
-                                                'required' => true // Sesuai update JS, recomendasi selalu wajib/penting
+                                                'required' => !$isLuarNegeri
                                             ],
                                             'file_ijazah_sd' => [
                                                 'label' => 'Ijazah SD/Sederajat', 

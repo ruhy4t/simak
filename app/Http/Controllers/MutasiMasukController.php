@@ -398,7 +398,7 @@ class MutasiMasukController extends Controller
             $siswaNum = $i + 1;
 
             $rules["siswa.{$i}.nama_murid"] = 'required|string|max:100';
-            $rules["siswa.{$i}.nisn"] = 'required|string|size:10';
+            $rules["siswa.{$i}.nisn"] = [$request->boolean("siswa.{$i}.asal_luar_negeri") ? 'nullable' : 'required', 'string', 'regex:/^\d{10}$/'];
             $rules["siswa.{$i}.nis"] = 'required|string|max:20';
             $rules["siswa.{$i}.tempat_lahir"] = 'required|string|max:50';
             $rules["siswa.{$i}.tanggal_lahir"] = 'required|date|before:today|after:1900-01-01';
@@ -411,7 +411,7 @@ class MutasiMasukController extends Controller
             $rules["siswa.{$i}.kabupaten_kota_asal"] = 'required|string|max:100';
 
             // Check if from foreign school
-            $luarNegeri = $request->input("siswa.{$i}.asal_luar_negeri") === '1';
+            $luarNegeri = $request->boolean("siswa.{$i}.asal_luar_negeri");
 
             // NPSN Validation
             if ($luarNegeri) {
@@ -689,7 +689,7 @@ class MutasiMasukController extends Controller
                 DB::table('mutasi_masuk_siswa')->insert([
                     'id_mutasi' => $idMutasi,
                     'nama_murid' => $this->sanitize($siswa['nama_murid']),
-                    'nisn' => $this->sanitizeNisn($siswa['nisn']),
+                    'nisn' => $this->sanitizeNisn($siswa['nisn'] ?? null),
                     'nis' => $this->sanitize($siswa['nis'] ?? null),
                     'tempat_lahir' => $this->sanitize($siswa['tempat_lahir']),
                     'tanggal_lahir' => $siswa['tanggal_lahir'],
@@ -702,7 +702,7 @@ class MutasiMasukController extends Controller
                     'provinsi_asal' => $this->sanitize($siswa['provinsi_asal']),
                     'kabupaten_kota_asal' => $this->sanitize($siswa['kabupaten_kota_asal']),
                     'npsn_ditemukan' => ($siswa['npsn_ditemukan'] ?? '0') === '1',
-                    'asal_luar_negeri' => ($siswa['asal_luar_negeri'] ?? '0') === '1',
+                    'asal_luar_negeri' => $request->boolean("siswa.{$idx}.asal_luar_negeri"),
                     'file_surat_pindah' => $filePaths['file_surat_pindah'] ?? null,
                     'file_surat_dapodik' => $filePaths['file_surat_dapodik'] ?? null,
                     'file_rekomendasi' => $filePaths['file_rekomendasi'] ?? null,
@@ -1725,7 +1725,7 @@ class MutasiMasukController extends Controller
         $studentRules = [
             'student_index' => 'required|integer|min:0|max:19',
             'nama_murid' => 'required|string|max:100',
-            'nisn' => ['required', 'string', 'regex:/^\d{10}$/'],
+            'nisn' => [$request->boolean('asal_luar_negeri') ? 'nullable' : 'required', 'string', 'regex:/^\d{10}$/'],
             'nis' => 'nullable|string|max:20',
             'tempat_lahir' => 'required|string|max:50',
             'tanggal_lahir' => 'required|date',
@@ -2024,14 +2024,14 @@ class MutasiMasukController extends Controller
                 'provinsi_asal' => $this->sanitize($request->provinsi_asal),
                 'kabupaten_kota_asal' => $this->sanitize($request->kabupaten_kota_asal),
                 'npsn_ditemukan' => ($request->npsn_ditemukan ?? '0') === '1',
-                'asal_luar_negeri' => ($request->asal_luar_negeri ?? '0') === '1',
+                'asal_luar_negeri' => $request->boolean('asal_luar_negeri'),
                 // Dinas confirmation checkboxes
-                'has_surat_pindah' => $request->has('has_surat_pindah') ? 1 : 0,
-                'has_surat_dapodik' => $request->has('has_surat_dapodik') ? 1 : 0,
-                'has_rekomendasi' => $request->has('has_rekomendasi') ? 1 : 0,
-                'has_ijazah_sd' => $request->has('has_ijazah_sd') ? 1 : 0,
-                'has_rapor' => $request->has('has_rapor') ? 1 : 0,
-                'has_surat_penyaluran' => $request->has('has_surat_penyaluran') ? 1 : 0,
+                'has_surat_pindah' => $request->boolean('has_surat_pindah'),
+                'has_surat_dapodik' => $request->boolean('has_surat_dapodik'),
+                'has_rekomendasi' => $request->boolean('has_rekomendasi'),
+                'has_ijazah_sd' => $request->boolean('has_ijazah_sd'),
+                'has_rapor' => $request->boolean('has_rapor'),
+                'has_surat_penyaluran' => $request->boolean('has_surat_penyaluran'),
                 'updated_at' => now(),
             ];
 

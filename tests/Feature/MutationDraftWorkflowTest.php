@@ -314,6 +314,59 @@ class MutationDraftWorkflowTest extends TestCase
         ]);
     }
 
+    public function test_foreign_students_without_nisn_can_be_saved_and_updated_by_each_role(): void
+    {
+        (require database_path('migrations/2024_01_01_000004_create_mutasi_masuk_siswa_table.php'))->up();
+        (require database_path('migrations/2026_01_23_061500_add_checklist_files_to_mutasi_masuk_siswa_table.php'))->up();
+        (require database_path('migrations/2026_09_07_000001_allow_nullable_nisn_for_incoming_students.php'))->up();
+
+        foreach (['Sekolah', 'Operator', 'Dinas'] as $role) {
+            Auth::user()->role = $role;
+            $controller = app(MutasiMasukController::class);
+            $draft = $controller->createDraft($this->jsonRequest('/mutasi-masuk/draft', [
+                'jumlah_siswa' => 2,
+                'npsn_sekolah_tujuan' => '12345678',
+                'nama_sekolah_tujuan' => 'SMP Pengujian',
+                'alamat_sekolah_tujuan' => 'Kota Bogor',
+            ]));
+            $this->assertSame(200, $draft->getStatusCode());
+            $id = $draft->getData(true)['id_mutasi'];
+            $data = [
+                'student_index' => 0, 'nama_murid' => 'Murid Luar Negeri',
+                'nisn' => '', 'nis' => '', 'asal_luar_negeri' => '1',
+                'tempat_lahir' => 'Tokyo', 'tanggal_lahir' => '2012-01-02',
+                'jenis_kelamin' => 'L', 'kelas' => 'VII', 'tanggal_diterima' => '2026-08-01',
+                'nama_sekolah_asal' => 'Sekolah Tokyo', 'alamat_sekolah_asal' => 'Tokyo, Jepang',
+                'provinsi_asal' => 'Luar Negeri', 'kabupaten_kota_asal' => 'Luar Negeri',
+                'has_surat_pindah' => '0', 'has_surat_dapodik' => '0', 'has_surat_penyaluran' => '0',
+            ];
+            $save = fn (array $payload) => $controller->addStudentToDraft(
+                $this->jsonRequest('/mutasi-masuk/draft/'.$id.'/siswa', $payload), $id
+            );
+            $response = $save($data);
+            $this->assertSame(200, $response->getStatusCode(), json_encode($response->getData(true)));
+            $this->assertDatabaseHas('mutasi_masuk_siswa', [
+                'id_mutasi' => $id, 'nisn' => null, 'asal_luar_negeri' => 1,
+                'has_surat_pindah' => 0, 'has_surat_dapodik' => 0, 'has_surat_penyaluran' => 0,
+            ]);
+            $this->assertSame(200, $save(array_replace($data, [
+                'student_index' => 1, 'nama_murid' => 'Murid Kedua',
+            ]))->getStatusCode());
+            $this->assertSame(200, $save(array_replace($data, [
+                'nama_murid' => 'Murid Diperbarui', 'has_surat_penyaluran' => '1',
+            ]))->getStatusCode());
+            $this->assertSame(2, DB::table('mutasi_masuk_siswa')->where('id_mutasi', $id)->count());
+            $this->assertDatabaseHas('mutasi_masuk_siswa', [
+                'id_mutasi' => $id, 'nama_murid' => 'Murid Diperbarui', 'has_surat_penyaluran' => 1,
+            ]);
+            foreach ([['asal_luar_negeri' => '0'], ['nisn' => '123']] as $invalid) {
+                $response = $save(array_replace($data, $invalid));
+                $this->assertSame(422, $response->getStatusCode());
+                $this->assertArrayHasKey('nisn', $response->getData(true)['errors']);
+            }
+        }
+    }
+
     public function test_incoming_student_draft_reports_every_missing_required_field(): void
     {
         $draftResponse = app(MutasiMasukController::class)->createDraft(
