@@ -128,7 +128,7 @@
                                         <i class="bi bi-eye"></i> Lihat File Saat Ini
                                     </button>
                                     <div x-show="activeDoc === 'surat_permohonan'" x-transition class="mt-2 border rounded-xl overflow-hidden shadow-xs">
-                                        <iframe src="{{ route('dokumen.view', ['path' => $mutasi->file_surat_permohonan]) }}" 
+                                        <iframe loading="lazy" title="Pratinjau surat permohonan" src="{{ route('dokumen.view', ['path' => $mutasi->file_surat_permohonan]) }}"
                                             class="w-full bg-slate-100 h-96"></iframe>
                                         <a href="{{ route('dokumen.view', ['path' => $mutasi->file_surat_permohonan]) }}" target="_blank"
                                            class="block text-center py-2 bg-slate-50 text-sky-600 text-xs font-medium hover:bg-slate-100 transition border-t border-slate-200">
@@ -304,7 +304,7 @@
 
                                                     @if($siswa->$field ?? null)
                                                         <div x-show="activeDoc === '{{ "siswa_{$siswa->id}_{$field}" }}'" x-transition class="mt-2 border rounded-lg overflow-hidden shadow-xs">
-                                                            <iframe src="{{ route('dokumen.view', ['path' => $siswa->$field]) }}" 
+                                                            <iframe loading="lazy" title="Pratinjau dokumen murid" src="{{ route('dokumen.view', ['path' => $siswa->$field]) }}"
                                                                 class="w-full bg-slate-100 h-80"></iframe>
                                                             <a href="{{ route('dokumen.view', ['path' => $siswa->$field]) }}" target="_blank"
                                                             class="block text-center py-2 bg-slate-50 text-sky-600 text-xs font-medium hover:bg-slate-100 transition border-t border-slate-200">

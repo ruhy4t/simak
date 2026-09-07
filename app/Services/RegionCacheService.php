@@ -27,17 +27,18 @@ class RegionCacheService
     public function getProvinces()
     {
         // 1. Try Local DB (Cached)
-        if (Schema::hasTable('ref_provinsi')) {
-            $provinces = Cache::remember('ref_provinces_local_db', self::TTL_LOCAL, function () {
-                return DB::table('ref_provinsi')
-                    ->select(['id', 'nama as name'])
-                    ->orderBy('nama')
-                    ->get();
-            });
-
-            if ($provinces->isNotEmpty()) {
-                return ['success' => true, 'source' => 'local_db', 'data' => $provinces];
+        $provinces = Cache::remember('ref_provinces_local_db', self::TTL_LOCAL, function () {
+            if (! Schema::hasTable('ref_provinsi')) {
+                return null;
             }
+            return DB::table('ref_provinsi')
+                ->select(['id', 'nama as name'])
+                ->orderBy('nama')
+                ->get();
+        });
+
+        if ($provinces?->isNotEmpty()) {
+            return ['success' => true, 'source' => 'local_db', 'data' => $provinces];
         }
 
         // 2. Fallback to External API (Cached)
@@ -59,18 +60,19 @@ class RegionCacheService
      */
     public function getRegencies($provinceId)
     {
-        if (Schema::hasTable('ref_kabupaten')) {
-            $regencies = Cache::remember("ref_regencies_local_{$provinceId}", self::TTL_LOCAL, function () use ($provinceId) {
-                return DB::table('ref_kabupaten')
-                    ->where('province_id', $provinceId)
-                    ->select(['id', 'nama as name'])
-                    ->orderBy('nama')
-                    ->get();
-            });
-
-            if ($regencies->isNotEmpty()) {
-                return ['success' => true, 'source' => 'local_db', 'data' => $regencies];
+        $regencies = Cache::remember("ref_regencies_local_{$provinceId}", self::TTL_LOCAL, function () use ($provinceId) {
+            if (! Schema::hasTable('ref_kabupaten')) {
+                return null;
             }
+            return DB::table('ref_kabupaten')
+                ->where('province_id', $provinceId)
+                ->select(['id', 'nama as name'])
+                ->orderBy('nama')
+                ->get();
+        });
+
+        if ($regencies?->isNotEmpty()) {
+            return ['success' => true, 'source' => 'local_db', 'data' => $regencies];
         }
 
         return Cache::remember("ref_regencies_external_{$provinceId}", self::TTL_EXTERNAL, function () use ($provinceId) {

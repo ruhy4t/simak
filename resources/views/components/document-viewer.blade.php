@@ -7,7 +7,7 @@
  
 <div class="border border-slate-200 rounded-xl overflow-hidden shadow-xs">
 
-    <iframe src="{{ route('dokumen.view', ['path' => $path]) }}" 
+    <iframe loading="lazy" title="Pratinjau dokumen" src="{{ route('dokumen.view', ['path' => $path]) }}"
         class="w-full bg-slate-100" 
         style="height: {{ $height }}; min-height: {{ $minHeight }};">
     </iframe>

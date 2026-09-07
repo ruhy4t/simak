@@ -271,7 +271,7 @@ const initializeDashboardCharts = async () => {
 
     if (trendCharts.length === 0 && statusCharts.length === 0 && reportTrendCharts.length === 0 && classDistributionCharts.length === 0 && cohortCharts.length === 0) return;
 
-    const { default: Chart } = await import('chart.js/auto');
+    const { default: Chart } = await import('./chart-library.js');
     trendCharts.forEach((canvas) => {
         if (chartInstances.has(canvas) || !canvas.isConnected) return;
         const chart = initializeTrendChart(Chart, canvas);

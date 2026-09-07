@@ -5,6 +5,7 @@
         "node": "22.x"
     },
     "scripts": {
+        "test": "node --test tests/js/*.cjs tests/js/*.mjs",
         "build": "vite build",
         "dev": "vite"
     },

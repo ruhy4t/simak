@@ -64,7 +64,7 @@
                                 {{-- Signature Image Column --}}
                                 <td class="px-6 py-4 text-center">
                                     @if(!empty($p->gambar_ttd))
-                                        <img src="{{ url('dokumen/lihat/' . $p->gambar_ttd) }}" 
+                                        <img loading="lazy" decoding="async" src="{{ url('dokumen/lihat/' . $p->gambar_ttd) }}"
                                             alt="Tanda Tangan {{ $p->nama }}" 
                                             class="mx-auto h-12 object-contain cursor-pointer rounded-sm border hover:shadow-lg transition"
                                             onclick="showSignaturePreview('{{ url('dokumen/lihat/' . $p->gambar_ttd) }}', '{{ $p->nama }}')"

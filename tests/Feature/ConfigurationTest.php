@@ -123,7 +123,7 @@ class ConfigurationTest extends TestCase
         $this->assertStringNotContainsString('cdn.jsdelivr.net/npm/chart.js', $trendView);
         $this->assertStringContainsString('data-report-trend-chart', $trendPanels);
         $this->assertStringContainsString("document.querySelectorAll('[data-report-trend-chart]')", $chartScript);
-        $this->assertStringContainsString("import('chart.js/auto')", $chartScript);
+        $this->assertStringContainsString("import('./chart-library.js')", $chartScript);
 
         $pdfOutput = Pdf::loadView('laporan.rekap.pdf', [
             'data' => collect(),

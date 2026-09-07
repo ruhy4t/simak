@@ -304,7 +304,7 @@
                                         </button>
                                         <div x-show="activeDoc === '{{ $field }}'" x-transition
                                             class="mt-2 border rounded-lg overflow-hidden shadow-xs">
-                                            <iframe src="{{ route('dokumen.view', ['path' => $currentFile]) }}"
+                                            <iframe loading="lazy" title="Pratinjau dokumen murid" src="{{ route('dokumen.view', ['path' => $currentFile]) }}"
                                                 class="w-full bg-slate-100 h-64"></iframe>
                                             <a href="{{ route('dokumen.view', ['path' => $currentFile]) }}" target="_blank"
                                                 class="block text-center py-2 bg-slate-50 text-sky-600 text-xs font-medium hover:bg-slate-100 transition border-t border-slate-200">

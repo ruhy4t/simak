@@ -71,5 +71,8 @@ jobs:
       - name: Build production assets
         run: npm run build
 
+      - name: Run JavaScript regression tests
+        run: npm test
+
       - name: Run Laravel test suite
         run: php artisan test
