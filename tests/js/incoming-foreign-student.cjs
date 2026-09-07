@@ -93,3 +93,38 @@ for (const dinas of [false, true]) {
         assert.ok(submission.errors.includes(dinas ? 'Konfirmasi Surat Penyaluran' : 'Surat Penyaluran'));
     });
 }
+
+const regionSource = fs.readFileSync(path.join(__dirname, '../../public/js/mutasi-masuk.js'), 'utf8');
+function regionLoader(fetch) {
+    const start = regionSource.indexOf('    const regionRequests = new Map();');
+    const end = regionSource.indexOf('    function loadProvinces(', start);
+    const context = vm.createContext({ fetch });
+    vm.runInContext(regionSource.slice(start, end), context);
+    return url => context.fetchRegionData(url);
+}
+
+test('20 student cards share one reference request including subsequent reads', async () => {
+    let calls = 0;
+    const load = regionLoader(async () => {
+        calls++;
+        return { ok: true, json: async () => ({ success: true, data: [{ id: '32', name: 'Jawa Barat' }] }) };
+    });
+    const results = await Promise.all(Array.from({ length: 20 }, () => load('/provinces')));
+    await load('/provinces');
+    assert.equal(calls, 1);
+    assert.equal(results.length, 20);
+    assert.equal(results[19].data[0].name, 'Jawa Barat');
+    await load('/regencies/32');
+    assert.equal(calls, 2);
+});
+
+test('failed region requests can be retried', async () => {
+    let calls = 0;
+    const load = regionLoader(async () => {
+        calls++;
+        return { ok: calls > 1, json: async () => ({ success: true, data: [] }) };
+    });
+    await assert.rejects(load('/provinces'));
+    await load('/provinces');
+    assert.equal(calls, 2);
+});

@@ -65,18 +65,20 @@ class Holiday extends Model
 
     private static function forDate(string $date): ?self
     {
-        return Cache::remember(self::CACHE_PREFIX . $date, 3600, function () use ($date) {
+        $holiday = Cache::memo()->remember(self::CACHE_PREFIX . $date, 3600, function () use ($date) {
             return static::query()
                 ->select(['id', 'date', 'description'])
                 ->where('date', $date)
-                ->first();
+                ->first() ?? false;
         });
+
+        return $holiday ?: null;
     }
 
     private static function forgetDateCache(?string $date): void
     {
         if ($date) {
-            Cache::forget(self::CACHE_PREFIX . $date);
+            Cache::memo()->forget(self::CACHE_PREFIX . $date);
             Cache::forget("holiday.{$date}");
         }
     }

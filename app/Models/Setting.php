@@ -28,7 +28,7 @@ class Setting extends Model
      */
     public static function get(string $key, mixed $default = null): mixed
     {
-        $setting = Cache::remember(self::CACHE_KEY, 3600, function () {
+        $setting = Cache::memo()->remember(self::CACHE_KEY, 3600, function () {
             return static::query()
                 ->get(['key', 'value', 'type'])
                 ->keyBy('key');
@@ -101,6 +101,6 @@ class Setting extends Model
      */
     public static function clearCache(): void
     {
-        Cache::forget(self::CACHE_KEY);
+        Cache::memo()->forget(self::CACHE_KEY);
     }
 }

@@ -249,6 +249,30 @@
     }
 
     // Load provinces
+    // Share reference requests across all student cards during this page visit.
+    const regionRequests = new Map();
+    function fetchRegionData(url) {
+        if (!regionRequests.has(url)) {
+            const pending = fetch(url)
+                .then(response => {
+                    if (!response.ok) throw new Error('Gagal memuat wilayah');
+                    return response.json();
+                })
+                .then(result => {
+                    if (!result.success || !Array.isArray(result.data)) {
+                        throw new Error('Data wilayah tidak tersedia');
+                    }
+                    return result;
+                })
+                .catch(error => {
+                    regionRequests.delete(url);
+                    throw error;
+                });
+            regionRequests.set(url, pending);
+        }
+        return regionRequests.get(url);
+    }
+
     function loadProvinces(selectId) {
         const select = document.getElementById(selectId);
         if (!select) return Promise.resolve();
@@ -258,11 +282,11 @@
 
         select.innerHTML = '<option value="">Pilih Provinsi</option>';
 
-        return fetch(CONFIG.routes.apiProvinces)
-            .then(response => response.json())
+        return fetchRegionData(CONFIG.routes.apiProvinces)
             .then(result => {
                 if (result.success && result.data) {
                     result.data.forEach(prov => {
+                        if ([...select.options].some(option => option.value === prov.name)) return;
                         const option = document.createElement('option');
                         option.value = prov.name;
                         option.dataset.id = prov.id;
@@ -314,8 +338,8 @@
 
                 if (provId && kabSelect) {
                     try {
-                        const response = await fetch(CONFIG.routes.apiRegencies.replace(':provinceId', provId));
-                        const result = await response.json();
+                        const result = await fetchRegionData(CONFIG.routes.apiRegencies.replace(':provinceId', provId));
+                        if (window.syncForeignOrigin(index) || provSelect.value !== val) return;
 
                         if (result.success && result.data) {
                             result.data.forEach(kab => {
