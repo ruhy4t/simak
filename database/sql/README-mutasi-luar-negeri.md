@@ -1,31 +1,21 @@
-# Migrasi mutasi masuk luar negeri melalui HeidiSQL
+﻿# Impor migrasi mutasi luar negeri melalui HeidiSQL
 
-Gunakan skrip `allow_nullable_nisn_for_incoming_students.sql` pada database
-MySQL/MariaDB aplikasi. Tidak perlu akses CLI atau menjalankan Artisan.
+File: `allow_nullable_nisn_for_incoming_students.sql` (MySQL/MariaDB).
 
-1. Masuk ke HeidiSQL dan pilih database aplikasi pada panel kiri.
-2. Buat cadangan database melalui menu ekspor database sebagai SQL.
-3. Buka tab Query, lalu buka atau salin isi skrip SQL di atas.
-4. Jalankan bagian 1. Pastikan `database_aktif` adalah database aplikasi dan
-   kolom `nisn` pada tabel `mutasi_masuk_siswa` ditemukan.
-5. Jalankan bagian 2 (`ALTER TABLE`). Tunggu hingga berhasil. Jika ada error,
-   berhenti dan simpan pesan error; jangan lanjut ke bagian 3.
-6. Jalankan bagian 3 untuk mencatat migrasi Laravel. Jika sudah tercatat,
-   skrip tidak menambahkan catatan duplikat.
-7. Jalankan bagian 4. Hasil kolom `nisn` harus menunjukkan `Null = YES`, dan
-   query `migrations` harus menampilkan satu baris untuk migrasi tersebut.
-8. Setelah kode terbaru terpasang, muat ulang halaman aplikasi. Centang
-   **Murid berasal dari Luar Negeri**, isi data murid, kosongkan NISN dan
-   NPSN asal, lalu pilih **Simpan Draft**. Buka kembali draft untuk memastikan
-   data dan status luar negeri tetap tersimpan. Uji pada akses Dinas dan
-   Sekolah/Operator.
+1. Masuk ke HeidiSQL, pilih database aplikasi dan buat cadangan melalui ekspor SQL.
+2. Buka file SQL melalui menu File > Load SQL file.
+3. Pastikan database aktif benar, lalu jalankan seluruh skrip dengan F9.
+4. Hasil terakhir harus menampilkan **BERHASIL: NISN boleh kosong dan migrasi sudah tercatat**.
+   Jika muncul error atau **PERIKSA**, simpan pesan untuk pemeriksaan lebih lanjut.
 
-Perubahan ini hanya membuat kolom NISN boleh berisi NULL. NISN yang sudah ada
-tetap tersimpan. Aplikasi tetap mewajibkan NISN untuk murid dalam negeri dan
-memvalidasi 10 digit jika NISN diisi. Dokumen boleh dilengkapi kemudian selama
-masih draft.
+Tidak perlu menjalankan per bagian. Skrip aman diimpor ulang secara berurutan:
+ALTER dilewati jika kolom sudah nullable, catatan migrasi tidak diduplikasi,
+dan catatan baru hanya dibuat setelah struktur kolom dipastikan sesuai.
+Tidak memerlukan stored procedure. Data murid dan NISN lama tetap tersimpan.
 
-Migrasi lokal pada komputer pengembangan sudah diterapkan. Database server
-perlu diperbarui sendiri melalui langkah di atas. Sebaiknya jalankan SQL
-sebelum pengguna memakai fitur baru. Tidak perlu menjalankan SQL ini jika
-migrasi yang sama sudah berhasil dijalankan melalui Artisan.
+Setelah kode terbaru terpasang, muat ulang aplikasi. Centang **Murid berasal dari
+Luar Negeri**, isi data murid, kosongkan NISN dan NPSN asal, lalu **Simpan Draft**.
+Buka kembali draft untuk memeriksa data dan checklist.
+
+Migrasi lokal sudah diterapkan. Impor ini untuk database server yang belum diperbarui.
+Jika migrasi sudah dijalankan melalui Artisan, impor ulang melewati perubahan yang selesai.
