@@ -128,3 +128,85 @@ test('failed region requests can be retried', async () => {
     await load('/provinces');
     assert.equal(calls, 2);
 });
+
+function regionForm(fetch) {
+    const nodes = new Map();
+    const select = () => ({
+        options: [], value: '', disabled: false, listeners: {},
+        get selectedIndex() { return this.options.findIndex(option => option.value === this.value); },
+        set innerHTML(value) { this.options = [{ value: '', dataset: {} }]; this.value = ''; },
+        appendChild(option) { this.options.push(option); },
+        addEventListener(event, callback) { this.listeners[event] = callback; },
+        async change(value) { this.value = value; await this.listeners.change.call(this); },
+    });
+    for (let i = 0; i < 3; i++) {
+        for (const prefix of ['provinsi', 'kabkota']) {
+            nodes.set(`${prefix}_asal_select_${i}`, select());
+            nodes.set(`${prefix}_asal_${i}`, { value: '' });
+        }
+        nodes.set(`luar_negeri_${i}`, { checked: false });
+    }
+    const document = {
+        getElementById: id => nodes.get(id) || null,
+        querySelector: () => null, addEventListener() {},
+        createElement: () => ({ value: '', dataset: {} }),
+    };
+    const CONFIG = { routes: { apiProvinces: '/provinces', apiRegencies: '/regencies/:provinceId' } };
+    const window = { MUTASI_CONFIG: CONFIG };
+    const context = vm.createContext({ window, document, fetch, CONFIG, console, setTimeout, clearTimeout });
+    vm.runInContext(regionSource, context);
+    vm.runInContext(regionSource.slice(regionSource.indexOf('    const regionRequests = new Map();'),
+        regionSource.indexOf('    function resetSekolahAsal(')), context);
+    for (let i = 0; i < 3; i++) context.setupSiswaEvents(i);
+    return { nodes, window };
+}
+
+const regionResponse = data => ({ ok: true, json: async () => ({ success: true, data }) });
+const provinceData = [{ id: '32', name: 'Jawa Barat' }, { id: '33', name: 'Jawa Tengah' }];
+const settle = () => new Promise(resolve => setImmediate(resolve));
+
+test('students independently select different provinces and cities while sharing reference lists', async () => {
+    const calls = [];
+    const { nodes, window } = regionForm(async url => {
+        calls.push(url);
+        return regionResponse(url === '/provinces' ? provinceData :
+            url.endsWith('/32') ? [{ name: 'Kota Bogor' }, { name: 'Kota Bandung' }] : [{ name: 'Kota Semarang' }]);
+    });
+    await settle();
+    await Promise.all([
+        nodes.get('provinsi_asal_select_0').change('Jawa Barat'),
+        nodes.get('provinsi_asal_select_1').change('Jawa Tengah'),
+        nodes.get('provinsi_asal_select_2').change('Jawa Barat'),
+    ]);
+    await nodes.get('kabkota_asal_select_0').change('Kota Bogor');
+    await nodes.get('kabkota_asal_select_1').change('Kota Semarang');
+    await nodes.get('kabkota_asal_select_2').change('Kota Bandung');
+    assert.equal(nodes.get('kabkota_asal_0').value, 'Kota Bogor');
+    assert.equal(nodes.get('kabkota_asal_1').value, 'Kota Semarang');
+    assert.equal(nodes.get('kabkota_asal_2').value, 'Kota Bandung');
+    assert.equal(nodes.get('provinsi_asal_1').value, 'Jawa Tengah');
+    assert.deepEqual(calls.sort(), ['/provinces', '/regencies/32', '/regencies/33']);
+    nodes.get('luar_negeri_0').checked = true;
+    window.syncForeignOrigin(0);
+    assert.equal(nodes.get('kabkota_asal_0').value, 'Luar Negeri');
+    assert.equal(nodes.get('kabkota_asal_1').value, 'Kota Semarang');
+    assert.equal(nodes.get('kabkota_asal_2').value, 'Kota Bandung');
+});
+
+test('rapid province changes do not apply outdated responses or duplicate cities', async () => {
+    const pending = new Map();
+    const { nodes } = regionForm(url => url === '/provinces' ? Promise.resolve(regionResponse(provinceData)) :
+        new Promise(resolve => pending.set(url, resolve)));
+    await settle();
+    const province = nodes.get('provinsi_asal_select_0');
+    const first = province.change('Jawa Barat');
+    const second = province.change('Jawa Tengah');
+    const third = province.change('Jawa Barat');
+    pending.get('/regencies/32')(regionResponse([{ name: 'Kota Bogor' }]));
+    await Promise.all([first, third]);
+    pending.get('/regencies/33')(regionResponse([{ name: 'Kota Semarang' }]));
+    await second;
+    const cities = nodes.get('kabkota_asal_select_0').options.map(option => option.value);
+    assert.deepEqual(cities, ['', 'Kota Bogor']);
+    assert.equal(nodes.get('provinsi_asal_0').value, 'Jawa Barat');
+});

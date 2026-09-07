@@ -308,8 +308,10 @@
         const provHidden = document.getElementById(`provinsi_asal_${index}`);
         const kabHidden = document.getElementById(`kabkota_asal_${index}`);
 
+        let provinceChangeVersion = 0;
         if (provSelect) {
             provSelect.addEventListener('change', async function () {
+                const changeVersion = ++provinceChangeVersion;
                 if (window.syncForeignOrigin(index)) return;
                 var val = this.value;
                 const selectedOption = this.options[this.selectedIndex];
@@ -339,7 +341,7 @@
                 if (provId && kabSelect) {
                     try {
                         const result = await fetchRegionData(CONFIG.routes.apiRegencies.replace(':provinceId', provId));
-                        if (window.syncForeignOrigin(index) || provSelect.value !== val) return;
+                        if (changeVersion !== provinceChangeVersion || window.syncForeignOrigin(index) || provSelect.value !== val) return;
 
                         if (result.success && result.data) {
                             result.data.forEach(kab => {
@@ -352,6 +354,7 @@
                         }
                         kabSelect.disabled = false;
                     } catch (e) {
+                        if (changeVersion !== provinceChangeVersion || window.syncForeignOrigin(index)) return;
                         console.error('Failed to load regencies', e);
                         kabSelect.disabled = false;
                     }
