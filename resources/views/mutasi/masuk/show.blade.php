@@ -705,6 +705,7 @@
 
             <!-- Form Surat Izin -->
             @if(in_array(auth()->user()->role, ['Dinas', 'SuperAdmin']) && $mutasi->status === 'Disetujui Dinas')
+                <x-revoke-mutation-approval type="masuk" :id="$mutasi->id_mutasi" />
                 <div class="bg-blue-50 border border-blue-200 rounded-xl p-6">
                     <h2 class="text-lg font-semibold text-blue-900 mb-4"><i
                             class="bi bi-file-earmark-text text-blue-600 mr-2"></i>Terbitkan Surat Izin</h2>

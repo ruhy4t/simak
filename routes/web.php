@@ -182,6 +182,10 @@ Route::middleware(['auth', EnsurePasswordChanged::class])->group(function () {
 
     // Dinas only routes
     Route::middleware('role:Dinas,SuperAdmin')->group(function () {
+        foreach (['masuk', 'keluar'] as $type) {
+            Route::post('/mutasi-'.$type.'/{id}/revoke-approval', \App\Http\Controllers\RevokeMutationApprovalController::class)
+                ->defaults('type', $type)->middleware('workday')->name('mutasi.'.$type.'.revoke-approval');
+        }
         // Verification
         Route::post('/mutasi-keluar/{id}/verify', [MutasiController::class, 'verify'])->middleware('workday')->name('mutasi.keluar.verify');
         Route::post('/mutasi-keluar/{id}/issue-letter', [MutasiController::class, 'issueLetter'])->middleware('workday')->name('mutasi.keluar.issue-letter');

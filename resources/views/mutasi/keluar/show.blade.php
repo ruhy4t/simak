@@ -332,6 +332,7 @@
                             @if($isDinas)
                                 <!-- Issue Letter -->
                                 @if($mutasi->status === 'Disetujui Dinas')
+                                    <x-revoke-mutation-approval type="keluar" :id="$mutasi->id_mutasi" />
                                     <form action="{{ route('mutasi.keluar.issue-letter', $mutasi->id_mutasi) }}" method="POST"
                                         class="space-y-3">
                                         @csrf
