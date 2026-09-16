@@ -76,4 +76,47 @@ class RevokeMutationApprovalTest extends TestCase
             }
         }
     }
+
+    public function test_stale_verification_cannot_overwrite_an_existing_decision(): void
+    {
+        $this->actingAs(new User(['role' => 'Dinas', 'username' => 'reviewer']));
+        foreach (['masuk', 'keluar'] as $type) {
+            foreach (['Disetujui Dinas', 'Perlu Perbaikan', 'Proses TTD', 'Selesai', 'Draft'] as $status) {
+                DB::table('mutasi_'.$type)->updateOrInsert(['id_mutasi' => 'test'], ['status' => $status]);
+                foreach (['approve', 'revision'] as $action) {
+                    $this->post(route('mutasi.'.$type.'.verify', 'test'), ['action' => $action])
+                        ->assertSessionHas('error');
+                    $this->assertDatabaseHas('mutasi_'.$type, ['id_mutasi' => 'test', 'status' => $status]);
+                }
+            }
+            $this->post(route('mutasi.'.$type.'.verify', 'missing'), ['action' => 'approve'])->assertNotFound();
+        }
+    }
+
+    public function test_incoming_document_changes_roll_back_when_status_update_fails(): void
+    {
+        $this->actingAs(new User(['role' => 'Dinas', 'username' => 'reviewer']));
+        Schema::create('mutasi_masuk_siswa', function (Blueprint $table) {
+            $table->id();
+            $table->string('id_mutasi');
+            foreach (['surat_pindah', 'surat_dapodik', 'rekomendasi', 'ijazah_sd', 'rapor', 'surat_penyaluran', 'rekam_didik'] as $field) {
+                $table->boolean('verif_'.$field)->default(false);
+            }
+            $table->timestamps();
+        });
+        DB::table('mutasi_masuk')->insert(['id_mutasi' => 'test', 'status' => 'Menunggu Verifikasi Dinas']);
+        DB::table('mutasi_masuk_siswa')->insert(['id' => 1, 'id_mutasi' => 'test']);
+        DB::unprepared("CREATE TRIGGER reject_status BEFORE UPDATE ON mutasi_masuk BEGIN SELECT RAISE(ABORT, 'Simulated failure'); END");
+        $this->withoutExceptionHandling();
+        try {
+            $this->post(route('mutasi.masuk.verify', 'test'), [
+                'action' => 'approve', 'verifikasi' => [1 => ['siswa_0_pindah' => 1]],
+            ]);
+            $this->fail('Expected the simulated database failure.');
+        } catch (\Illuminate\Database\QueryException $exception) {
+            $this->assertStringContainsString('Simulated failure', $exception->getMessage());
+        }
+        $this->assertDatabaseHas('mutasi_masuk', ['id_mutasi' => 'test', 'status' => 'Menunggu Verifikasi Dinas']);
+        $this->assertDatabaseHas('mutasi_masuk_siswa', ['id' => 1, 'verif_surat_pindah' => 0]);
+    }
 }

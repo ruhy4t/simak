@@ -870,22 +870,36 @@ class MutasiController extends Controller
 
         $action = $request->input('action');
         $status = $action === 'approve' ? 'Disetujui Dinas' : 'Perlu Perbaikan';
-        $previousStatus = DB::table('mutasi_keluar')->where('id_mutasi', $id)->value('status');
+        $previousStatus = 'Menunggu Verifikasi Dinas';
+        $verified = DB::transaction(function () use ($request, $id, $status) {
+            $mutasi = DB::table('mutasi_keluar')->where('id_mutasi', $id)->lockForUpdate()->first();
+            abort_unless($mutasi, 404);
+            if ($mutasi->status !== 'Menunggu Verifikasi Dinas') {
+                return false;
+            }
 
-        DB::table('mutasi_keluar')->where('id_mutasi', $id)->update([
-            'ceklis_surat_sekolah' => $request->boolean('ceklis_surat_sekolah') ? 1 : 0,
-            'ceklis_berkas_dapodik' => $request->boolean('ceklis_berkas_dapodik') ? 1 : 0,
-            'ceklis_sekolah_tujuan' => $request->boolean('ceklis_sekolah_tujuan') ? 1 : 0,
-            'ceklis_rapor' => $request->boolean('ceklis_rapor') ? 1 : 0,
-            // Smart Document Revision: simpan status verifikasi per file
-            'verif_suket_keluar' => $request->has('file_suket_keluar_ok') ? 1 : 0,
-            'verif_suket_dapo' => $request->has('file_suket_dapo_ok') ? 1 : 0,
-            'verif_suket_diterima' => $request->has('file_suket_diterima_ok') ? 1 : 0,
-            'verif_rapor' => $request->has('file_rapor_ok') ? 1 : 0,
-            'catatan_berkas' => $request->catatan_berkas,
-            'status' => $status,
-            'updated_at' => now(),
-        ]);
+            DB::table('mutasi_keluar')->where('id_mutasi', $id)->update([
+                'ceklis_surat_sekolah' => $request->boolean('ceklis_surat_sekolah') ? 1 : 0,
+                'ceklis_berkas_dapodik' => $request->boolean('ceklis_berkas_dapodik') ? 1 : 0,
+                'ceklis_sekolah_tujuan' => $request->boolean('ceklis_sekolah_tujuan') ? 1 : 0,
+                'ceklis_rapor' => $request->boolean('ceklis_rapor') ? 1 : 0,
+                // Smart Document Revision: simpan status verifikasi per file
+                'verif_suket_keluar' => $request->has('file_suket_keluar_ok') ? 1 : 0,
+                'verif_suket_dapo' => $request->has('file_suket_dapo_ok') ? 1 : 0,
+                'verif_suket_diterima' => $request->has('file_suket_diterima_ok') ? 1 : 0,
+                'verif_rapor' => $request->has('file_rapor_ok') ? 1 : 0,
+                'catatan_berkas' => $request->catatan_berkas,
+                'status' => $status,
+                'updated_at' => now(),
+            ]);
+
+            return true;
+        });
+
+        if (!$verified) {
+            return back()->with('error', 'Status usulan sudah berubah. Silakan muat ulang halaman sebelum memverifikasi.');
+        }
+        \App\Services\MutationStatisticsCache::invalidate();
 
         // Send Telegram notification to pengusul (wrapped in try-catch)
         try {
@@ -935,12 +949,18 @@ class MutasiController extends Controller
         }
         $previousStatus = $mutasi->status;
 
-        DB::table('mutasi_keluar')->where('id_mutasi', $id)->update([
+        $issued = DB::table('mutasi_keluar')->where('id_mutasi', $id)
+            ->where('status', 'Disetujui Dinas')->update([
             'nomor_surat_izin' => $request->filled('nomor_surat_izin') ? $request->nomor_surat_izin : null,
             'tanggal_surat_izin' => $request->tanggal_surat_izin,
             'status' => 'Proses TTD',
             'updated_at' => now(),
         ]);
+
+        if (!$issued) {
+            return back()->with('error', 'Status usulan sudah berubah. Silakan muat ulang halaman sebelum menyiapkan surat.');
+        }
+        \App\Services\MutationStatisticsCache::invalidate();
 
         // Send Telegram notification to pengusul about Proses TTD status (wrapped in try-catch)
         try {

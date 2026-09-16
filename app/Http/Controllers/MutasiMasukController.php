@@ -828,42 +828,54 @@ class MutasiMasukController extends Controller
 
         $id = $this->sanitize($id);
 
-        $mutasi = DB::table('mutasi_masuk')->where('id_mutasi', $id)->first();
-        if (!$mutasi) {
-            abort(404);
-        }
-
         $action = $request->input('action');
         $status = $action === 'approve' ? 'Disetujui Dinas' : 'Perlu Perbaikan';
+        $verified = DB::transaction(function () use ($request, $id, $status) {
+            $mutasi = DB::table('mutasi_masuk')->where('id_mutasi', $id)->lockForUpdate()->first();
+            if (!$mutasi) {
+                abort(404);
+            }
 
-        // Save verification status for each document per murid
-        $siswaList = DB::table('mutasi_masuk_siswa')->where('id_mutasi', $id)->get();
-        $verifikasiInput = $request->input('verifikasi', []);
+            if ($mutasi->status !== 'Menunggu Verifikasi Dinas') {
+                return false;
+            }
 
-        foreach ($siswaList as $idx => $siswa) {
-            $siswaVerif = $verifikasiInput[$siswa->id] ?? [];
+            // Save verification status for each document per murid
+            $siswaList = DB::table('mutasi_masuk_siswa')->where('id_mutasi', $id)->get(['id']);
+            $verifikasiInput = $request->input('verifikasi', []);
 
-            $verifData = [
-                'verif_surat_pindah' => isset($siswaVerif["siswa_{$idx}_pindah"]) ? 1 : 0,
-                'verif_surat_dapodik' => isset($siswaVerif["siswa_{$idx}_dapodik"]) ? 1 : 0,
-                'verif_rekomendasi' => isset($siswaVerif["siswa_{$idx}_rekom"]) ? 1 : 0,
-                'verif_ijazah_sd' => isset($siswaVerif["siswa_{$idx}_ijazah"]) ? 1 : 0,
-                'verif_rapor' => isset($siswaVerif["siswa_{$idx}_rapor"]) ? 1 : 0,
-                'verif_surat_penyaluran' => isset($siswaVerif["siswa_{$idx}_penyaluran"]) ? 1 : 0,
-                'verif_rekam_didik' => isset($siswaVerif["siswa_{$idx}_rekam_didik"]) ? 1 : 0,
+            foreach ($siswaList as $idx => $siswa) {
+                $siswaVerif = $verifikasiInput[$siswa->id] ?? [];
+
+                $verifData = [
+                    'verif_surat_pindah' => isset($siswaVerif["siswa_{$idx}_pindah"]) ? 1 : 0,
+                    'verif_surat_dapodik' => isset($siswaVerif["siswa_{$idx}_dapodik"]) ? 1 : 0,
+                    'verif_rekomendasi' => isset($siswaVerif["siswa_{$idx}_rekom"]) ? 1 : 0,
+                    'verif_ijazah_sd' => isset($siswaVerif["siswa_{$idx}_ijazah"]) ? 1 : 0,
+                    'verif_rapor' => isset($siswaVerif["siswa_{$idx}_rapor"]) ? 1 : 0,
+                    'verif_surat_penyaluran' => isset($siswaVerif["siswa_{$idx}_penyaluran"]) ? 1 : 0,
+                    'verif_rekam_didik' => isset($siswaVerif["siswa_{$idx}_rekam_didik"]) ? 1 : 0,
+                    'updated_at' => now(),
+                ];
+
+                DB::table('mutasi_masuk_siswa')
+                    ->where('id', $siswa->id)
+                    ->update($verifData);
+            }
+
+            DB::table('mutasi_masuk')->where('id_mutasi', $id)->update([
+                'catatan_berkas' => $this->sanitize($request->catatan_berkas),
+                'status' => $status,
                 'updated_at' => now(),
-            ];
+            ]);
 
-            DB::table('mutasi_masuk_siswa')
-                ->where('id', $siswa->id)
-                ->update($verifData);
+            return true;
+        });
+
+        if (!$verified) {
+            return back()->with('error', 'Status usulan sudah berubah. Silakan muat ulang halaman sebelum memverifikasi.');
         }
-
-        DB::table('mutasi_masuk')->where('id_mutasi', $id)->update([
-            'catatan_berkas' => $this->sanitize($request->catatan_berkas),
-            'status' => $status,
-            'updated_at' => now(),
-        ]);
+        \App\Services\MutationStatisticsCache::invalidate();
 
         // Send Telegram notification to pengusul (wrapped in try-catch)
         try {
@@ -871,7 +883,7 @@ class MutasiMasukController extends Controller
             if ($updatedMutasi) {
                 \App\Helpers\NotificationHelper::notifyPengusulOnStatusChange(
                     $updatedMutasi,
-                    $mutasi->status,
+                    'Menunggu Verifikasi Dinas',
                     $status,
                     'masuk'
                 );
@@ -917,12 +929,18 @@ class MutasiMasukController extends Controller
         }
         $previousStatus = $mutasi->status;
 
-        DB::table('mutasi_masuk')->where('id_mutasi', $id)->update([
+        $issued = DB::table('mutasi_masuk')->where('id_mutasi', $id)
+            ->where('status', 'Disetujui Dinas')->update([
             'nomor_surat_izin' => $request->filled('nomor_surat_izin') ? $this->sanitize($request->nomor_surat_izin) : null,
             'tanggal_surat_izin' => $request->tanggal_surat_izin,
             'status' => 'Proses TTD',
             'updated_at' => now(),
         ]);
+
+        if (!$issued) {
+            return back()->with('error', 'Status usulan sudah berubah. Silakan muat ulang halaman sebelum menyiapkan surat.');
+        }
+        \App\Services\MutationStatisticsCache::invalidate();
 
         // Send Telegram notification to pengusul about Proses TTD status (wrapped in try-catch)
         try {

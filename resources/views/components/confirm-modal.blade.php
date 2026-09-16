@@ -1,7 +1,7 @@
 {{-- Custom Confirm Modal - Global Component --}}
 {{-- Include this in layouts/app.blade.php --}}
 
-<div id="confirmModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-xs">
+<div id="confirmModal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmMessage" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-xs">
     <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden transform transition-all">
         <!-- Header -->
         <div class="px-6 pt-6 pb-4">
@@ -45,6 +45,11 @@
             const icon = document.getElementById('confirmIcon');
             const okBtn = document.getElementById('confirmOk');
             const cancelBtn = document.getElementById('confirmCancel');
+            const previousFocus = document.activeElement;
+            if (!modal.classList.contains('hidden')) {
+                resolve(false);
+                return;
+            }
 
             // Set content
             title.textContent = options.title || 'Konfirmasi';
@@ -73,6 +78,7 @@
             // Show modal
             modal.classList.remove('hidden');
             modal.classList.add('flex');
+            cancelBtn.focus();
 
             // Handle clicks
             const handleOk = () => {
@@ -92,17 +98,30 @@
                 }
             };
 
+            const handleKeydown = (event) => {
+                if (event.key === 'Escape') {
+                    event.preventDefault();
+                    handleCancel();
+                } else if (event.key === 'Tab') {
+                    event.preventDefault();
+                    (document.activeElement === cancelBtn ? okBtn : cancelBtn).focus();
+                }
+            };
+
             const cleanup = () => {
                 modal.classList.add('hidden');
                 modal.classList.remove('flex');
                 okBtn.removeEventListener('click', handleOk);
                 cancelBtn.removeEventListener('click', handleCancel);
                 modal.removeEventListener('click', handleBackdrop);
+                document.removeEventListener('keydown', handleKeydown);
+                if (previousFocus?.isConnected) previousFocus.focus();
             };
 
             okBtn.addEventListener('click', handleOk);
             cancelBtn.addEventListener('click', handleCancel);
             modal.addEventListener('click', handleBackdrop);
+            document.addEventListener('keydown', handleKeydown);
         });
     };
 

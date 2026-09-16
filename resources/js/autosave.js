@@ -10,6 +10,8 @@
 
     const SAVE_INTERVAL = 30000; // 30 seconds
     const STORAGE_PREFIX = 'simak_draft_';
+    const indicators = new WeakMap();
+    const indicatorTimers = new WeakMap();
 
     /**
      * Get storage key for a form
@@ -116,20 +118,28 @@
      * Clear saved form data
      */
     function clearFormData(key) {
-        localStorage.removeItem(getStorageKey(key));
+        try {
+            localStorage.removeItem(getStorageKey(key));
+        } catch (e) {
+            console.warn('AutoSave: Failed to clear form data', e);
+        }
     }
 
     /**
      * Update save status indicator
      */
     function updateStatusIndicator(form, status) {
-        let indicator = form.querySelector('.autosave-status');
+        let indicator = indicators.get(form);
 
         if (!indicator) {
             indicator = document.createElement('div');
             indicator.className = 'autosave-status fixed bottom-4 right-4 px-4 py-2 bg-gray-800 text-white text-sm rounded-lg shadow-lg transition-opacity duration-300 z-50';
-            document.body.appendChild(indicator);
+            indicator.setAttribute('role', 'status');
+            indicator.setAttribute('aria-live', 'polite');
+            form.appendChild(indicator);
+            indicators.set(form, indicator);
         }
+        clearTimeout(indicatorTimers.get(form));
 
         if (status === 'saving') {
             indicator.innerHTML = '<span class="autosave-saving">⏳ Menyimpan draft...</span>';
@@ -140,15 +150,16 @@
             indicator.style.opacity = '1';
 
             // Hide after 3 seconds
-            setTimeout(() => {
+            indicatorTimers.set(form, setTimeout(() => {
                 indicator.style.opacity = '0';
-            }, 3000);
+            }, 3000));
         } else if (status === 'restored') {
             indicator.innerHTML = '📋 Draft sebelumnya dipulihkan';
             indicator.style.opacity = '1';
 
             // Add clear button
             const clearBtn = document.createElement('button');
+            clearBtn.type = 'button';
             clearBtn.className = 'ml-2 underline hover:no-underline';
             clearBtn.textContent = 'Hapus';
             clearBtn.onclick = () => {
@@ -158,9 +169,12 @@
             };
             indicator.appendChild(clearBtn);
 
-            setTimeout(() => {
+            indicatorTimers.set(form, setTimeout(() => {
                 indicator.style.opacity = '0';
-            }, 5000);
+            }, 5000));
+        } else if (status === 'error') {
+            indicator.textContent = 'Draft belum tersimpan di perangkat. Periksa penyimpanan browser.';
+            indicator.style.opacity = '1';
         }
     }
 
@@ -173,6 +187,17 @@
         form.dataset.autosaveInitialized = 'true';
 
         let saveTimer = null;
+        let dirty = false;
+
+        function saveChanges() {
+            if (!form.isConnected || !dirty) return;
+            if (saveFormData(form, key)) {
+                dirty = false;
+                updateStatusIndicator(form, 'saved');
+            } else {
+                updateStatusIndicator(form, 'error');
+            }
+        }
 
         // Try to restore saved data
         const savedData = loadFormData(key);
@@ -186,28 +211,25 @@
             if (saveTimer) clearTimeout(saveTimer);
 
             saveTimer = setTimeout(() => {
-                updateStatusIndicator(form, 'saving');
-
-                setTimeout(() => {
-                    if (saveFormData(form, key)) {
-                        updateStatusIndicator(form, 'saved');
-                    }
-                    scheduleSave();
-                }, 500);
+                if (!form.isConnected) return;
+                saveChanges();
+                scheduleSave();
             }, SAVE_INTERVAL);
         }
 
         // Save on input changes (debounced)
         let inputTimer = null;
         form.addEventListener('input', () => {
+            dirty = true;
             if (inputTimer) clearTimeout(inputTimer);
-            inputTimer = setTimeout(() => {
-                saveFormData(form, key);
-            }, 2000);
+            inputTimer = setTimeout(saveChanges, 2000);
         });
 
         // Clear on successful submit
         form.addEventListener('submit', () => {
+            clearTimeout(inputTimer);
+            clearTimeout(saveTimer);
+            dirty = false;
             clearFormData(key);
         });
 
