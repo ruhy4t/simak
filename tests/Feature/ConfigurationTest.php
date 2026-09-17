@@ -30,7 +30,8 @@ class ConfigurationTest extends TestCase
         $this->assertSame(30, $vercel['functions']['api/*.php']['maxDuration']);
         $this->assertArrayNotHasKey('APP_URL', $vercel['env']);
         $this->assertArrayNotHasKey('ASSET_URL', $vercel['env']);
-        $this->assertSame('2.7.7', $vercel['env']['APP_VERSION']);
+        $this->assertSame(config('app.version'), $vercel['env']['APP_VERSION']);
+        $this->assertStringContainsString('APP_VERSION='.config('app.version'), file_get_contents(base_path('.env.example')));
         $this->assertSame('true', $vercel['env']['SESSION_SECURE_COOKIE']);
         $this->assertSame('true', $vercel['env']['SESSION_ENCRYPT']);
         $this->assertSame('database', $vercel['env']['CACHE_DRIVER']);
