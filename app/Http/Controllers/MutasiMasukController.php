@@ -356,6 +356,7 @@ class MutasiMasukController extends Controller
 
         // Base validation with custom messages
         $rules = [
+            'draft_id' => 'nullable|string|max:20',
             'jumlah_siswa' => 'required|integer|min:1', // Removed max:5
             'nomor_surat' => 'required|string|max:50',
             'tanggal_surat' => 'required|date|before_or_equal:today|after:1900-01-01',
@@ -489,7 +490,22 @@ class MutasiMasukController extends Controller
         try {
             DB::beginTransaction();
 
-            $idMutasi = $this->mutasiService->generateMutasiMasukId();
+            $draft = null;
+            if ($request->filled('draft_id')) {
+                $draft = DB::table('mutasi_masuk')
+                    ->where('id_mutasi', $request->input('draft_id'))
+                    ->lockForUpdate()
+                    ->first();
+
+                if (! $draft || $draft->status !== 'Draft'
+                    || ($draft->pengusul !== $user->username && ! in_array($user->role, ['Dinas', 'SuperAdmin']))) {
+                    DB::rollBack();
+
+                    return back()->with('error', 'Draft tidak ditemukan, sudah dikirim, atau tidak dapat Anda akses.')->withInput();
+                }
+            }
+
+            $idMutasi = $draft?->id_mutasi ?? $this->mutasiService->generateMutasiMasukId();
 
             // Upload surat permohonan
             $fileSuratPermohonan = null;
@@ -535,7 +551,7 @@ class MutasiMasukController extends Controller
                 ? 'Disetujui Dinas'
                 : 'Menunggu Verifikasi Dinas';
 
-            DB::table('mutasi_masuk')->insert([
+            $headerData = [
                 'id_mutasi' => $idMutasi,
                 'tanggal_pengajuan' => now(),
                 ...($this->supportsSubmissionTimeline() ? ['last_submitted_at' => now()] : []),
@@ -547,11 +563,20 @@ class MutasiMasukController extends Controller
                 'nama_sekolah_tujuan' => $this->sanitize($request->nama_sekolah_tujuan),
                 'alamat_sekolah_tujuan' => $this->sanitize($request->alamat_sekolah_tujuan),
                 'status' => $initialStatus,
-                'pengusul' => $user->username,
+                'pengusul' => $draft?->pengusul ?? $user->username,
                 'is_dinas_entry' => $isDinasEntry ? 1 : 0,
-                'created_at' => now(),
+                'created_at' => $draft?->created_at ?? now(),
                 'updated_at' => now(),
-            ]);
+            ];
+
+            if ($draft) {
+                DB::table('mutasi_masuk')->where('id_mutasi', $idMutasi)->update($headerData);
+                // The submitted form contains the complete student list. Replace
+                // draft rows within the same transaction, keeping the mutation ID.
+                DB::table('mutasi_masuk_siswa')->where('id_mutasi', $idMutasi)->delete();
+            } else {
+                DB::table('mutasi_masuk')->insert($headerData);
+            }
 
             // Insert per murid with sanitization
             $siswaData = $request->input('siswa', []);
@@ -734,23 +759,6 @@ class MutasiMasukController extends Controller
 
             // Notify Dinas users about new submission (wrapped in try-catch to not affect save)
             try {
-                // CLEANUP DRAFT: If this was a resume operation, delete the old draft DB records
-                // We do NOT delete files because they are reused/moved to the new ID
-                if ($request->filled('draft_id')) {
-                    $draftId = $request->draft_id;
-                    $oldDraft = DB::table('mutasi_masuk')
-                        ->where('id_mutasi', $draftId)
-                        ->where('status', 'Draft')
-                        ->where('pengusul', $user->username) // Security check
-                        ->first();
-
-                    if ($oldDraft) {
-                        DB::table('mutasi_masuk_siswa')->where('id_mutasi', $draftId)->delete();
-                        DB::table('mutasi_masuk')->where('id_mutasi', $draftId)->delete();
-                        Log::info("Old Draft {$draftId} cleaned up after submission {$idMutasi}");
-                    }
-                }
-
                 $newMutasi = DB::table('mutasi_masuk')->where('id_mutasi', $idMutasi)->first();
                 // Skip notification if submitter is Dinas/SuperAdmin (they already know about their own submission)
                 if ($newMutasi && !in_array($user->role, ['Dinas', 'SuperAdmin'])) {

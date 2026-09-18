@@ -521,6 +521,61 @@ class MutationDraftWorkflowTest extends TestCase
         $this->assertStringContainsString("->whereNotIn('status', ['Draft', 'Dibatalkan', 'Ditolak'])", $outgoingController);
     }
 
+    public function test_submitting_incoming_draft_keeps_id_files_and_does_not_duplicate_on_retry(): void
+    {
+        (require database_path('migrations/2024_01_01_000004_create_mutasi_masuk_siswa_table.php'))->up();
+        (require database_path('migrations/2025_12_29_000001_add_rekam_didik_to_mutasi_masuk_siswa.php'))->up();
+        Auth::user()->role = 'Dinas';
+        $controller = app(MutasiMasukController::class);
+
+        foreach ([1, 2] as $count) {
+            $header = [
+                'jumlah_siswa' => $count,
+                'nomor_surat' => '123/Permohonan',
+                'tanggal_surat' => '2026-01-05',
+                'npsn_sekolah_tujuan' => '12345678',
+                'nama_sekolah_tujuan' => 'SMP Tujuan',
+                'alamat_sekolah_tujuan' => 'Bogor',
+            ];
+            $draft = $controller->createDraft($this->jsonRequest('/mutasi-masuk/draft', $header));
+            $id = $draft->getData(true)['id_mutasi'];
+            $path = "mutasi_masuk/{$id}_surat_permohonan.pdf";
+            DB::table('mutasi_masuk')->where('id_mutasi', $id)->update(['file_surat_permohonan' => $path]);
+            $student = [
+                'nama_murid' => 'Murid Pengujian', 'nisn' => '0012345678', 'nis' => '123',
+                'tempat_lahir' => 'Bogor', 'tanggal_lahir' => '2012-01-02',
+                'jenis_kelamin' => 'L', 'kelas' => 'VIII', 'tanggal_diterima' => '2026-01-05',
+                'nama_sekolah_asal' => 'SMP Asal', 'alamat_sekolah_asal' => 'Bandung',
+                'provinsi_asal' => 'Jawa Barat', 'kabupaten_kota_asal' => 'Bandung',
+            ];
+            DB::table('mutasi_masuk_siswa')->insert($student + ['id_mutasi' => $id]);
+            $payload = $header + [
+                'draft_id' => $id, 'is_dinas_entry' => 1,
+                'file_surat_permohonan' => $path,
+                'siswa' => array_fill(0, $count, $student),
+            ];
+            $sequence = DB::table('mutation_id_sequences')->where('type', 'masuk')->value('last_value');
+            $response = $controller->store($this->jsonRequest('/mutasi-masuk', $payload));
+            $this->assertSame(route('mutasi.masuk.index'), $response->getTargetUrl());
+            $this->assertDatabaseHas('mutasi_masuk', [
+                'id_mutasi' => $id, 'status' => 'Disetujui Dinas', 'file_surat_permohonan' => $path,
+            ]);
+            $this->assertSame($count, DB::table('mutasi_masuk_siswa')->where('id_mutasi', $id)->count());
+            $this->assertSame($sequence, DB::table('mutation_id_sequences')->where('type', 'masuk')->value('last_value'));
+            $total = DB::table('mutasi_masuk')->count();
+            $controller->store($this->jsonRequest('/mutasi-masuk', $payload));
+            $this->assertSame($total, DB::table('mutasi_masuk')->count());
+            $this->assertSame($count, DB::table('mutasi_masuk_siswa')->where('id_mutasi', $id)->count());
+
+            $record = DB::table('mutasi_masuk')->where('id_mutasi', $id)->first();
+            $record->nomor_surat_izin = null;
+            $record->tanggal_surat_izin = null;
+            $letter = app(\App\Services\PdfService::class)->prepareMutasiMasukData($record);
+            $this->assertSame($id, $letter->id_mutasi);
+            $this->assertStringStartsWith($id.'_', app(\App\Services\WordDocumentService::class)->mutasiMasukFilename($letter, $count));
+        }
+    }
+
     private function insertOutgoingMutation(array $overrides = []): void
     {
         DB::table('mutasi_keluar')->insert(array_merge([
