@@ -28,15 +28,18 @@
                     @csrf
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Password Saat Ini</label>
+                        <label for="current_password" class="block text-sm font-medium text-gray-700 mb-1">Password Saat Ini / Password Sementara</label>
                         <div class="relative" x-data="{ show: false }">
-                            <input :type="show ? 'text' : 'password'" name="current_password" required
+                            <input type="password" :type="show ? 'text' : 'password'" id="current_password" name="current_password" required autocomplete="current-password" aria-describedby="current-password-help"
                                 class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-100 focus:border-red-500 outline-hidden pr-10">
                             <button type="button" @click="show = !show"
                                 class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-hidden z-10 transition-colors cursor-pointer">
                                 <i class="bi" :class="show ? 'bi-eye-slash-fill' : 'bi-eye-fill'"></i>
                             </button>
                         </div>
+                        <p id="current-password-help" class="text-xs text-gray-500 mt-2">
+                            Masukkan password yang digunakan untuk login tadi. Jika akun baru dibuat atau direset, gunakan password sementara terbaru dari admin, bukan password sebelum reset.
+                        </p>
                         @error('current_password')
                             <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
                         @enderror
@@ -47,7 +50,7 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Password Baru</label>
                         <div class="relative" x-data="{ show: false }">
-                            <input :type="show ? 'text' : 'password'" name="password" required minlength="8"
+                            <input type="password" :type="show ? 'text' : 'password'" name="password" required minlength="8" autocomplete="new-password"
                                 class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden pr-10">
                             <button type="button" @click="show = !show"
                                 class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-hidden z-10 transition-colors cursor-pointer">
@@ -59,7 +62,7 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Konfirmasi Password Baru</label>
                         <div class="relative" x-data="{ show: false }">
-                            <input :type="show ? 'text' : 'password'" name="password_confirmation" required minlength="8"
+                            <input type="password" :type="show ? 'text' : 'password'" name="password_confirmation" required minlength="8" autocomplete="new-password"
                                 class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-hidden pr-10">
                             <button type="button" @click="show = !show"
                                 class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-hidden z-10 transition-colors cursor-pointer">

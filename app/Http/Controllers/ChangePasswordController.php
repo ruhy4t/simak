@@ -31,7 +31,7 @@ class ChangePasswordController extends Controller
 
         // Check if current password matches
         if (!Hash::check($request->current_password, $user->password)) {
-            return back()->withErrors(['current_password' => 'Password saat ini salah.']);
+            return back()->withErrors(['current_password' => 'Password saat ini tidak sesuai. Gunakan password untuk login terakhir atau password sementara terbaru dari admin jika akun direset.']);
         }
 
         // Update Password
