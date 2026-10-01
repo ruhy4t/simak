@@ -220,12 +220,13 @@
                                                 Lanjutkan
                                             </a>
                                             <form action="{{ route('mutasi.masuk.draft.delete', $mutasi->id_mutasi) }}" method="POST" class="inline"
-                                                onsubmit="return confirm('Apakah Anda yakin ingin menghapus draft ini?\n\nSemua file yang sudah diunggah juga akan dihapus secara permanen.');">
+                                                data-confirm="Batalkan dan hapus draft #{{ $mutasi->id_mutasi }} beserta berkasnya secara permanen? Tindakan ini tidak dapat dibatalkan."
+                                                data-confirm-title="Batalkan &amp; Hapus Draft" data-confirm-type="danger">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit"
                                                     class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50"
-                                                    title="Hapus Draft">
+                                                    title="Batalkan & Hapus Draft" aria-label="Batalkan & Hapus Draft">
                                                     <i class="bi bi-trash-fill"></i>
                                                 </button>
                                             </form>
@@ -236,6 +237,20 @@
                                                 <i class="bi bi-eye"></i>
                                                 <span>Detail</span>
                                             </a>
+
+                                            @if($mutasi->status === 'Perlu Perbaikan')
+                                                <form action="{{ route('mutasi.masuk.cancel', $mutasi->id_mutasi) }}" method="POST" class="inline"
+                                                    data-confirm="Batalkan dan hapus usulan #{{ $mutasi->id_mutasi }} beserta data murid dan seluruh dokumennya secara permanen? Tindakan ini tidak dapat dibatalkan."
+                                                    data-confirm-title="Batalkan &amp; Hapus Usulan" data-confirm-type="danger">
+                                                    @csrf
+                                                    @method('PUT')
+                                                    <button type="submit"
+                                                        class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50"
+                                                        title="Batalkan & Hapus Usulan" aria-label="Batalkan & Hapus Usulan">
+                                                        <i class="bi bi-trash" aria-hidden="true"></i>
+                                                    </button>
+                                                </form>
+                                            @endif
 
                                             @if($mutasi->status === 'Selesai')
                                                 @if($mutasi->file_arsip_scan)

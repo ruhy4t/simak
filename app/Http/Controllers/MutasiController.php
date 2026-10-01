@@ -160,7 +160,7 @@ class MutasiController extends Controller
 
     /**
      * Cancel and Permanently Delete Submission
-     * Only allowed if status is 'Menunggu Verifikasi Dinas' or 'Perlu Perbaikan'
+    * Only allowed for pending or revision-required submissions.
      */
     public function cancel(Request $request, string $id)
     {
@@ -203,20 +203,19 @@ class MutasiController extends Controller
                 return back()->with('error', 'Gagal menghapus! Status usulan tidak mengizinkan pembatalan. Silakan refresh halaman.');
             }
 
-            // 4. Delete Files Physically (from dokumen_rahasia, not public/storage)
+            // 4. Remove all referenced files from the active storage disk.
             $fileColumns = ['file_suket_keluar', 'file_suket_dapo', 'file_suket_diterima', 'file_rapor', 'file_arsip_scan'];
-            foreach ($fileColumns as $col) {
-                if (!empty($mutasi->$col)) {
-                    $fullPath = storage_path('app/dokumen_rahasia/' . ltrim($mutasi->$col, '/'));
-                    if (file_exists($fullPath)) {
-                        try {
-                            unlink($fullPath);
-                            Log::info("Deleted file on cancel: " . $mutasi->$col);
-                        } catch (\Exception $e) {
-                            Log::error("Failed to delete file on cancel: " . $mutasi->$col . " - " . $e->getMessage());
-                        }
-                    }
-                }
+            try {
+                $this->fileUploadService->deleteStoredFiles(
+                    array_map(fn ($column) => $mutasi->$column ?? null, $fileColumns)
+                );
+            } catch (\Throwable $e) {
+                Log::error('Permanent mutasi keluar deletion stopped because files could not be removed.', [
+                    'mutasi_id' => $id,
+                    'exception' => $e,
+                ]);
+
+                return back()->with('error', 'Usulan belum dihapus karena ada berkas yang gagal dihapus. Silakan coba kembali.');
             }
 
             // 5. Permanent Delete Database Record
@@ -1507,25 +1506,19 @@ class MutasiController extends Controller
             return back()->with('error', 'Hanya usulan dengan status Draft yang dapat dihapus.');
         }
 
-        // Delete every document owned by the draft from permanent or temporary storage.
+        // Remove every document owned by the draft from permanent or temporary storage.
         $fileColumns = ['file_suket_keluar', 'file_suket_dapo', 'file_suket_diterima', 'file_rapor', 'file_arsip_scan'];
+        try {
+            $this->fileUploadService->deleteStoredFiles(
+                array_map(fn ($column) => $draft->$column ?? null, $fileColumns)
+            );
+        } catch (\Throwable $e) {
+            Log::error('Permanent outgoing draft deletion stopped because files could not be removed.', [
+                'mutasi_id' => $id,
+                'exception' => $e,
+            ]);
 
-        // Get disk (private_docs/b2)
-        $disk = $this->fileUploadService->getDisk();
-        $tempDisk = $this->fileUploadService->getTempDisk();
-
-        foreach ($fileColumns as $col) {
-            if (!empty($draft->$col)) {
-                try {
-                    if (str_starts_with($draft->$col, 'temp_uploads/')) {
-                        Storage::disk($tempDisk)->delete($draft->$col);
-                    } else {
-                        Storage::disk($disk)->delete($draft->$col);
-                    }
-                } catch (\Exception $e) {
-                    Log::warning("Failed to delete draft file: " . $draft->$col);
-                }
-            }
+            return back()->with('error', 'Draft belum dihapus karena ada berkas yang gagal dihapus. Silakan coba kembali.');
         }
 
         DB::table('mutasi_keluar')->where('id_mutasi', $id)->delete();

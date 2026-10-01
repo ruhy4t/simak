@@ -29,8 +29,8 @@
             @endphp
             @if($canCancel)
                 <form action="{{ route('mutasi.masuk.cancel', $mutasi->id_mutasi) }}" method="POST"
-                    data-confirm="PERINGATAN: Apakah Anda yakin ingin MENGHAPUS usulan mutasi ini? Tindakan ini akan MENGHAPUS SELURUH data murid dan dokumen secara PERMANEN dan tidak dapat dikembalikan."
-                    data-confirm-title="Hapus Usulan Secara Permanen" data-confirm-type="danger">
+                    data-confirm="Batalkan dan hapus usulan #{{ $mutasi->id_mutasi }} beserta data murid dan seluruh dokumennya secara permanen? Tindakan ini tidak dapat dibatalkan."
+                    data-confirm-title="Batalkan &amp; Hapus Usulan" data-confirm-type="danger">
                     @csrf
                     @method('PUT')
                     <button type="submit"

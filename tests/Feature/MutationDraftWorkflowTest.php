@@ -62,6 +62,7 @@ class MutationDraftWorkflowTest extends TestCase
             $table->string('file_suket_dapo')->nullable();
             $table->string('file_suket_diterima')->nullable();
             $table->string('file_rapor')->nullable();
+            $table->string('file_arsip_scan')->nullable();
             $table->string('status');
             $table->string('pengusul');
             $table->timestamps();
@@ -87,6 +88,7 @@ class MutationDraftWorkflowTest extends TestCase
             $table->string('nomor_surat');
             $table->date('tanggal_surat');
             $table->string('file_surat_permohonan')->nullable();
+            $table->string('file_arsip_scan')->nullable();
             $table->string('npsn_sekolah_tujuan', 8);
             $table->string('nama_sekolah_tujuan');
             $table->text('alamat_sekolah_tujuan');
@@ -574,6 +576,154 @@ class MutationDraftWorkflowTest extends TestCase
             $this->assertSame($id, $letter->id_mutasi);
             $this->assertStringStartsWith($id.'_', app(\App\Services\WordDocumentService::class)->mutasiMasukFilename($letter, $count));
         }
+    }
+
+    public function test_outgoing_draft_deletion_removes_its_b2_file(): void
+    {
+        $this->useB2Storage();
+        $path = 'mutasi_keluar/2026/10/MK-TEST-1.pdf';
+        Storage::disk('b2')->put($path, 'private document');
+        $this->insertOutgoingMutation([
+            'status' => 'Draft',
+            'file_suket_keluar' => $path,
+        ]);
+
+        app(MutasiController::class)->deleteDraft('MK-TEST-1');
+
+        $this->assertDatabaseMissing('mutasi_keluar', ['id_mutasi' => 'MK-TEST-1']);
+        $this->assertFalse(Storage::disk('b2')->exists($path));
+    }
+
+    public function test_incoming_draft_deletion_removes_student_and_temporary_files(): void
+    {
+        $this->useB2Storage();
+        $this->createIncomingStudentTable();
+        $headerPath = 'temp_uploads/42/temp_header_01234567890123456789.pdf';
+        $studentPath = 'mutasi_masuk/2026/10/MM-TEST-1_student.pdf';
+        Storage::disk('b2')->put($headerPath, 'temporary header');
+        Storage::disk('b2')->put($studentPath, 'student document');
+        DB::table('mutasi_masuk')->insert([
+            'id_mutasi' => 'MM-TEST-1',
+            'tanggal_pengajuan' => '2026-10-01',
+            'jumlah_siswa' => 1,
+            'nomor_surat' => '123/TEST',
+            'tanggal_surat' => '2026-10-01',
+            'file_surat_permohonan' => $headerPath,
+            'npsn_sekolah_tujuan' => '12345678',
+            'nama_sekolah_tujuan' => 'SMP Pengujian',
+            'alamat_sekolah_tujuan' => 'Kota Bogor',
+            'status' => 'Draft',
+            'pengusul' => 'operator-draft',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        DB::table('mutasi_masuk_siswa')->insert([
+            'id_mutasi' => 'MM-TEST-1',
+            'file_rapor' => $studentPath,
+        ]);
+
+        app(MutasiMasukController::class)->deleteDraft(
+            Request::create('/mutasi-masuk/draft/MM-TEST-1', 'DELETE'),
+            'MM-TEST-1'
+        );
+
+        $this->assertDatabaseMissing('mutasi_masuk', ['id_mutasi' => 'MM-TEST-1']);
+        $this->assertDatabaseMissing('mutasi_masuk_siswa', ['id_mutasi' => 'MM-TEST-1']);
+        $this->assertFalse(Storage::disk('b2')->exists($headerPath));
+        $this->assertFalse(Storage::disk('b2')->exists($studentPath));
+    }
+
+    public function test_outgoing_revision_can_be_permanently_deleted_from_b2(): void
+    {
+        $this->useB2Storage();
+        $path = 'mutasi_keluar/2026/10/MK-TEST-1.pdf';
+        Storage::disk('b2')->put($path, 'private document');
+        $this->insertOutgoingMutation([
+            'status' => 'Perlu Perbaikan',
+            'file_suket_keluar' => $path,
+        ]);
+
+        app(MutasiController::class)->cancel(Request::create('/mutasi-keluar/MK-TEST-1/cancel', 'PUT'), 'MK-TEST-1');
+
+        $this->assertDatabaseMissing('mutasi_keluar', ['id_mutasi' => 'MK-TEST-1']);
+        $this->assertFalse(Storage::disk('b2')->exists($path));
+    }
+
+    public function test_incoming_revision_deletes_header_students_and_files_from_b2(): void
+    {
+        $this->useB2Storage();
+        $this->createIncomingStudentTable();
+        $headerPath = 'mutasi_masuk/2026/10/MM-TEST-1.pdf';
+        $studentPath = 'mutasi_masuk/2026/10/MM-TEST-1_student.pdf';
+        Storage::disk('b2')->put($headerPath, 'header document');
+        Storage::disk('b2')->put($studentPath, 'student document');
+        DB::table('mutasi_masuk')->insert([
+            'id_mutasi' => 'MM-TEST-1',
+            'tanggal_pengajuan' => '2026-10-01',
+            'jumlah_siswa' => 1,
+            'nomor_surat' => '123/TEST',
+            'tanggal_surat' => '2026-10-01',
+            'file_surat_permohonan' => $headerPath,
+            'npsn_sekolah_tujuan' => '12345678',
+            'nama_sekolah_tujuan' => 'SMP Pengujian',
+            'alamat_sekolah_tujuan' => 'Kota Bogor',
+            'status' => 'Perlu Perbaikan',
+            'pengusul' => 'operator-draft',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        DB::table('mutasi_masuk_siswa')->insert([
+            'id_mutasi' => 'MM-TEST-1',
+            'file_rapor' => $studentPath,
+        ]);
+
+        app(MutasiMasukController::class)->cancel(
+            Request::create('/mutasi-masuk/MM-TEST-1/cancel', 'PUT'),
+            'MM-TEST-1'
+        );
+
+        $this->assertDatabaseMissing('mutasi_masuk', ['id_mutasi' => 'MM-TEST-1']);
+        $this->assertDatabaseMissing('mutasi_masuk_siswa', ['id_mutasi' => 'MM-TEST-1']);
+        $this->assertFalse(Storage::disk('b2')->exists($headerPath));
+        $this->assertFalse(Storage::disk('b2')->exists($studentPath));
+    }
+
+    public function test_failed_file_cleanup_keeps_outgoing_submission_record(): void
+    {
+        Storage::fake('private_docs');
+        $this->insertOutgoingMutation([
+            'status' => 'Perlu Perbaikan',
+            'file_suket_keluar' => '../outside.pdf',
+        ]);
+
+        app(MutasiController::class)->cancel(Request::create('/mutasi-keluar/MK-TEST-1/cancel', 'PUT'), 'MK-TEST-1');
+
+        $this->assertDatabaseHas('mutasi_keluar', [
+            'id_mutasi' => 'MK-TEST-1',
+            'status' => 'Perlu Perbaikan',
+        ]);
+    }
+
+    private function useB2Storage(): void
+    {
+        $this->app['env'] = 'production';
+        config()->set('filesystems.disks.b2.key', 'test-key');
+        Storage::fake('b2');
+    }
+
+    private function createIncomingStudentTable(): void
+    {
+        Schema::create('mutasi_masuk_siswa', function (Blueprint $table): void {
+            $table->id();
+            $table->string('id_mutasi');
+            $table->string('file_surat_pindah')->nullable();
+            $table->string('file_surat_dapodik')->nullable();
+            $table->string('file_rekomendasi')->nullable();
+            $table->string('file_ijazah_sd')->nullable();
+            $table->string('file_rapor')->nullable();
+            $table->string('file_surat_penyaluran')->nullable();
+            $table->string('file_rekam_didik')->nullable();
+        });
     }
 
     private function insertOutgoingMutation(array $overrides = []): void

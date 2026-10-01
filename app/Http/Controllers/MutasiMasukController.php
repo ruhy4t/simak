@@ -198,7 +198,7 @@ class MutasiMasukController extends Controller
 
     /**
      * Cancel and Permanently Delete Submission
-     * Only allowed if status is 'Menunggu Verifikasi Dinas' or 'Perlu Perbaikan'
+    * Only allowed for pending or revision-required submissions.
      */
     public function cancel(Request $request, string $id)
     {
@@ -235,30 +235,9 @@ class MutasiMasukController extends Controller
                 return back()->with('error', 'Gagal menghapus! Status usulan tidak mengizinkan pembatalan. Silakan refresh halaman.');
             }
 
-            // 4. Delete Header Files (from dokumen_rahasia, not public/storage)
+            // 4. Remove header and student files from the active storage disk.
             $headerFiles = ['file_surat_permohonan', 'file_arsip_scan'];
-            foreach ($headerFiles as $col) {
-                if (!empty($mutasi->$col)) {
-                    $relativePath = ltrim($mutasi->$col, '/');
-                    // Fix for inconsistent path storage
-                    if (strpos($relativePath, 'dokumen/') === 0) {
-                        $relativePath = substr($relativePath, 8);
-                    }
-
-                    $fullPath = storage_path('app/dokumen_rahasia/' . $relativePath);
-
-                    if (file_exists($fullPath)) {
-                        try {
-                            unlink($fullPath);
-                            Log::info("Deleted header file on cancel: " . $mutasi->$col);
-                        } catch (\Exception $e) {
-                            Log::error("Failed to delete header file: " . $mutasi->$col);
-                        }
-                    }
-                }
-            }
-
-            // 5. Delete Student Files
+            // 5. Collect all student file references before deleting any records.
             $siswaList = DB::table('mutasi_masuk_siswa')->where('id_mutasi', $id)->get();
             $fileColumns = [
                 'file_surat_pindah',
@@ -270,28 +249,22 @@ class MutasiMasukController extends Controller
                 'file_rekam_didik'
             ];
 
+            $filePaths = array_map(fn ($column) => $mutasi->$column ?? null, $headerFiles);
             foreach ($siswaList as $siswa) {
                 foreach ($fileColumns as $col) {
-                    if (!empty($siswa->$col)) {
-                        $relativePath = ltrim($siswa->$col, '/');
-                        // Fix for inconsistent path storage: some WebP files might have 'dokumen/' prefix in DB
-                        // but physically exist directly under dokumen_rahasia/mutasi_masuk/...
-                        if (strpos($relativePath, 'dokumen/') === 0) {
-                            $relativePath = substr($relativePath, 8); // Remove 'dokumen/'
-                        }
-
-                        $fullPath = storage_path('app/dokumen_rahasia/' . $relativePath);
-
-                        if (file_exists($fullPath)) {
-                            try {
-                                unlink($fullPath);
-                                Log::info("Deleted student file on cancel: " . $siswa->$col);
-                            } catch (\Exception $e) {
-                                Log::error("Failed to delete student file: " . $siswa->$col);
-                            }
-                        }
-                    }
+                    $filePaths[] = $siswa->$col ?? null;
                 }
+            }
+
+            try {
+                $this->fileUploadService->deleteStoredFiles($filePaths);
+            } catch (\Throwable $e) {
+                Log::error('Permanent mutasi masuk deletion stopped because files could not be removed.', [
+                    'mutasi_id' => $id,
+                    'exception' => $e,
+                ]);
+
+                return back()->with('error', 'Usulan belum dihapus karena ada berkas yang gagal dihapus. Silakan coba kembali.');
             }
 
             // 6. Delete Students Records
@@ -2429,28 +2402,8 @@ class MutasiMasukController extends Controller
                 return back()->with('error', 'Hanya usulan dengan status Draft yang dapat dihapus. Gunakan tombol Batalkan untuk status lain.');
             }
 
-            // Get storage disk
-            $disk = $this->fileUploadService->getDisk();
-            $tempDisk = $this->fileUploadService->getTempDisk();
-
             // Delete header files
             $headerFiles = ['file_surat_permohonan', 'file_arsip_scan'];
-            foreach ($headerFiles as $col) {
-                if (!empty($mutasi->$col)) {
-                    try {
-                        // Check if it's a temp file
-                        if (str_starts_with($mutasi->$col, 'temp_uploads/')) {
-                            Storage::disk($tempDisk)->delete($mutasi->$col);
-                        } else {
-                            Storage::disk($disk)->delete($mutasi->$col);
-                        }
-                        Log::info("Deleted header file on draft delete: " . $mutasi->$col);
-                    } catch (\Exception $e) {
-                        Log::warning("Failed to delete header file: " . $mutasi->$col);
-                    }
-                }
-            }
-
             // Delete student files
             $siswaList = DB::table('mutasi_masuk_siswa')->where('id_mutasi', $id)->get();
             $fileColumns = [
@@ -2463,21 +2416,22 @@ class MutasiMasukController extends Controller
                 'file_rekam_didik'
             ];
 
+            $filePaths = array_map(fn ($column) => $mutasi->$column ?? null, $headerFiles);
             foreach ($siswaList as $siswa) {
                 foreach ($fileColumns as $col) {
-                    if (!empty($siswa->$col)) {
-                        try {
-                            if (str_starts_with($siswa->$col, 'temp_uploads/')) {
-                                Storage::disk($tempDisk)->delete($siswa->$col);
-                            } else {
-                                Storage::disk($disk)->delete($siswa->$col);
-                            }
-                            Log::info("Deleted student file on draft delete: " . $siswa->$col);
-                        } catch (\Exception $e) {
-                            Log::warning("Failed to delete student file: " . $siswa->$col);
-                        }
-                    }
+                    $filePaths[] = $siswa->$col ?? null;
                 }
+            }
+
+            try {
+                $this->fileUploadService->deleteStoredFiles($filePaths);
+            } catch (\Throwable $e) {
+                Log::error('Permanent incoming draft deletion stopped because files could not be removed.', [
+                    'mutasi_id' => $id,
+                    'exception' => $e,
+                ]);
+
+                return back()->with('error', 'Draft belum dihapus karena ada berkas yang gagal dihapus. Silakan coba kembali.');
             }
 
             // Delete student records

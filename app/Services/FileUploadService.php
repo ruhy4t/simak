@@ -157,6 +157,54 @@ class FileUploadService
     }
 
     /**
+     * Delete referenced mutation files from their configured storage disks.
+     *
+     * @param list<string|null> $paths
+     */
+    public function deleteStoredFiles(array $paths): void
+    {
+        $files = [];
+
+        foreach ($paths as $path) {
+            if (! is_string($path) || trim($path) === '') {
+                continue;
+            }
+
+            $path = ltrim(trim(str_replace('\\', '/', $path)), '/');
+            if (str_starts_with($path, 'dokumen/')) {
+                $path = substr($path, 8);
+            }
+
+            if (
+                $path === ''
+                || str_contains($path, "\0")
+                || str_contains($path, ':')
+                || preg_match('#(^|/)\.\.?(/|$)#', $path)
+            ) {
+                throw new \InvalidArgumentException('Referensi berkas tidak valid.');
+            }
+
+            $disk = str_starts_with($path, 'temp_uploads/')
+                ? $this->getTempDisk()
+                : $this->getDisk();
+
+            $files[$disk . "\0" . $path] = [$disk, $path];
+        }
+
+        foreach ($files as [$disk, $path]) {
+            $storage = Storage::disk($disk);
+
+            if (! $storage->exists($path)) {
+                continue;
+            }
+
+            if (! $storage->delete($path) || $storage->exists($path)) {
+                throw new \RuntimeException('Berkas usulan gagal dihapus dari penyimpanan.');
+            }
+        }
+    }
+
+    /**
      * Upload a single PDF file with security validation
      * 
      * @param UploadedFile $file The uploaded file

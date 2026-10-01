@@ -26,12 +26,12 @@
                     || ($user->role === 'Sekolah' && $mutasi->npsn_sekolah_asal === $user->npsn);
                 $canCancel = in_array($user->role, ['Operator', 'Sekolah'])
                     && $isOwner
-                    && $mutasi->status === 'Menunggu Verifikasi Dinas';
+                    && in_array($mutasi->status, ['Menunggu Verifikasi Dinas', 'Perlu Perbaikan']);
             @endphp
             @if($canCancel)
                 <form action="{{ route('mutasi.keluar.cancel', $mutasi->id_mutasi) }}" method="POST"
-                    data-confirm="PERINGATAN: Apakah Anda yakin ingin MENGHAPUS usulan mutasi ini? Tindakan ini akan MENGHAPUS SELURUH data dan dokumen secara PERMANEN dan tidak dapat dikembalikan."
-                    data-confirm-title="Hapus Usulan Secara Permanen" data-confirm-type="danger">
+                    data-confirm="Batalkan dan hapus usulan #{{ $mutasi->id_mutasi }} beserta seluruh dokumennya secara permanen? Tindakan ini tidak dapat dibatalkan."
+                    data-confirm-title="Batalkan &amp; Hapus Usulan" data-confirm-type="danger">
                     @csrf
                     @method('PUT')
                     <button type="submit"
