@@ -75,6 +75,7 @@ class WordDocumentServiceTest extends TestCase
         $this->assertCount(1, $document->getSections());
         $this->assertSrikandiOutgoingMargins($document);
         $this->assertSrikandiHeaderRule($path);
+        $this->assertSrikandiOpeningIndent($path);
         $this->assertSame('Times New Roman', $document->getDefaultFontName());
         $this->assertSrikandiPlaceholdersOccurExactlyOnce($path);
 
@@ -266,8 +267,8 @@ class WordDocumentServiceTest extends TestCase
 
         $this->assertEqualsWithDelta(Converter::cmToTwip(1), $style->getMarginTop(), 1);
         $this->assertEqualsWithDelta(Converter::cmToTwip(3), $style->getMarginBottom(), 1);
-        $this->assertEqualsWithDelta(Converter::cmToTwip(2.5), $style->getMarginLeft(), 1);
-        $this->assertEqualsWithDelta(Converter::cmToTwip(2.5), $style->getMarginRight(), 1);
+        $this->assertEqualsWithDelta(Converter::cmToTwip(2), $style->getMarginLeft(), 1);
+        $this->assertEqualsWithDelta(Converter::cmToTwip(2), $style->getMarginRight(), 1);
     }
 
     private function assertSrikandiSignatureSpacing(string $path): void
@@ -282,8 +283,45 @@ class WordDocumentServiceTest extends TestCase
             '/<w:style[^>]+w:styleId="Normal".*?<w:spacing[^>]+w:before="0"[^>]+w:after="0"[^>]+w:line="240"/s',
             $stylesXml
         );
-        $this->assertSame(2, substr_count($documentXml, 'w:before="360"'));
-        $this->assertSame(1, substr_count($documentXml, 'w:before="480"'));
+        $xml = new \DOMDocument;
+        $this->assertTrue($xml->loadXML($documentXml));
+        $xpath = new \DOMXPath($xml);
+        $xpath->registerNamespace('w', 'http://schemas.openxmlformats.org/wordprocessingml/2006/main');
+
+        foreach ([
+            'Bogor, ${tanggal_naskah}' => ['560', null],
+            '${ttd_pengirim}' => ['580', '1080'],
+            '${nama_pengirim}' => ['640', '560'],
+            '${pangkat_pengirim}' => ['0', '560'],
+            'NIP. ${nip_pengirim}' => ['0', '560'],
+        ] as $text => [$before, $left]) {
+            $paragraph = $xpath->query(sprintf('//w:p[w:r/w:t="%s"]', $text))->item(0);
+            $this->assertNotNull($paragraph, $text);
+            $this->assertSame($before, $xpath->evaluate('string(w:pPr/w:spacing/@w:before)', $paragraph), $text);
+            if ($left !== null) {
+                $this->assertSame($left, $xpath->evaluate('string(w:pPr/w:ind/@w:left)', $paragraph), $text);
+            }
+        }
+
+        $this->assertSame(1, $xpath->query('//w:tr[w:tc/w:p/w:r/w:t="a.n."][w:tc/w:p/w:r/w:t="Kepala Dinas,"]')->length);
+        $this->assertSame(1, $xpath->query('//w:tr[w:tc/w:p/w:r/w:t="u.b."][w:tc/w:p/w:r/w:t="Kabid SMP,"]')->length);
+    }
+
+    private function assertSrikandiOpeningIndent(string $path): void
+    {
+        $zip = new ZipArchive;
+        $this->assertTrue($zip->open($path) === true);
+        $documentXml = (string) $zip->getFromName('word/document.xml');
+        $zip->close();
+
+        $xml = new \DOMDocument;
+        $this->assertTrue($xml->loadXML($documentXml));
+        $xpath = new \DOMXPath($xml);
+        $xpath->registerNamespace('w', 'http://schemas.openxmlformats.org/wordprocessingml/2006/main');
+        $indent = $xpath->query('//w:p[w:r/w:t[starts-with(., "Berdasarkan Surat Keterangan Pindah")]]/w:pPr/w:ind')->item(0);
+        $this->assertNotNull($indent);
+        $this->assertSame('709', $xpath->evaluate('string(@w:firstLine)', $indent));
+        $this->assertSame(0, $xpath->query('@w:hanging', $indent)->length);
     }
 
     private function assertSrikandiHeaderRule(string $path): void
@@ -294,7 +332,7 @@ class WordDocumentServiceTest extends TestCase
         $zip->close();
 
         $this->assertStringContainsString('<w:pBdr>', $documentXml);
-        $this->assertStringContainsString('w:color="000000"', $documentXml);
+        $this->assertMatchesRegularExpression('/<w:bottom[^>]*w:val="double"[^>]*w:color="000000"/', $documentXml);
     }
 
     private function signer(): object

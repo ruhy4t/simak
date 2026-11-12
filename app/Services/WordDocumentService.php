@@ -72,11 +72,11 @@ class WordDocumentService
             'pageSizeW' => self::A4_WIDTH,
             'pageSizeH' => self::A4_HEIGHT,
             'marginTop' => (int) round(Converter::cmToTwip($srikandi ? 1 : 1.5)),
-            'marginRight' => (int) round(Converter::cmToTwip(2.5)),
+            'marginRight' => (int) round(Converter::cmToTwip($srikandi ? 2 : 2.5)),
             'marginBottom' => (int) round(Converter::cmToTwip(3)),
-            'marginLeft' => (int) round(Converter::cmToTwip(2.5)),
+            'marginLeft' => (int) round(Converter::cmToTwip($srikandi ? 2 : 2.5)),
         ]);
-        $contentWidth = self::A4_WIDTH - Converter::cmToTwip(5);
+        $contentWidth = self::A4_WIDTH - Converter::cmToTwip($srikandi ? 4 : 5);
 
         if ($srikandi) {
             $this->addSrikandiLetterhead($section, $contentWidth);
@@ -100,7 +100,9 @@ class WordDocumentService
             $this->text($mutasi->nomor_surat_keluar ?? '-'),
             $this->date($mutasi->tanggal_surat_keluar ?? null)
         );
-        $section->addText($opening, [], $this->paragraph(['indentation' => ['firstLine' => 709]]));
+        $section->addText($opening, [], $this->paragraph([
+            'indentation' => $srikandi ? ['firstLine' => 709, 'hanging' => null] : ['firstLine' => 709],
+        ]));
 
         $section->addText('DATA MURID :', ['bold' => true], ['indentation' => ['left' => 709], 'spaceAfter' => 0]);
         $this->addKeyValueTable($section, [
@@ -117,7 +119,7 @@ class WordDocumentService
             ['Alamat Sekolah', $mutasi->alamat_sekolah_asal ?? '-'],
         ], $contentWidth - 709, 709);
 
-        $section->addText('Bermaksud pindah dan melanjutkan sekolah di ;', [], ['spaceBefore' => 0, 'spaceAfter' => 0]);
+        $section->addText('Bermaksud pindah dan melanjutkan sekolah di ;', [], ['spaceBefore' => $srikandi ? 260 : 0, 'spaceAfter' => 0]);
         $section->addText('DATA SEKOLAH TUJUAN :', ['bold' => true], ['indentation' => ['left' => 709], 'spaceAfter' => 0]);
         $this->addKeyValueTable($section, [
             ['NPSN Sekolah Tujuan', $mutasi->npsn_tujuan ?? '-'],
@@ -130,7 +132,9 @@ class WordDocumentService
         $section->addText(
             'Demikian Surat Keterangan ini kami buat untuk dipergunakan sebagaimana mestinya.',
             [],
-            $this->paragraph(['indentation' => ['firstLine' => 709]])
+            $srikandi
+                ? $this->paragraph(['spaceBefore' => 280])
+                : $this->paragraph(['indentation' => ['firstLine' => 709]])
         );
         if ($srikandi) {
             $this->addSrikandiSignature($section, $contentWidth, true, true);
@@ -329,27 +333,30 @@ class WordDocumentService
         $logoCell = $row->addCell(1200, ['valign' => 'center']);
         $logo = public_path('images/logo_Kota_Bogor.png');
         if (is_file($logo)) {
-            $logoCell->addImage($logo, ['width' => 48, 'height' => 62, 'alignment' => Jc::LEFT]);
+            $logoCell->addTextRun(['indentation' => ['left' => 140]])
+                ->addImage($logo, ['width' => 48, 'height' => 62]);
         }
         $textCell = $row->addCell($width - 1200, ['valign' => 'center']);
         $textCell->addText('PEMERINTAH KOTA BOGOR', ['bold' => true, 'size' => 12], ['alignment' => Jc::CENTER, 'spaceAfter' => 0]);
-        $textCell->addText('DINAS PENDIDIKAN', ['bold' => true, 'size' => 12], ['alignment' => Jc::CENTER, 'spaceAfter' => 0]);
+        $textCell->addText('DINAS PENDIDIKAN', ['bold' => true, 'size' => 14], ['alignment' => Jc::CENTER, 'spaceAfter' => 0]);
         $textCell->addText(
             'Jl. Pajajaran No. 125 Kecamatan Bogor Utara, Kota Bogor',
-            ['size' => 9],
+            ['size' => 12],
             ['alignment' => Jc::CENTER, 'spaceAfter' => 0]
         );
         $textCell->addText(
             'Telepon (0251) 8341101 Faksimile (0251) 8341101',
-            ['size' => 9],
+            ['size' => 12],
             ['alignment' => Jc::CENTER, 'spaceAfter' => 0]
         );
-        $textCell->addText('Situs web disdik.kotabogor.go.id', ['size' => 8], ['alignment' => Jc::CENTER, 'spaceAfter' => 0]);
-        $section->addText('', [], [
-            'borderBottomSize' => 18,
+        $textCell->addText('Situs web disdik.kotabogor.go.id', ['size' => 12], ['alignment' => Jc::CENTER, 'spaceAfter' => 0]);
+        $section->addText('', ['size' => 1], [
+            'borderBottomSize' => 8,
+            'borderBottomStyle' => 'double',
             'borderBottomColor' => '000000',
+            'lineHeight' => 0.1,
             'spaceBefore' => 0,
-            'spaceAfter' => 240,
+            'spaceAfter' => 380,
         ]);
     }
 
@@ -504,6 +511,34 @@ class WordDocumentService
         $row = $outer->addRow();
         $row->addCell((int) ($width * 0.53));
         $cell = $row->addCell((int) ($width * 0.47));
+        if ($spacious && $includeDate) {
+            $cell->addText('Bogor, ${tanggal_naskah}', [], ['spaceBefore' => 560, 'spaceAfter' => 0]);
+            $signature = $cell->addTable([
+                'width' => (int) ($width * 0.47),
+                'unit' => TblWidth::TWIP,
+                'borderSize' => 0,
+                'cellMargin' => 0,
+            ]);
+            foreach ([['a.n.', 'Kepala Dinas,'], ['', 'Sekretaris,'], ['u.b.', 'Kabid SMP,']] as $line) {
+                $signatureRow = $signature->addRow();
+                $signatureRow->addCell(560)->addText($line[0], [], ['spaceAfter' => 0]);
+                $signatureRow->addCell((int) ($width * 0.47) - 560)->addText($line[1], [], ['spaceAfter' => 0]);
+            }
+            $cell->addText('${ttd_pengirim}', [], [
+                'indentation' => ['left' => 1080],
+                'spaceBefore' => 580,
+                'spaceAfter' => 0,
+            ]);
+            foreach (['${nama_pengirim}', '${pangkat_pengirim}', 'NIP. ${nip_pengirim}'] as $index => $line) {
+                $cell->addText($line, [], [
+                    'indentation' => ['left' => 560],
+                    'spaceBefore' => $index === 0 ? 640 : 0,
+                    'spaceAfter' => 0,
+                ]);
+            }
+
+            return;
+        }
         $lines = [
             'a.n. Kepala Dinas,',
             'Sekretaris,',
@@ -517,16 +552,8 @@ class WordDocumentService
             array_unshift($lines, 'Bogor, ${tanggal_naskah}');
         }
         foreach ($lines as $line) {
-            $spaceBefore = 0;
-            if ($spacious && $includeDate) {
-                $spaceBefore = match ($line) {
-                    'Bogor, ${tanggal_naskah}', '${ttd_pengirim}' => 360,
-                    '${nama_pengirim}' => 480,
-                    default => 0,
-                };
-            }
             $cell->addText($line, ['bold' => $line === '${nama_pengirim}'], [
-                'spaceBefore' => $spaceBefore,
+                'spaceBefore' => 0,
                 'spaceAfter' => 0,
             ]);
         }
