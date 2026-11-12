@@ -178,7 +178,7 @@ class UserManagementController extends Controller
                 'line' => $e->getLine(),
             ]);
 
-            return back()->with('error', $this->safeErrorMessage('Gagal mengubah status operator', $e));
+            return back()->with('error', $this->safeErrorMessage('Gagal mengubah status operator'));
         }
     }
 

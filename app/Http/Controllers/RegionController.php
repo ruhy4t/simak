@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 use App\Services\RegionCacheService;
 
@@ -36,15 +37,9 @@ class RegionController extends Controller
                     ->orWhere('id', 'like', "%{$search}%");
             }
 
-            // Check if table exists safely
-            try {
-                if (DB::getSchemaBuilder()->hasTable('ref_provinsi')) {
-                    $provinces = $query->paginate(10);
-                } else {
-                    throw new \Exception("Table not found");
-                }
-            } catch (\Throwable $e) {
-                // Return empty paginator if table doesn't exist or other DB error
+            if (DB::getSchemaBuilder()->hasTable('ref_provinsi')) {
+                $provinces = $query->paginate(10);
+            } else {
                 $provinces = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 10);
                 $provinces->setPath($request->url());
             }
@@ -52,8 +47,11 @@ class RegionController extends Controller
             return view('admin.regions.index', compact('provinces'));
 
         } catch (\Throwable $e) {
-            // Debugging output for Verification
-            return response('Error in RegionController: ' . $e->getMessage(), 500);
+            Log::error('Failed to load region data: ' . $e->getMessage(), [
+                'exception' => $e,
+            ]);
+
+            return response('Data wilayah gagal dimuat. Silakan muat ulang halaman atau hubungi administrator.', 500);
         }
     }
 
@@ -130,7 +128,11 @@ class RegionController extends Controller
 
             return back()->with('success', 'Data berhasil ditambahkan.');
         } catch (\Exception $e) {
-            return back()->with('error', 'Gagal menambah data: ' . $e->getMessage());
+            Log::error('Failed to add region data: ' . $e->getMessage(), [
+                'exception' => $e,
+            ]);
+
+            return back()->with('error', $this->safeErrorMessage('Gagal menambahkan data wilayah'));
         }
     }
 
@@ -170,7 +172,11 @@ class RegionController extends Controller
 
             return back()->with('success', 'Data berhasil dihapus.');
         } catch (\Exception $e) {
-            return back()->with('error', 'Gagal menghapus data: ' . $e->getMessage());
+            Log::error('Failed to delete region data: ' . $e->getMessage(), [
+                'exception' => $e,
+            ]);
+
+            return back()->with('error', $this->safeErrorMessage('Gagal menghapus data wilayah'));
         }
     }
 
@@ -210,8 +216,11 @@ class RegionController extends Controller
 
             return back()->with('success', 'Data wilayah berhasil disinkronisasi.');
         } catch (\Throwable $e) {
-            // Catch ALL errors including compilation errors if possible (though require catches parse errors differently)
-            return back()->with('error', 'Gagal sinkronisasi: ' . $e->getMessage() . ' on line ' . $e->getLine());
+            Log::error('Failed to synchronize region data: ' . $e->getMessage(), [
+                'exception' => $e,
+            ]);
+
+            return back()->with('error', $this->safeErrorMessage('Gagal menyinkronkan data wilayah'));
         }
     }
     /**

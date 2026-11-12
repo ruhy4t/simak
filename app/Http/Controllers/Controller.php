@@ -10,12 +10,8 @@ class Controller extends BaseController
 {
     use AuthorizesRequests, ValidatesRequests;
 
-    protected function safeErrorMessage(string $userMessage, \Throwable $exception): string
+    protected function safeErrorMessage(string $userMessage): string
     {
-        if (config('app.debug')) {
-            return $userMessage . ': ' . $exception->getMessage();
-        }
-
         return $userMessage . '. Silakan coba lagi atau hubungi administrator.';
     }
 
@@ -23,7 +19,7 @@ class Controller extends BaseController
     {
         $payload = [
             'success' => false,
-            'message' => $this->safeErrorMessage($userMessage, $exception),
+            'message' => $this->safeErrorMessage($userMessage),
         ];
 
         if (config('app.debug')) {

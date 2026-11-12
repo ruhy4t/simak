@@ -749,7 +749,7 @@ class MutasiMasukController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error("Mutasi Masuk Error: " . $e->getMessage());
-            return back()->with('error', $this->safeErrorMessage('Gagal menyimpan data mutasi masuk', $e))->withInput();
+            return back()->with('error', $this->safeErrorMessage('Gagal menyimpan data mutasi masuk'))->withInput();
         }
     }
 
@@ -1495,7 +1495,11 @@ class MutasiMasukController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Gagal menyimpan perbaikan: ' . $e->getMessage());
+            Log::error('Failed to save mutasi masuk revision: ' . $e->getMessage(), [
+                'exception' => $e,
+            ]);
+
+            return back()->with('error', $this->safeErrorMessage('Gagal menyimpan perbaikan data mutasi masuk'));
         }
     }
 

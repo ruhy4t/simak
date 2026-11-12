@@ -102,7 +102,7 @@ class SatuanPendidikanController extends Controller
             return response()->json([
                 'found' => false,
                 'success' => false,
-                'error' => $e->getMessage(),
+                'error' => 'Terjadi kendala saat mencari data NPSN. Silakan coba lagi.',
             ], 500);
         }
     }
@@ -377,7 +377,11 @@ class SatuanPendidikanController extends Controller
             return redirect()->route('satpen.index')
                 ->with('success', "Satuan Pendidikan {$request->nama} berhasil ditambahkan");
         } catch (\Exception $e) {
-            return back()->with('error', 'Gagal menambahkan data: '.$e->getMessage())->withInput();
+            \Log::error('Failed to add Satuan Pendidikan: '.$e->getMessage(), [
+                'exception' => $e,
+            ]);
+
+            return back()->with('error', $this->safeErrorMessage('Gagal menambahkan data satuan pendidikan'))->withInput();
         }
     }
 
@@ -672,7 +676,11 @@ class SatuanPendidikanController extends Controller
             return redirect()->route('satpen.index')
                 ->with('success', "Satuan Pendidikan {$request->nama} berhasil diperbarui");
         } catch (\Exception $e) {
-            return back()->with('error', 'Gagal memperbarui data: '.$e->getMessage())->withInput();
+            \Log::error('Failed to update Satuan Pendidikan: '.$e->getMessage(), [
+                'exception' => $e,
+            ]);
+
+            return back()->with('error', $this->safeErrorMessage('Gagal memperbarui data satuan pendidikan'))->withInput();
         }
     }
 

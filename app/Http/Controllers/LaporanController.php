@@ -1227,22 +1227,13 @@ class LaporanController extends Controller
             */
         } catch (\Exception $e) {
             \Log::error('Print comprehensive report error: '.$e->getMessage(), [
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
+                'exception' => $e,
             ]);
 
             $payload = [
                 'status' => 'error',
-                'message' => config('app.debug')
-                    ? $e->getMessage()
-                    : 'Gagal membuat laporan komprehensif. Silakan coba lagi atau hubungi administrator.',
+                'message' => 'Gagal membuat laporan komprehensif. Silakan coba lagi atau hubungi administrator.',
             ];
-
-            if (config('app.debug')) {
-                $payload['file'] = $e->getFile();
-                $payload['line'] = $e->getLine();
-                $payload['trace'] = $e->getTraceAsString();
-            }
 
             return response()->json($payload, 500);
         }

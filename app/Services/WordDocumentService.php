@@ -11,6 +11,7 @@ use PhpOffice\PhpWord\Settings;
 use PhpOffice\PhpWord\Shared\Converter;
 use PhpOffice\PhpWord\SimpleType\Jc;
 use PhpOffice\PhpWord\SimpleType\TblWidth;
+use PhpOffice\PhpWord\Style\Image as ImageStyle;
 use ZipArchive;
 
 class WordDocumentService
@@ -77,6 +78,7 @@ class WordDocumentService
             'marginBottom' => (int) round(Converter::cmToTwip(3)),
             'marginLeft' => (int) round(Converter::cmToTwip($srikandi ? 2 : 2.5)),
         ]);
+        $this->addWatermark($section);
         $contentWidth = self::A4_WIDTH - Converter::cmToTwip($srikandi ? 4 : 5);
 
         if ($srikandi) {
@@ -175,6 +177,7 @@ class WordDocumentService
             'marginBottom' => (int) round(Converter::cmToTwip(3)),
             'marginLeft' => (int) round(Converter::cmToTwip(2.5)),
         ]);
+        $this->addWatermark($section);
 
         if ($srikandi) {
             $this->addIncomingSrikandiLetterhead($section, $portraitWidth);
@@ -244,6 +247,7 @@ class WordDocumentService
                     'marginBottom' => (int) round(Converter::cmToTwip(3)),
                     'marginLeft' => (int) round(Converter::cmToTwip(2.5)),
                 ]);
+                $this->addWatermark($landscape, true);
 
                 if ($pageIndex === 0) {
                     $landscape->addText('LAMPIRAN', ['bold' => true], ['spaceAfter' => 0]);
@@ -306,6 +310,24 @@ class WordDocumentService
         ]);
 
         return $word;
+    }
+
+    private function addWatermark(Section $section, bool $landscape = false): void
+    {
+        $path = public_path('images/logo_Kota_Bogor_watermark.png');
+        if (! is_file($path)) {
+            throw new \RuntimeException('File logo watermark Kota Bogor tidak ditemukan.');
+        }
+
+        $section->addHeader()->addWatermark($path, [
+            'width' => $landscape ? 210 : 150,
+            'height' => $landscape ? 272 : 194,
+            'posHorizontal' => ImageStyle::POSITION_HORIZONTAL_CENTER,
+            'posHorizontalRel' => ImageStyle::POSITION_RELATIVE_TO_PAGE,
+            'posVertical' => ImageStyle::POSITION_VERTICAL_CENTER,
+            'posVerticalRel' => ImageStyle::POSITION_RELATIVE_TO_PAGE,
+            'wrappingStyle' => ImageStyle::WRAPPING_STYLE_BEHIND,
+        ]);
     }
 
     private function addLetterhead(Section $section, int $width, bool $compact): void

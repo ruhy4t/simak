@@ -51,6 +51,7 @@ class WordDocumentServiceTest extends TestCase
         $this->assertDocxTablesHaveNoVisibleBorders($path);
         $this->assertCount(1, $document->getSections());
         $this->assertRequestedMargins($document);
+        $this->assertWatermarks($path, [[150, 194]]);
 
         unlink($path);
     }
@@ -79,6 +80,7 @@ class WordDocumentServiceTest extends TestCase
         $this->assertSrikandiOpeningIndent($path);
         $this->assertSame('Times New Roman', $document->getDefaultFontName());
         $this->assertSrikandiPlaceholdersOccurExactlyOnce($path);
+        $this->assertWatermarks($path, [[150, 194]]);
 
         unlink($path);
     }
@@ -106,6 +108,7 @@ class WordDocumentServiceTest extends TestCase
         $this->assertCount(2, $document->getSections());
         $this->assertSame('landscape', $document->getSections()[1]->getStyle()->getOrientation());
         $this->assertRequestedMargins($document);
+        $this->assertWatermarks($path, [[150, 194], [210, 272]]);
 
         unlink($path);
     }
@@ -134,8 +137,19 @@ class WordDocumentServiceTest extends TestCase
         $this->assertRequestedMargins($document);
         $this->assertSame('Times New Roman', $document->getDefaultFontName());
         $this->assertIncomingSrikandiPlaceholderCounts($path);
+        $this->assertWatermarks($path, [[150, 194], [210, 272]]);
 
         unlink($path);
+    }
+
+    public function test_watermark_logo_uses_low_opacity_without_changing_its_proportions(): void
+    {
+        $image = imagecreatefrompng(public_path('images/logo_Kota_Bogor_watermark.png'));
+
+        $this->assertSame(474, imagesx($image));
+        $this->assertSame(613, imagesy($image));
+        $pixel = imagecolorat($image, 100, 100);
+        $this->assertSame(114, ($pixel >> 24) & 0x7F);
     }
 
     public function test_transfer_documents_preserve_special_characters_as_valid_xml(): void
@@ -265,6 +279,34 @@ class WordDocumentServiceTest extends TestCase
             $this->assertSame(2, $xpath->query('//w:p[w:r/w:t="${ttd_pengirim}"]/w:pPr/w:spacing[@w:before="580"]')->length);
             $this->assertSame(2, $xpath->query('//w:tr[w:tc/w:p/w:r/w:t="${ttd_pengirim}"]/w:trPr/w:cantSplit')->length);
         }
+    }
+
+    private function assertWatermarks(string $path, array $expectedDimensions): void
+    {
+        $zip = new ZipArchive;
+        $this->assertTrue($zip->open($path) === true);
+        $headerPaths = [];
+        for ($index = 0; $index < $zip->numFiles; $index++) {
+            $name = $zip->getNameIndex($index);
+            if (is_string($name) && preg_match('/^word\\/header\\d+\\.xml$/', $name) === 1) {
+                $headerPaths[] = $name;
+            }
+        }
+        sort($headerPaths, SORT_NATURAL);
+
+        $this->assertCount(count($expectedDimensions), $headerPaths);
+        foreach ($expectedDimensions as $index => [$width, $height]) {
+            $headerXml = (string) $zip->getFromName($headerPaths[$index]);
+            $this->assertStringContainsString('<v:shape', $headerXml);
+            $this->assertStringContainsString('width:'.$width.'pt', $headerXml);
+            $this->assertStringContainsString('height:'.$height.'pt', $headerXml);
+            $this->assertStringContainsString('mso-position-horizontal:center', $headerXml);
+            $this->assertStringContainsString('mso-position-horizontal-relative:page', $headerXml);
+            $this->assertStringContainsString('mso-position-vertical:center', $headerXml);
+            $this->assertStringContainsString('mso-position-vertical-relative:page', $headerXml);
+            $this->assertStringContainsString('z-index:-2147483647', $headerXml);
+        }
+        $zip->close();
     }
 
     public function test_incoming_attachment_keeps_the_final_signature_with_its_student_rows(): void

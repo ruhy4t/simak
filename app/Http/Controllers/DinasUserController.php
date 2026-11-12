@@ -271,7 +271,7 @@ class DinasUserController extends Controller
                 'line' => $e->getLine(),
             ]);
 
-            return back()->with('error', $this->safeErrorMessage('Gagal mengubah status akun', $e));
+            return back()->with('error', $this->safeErrorMessage('Gagal mengubah status akun'));
         }
     }
 

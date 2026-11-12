@@ -290,10 +290,6 @@ class MutasiController extends Controller
                 'line' => $e->getLine(),
             ]);
 
-            if (config('app.debug')) {
-                return response('Error in View Rendering: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine(), 500);
-            }
-
             return back()->with('error', 'Gagal membuka halaman perbaikan. Silakan coba lagi atau hubungi administrator.');
         }
     }
@@ -808,7 +804,7 @@ class MutasiController extends Controller
             DB::rollBack(); // ROLLBACK on error
             Log::error("CRITICAL ERROR MutasiKeluar: " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine());
             Log::error($e->getTraceAsString());
-            return back()->with('error', $this->safeErrorMessage('Gagal menyimpan pengajuan mutasi keluar', $e))->withInput();
+            return back()->with('error', $this->safeErrorMessage('Gagal menyimpan pengajuan mutasi keluar'))->withInput();
         }
     }
 
@@ -1221,7 +1217,7 @@ class MutasiController extends Controller
             Log::error('Mutasi keluar NPSN lookup error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => config('app.debug') ? 'Error: ' . $e->getMessage() : 'Gagal mencari data NPSN.',
+                'message' => 'Gagal mencari data NPSN. Silakan coba lagi.',
                 'data' => null
             ]);
         }
@@ -1437,7 +1433,7 @@ class MutasiController extends Controller
                 return $this->safeJsonError('Gagal menyimpan draft', $e);
             }
 
-            return back()->with('error', $this->safeErrorMessage('Gagal menyimpan draft', $e))->withInput();
+            return back()->with('error', $this->safeErrorMessage('Gagal menyimpan draft'))->withInput();
         }
     }
 
