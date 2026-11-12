@@ -70,7 +70,7 @@ class WordDocumentServiceTest extends TestCase
             '${pangkat_pengirim}',
             '${nip_pengirim}',
         ]);
-        $this->assertSingleLineZeroParagraphSpacing($path);
+        $this->assertSrikandiSignatureSpacing($path);
         $this->assertDocxTablesHaveNoVisibleBorders($path);
         $this->assertCount(1, $document->getSections());
         $this->assertSrikandiOutgoingMargins($document);
@@ -266,8 +266,24 @@ class WordDocumentServiceTest extends TestCase
 
         $this->assertEqualsWithDelta(Converter::cmToTwip(1), $style->getMarginTop(), 1);
         $this->assertEqualsWithDelta(Converter::cmToTwip(3), $style->getMarginBottom(), 1);
-        $this->assertEqualsWithDelta(Converter::cmToTwip(1.5), $style->getMarginLeft(), 1);
-        $this->assertEqualsWithDelta(Converter::cmToTwip(1.5), $style->getMarginRight(), 1);
+        $this->assertEqualsWithDelta(Converter::cmToTwip(2.5), $style->getMarginLeft(), 1);
+        $this->assertEqualsWithDelta(Converter::cmToTwip(2.5), $style->getMarginRight(), 1);
+    }
+
+    private function assertSrikandiSignatureSpacing(string $path): void
+    {
+        $zip = new ZipArchive;
+        $this->assertTrue($zip->open($path) === true);
+        $documentXml = (string) $zip->getFromName('word/document.xml');
+        $stylesXml = (string) $zip->getFromName('word/styles.xml');
+        $zip->close();
+
+        $this->assertMatchesRegularExpression(
+            '/<w:style[^>]+w:styleId="Normal".*?<w:spacing[^>]+w:before="0"[^>]+w:after="0"[^>]+w:line="240"/s',
+            $stylesXml
+        );
+        $this->assertSame(2, substr_count($documentXml, 'w:before="360"'));
+        $this->assertSame(1, substr_count($documentXml, 'w:before="480"'));
     }
 
     private function assertSrikandiHeaderRule(string $path): void

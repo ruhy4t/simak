@@ -68,16 +68,15 @@ class WordDocumentService
             'Surat Keterangan Mutasi Keluar'.($srikandi ? ' SRIKANDI' : ''),
             $srikandi ? self::SRIKANDI_FONT : self::FONT
         );
-        $horizontalMargin = $srikandi ? 3 : 5;
         $section = $word->addSection([
             'pageSizeW' => self::A4_WIDTH,
             'pageSizeH' => self::A4_HEIGHT,
             'marginTop' => (int) round(Converter::cmToTwip($srikandi ? 1 : 1.5)),
-            'marginRight' => (int) round(Converter::cmToTwip($srikandi ? 1.5 : 2.5)),
+            'marginRight' => (int) round(Converter::cmToTwip(2.5)),
             'marginBottom' => (int) round(Converter::cmToTwip(3)),
-            'marginLeft' => (int) round(Converter::cmToTwip($srikandi ? 1.5 : 2.5)),
+            'marginLeft' => (int) round(Converter::cmToTwip(2.5)),
         ]);
-        $contentWidth = self::A4_WIDTH - Converter::cmToTwip($horizontalMargin);
+        $contentWidth = self::A4_WIDTH - Converter::cmToTwip(5);
 
         if ($srikandi) {
             $this->addSrikandiLetterhead($section, $contentWidth);
@@ -134,7 +133,7 @@ class WordDocumentService
             $this->paragraph(['indentation' => ['firstLine' => 709]])
         );
         if ($srikandi) {
-            $this->addSrikandiSignature($section, $contentWidth);
+            $this->addSrikandiSignature($section, $contentWidth, true, true);
         } else {
             $this->addSignature($section, $penandatangan, 'Bogor, '.$this->date($mutasi->tanggal_surat_izin ?? null), $contentWidth);
         }
@@ -350,7 +349,7 @@ class WordDocumentService
             'borderBottomSize' => 18,
             'borderBottomColor' => '000000',
             'spaceBefore' => 0,
-            'spaceAfter' => 0,
+            'spaceAfter' => 240,
         ]);
     }
 
@@ -517,17 +516,17 @@ class WordDocumentService
         if ($includeDate) {
             array_unshift($lines, 'Bogor, ${tanggal_naskah}');
         }
-        if ($spacious) {
-            if ($includeDate) {
-                array_unshift($lines, '', '');
-            }
-            $placeholderIndex = array_search('${ttd_pengirim}', $lines, true);
-            array_splice($lines, $placeholderIndex, 0, ['', '']);
-            array_splice($lines, $placeholderIndex + 3, 0, ['', '']);
-        }
         foreach ($lines as $line) {
+            $spaceBefore = 0;
+            if ($spacious && $includeDate) {
+                $spaceBefore = match ($line) {
+                    'Bogor, ${tanggal_naskah}', '${ttd_pengirim}' => 360,
+                    '${nama_pengirim}' => 480,
+                    default => 0,
+                };
+            }
             $cell->addText($line, ['bold' => $line === '${nama_pengirim}'], [
-                'spaceBefore' => 0,
+                'spaceBefore' => $spaceBefore,
                 'spaceAfter' => 0,
             ]);
         }
