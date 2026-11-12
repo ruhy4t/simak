@@ -2440,6 +2440,21 @@
         }
 
         try {
+            for (let i = 0; i < totalSiswa; i++) {
+                const card = document.querySelector(`.siswa-card[data-index="${i}"]`);
+                if (!card || card.querySelector('[name*="[nama_murid]"]')?.value?.trim()) continue;
+
+                const hasData = Array.from(card.querySelectorAll('input, select, textarea')).some(input => {
+                    if (input.type === 'checkbox' || input.type === 'radio') return input.checked;
+                    if (input.type === 'file') return input.files.length > 0;
+                    if (input.type === 'hidden' && input.value === '0') return false;
+                    return input.value.trim() !== '';
+                });
+                if (hasData) {
+                    throw new Error(`Isi nama murid #${i + 1} sebelum menyimpan agar data murid tidak terlewat.`);
+                }
+            }
+
             // Create draft if not exists
             await createDraftIfNeeded(true);
 

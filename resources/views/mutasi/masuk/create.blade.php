@@ -302,11 +302,11 @@
             </div>
 
             <!-- Submit -->
-            <div class="flex items-center justify-between gap-3 pt-4">
+            <div class="flex flex-col items-start justify-between gap-3 pt-4 sm:flex-row sm:items-center">
                 <div class="text-sm text-slate-500 bg-white px-4 py-2 rounded-lg border border-slate-100">
                     Total Ukuran File: <span id="totalUploadSize" class="font-bold text-sky-600">0 Bytes</span>
                 </div>
-                <div class="flex items-center gap-3">
+                <div class="flex flex-wrap items-center gap-3">
                     <a href="{{ route('mutasi.masuk.index') }}"
                         class="px-6 py-2.5 border border-slate-300 text-slate-600 hover:bg-slate-50 hover:text-slate-800 rounded-xl transition font-medium">
                         Batal

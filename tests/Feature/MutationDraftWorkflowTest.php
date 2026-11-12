@@ -316,6 +316,44 @@ class MutationDraftWorkflowTest extends TestCase
         ]);
     }
 
+    public function test_incoming_create_form_shows_save_draft_for_school(): void
+    {
+        Auth::user()->role = 'Sekolah';
+
+        $this->actingAs(Auth::user())
+            ->withoutMiddleware(\App\Http\Middleware\EnsureInitialStudentCountsCompleted::class)
+            ->get(route('mutasi.masuk.create'))
+            ->assertOk()
+            ->assertSee('id="btnSaveDraft"', false)
+            ->assertSee('Simpan Draft');
+    }
+
+    public function test_school_cannot_modify_or_resume_another_users_incoming_draft(): void
+    {
+        $controller = app(MutasiMasukController::class);
+        $response = $controller->createDraft($this->jsonRequest('/mutasi-masuk/draft', [
+            'jumlah_siswa' => 1,
+            'npsn_sekolah_tujuan' => '12345678',
+            'nama_sekolah_tujuan' => 'SMP Pengujian',
+            'alamat_sekolah_tujuan' => 'Kota Bogor',
+        ]));
+        $id = $response->getData(true)['id_mutasi'];
+        Auth::user()->username = 'sekolah-lain';
+        Auth::user()->role = 'Sekolah';
+        $request = $this->jsonRequest('/mutasi-masuk/draft/'.$id, ['jumlah_siswa' => 2]);
+
+        $this->assertSame(403, $controller->updateDraftHeader($request, $id)->getStatusCode());
+        $this->assertSame(403, $controller->addStudentToDraft($request, $id)->getStatusCode());
+        $this->assertSame(403, $controller->finalizeDraft($request, $id)->getStatusCode());
+        $this->assertSame(route('mutasi.masuk.index'), $controller->resumeDraft($id)->getTargetUrl());
+        $this->assertDatabaseHas('mutasi_masuk', [
+            'id_mutasi' => $id,
+            'pengusul' => 'operator-draft',
+            'jumlah_siswa' => 1,
+            'status' => 'Draft',
+        ]);
+    }
+
     public function test_foreign_students_without_nisn_can_be_saved_and_updated_by_each_role(): void
     {
         (require database_path('migrations/2024_01_01_000004_create_mutasi_masuk_siswa_table.php'))->up();

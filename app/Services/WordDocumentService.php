@@ -7,6 +7,7 @@ use Illuminate\Support\Collection;
 use PhpOffice\PhpWord\ComplexType\TblWidth as TblWidthComplex;
 use PhpOffice\PhpWord\Element\Section;
 use PhpOffice\PhpWord\PhpWord;
+use PhpOffice\PhpWord\Settings;
 use PhpOffice\PhpWord\Shared\Converter;
 use PhpOffice\PhpWord\SimpleType\Jc;
 use PhpOffice\PhpWord\SimpleType\TblWidth;
@@ -179,8 +180,10 @@ class WordDocumentService
             $this->addIncomingSrikandiLetterhead($section, $portraitWidth);
         } else {
             $this->addLetterhead($section, $portraitWidth, true);
+            $this->addIncomingLetterheadRule($section, false);
         }
         $this->addIncomingLetterInfo($section, $mutasi, $portraitWidth, $srikandi);
+        $section->addText('', ['size' => 1], ['lineHeight' => 0.1, 'spaceAfter' => 180]);
 
         if ($srikandi) {
             $section->addText('Yth. ${jabatan_tujuan}', [], ['spaceAfter' => 0]);
@@ -193,7 +196,7 @@ class WordDocumentService
             $recipientCell->addText($this->text($mutasi->alamat_sekolah_tujuan ?? '-'), [], ['spaceAfter' => 0]);
             $row->addCell((int) ($portraitWidth * 0.52) - 500);
         }
-        $section->addText('di Bogor', [], ['indentation' => ['left' => 500], 'spaceBefore' => 0, 'spaceAfter' => 0]);
+        $section->addText('di Bogor', [], ['indentation' => ['left' => 500], 'spaceBefore' => 160, 'spaceAfter' => 0]);
 
         $body = sprintf(
             'Berdasarkan surat dari Kepala %s nomor : %s tanggal %s perihal Permohonan Izin Mutasi Masuk, dengan ini memberikan izin untuk menerima murid mutasi masuk sebagaimana terlampir.',
@@ -201,8 +204,11 @@ class WordDocumentService
             $this->text($mutasi->nomor_surat_permohonan ?? '-'),
             $this->date($mutasi->tanggal_surat_permohonan ?? null)
         );
-        $section->addText($body, [], $this->paragraph(['indentation' => ['firstLine' => 567]]));
-        $section->addText('Dengan catatan :', ['bold' => true], ['spaceAfter' => 0]);
+        $section->addText($body, [], $this->paragraph([
+            'indentation' => ['firstLine' => 567, 'hanging' => null],
+            'spaceBefore' => 240,
+        ]));
+        $section->addText('Dengan catatan :', ['bold' => true], ['spaceBefore' => 160, 'spaceAfter' => 0]);
         foreach ([
             'proses perpindahan murid berpedoman kepada ketentuan yang berlaku;',
             'Kuota murid per rombel tidak melebihi ketentuan yang sudah ditetapkan;',
@@ -213,8 +219,9 @@ class WordDocumentService
         $section->addText(
             'Demikian surat ini kami buat untuk dipergunakan sebagaimana mestinya.',
             [],
-            $this->paragraph(['indentation' => ['firstLine' => 567]])
+            $this->paragraph(['indentation' => ['firstLine' => 567, 'hanging' => null], 'spaceBefore' => 200])
         );
+        $section->addText('', ['size' => 1], ['lineHeight' => 0.1, 'spaceAfter' => 300]);
         if ($srikandi) {
             $this->addSrikandiSignature($section, $portraitWidth, false, true);
         } else {
@@ -246,18 +253,20 @@ class WordDocumentService
                     ], 4500, 0, 1000);
                     $landscape->addText('DAFTAR MURID MUTASI MASUK', ['bold' => true], [
                         'alignment' => Jc::CENTER,
-                        'spaceBefore' => 0,
+                        'spaceBefore' => 160,
                         'spaceAfter' => 0,
                     ]);
                     $landscape->addText('KE '.$this->text($mutasi->sekolah_tujuan ?? '-'), ['bold' => true], [
                         'alignment' => Jc::CENTER,
-                        'spaceAfter' => 0,
+                        'spaceAfter' => 120,
                     ]);
                 }
 
-                $this->addStudentTable($landscape, $chunk->all(), $counter, $landscapeWidth, $srikandi);
+                $isLastPage = $pageIndex === $chunks->count() - 1;
+                $this->addStudentTable($landscape, $chunk->all(), $counter, $landscapeWidth, $isLastPage);
 
-                if ($pageIndex === $chunks->count() - 1) {
+                if ($isLastPage) {
+                    $landscape->addText('', ['size' => 1], ['lineHeight' => 0.1, 'spaceAfter' => 200, 'keepNext' => true]);
                     if ($srikandi) {
                         $this->addSrikandiSignature($landscape, $landscapeWidth, false, true);
                     } else {
@@ -270,7 +279,7 @@ class WordDocumentService
         return $this->save(
             $word,
             $srikandi ? 'surat-mutasi-masuk-srikandi' : 'surat-mutasi-masuk',
-            $srikandi
+            true
         );
     }
 
@@ -363,11 +372,18 @@ class WordDocumentService
     private function addIncomingSrikandiLetterhead(Section $section, int $width): void
     {
         $this->addLetterhead($section, $width, true);
-        $section->addText('', [], [
-            'borderBottomSize' => 18,
+        $this->addIncomingLetterheadRule($section, true);
+    }
+
+    private function addIncomingLetterheadRule(Section $section, bool $double): void
+    {
+        $section->addText('', ['size' => 1], [
+            'borderBottomSize' => 8,
+            'borderBottomStyle' => $double ? 'double' : 'single',
             'borderBottomColor' => '000000',
+            'lineHeight' => 0.1,
             'spaceBefore' => 0,
-            'spaceAfter' => 0,
+            'spaceAfter' => 240,
         ]);
     }
 
@@ -381,7 +397,7 @@ class WordDocumentService
             ['Sifat', $srikandi ? '${sifat}' : 'Biasa'],
             ['Lampiran', '1 (satu)'],
             ['Hal', $srikandi ? '${hal}' : 'Izin Mutasi Murid', true],
-        ], (int) ($width * 0.58), 1000);
+        ], (int) ($width * 0.58), 1300);
         $row->addCell((int) ($width * 0.42))->addText(
             'Bogor, '.($srikandi ? '${tanggal_naskah}' : $this->date($mutasi->tanggal_surat_izin ?? null)),
             [],
@@ -420,13 +436,13 @@ class WordDocumentService
         array $students,
         int &$counter,
         int $width,
-        bool $visibleBorders = false
+        bool $keepWithSignature
     ): void {
-        $widths = [500, 2700, 1600, 600, 2500, 650, 3900, $width - 11850];
+        $widths = [500, 2400, 1500, 550, 2400, 850, 3600, $width - 11800];
         $table = $section->addTable([
             'width' => $width,
             'unit' => TblWidth::TWIP,
-            'borderSize' => $visibleBorders ? 1 : 0,
+            'borderSize' => 8,
             'borderColor' => 'B7B7B7',
             'cellMargin' => 70,
             'layout' => 'fixed',
@@ -439,8 +455,8 @@ class WordDocumentService
             ]);
         }
 
-        foreach ($students as $student) {
-            $row = $table->addRow();
+        foreach ($students as $studentIndex => $student) {
+            $row = $table->addRow(null, ['cantSplit' => true]);
             $origin = 'NPSN: '.$this->text($student['npsn_asal'] ?? $student['npsn_sekolah_asal'] ?? '-')."\n"
                 .$this->text($student['sekolah_asal'] ?? $student['nama_sekolah_asal'] ?? '-')."\n"
                 .str_replace('Kabupaten', 'Kab.', $this->text($student['kabupaten_kota_asal'] ?? ''))
@@ -459,13 +475,17 @@ class WordDocumentService
             ];
             foreach ($values as $index => $value) {
                 $cell = $row->addCell($widths[$index], ['valign' => 'center']);
-                $cell->addText($this->text($value), [
-                    'bold' => $index === 1,
-                    'size' => $index === 6 ? 9 : 10,
-                ], [
+                $run = $cell->addTextRun([
                     'alignment' => in_array($index, [0, 2, 3, 5, 7], true) ? Jc::CENTER : Jc::LEFT,
                     'spaceAfter' => 0,
+                    'keepNext' => $keepWithSignature && $studentIndex === count($students) - 1,
                 ]);
+                foreach (explode("\n", $this->text($value)) as $lineIndex => $line) {
+                    if ($lineIndex > 0) {
+                        $run->addTextBreak();
+                    }
+                    $run->addText($line, ['bold' => $index === 1, 'size' => $index === 6 ? 9 : 10]);
+                }
             }
         }
     }
@@ -473,7 +493,7 @@ class WordDocumentService
     private function addSignature(Section $section, ?object $signer, ?string $dateLine, int $width): void
     {
         $outer = $section->addTable(['width' => $width, 'unit' => TblWidth::TWIP, 'borderSize' => 0]);
-        $row = $outer->addRow();
+        $row = $outer->addRow(null, ['cantSplit' => true]);
         $row->addCell((int) ($width * 0.53));
         $cell = $row->addCell((int) ($width * 0.47));
         if ($dateLine) {
@@ -508,11 +528,13 @@ class WordDocumentService
         bool $spacious = false
     ): void {
         $outer = $section->addTable(['width' => $width, 'unit' => TblWidth::TWIP, 'borderSize' => 0]);
-        $row = $outer->addRow();
+        $row = $outer->addRow(null, ['cantSplit' => true]);
         $row->addCell((int) ($width * 0.53));
         $cell = $row->addCell((int) ($width * 0.47));
-        if ($spacious && $includeDate) {
-            $cell->addText('Bogor, ${tanggal_naskah}', [], ['spaceBefore' => 560, 'spaceAfter' => 0]);
+        if ($spacious) {
+            if ($includeDate) {
+                $cell->addText('Bogor, ${tanggal_naskah}', [], ['spaceBefore' => 560, 'spaceAfter' => 0]);
+            }
             $signature = $cell->addTable([
                 'width' => (int) ($width * 0.47),
                 'unit' => TblWidth::TWIP,
@@ -567,7 +589,13 @@ class WordDocumentService
         }
         $docxPath = $path.'.docx';
         @unlink($path);
-        $word->save($docxPath, 'Word2007');
+        $escapingEnabled = Settings::isOutputEscapingEnabled();
+        Settings::setOutputEscapingEnabled(true);
+        try {
+            $word->save($docxPath, 'Word2007');
+        } finally {
+            Settings::setOutputEscapingEnabled($escapingEnabled);
+        }
         $this->removeVisibleTableBorders($docxPath, $preserveTableBorders);
 
         return $docxPath;

@@ -6,6 +6,7 @@ use App\Services\WordDocumentService;
 use Illuminate\Support\Collection;
 use PhpOffice\PhpWord\IOFactory;
 use PhpOffice\PhpWord\PhpWord;
+use PhpOffice\PhpWord\Settings;
 use PhpOffice\PhpWord\Shared\Converter;
 use Tests\TestCase;
 use ZipArchive;
@@ -101,8 +102,7 @@ class WordDocumentServiceTest extends TestCase
         $path = app(WordDocumentService::class)->createMutasiMasuk($this->incomingTransfer(), $students, $this->signer());
 
         $document = $this->assertNativeDocx($path, ['Izin Mutasi Murid', 'DAFTAR MURID MUTASI MASUK', 'Siti Aminah']);
-        $this->assertSingleLineZeroParagraphSpacing($path);
-        $this->assertDocxTablesHaveNoVisibleBorders($path);
+        $this->assertIncomingLetterLayout($path, false);
         $this->assertCount(2, $document->getSections());
         $this->assertSame('landscape', $document->getSections()[1]->getStyle()->getOrientation());
         $this->assertRequestedMargins($document);
@@ -128,8 +128,7 @@ class WordDocumentServiceTest extends TestCase
             '${pangkat_pengirim}',
             '${nip_pengirim}',
         ]);
-        $this->assertSingleLineZeroParagraphSpacing($path);
-        $this->assertStudentTableHasVisibleBorders($path);
+        $this->assertIncomingLetterLayout($path, true);
         $this->assertCount(2, $document->getSections());
         $this->assertSame('landscape', $document->getSections()[1]->getStyle()->getOrientation());
         $this->assertRequestedMargins($document);
@@ -137,6 +136,37 @@ class WordDocumentServiceTest extends TestCase
         $this->assertIncomingSrikandiPlaceholderCounts($path);
 
         unlink($path);
+    }
+
+    public function test_transfer_documents_preserve_special_characters_as_valid_xml(): void
+    {
+        $escapingEnabled = Settings::isOutputEscapingEnabled();
+        $outgoing = $this->outgoingTransfer();
+        $outgoing->nama_siswa = 'Budi & Ani <Murid>';
+        $student = $this->incomingStudent();
+        $student->nama_murid = 'Budi & Ani <Murid>';
+        $student->nama_sekolah_asal = 'SMP A &amp; B';
+        $service = app(WordDocumentService::class);
+        $paths = [
+            $service->createMutasiKeluarSrikandi($outgoing),
+            $service->createMutasiMasukSrikandi($this->incomingTransfer(), [$student]),
+        ];
+
+        foreach ($paths as $path) {
+            $zip = new ZipArchive;
+            $this->assertTrue($zip->open($path) === true);
+            $xml = new \DOMDocument;
+            $this->assertTrue($xml->loadXML((string) $zip->getFromName('word/document.xml')));
+            $zip->close();
+            $xpath = new \DOMXPath($xml);
+            $xpath->registerNamespace('w', 'http://schemas.openxmlformats.org/wordprocessingml/2006/main');
+            $this->assertSame(1, $xpath->query('//w:t[text()="Budi & Ani <Murid>"]')->length);
+            if ($path === $paths[1]) {
+                $this->assertSame(1, $xpath->query('//w:t[text()="SMP A & B"]')->length);
+            }
+            unlink($path);
+        }
+        $this->assertSame($escapingEnabled, Settings::isOutputEscapingEnabled());
     }
 
     private function assertNativeDocx(string $path, array $expectedText): PhpWord
@@ -200,6 +230,65 @@ class WordDocumentServiceTest extends TestCase
 
         $this->assertStringContainsString('<w:tblBorders>', $documentXml);
         $this->assertStringContainsString('w:val="single"', $documentXml);
+    }
+
+    private function assertIncomingLetterLayout(string $path, bool $srikandi): void
+    {
+        $this->assertStudentTableHasVisibleBorders($path);
+        $zip = new ZipArchive;
+        $this->assertTrue($zip->open($path) === true);
+        $documentXml = (string) $zip->getFromName('word/document.xml');
+        $zip->close();
+
+        $xml = new \DOMDocument;
+        $this->assertTrue($xml->loadXML($documentXml));
+        $xpath = new \DOMXPath($xml);
+        $xpath->registerNamespace('w', 'http://schemas.openxmlformats.org/wordprocessingml/2006/main');
+
+        $table = $xpath->query('//w:tbl[w:tr/w:tc/w:p/w:r/w:t="Nama Murid"]')->item(0);
+        $this->assertNotNull($table);
+        $this->assertEqualsWithDelta(
+            16838 - Converter::cmToTwip(5),
+            $xpath->evaluate('sum(w:tblGrid/w:gridCol/@w:w)', $table),
+            1
+        );
+        $this->assertGreaterThanOrEqual(3, $xpath->query('.//w:br', $table)->length);
+        $this->assertSame(1, $xpath->query('w:tr[position()>1]/w:trPr/w:cantSplit', $table)->length);
+        $this->assertSame(8, $xpath->query('w:tr[last()]/w:tc/w:p/w:pPr/w:keepNext', $table)->length);
+        $this->assertSame(6, $xpath->query('w:tblPr/w:tblBorders/*[@w:val="single" and @w:sz="8"]', $table)->length);
+
+        $indent = $xpath->query('//w:p[w:r/w:t[starts-with(., "Berdasarkan surat dari Kepala")]]/w:pPr/w:ind')->item(0);
+        $this->assertNotNull($indent);
+        $this->assertSame('567', $xpath->evaluate('string(@w:firstLine)', $indent));
+        $this->assertSame(0, $xpath->query('@w:hanging', $indent)->length);
+        if ($srikandi) {
+            $this->assertSame(2, $xpath->query('//w:p[w:r/w:t="${ttd_pengirim}"]/w:pPr/w:spacing[@w:before="580"]')->length);
+            $this->assertSame(2, $xpath->query('//w:tr[w:tc/w:p/w:r/w:t="${ttd_pengirim}"]/w:trPr/w:cantSplit')->length);
+        }
+    }
+
+    public function test_incoming_attachment_keeps_the_final_signature_with_its_student_rows(): void
+    {
+        foreach ([4 => [4], 5 => [5], 6 => [6], 7 => [6, 1]] as $count => $expectedRows) {
+            $students = array_fill(0, $count, $this->incomingStudent());
+            $path = app(WordDocumentService::class)->createMutasiMasukSrikandi($this->incomingTransfer(), $students);
+            $document = IOFactory::load($path, 'Word2007');
+            $this->assertCount(count($expectedRows) + 1, $document->getSections());
+
+            $zip = new ZipArchive;
+            $this->assertTrue($zip->open($path) === true);
+            $xml = new \DOMDocument;
+            $this->assertTrue($xml->loadXML((string) $zip->getFromName('word/document.xml')));
+            $zip->close();
+            $xpath = new \DOMXPath($xml);
+            $xpath->registerNamespace('w', 'http://schemas.openxmlformats.org/wordprocessingml/2006/main');
+            $tables = $xpath->query('//w:tbl[w:tr/w:tc/w:p/w:r/w:t="Nama Murid"]');
+            $this->assertCount(count($expectedRows), $tables);
+            foreach ($expectedRows as $index => $expected) {
+                $this->assertSame($expected, $xpath->query('w:tr[position()>1]', $tables->item($index))->length);
+            }
+            unlink($path);
+        }
     }
 
     private function assertSrikandiPlaceholdersOccurExactlyOnce(string $path): void

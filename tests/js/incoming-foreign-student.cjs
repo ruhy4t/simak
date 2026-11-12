@@ -4,6 +4,55 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const path = require('node:path');
 
+async function saveDraftWithUnnamedStudent(extraInput) {
+    const calls = [];
+    const alerts = [];
+    const button = { innerHTML: '', disabled: false };
+    const indicator = { classList: { add() {} }, style: {} };
+    const name = { type: 'text', value: '' };
+    const inputs = [name, { type: 'hidden', value: '0' }, ...(extraInput ? [extraInput] : [])];
+    const card = {
+        querySelector: () => name,
+        querySelectorAll: () => inputs,
+    };
+    const document = {
+        getElementById: id => ({ btnSaveDraft: button, jumlah_siswa: { value: '1' }, autoSaveIndicator: indicator })[id] || null,
+        querySelector: selector => selector.startsWith('.siswa-card') ? card : null,
+        addEventListener() {},
+    };
+    const window = { MUTASI_CONFIG: { draftId: 'MM-TEST-1' } };
+    const fetch = async url => {
+        calls.push(url);
+        return { ok: true, json: async () => ({ success: true }) };
+    };
+    vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../../public/js/mutasi-masuk.js'), 'utf8'), {
+        window, document, fetch, alert: message => alerts.push(message),
+        console: { log() {}, error() {}, warn() {} }, setTimeout: () => 1, clearTimeout() {},
+    });
+    await window.saveDraftAndRedirect();
+    return { calls, alerts, button, indicator };
+}
+
+test('empty student slot permits saving the incoming draft header', async () => {
+    const result = await saveDraftWithUnnamedStudent();
+    assert.equal(result.calls.length, 1);
+    assert.match(result.indicator.textContent, /Draft tersimpan/);
+    assert.deepEqual(result.alerts, []);
+});
+
+for (const input of [
+    { type: 'text', value: '0012345678' },
+    { type: 'checkbox', checked: true },
+    { type: 'file', files: [{}] },
+]) {
+    test(`draft does not discard an unnamed student's ${input.type} data`, async () => {
+        const result = await saveDraftWithUnnamedStudent(input);
+        assert.equal(result.calls.length, 0);
+        assert.match(result.alerts[0], /Isi nama murid #1/);
+        assert.equal(result.button.disabled, false);
+    });
+}
+
 function element(saved = false) {
     return {
         required: true, checked: false, placeholder: '', textContent: '',
