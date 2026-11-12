@@ -112,6 +112,8 @@ Project ini memakai `vercel.json` dengan:
 
 Untuk Preview Deployment, jangan hardcode `APP_URL` atau `ASSET_URL` di `vercel.json`. Entry point `api/index.php` akan mengatur URL aplikasi dan asset berdasarkan domain Vercel yang sedang aktif.
 
+Function dikonfigurasi di region Singapura (`sin1`) agar dekat dengan database TiDB di Singapura. Sebelum deploy ke Production, uji Preview: pastikan header `x-vercel-id` menunjukkan Function berjalan di `sin1`, bandingkan waktu respons halaman dan `Server-Timing`, lalu periksa login, mutasi, laporan, dan upload B2. Konfigurasi region ini juga berlaku untuk Production saat perubahan dideploy; akses ke layanan yang berada di region lain, seperti B2, perlu diuji.
+
 Environment variable penting di Vercel:
 
 ```env
