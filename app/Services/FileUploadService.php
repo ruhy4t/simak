@@ -116,10 +116,7 @@ class FileUploadService
     ): string {
         $metadata = $this->temporaryUploads->validateOwned($temporaryPath, $ownerId, $allowedMimes);
         $targetDisk = $this->getDisk();
-        $content = Storage::disk($metadata['disk'])->get($metadata['path']);
-
-        Storage::disk($targetDisk)->put($permanentPath, $content);
-        Storage::disk($metadata['disk'])->delete($metadata['path']);
+        $this->moveTemporaryFile($metadata['disk'], $metadata['path'], $targetDisk, $permanentPath);
 
         Log::info('Temporary upload promoted.', [
             'temporary_path' => $metadata['path'],
@@ -130,6 +127,27 @@ class FileUploadService
         ]);
 
         return $permanentPath;
+    }
+
+    private function moveTemporaryFile(string $sourceDisk, string $sourcePath, string $targetDisk, string $targetPath): void
+    {
+        $source = Storage::disk($sourceDisk);
+        $target = Storage::disk($targetDisk);
+
+        if ($sourceDisk === $targetDisk) {
+            if ($sourcePath === $targetPath || ! $source->copy($sourcePath, $targetPath)) {
+                throw new \RuntimeException('Berkas sementara gagal disalin ke penyimpanan.');
+            }
+        } else {
+            $content = $source->get($sourcePath);
+            if (! is_string($content) || ! $target->put($targetPath, $content)) {
+                throw new \RuntimeException('Berkas sementara gagal disalin ke penyimpanan.');
+            }
+        }
+
+        if (! $source->delete($sourcePath)) {
+            throw new \RuntimeException('Berkas sementara gagal dihapus setelah disalin.');
+        }
     }
 
     /**
@@ -236,12 +254,7 @@ class FileUploadService
 
             $disk = $this->getDisk();
 
-            // Move/Copy from temp disk to target disk
-            $content = Storage::disk($tempDisk)->get($file);
-            Storage::disk($disk)->put($storedPath, $content);
-
-            // Delete temp file
-            Storage::disk($tempDisk)->delete($file);
+            $this->moveTemporaryFile($tempDisk, $file, $disk, $storedPath);
 
             Log::info("Moved temp file {$file} from {$tempDisk} to {$disk}: {$storedPath}");
             return $storedPath;
@@ -325,12 +338,7 @@ class FileUploadService
 
             $disk = $targetDisk ?? $this->getDisk();
 
-            // Move/Copy from temp disk to target disk
-            $content = Storage::disk($tempDisk)->get($file);
-            Storage::disk($disk)->put($storedPath, $content);
-
-            // Delete temp file
-            Storage::disk($tempDisk)->delete($file);
+            $this->moveTemporaryFile($tempDisk, $file, $disk, $storedPath);
 
             Log::info("Moved temp image {$file} from {$tempDisk} to {$disk}: {$storedPath}");
             return $storedPath;
