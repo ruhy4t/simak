@@ -94,7 +94,7 @@ class WordDocumentService
         ]);
         $section->addText('Nomor : '.($srikandi ? '${nomor_naskah}' : $this->text($mutasi->nomor_surat_izin ?? '______')), [], [
             'alignment' => Jc::CENTER,
-            'spaceAfter' => 0,
+            'spaceAfter' => $srikandi ? 240 : 0,
         ]);
 
         $opening = sprintf(

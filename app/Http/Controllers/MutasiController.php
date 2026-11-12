@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\SatuanPendidikan;
 use App\Services\FileUploadService;
 use App\Services\MutasiService;
+use App\Services\TemporaryUploadService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -17,15 +18,21 @@ class MutasiController extends Controller
 {
     protected FileUploadService $fileUploadService;
     protected MutasiService $mutasiService;
+    protected TemporaryUploadService $temporaryUploadService;
 
     private const DRAFT_EMPTY_NISN = '0000000000';
     private const DRAFT_EMPTY_NPSN = '00000000';
     private const DRAFT_EMPTY_DATE = '1900-01-02';
 
-    public function __construct(FileUploadService $fileUploadService, MutasiService $mutasiService)
+    public function __construct(
+        FileUploadService $fileUploadService,
+        MutasiService $mutasiService,
+        TemporaryUploadService $temporaryUploadService
+    )
     {
         $this->fileUploadService = $fileUploadService;
         $this->mutasiService = $mutasiService;
+        $this->temporaryUploadService = $temporaryUploadService;
     }
 
     public function uploadArsip(Request $request, $id)
@@ -109,7 +116,7 @@ class MutasiController extends Controller
         }
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $user = Auth::user();
 
@@ -155,6 +162,18 @@ class MutasiController extends Controller
         }
 
         $draft = null;
+        $draftId = $request->old('draft_id');
+        if ($draftId) {
+            $candidateDraft = DB::table('mutasi_keluar')
+                ->where('id_mutasi', $draftId)
+                ->where('status', 'Draft')
+                ->first();
+
+            if ($candidateDraft && $this->canAccessDraft($candidateDraft, $user)) {
+                $draft = $candidateDraft;
+            }
+        }
+
         return view('mutasi.keluar.create', compact('user', 'alamatSekolahAsal', 'namaSekolahAsal', 'npsnSekolahAsal', 'draft'));
     }
 
@@ -1232,6 +1251,7 @@ class MutasiController extends Controller
     public function saveDraft(Request $request)
     {
         $user = Auth::user();
+        $preparingSubmission = $request->boolean('submit_after_save');
 
         // Basic validation for draft (minimal)
         $draftRules = [
@@ -1295,6 +1315,33 @@ class MutasiController extends Controller
             'file_suket_diterima' => 'Surat diterima sekolah tujuan',
             'file_rapor' => 'Rapor',
         ]);
+
+        $validator->after(function ($validator) use ($request): void {
+            $fileLimits = [
+                'file_suket_keluar' => 1024 * 1024,
+                'file_suket_dapo' => 1024 * 1024,
+                'file_suket_diterima' => 1024 * 1024,
+                'file_rapor' => 2048 * 1024,
+            ];
+
+            foreach ($fileLimits as $field => $maxBytes) {
+                $path = $request->input($field);
+                if ($request->hasFile($field) || ! is_string($path) || ! str_contains($path, 'temp_uploads/')) {
+                    continue;
+                }
+
+                try {
+                    $metadata = $this->temporaryUploadService->validateOwned($path, $request->user()?->getAuthIdentifier(), ['application/pdf']);
+                } catch (\Illuminate\Validation\ValidationException $exception) {
+                    $validator->errors()->add($field, $exception->errors()['file'][0] ?? 'Berkas sementara tidak valid. Silakan unggah ulang.');
+                    continue;
+                }
+
+                if ($metadata['size'] > $maxBytes) {
+                    $validator->errors()->add($field, 'Ukuran berkas melebihi batas yang diizinkan untuk dokumen ini.');
+                }
+            }
+        });
 
         if ($validator->fails()) {
             if ($request->expectsJson()) {
@@ -1381,11 +1428,14 @@ class MutasiController extends Controller
 
                     if ($request->expectsJson()) {
                         $message = 'Draft berhasil diperbarui.';
-                        $request->session()->flash('success', $message);
+                        if (! $preparingSubmission) {
+                            $request->session()->flash('success', $message);
+                        }
 
                         return response()->json([
                             'success' => true,
                             'message' => $message,
+                            'id_mutasi' => $existingDraftId,
                             'redirect' => route('mutasi.keluar.index', ['draft_saved' => 1]),
                         ]);
                     }
@@ -1412,7 +1462,9 @@ class MutasiController extends Controller
 
             if ($request->expectsJson()) {
                 $message = 'Draft berhasil disimpan. Anda dapat melanjutkan pengisian nanti.';
-                $request->session()->flash('success', $message);
+                if (! $preparingSubmission) {
+                    $request->session()->flash('success', $message);
+                }
 
                 return response()->json([
                     'success' => true,

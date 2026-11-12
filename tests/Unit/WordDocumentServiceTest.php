@@ -449,6 +449,10 @@ class WordDocumentServiceTest extends TestCase
         $this->assertTrue($xml->loadXML($documentXml));
         $xpath = new \DOMXPath($xml);
         $xpath->registerNamespace('w', 'http://schemas.openxmlformats.org/wordprocessingml/2006/main');
+        $number = $xpath->query('//w:p[w:r/w:t="Nomor : ${nomor_naskah}"]')->item(0);
+        $this->assertNotNull($number);
+        $this->assertSame('240', $xpath->evaluate('string(w:pPr/w:spacing/@w:after)', $number));
+        $this->assertSame(1, $xpath->query('following-sibling::*[1][self::w:p and w:r/w:t[starts-with(., "Berdasarkan Surat Keterangan Pindah")]]', $number)->length);
         $indent = $xpath->query('//w:p[w:r/w:t[starts-with(., "Berdasarkan Surat Keterangan Pindah")]]/w:pPr/w:ind')->item(0);
         $this->assertNotNull($indent);
         $this->assertSame('709', $xpath->evaluate('string(@w:firstLine)', $indent));

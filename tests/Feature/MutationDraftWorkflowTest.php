@@ -152,6 +152,52 @@ class MutationDraftWorkflowTest extends TestCase
         Storage::disk('private_docs')->assertExists($savedPath);
     }
 
+    public function test_submission_preparation_saves_a_draft_without_success_flash_and_restores_it_on_create(): void
+    {
+        $request = $this->jsonRequest('/mutasi-keluar/draft', [
+            'submit_after_save' => '1',
+            'npsn_sekolah_asal' => '12345678',
+            'nama_sekolah_asal' => 'SMP Pengujian',
+            'alamat_sekolah_asal' => 'Kota Bogor',
+        ]);
+
+        $response = app(MutasiController::class)->saveDraft($request);
+        $draftId = $response->getData(true)['id_mutasi'];
+
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertFalse($request->session()->has('success'));
+
+        $request->session()->flashInput(['draft_id' => $draftId]);
+        $createRequest = Request::create('/mutasi-keluar/create', 'GET');
+        $createRequest->setLaravelSession($request->session());
+        $createRequest->setUserResolver(fn () => Auth::user());
+
+        $view = app(MutasiController::class)->create($createRequest);
+
+        $this->assertSame($draftId, $view->getData()['draft']->id_mutasi);
+    }
+
+    public function test_outgoing_draft_enforces_per_document_size_limit_for_temporary_uploads(): void
+    {
+        Storage::fake('local');
+        $tempPath = 'temp_uploads/42/temp_oversized_01234567890123456789.pdf';
+        Storage::disk('local')->put($tempPath, "%PDF-1.4\n" . str_repeat('0', 1024 * 1024));
+
+        $request = $this->jsonRequest('/mutasi-keluar/draft', [
+            'npsn_sekolah_asal' => '12345678',
+            'nama_sekolah_asal' => 'SMP Pengujian',
+            'alamat_sekolah_asal' => 'Kota Bogor',
+            'file_suket_keluar' => $tempPath,
+        ]);
+
+        $response = app(MutasiController::class)->saveDraft($request);
+        $payload = $response->getData(true);
+
+        $this->assertSame(422, $response->getStatusCode());
+        $this->assertArrayHasKey('file_suket_keluar', $payload['errors']);
+        $this->assertDatabaseCount('mutasi_keluar', 0);
+    }
+
     public function test_incoming_mutation_id_is_not_reused_after_a_record_is_deleted(): void
     {
         DB::table('mutasi_masuk')->insert([

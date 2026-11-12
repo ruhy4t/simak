@@ -464,52 +464,131 @@
 
     <script>
         let isSubmitting = false;
-        function showSubmittingModal() {
+        async function showSubmittingModal() {
             if (isSubmitting) return;
-            isSubmitting = true;
 
             const form = document.getElementById('formMutasiKeluar');
-            if (!form.reportValidity()) {
-                isSubmitting = false;
-                return;
-            }
+            if (!form || !form.reportValidity()) return;
 
-            // Calculate total file size
-            let totalSize = 0;
-            const fileInputs = document.querySelectorAll('input[type="file"]');
-            fileInputs.forEach(input => {
-                if (input.files.length > 0) {
-                    totalSize += input.files[0].size;
-                }
-            });
+            isSubmitting = true;
+            const submitButton = document.getElementById('btnSubmitKeluar');
+            if (submitButton) submitButton.disabled = true;
 
-            // Warn if total size > 8MB (Safe limit for standard post_max_size)
-            const MAX_TOTAL_SIZE = 8 * 1024 * 1024; // 8MB
-            if (totalSize > MAX_TOTAL_SIZE) {
-                alert('Total ukuran file terlalu besar (' + (totalSize / 1024 / 1024).toFixed(2) + ' MB). Mohon perkecil ukuran file agar total < 8MB untuk mencegah kegagalan sistem.');
-                isSubmitting = false;
-                return; // Stop submission
-            }
-
-            // Show modal
             const modal = document.getElementById('loadingModal');
+            const status = modal.querySelector('p');
             modal.classList.remove('hidden');
             modal.classList.add('flex');
 
-            // Submit form after showing modal
-            setTimeout(() => {
-                if (form) {
-                    if (form.requestSubmit) {
-                        form.requestSubmit();
-                    } else {
-                        form.submit();
+            try {
+                const fetchWithTimeout = async (url, options) => {
+                    const controller = new AbortController();
+                    const timeoutId = window.setTimeout(() => controller.abort(), 35000);
+                    try {
+                        return await fetch(url, { ...options, signal: controller.signal });
+                    } finally {
+                        window.clearTimeout(timeoutId);
                     }
-                } else {
-                    console.error('Form not found!');
-                    // Fallback just in case
-                    document.querySelector('form[action*="mutasi-keluar"]').submit();
+                };
+                const fileInputs = Array.from(form.querySelectorAll('input[type="file"]'));
+                const selectedFiles = fileInputs.filter(input => input.files && input.files.length > 0);
+
+                if (selectedFiles.length === 0) {
+                    status.textContent = 'Mohon tunggu, data sedang dikirim ke server.';
+                    setTimeout(() => form.submit(), 100);
+                    return;
                 }
-            }, 100);
+
+                const formData = new FormData(form);
+                fileInputs.forEach(input => formData.delete(input.name));
+
+                for (let index = 0; index < selectedFiles.length; index++) {
+                    const input = selectedFiles[index];
+                    const uploadData = new FormData();
+                    uploadData.append('file', input.files[0]);
+                    status.textContent = `Mengunggah dokumen ${index + 1}/${selectedFiles.length}...`;
+
+                    const uploadResponse = await fetchWithTimeout(window.MUTASI_CONFIG.routes.uploadTemp, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                            'Accept': 'application/json',
+                        },
+                        body: uploadData,
+                    });
+                    const uploadResult = await uploadResponse.json().catch(() => ({}));
+
+                    if (!uploadResponse.ok || !uploadResult.success || !uploadResult.path) {
+                        const message = uploadResponse.status === 413
+                            ? 'Ukuran dokumen terlalu besar untuk diunggah. Perkecil PDF lalu coba kembali.'
+                            : (uploadResponse.status >= 500
+                                ? 'Server mengalami gangguan saat mengunggah dokumen. Silakan coba kembali.'
+                                : `Gagal mengunggah ${input.files[0].name}.`);
+                        throw new Error(uploadResult.message || message);
+                    }
+
+                    formData.set(input.name, uploadResult.path);
+                }
+
+                formData.set('submit_after_save', '1');
+                status.textContent = 'Menyimpan dokumen sebelum pengajuan...';
+
+                const saveResponse = await fetchWithTimeout('{{ route('mutasi.keluar.draft.save') }}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                        'Accept': 'application/json',
+                    },
+                    body: formData,
+                });
+                const saveResult = await saveResponse.json().catch(() => ({}));
+
+                if (!saveResponse.ok || !saveResult.success) {
+                    const validationMessages = saveResult.errors
+                        ? [...new Set(Object.values(saveResult.errors).flat().filter(Boolean))]
+                        : [];
+                    const validationMessage = validationMessages.length > 0
+                        ? validationMessages.map(message => `• ${message}`).join('\n')
+                        : null;
+                    const fallbackMessage = saveResponse.status === 413
+                        ? 'Ukuran data terlalu besar untuk diterima server.'
+                        : (saveResponse.status === 419
+                            ? 'Sesi Anda telah berakhir. Muat ulang halaman, lalu coba kembali.'
+                            : (saveResponse.status >= 500
+                                ? 'Server mengalami gangguan saat menyiapkan pengajuan. Silakan coba kembali.'
+                                : `Gagal menyiapkan pengajuan (HTTP ${saveResponse.status}).`));
+
+                    throw new Error(validationMessage || saveResult.message || fallbackMessage);
+                }
+
+                const draftId = formData.get('draft_id') || saveResult.id_mutasi;
+                if (!draftId) {
+                    throw new Error('Dokumen tersimpan, tetapi ID pengajuan tidak diterima. Silakan buka draft dari daftar mutasi.');
+                }
+
+                let draftIdInput = form.querySelector('input[name="draft_id"]');
+                if (!draftIdInput) {
+                    draftIdInput = document.createElement('input');
+                    draftIdInput.type = 'hidden';
+                    draftIdInput.name = 'draft_id';
+                    form.appendChild(draftIdInput);
+                }
+                draftIdInput.value = draftId;
+                selectedFiles.forEach(input => { input.value = ''; });
+                status.textContent = 'Mengirim pengajuan...';
+                form.submit();
+            } catch (error) {
+                console.error('Submit outgoing mutation error:', error);
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                isSubmitting = false;
+                if (submitButton) submitButton.disabled = false;
+                const message = error.name === 'AbortError'
+                    ? 'Waktu tunggu ke server habis. Periksa koneksi internet, lalu coba kembali.'
+                    : (error instanceof TypeError
+                        ? 'Koneksi ke server terputus. Periksa koneksi internet, lalu coba kembali.'
+                        : error.message);
+                alert(message || 'Pengajuan gagal dikirim. Silakan coba kembali.');
+            }
         }
     </script>
 
