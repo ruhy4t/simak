@@ -61,6 +61,8 @@ class WordDocumentServiceTest extends TestCase
         $document = $this->assertNativeDocx($path, [
             'SURAT KETERANGAN',
             'Budi Santoso',
+            'Telepon (0251) 8341101 Faksimile (0251) 8341101',
+            'Situs web disdik.kotabogor.go.id',
             '${nomor_naskah}',
             '${tanggal_naskah}',
             '${ttd_pengirim}',
@@ -71,7 +73,8 @@ class WordDocumentServiceTest extends TestCase
         $this->assertSingleLineZeroParagraphSpacing($path);
         $this->assertDocxTablesHaveNoVisibleBorders($path);
         $this->assertCount(1, $document->getSections());
-        $this->assertRequestedMargins($document);
+        $this->assertSrikandiOutgoingMargins($document);
+        $this->assertSrikandiHeaderRule($path);
         $this->assertSame('Times New Roman', $document->getDefaultFontName());
         $this->assertSrikandiPlaceholdersOccurExactlyOnce($path);
 
@@ -255,6 +258,27 @@ class WordDocumentServiceTest extends TestCase
             $this->assertEqualsWithDelta(Converter::cmToTwip(2.5), $style->getMarginLeft(), 1);
             $this->assertEqualsWithDelta(Converter::cmToTwip(2.5), $style->getMarginRight(), 1);
         }
+    }
+
+    private function assertSrikandiOutgoingMargins(PhpWord $document): void
+    {
+        $style = $document->getSections()[0]->getStyle();
+
+        $this->assertEqualsWithDelta(Converter::cmToTwip(1), $style->getMarginTop(), 1);
+        $this->assertEqualsWithDelta(Converter::cmToTwip(3), $style->getMarginBottom(), 1);
+        $this->assertEqualsWithDelta(Converter::cmToTwip(1.5), $style->getMarginLeft(), 1);
+        $this->assertEqualsWithDelta(Converter::cmToTwip(1.5), $style->getMarginRight(), 1);
+    }
+
+    private function assertSrikandiHeaderRule(string $path): void
+    {
+        $zip = new ZipArchive;
+        $this->assertTrue($zip->open($path) === true);
+        $documentXml = (string) $zip->getFromName('word/document.xml');
+        $zip->close();
+
+        $this->assertStringContainsString('<w:pBdr>', $documentXml);
+        $this->assertStringContainsString('w:color="000000"', $documentXml);
     }
 
     private function signer(): object

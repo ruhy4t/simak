@@ -68,15 +68,16 @@ class WordDocumentService
             'Surat Keterangan Mutasi Keluar'.($srikandi ? ' SRIKANDI' : ''),
             $srikandi ? self::SRIKANDI_FONT : self::FONT
         );
+        $horizontalMargin = $srikandi ? 3 : 5;
         $section = $word->addSection([
             'pageSizeW' => self::A4_WIDTH,
             'pageSizeH' => self::A4_HEIGHT,
-            'marginTop' => (int) round(Converter::cmToTwip(1.5)),
-            'marginRight' => (int) round(Converter::cmToTwip(2.5)),
+            'marginTop' => (int) round(Converter::cmToTwip($srikandi ? 1 : 1.5)),
+            'marginRight' => (int) round(Converter::cmToTwip($srikandi ? 1.5 : 2.5)),
             'marginBottom' => (int) round(Converter::cmToTwip(3)),
-            'marginLeft' => (int) round(Converter::cmToTwip(2.5)),
+            'marginLeft' => (int) round(Converter::cmToTwip($srikandi ? 1.5 : 2.5)),
         ]);
-        $contentWidth = self::A4_WIDTH - Converter::cmToTwip(5);
+        $contentWidth = self::A4_WIDTH - Converter::cmToTwip($horizontalMargin);
 
         if ($srikandi) {
             $this->addSrikandiLetterhead($section, $contentWidth);
@@ -329,17 +330,28 @@ class WordDocumentService
         $logoCell = $row->addCell(1200, ['valign' => 'center']);
         $logo = public_path('images/logo_Kota_Bogor.png');
         if (is_file($logo)) {
-            $logoCell->addImage($logo, ['width' => 65, 'height' => 80, 'alignment' => Jc::LEFT]);
+            $logoCell->addImage($logo, ['width' => 48, 'height' => 62, 'alignment' => Jc::LEFT]);
         }
         $textCell = $row->addCell($width - 1200, ['valign' => 'center']);
-        $textCell->addText('PEMERINTAH KOTA BOGOR', ['bold' => true, 'size' => 11], ['alignment' => Jc::CENTER, 'spaceAfter' => 0]);
-        $textCell->addText('DINAS PENDIDIKAN', ['bold' => true, 'size' => 11], ['alignment' => Jc::CENTER, 'spaceAfter' => 0]);
+        $textCell->addText('PEMERINTAH KOTA BOGOR', ['bold' => true, 'size' => 12], ['alignment' => Jc::CENTER, 'spaceAfter' => 0]);
+        $textCell->addText('DINAS PENDIDIKAN', ['bold' => true, 'size' => 12], ['alignment' => Jc::CENTER, 'spaceAfter' => 0]);
         $textCell->addText(
-            'Jl. Pajajaran No. 125 Kecamatan Bogor Utara, Kota Bogor Telepon (0251) 8341101 Faksimile (0251) 8341101',
+            'Jl. Pajajaran No. 125 Kecamatan Bogor Utara, Kota Bogor',
+            ['size' => 9],
+            ['alignment' => Jc::CENTER, 'spaceAfter' => 0]
+        );
+        $textCell->addText(
+            'Telepon (0251) 8341101 Faksimile (0251) 8341101',
             ['size' => 9],
             ['alignment' => Jc::CENTER, 'spaceAfter' => 0]
         );
         $textCell->addText('Situs web disdik.kotabogor.go.id', ['size' => 8], ['alignment' => Jc::CENTER, 'spaceAfter' => 0]);
+        $section->addText('', [], [
+            'borderBottomSize' => 18,
+            'borderBottomColor' => '000000',
+            'spaceBefore' => 0,
+            'spaceAfter' => 0,
+        ]);
     }
 
     private function addIncomingSrikandiLetterhead(Section $section, int $width): void
@@ -506,7 +518,12 @@ class WordDocumentService
             array_unshift($lines, 'Bogor, ${tanggal_naskah}');
         }
         if ($spacious) {
-            array_splice($lines, array_search('${ttd_pengirim}', $lines, true) + 1, 0, ['', '']);
+            if ($includeDate) {
+                array_unshift($lines, '', '');
+            }
+            $placeholderIndex = array_search('${ttd_pengirim}', $lines, true);
+            array_splice($lines, $placeholderIndex, 0, ['', '']);
+            array_splice($lines, $placeholderIndex + 3, 0, ['', '']);
         }
         foreach ($lines as $line) {
             $cell->addText($line, ['bold' => $line === '${nama_pengirim}'], [
