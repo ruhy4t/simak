@@ -375,6 +375,54 @@ class MutationDraftWorkflowTest extends TestCase
             ->assertSee('Simpan Draft');
     }
 
+    public function test_school_and_operator_can_render_incoming_mutation_index_with_students(): void
+    {
+        Schema::create('mutasi_masuk_siswa', function (Blueprint $table): void {
+            $table->id();
+            $table->string('id_mutasi');
+            $table->string('nama_murid');
+            $table->string('nisn');
+            $table->string('npsn_sekolah_asal')->nullable();
+            $table->string('nama_sekolah_asal')->nullable();
+            $table->string('kabupaten_kota_asal')->nullable();
+        });
+
+        DB::table('mutasi_masuk')->insert([
+            'id_mutasi' => 'MM-INDEX-1',
+            'tanggal_pengajuan' => '2026-11-13',
+            'jumlah_siswa' => 1,
+            'nomor_surat' => '001/SM/2026',
+            'tanggal_surat' => '2026-11-13',
+            'npsn_sekolah_tujuan' => '12345678',
+            'nama_sekolah_tujuan' => 'SMP Pengujian',
+            'alamat_sekolah_tujuan' => 'Kota Bogor',
+            'status' => 'Menunggu Verifikasi Dinas',
+            'pengusul' => 'operator-draft',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        DB::table('mutasi_masuk_siswa')->insert([
+            'id_mutasi' => 'MM-INDEX-1',
+            'nama_murid' => 'Murid Uji',
+            'nisn' => '0012345678',
+            'npsn_sekolah_asal' => '87654321',
+            'nama_sekolah_asal' => 'Sekolah Asal',
+            'kabupaten_kota_asal' => 'Kota Bogor',
+        ]);
+
+        $user = Auth::user();
+        $user->telegram_chat_id = '123456789';
+
+        foreach (['Sekolah', 'Operator'] as $role) {
+            $user->role = $role;
+
+            $this->actingAs($user)
+                ->get(route('mutasi.masuk.index'))
+                ->assertOk()
+                ->assertSee('Murid Uji');
+        }
+    }
+
     public function test_school_without_telegram_cannot_open_either_mutation_form(): void
     {
         Auth::user()->role = 'Sekolah';

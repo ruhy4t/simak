@@ -3,7 +3,10 @@
 @section('title', 'Daftar Mutasi Masuk')
 
 @section('content')
-    @php($requiresTelegramLink = in_array(Auth::user()->role, ['Sekolah', 'Operator'], true) && blank(Auth::user()->telegram_chat_id))
+    @php
+        $requiresTelegramLink = in_array(Auth::user()->role, ['Sekolah', 'Operator'], true)
+            && blank(Auth::user()->telegram_chat_id);
+    @endphp
     <div class="space-y-6">
         @if($requiresTelegramLink)
             <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900" role="status">
