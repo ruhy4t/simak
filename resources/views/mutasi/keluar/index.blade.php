@@ -148,7 +148,7 @@
                                     @endif
                                     @if(in_array(Auth::user()->role, ['Dinas', 'SuperAdmin'], true))
                                         <td class="px-6 py-4 text-sm text-slate-600">
-                                            {{ $mutasi->pengusul ?: '-' }}
+                                            {{ $mutasi->pengusul_nama ?: ($mutasi->pengusul ?: '-') }}
                                         </td>
                                     @endif
                                     <td class="px-6 py-4">

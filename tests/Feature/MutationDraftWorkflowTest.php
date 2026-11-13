@@ -444,11 +444,33 @@ class MutationDraftWorkflowTest extends TestCase
         }
 
         $user->role = 'Dinas';
+        Schema::create('users', function (Blueprint $table): void {
+            $table->id();
+            $table->string('username');
+            $table->string('role');
+            $table->string('nama_pengguna');
+            $table->string('npsn')->nullable();
+        });
+        DB::table('users')->insert([
+            [
+                'username' => 'operator-draft',
+                'role' => 'Operator',
+                'nama_pengguna' => 'Nama Pengusul Tepat',
+                'npsn' => '12345678',
+            ],
+            [
+                'username' => 'operator-draft',
+                'role' => 'Operator',
+                'nama_pengguna' => 'Nama Pengusul Lain',
+                'npsn' => '87654321',
+            ],
+        ]);
         $this->actingAs($user)
             ->get(route('mutasi.masuk.index'))
             ->assertOk()
             ->assertSee('Pengusul')
-            ->assertSee('operator-draft');
+            ->assertSee('Nama Pengusul Tepat')
+            ->assertDontSee('Nama Pengusul Lain');
     }
 
     public function test_school_and_operator_can_render_outgoing_mutation_index_without_count_query(): void
@@ -483,14 +505,30 @@ class MutationDraftWorkflowTest extends TestCase
             $table->id();
             $table->string('username');
             $table->string('role');
+            $table->string('nama_pengguna');
+            $table->string('npsn')->nullable();
         });
-
+        DB::table('users')->insert([
+            [
+                'username' => 'operator-draft',
+                'role' => 'Operator',
+                'nama_pengguna' => 'Nama Pengusul Tepat',
+                'npsn' => '20220385',
+            ],
+            [
+                'username' => 'operator-draft',
+                'role' => 'Operator',
+                'nama_pengguna' => 'Nama Pengusul Lain',
+                'npsn' => '87654321',
+            ],
+        ]);
         $user->role = 'Dinas';
         $this->actingAs($user)
             ->get(route('mutasi.keluar.index'))
             ->assertOk()
             ->assertSee('Pengusul')
-            ->assertSee('operator-draft');
+            ->assertSee('Nama Pengusul Tepat')
+            ->assertDontSee('Nama Pengusul Lain');
     }
 
     public function test_school_without_telegram_cannot_open_either_mutation_form(): void

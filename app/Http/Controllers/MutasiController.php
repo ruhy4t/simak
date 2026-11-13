@@ -71,6 +71,20 @@ class MutasiController extends Controller
                 ->whereNull('deleted_at') // HIDE SOFT DELETED
                 ->where('status', '!=', 'Dibatalkan'); // HIDE CANCELLED
 
+            if (in_array($user->role, ['Dinas', 'SuperAdmin'], true)) {
+                $query->addSelect([
+                    'pengusul_nama' => \App\Models\User::query()
+                        ->select('nama_pengguna')
+                        ->whereColumn('users.username', 'mutasi_keluar.pengusul')
+                        ->where(function ($query) {
+                            $query->whereColumn('users.npsn', 'mutasi_keluar.npsn_sekolah_asal')
+                                ->orWhereIn('users.role', ['Dinas', 'SuperAdmin']);
+                        })
+                        ->orderByRaw('CASE WHEN users.npsn = mutasi_keluar.npsn_sekolah_asal THEN 0 ELSE 1 END')
+                        ->limit(1),
+                ]);
+            }
+
             $this->supportsSubmissionTimeline()
                 ? $query->latestSubmissionFirst()
                 : $query->orderByDesc('id_mutasi');

@@ -105,6 +105,20 @@ class MutasiMasukController extends Controller
             $query = \App\Models\MutasiMasuk::query()
                 ->with('siswa:id,id_mutasi,nama_murid,nisn,npsn_sekolah_asal,nama_sekolah_asal,kabupaten_kota_asal');
 
+            if (in_array($user->role, ['Dinas', 'SuperAdmin'], true)) {
+                $query->addSelect([
+                    'pengusul_nama' => \App\Models\User::query()
+                        ->select('nama_pengguna')
+                        ->whereColumn('users.username', 'mutasi_masuk.pengusul')
+                        ->where(function ($query) {
+                            $query->whereColumn('users.npsn', 'mutasi_masuk.npsn_sekolah_tujuan')
+                                ->orWhereIn('users.role', ['Dinas', 'SuperAdmin']);
+                        })
+                        ->orderByRaw('CASE WHEN users.npsn = mutasi_masuk.npsn_sekolah_tujuan THEN 0 ELSE 1 END')
+                        ->limit(1),
+                ]);
+            }
+
             $this->supportsSubmissionTimeline()
                 ? $query->latestSubmissionFirst()
                 : $query->orderByDesc('id_mutasi');
