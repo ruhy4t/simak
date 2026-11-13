@@ -375,6 +375,19 @@ class MutationDraftWorkflowTest extends TestCase
             ->assertSee('Simpan Draft');
     }
 
+    public function test_incoming_create_form_resets_submit_ui_after_server_error_flash(): void
+    {
+        Auth::user()->role = 'Sekolah';
+        Auth::user()->telegram_chat_id = '123456789';
+
+        $this->actingAs(Auth::user())
+            ->withSession(['error' => 'Gagal menyimpan pengajuan.'])
+            ->withoutMiddleware(\App\Http\Middleware\EnsureInitialStudentCountsCompleted::class)
+            ->get(route('mutasi.masuk.create'))
+            ->assertOk()
+            ->assertSee('window.resetMutasiMasukSubmitting();', false);
+    }
+
     public function test_school_and_operator_can_render_incoming_mutation_index_with_students(): void
     {
         Schema::create('mutasi_masuk_siswa', function (Blueprint $table): void {

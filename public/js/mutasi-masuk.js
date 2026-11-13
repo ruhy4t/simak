@@ -1281,11 +1281,13 @@
                     const validation = validateCurrentStudent(index);
                     if (!validation.valid) {
                         showValidationError(validation.errors, index);
+                        window.resetMutasiMasukSubmitting?.();
                         return;
                     }
                 }
                 if (!form.checkValidity()) {
                     form.reportValidity();
+                    window.resetMutasiMasukSubmitting?.();
                     return;
                 }
 
@@ -1293,6 +1295,7 @@
                 const pendingUploads = document.querySelectorAll('.upload-status-indicator .bi-arrow-repeat');
                 if (pendingUploads.length > 0) {
                     alert('⏳ Mohon tunggu hingga semua file selesai diunggah.');
+                    window.resetMutasiMasukSubmitting?.();
                     return;
                 }
 
@@ -1300,6 +1303,7 @@
                 const failedUploads = document.querySelectorAll('.upload-status-indicator .bi-x-circle-fill');
                 if (failedUploads.length > 0) {
                     alert('❌ Ada file yang gagal diunggah. Silakan pilih ulang file yang gagal.');
+                    window.resetMutasiMasukSubmitting?.();
                     return;
                 }
 

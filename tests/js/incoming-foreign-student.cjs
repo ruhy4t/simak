@@ -4,6 +4,52 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const path = require('node:path');
 
+async function submitAfterValidationFailure(failure) {
+    const source = fs.readFileSync(path.join(__dirname, '../../public/js/mutasi-masuk.js'), 'utf8');
+    const start = source.indexOf("form.addEventListener('submit', async function (e) {");
+    const close = source.indexOf('\n            });', start) + '\n            });'.length;
+    assert.ok(start >= 0 && close > start, 'submit listener should be found');
+
+    let submitHandler;
+    let resetCalls = 0;
+    let formSubmitCalls = 0;
+    const form = {
+        addEventListener: (event, handler) => { submitHandler = handler; },
+        checkValidity: () => failure !== 'native-validation',
+        reportValidity() {},
+        submit: () => { formSubmitCalls++; },
+    };
+    const context = {
+        form,
+        totalSiswa: 1,
+        validateCurrentStudent: () => failure === 'student-validation'
+            ? { valid: false, errors: ['NISN'] }
+            : { valid: true, errors: [] },
+        showValidationError() {},
+        window: { resetMutasiMasukSubmitting: () => { resetCalls++; } },
+        document: {
+            querySelectorAll: selector => selector.includes('arrow-repeat') && failure === 'pending-upload'
+                ? [{}]
+                : selector.includes('x-circle-fill') && failure === 'failed-upload' ? [{}] : [],
+            getElementById: () => null,
+        },
+        alert() {},
+        isSaving: false,
+        draftId: null,
+    };
+    vm.runInNewContext(source.slice(start, close), context);
+    await submitHandler({ preventDefault() {} });
+    return { resetCalls, formSubmitCalls };
+}
+
+for (const failure of ['student-validation', 'native-validation', 'pending-upload', 'failed-upload']) {
+    test(`failed ${failure} closes the incoming submit modal`, async () => {
+        const result = await submitAfterValidationFailure(failure);
+        assert.equal(result.resetCalls, 1);
+        assert.equal(result.formSubmitCalls, 0);
+    });
+}
+
 async function saveDraftWithUnnamedStudent(extraInput) {
     const calls = [];
     const alerts = [];

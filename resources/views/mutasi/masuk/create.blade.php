@@ -344,18 +344,12 @@
     </div>
 
     <script>
-        // Hide loading modal if there are validation errors (page reloaded with errors)
+        // Reset the submit UI when the server returns the form with an error.
         document.addEventListener('DOMContentLoaded', function () {
-            @if($errors->any())
-                const modal = document.getElementById('loadingModal');
-                if (modal) {
-                    modal.classList.add('hidden');
-                    modal.classList.remove('flex');
-                }
-                // Reset submitting flag so user can try again
-                window.isSubmitting = false;
+            @if($errors->any() || session('error') || session('working_hours'))
+                window.resetMutasiMasukSubmitting();
             @endif
-                        });
+        });
 
         let isSubmitting = false;
         window.resetMutasiMasukSubmitting = function () {
