@@ -138,6 +138,7 @@ class CohortReportTest extends TestCase
             'role' => 'Operator',
             'status' => 'Aktif',
             'npsn' => '12345678',
+            'telegram_chat_id' => '123456789',
             'must_change_password' => false,
             'created_at' => now(),
             'updated_at' => now(),
@@ -824,6 +825,7 @@ class CohortReportTest extends TestCase
             'role' => $role,
             'status' => 'Aktif',
             'npsn' => $npsn,
+            'telegram_chat_id' => '123456789',
             'must_change_password' => false,
             'created_at' => now(),
             'updated_at' => now(),
@@ -841,6 +843,7 @@ class CohortReportTest extends TestCase
             $table->string('role');
             $table->string('status')->default('Aktif');
             $table->string('npsn')->nullable();
+            $table->string('telegram_chat_id')->nullable();
             $table->boolean('must_change_password')->default(false);
             $table->rememberToken();
             $table->timestamps();

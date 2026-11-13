@@ -26,6 +26,7 @@ class LoginRateLimitTest extends TestCase
             $table->string('role');
             $table->string('nama_pengguna');
             $table->string('npsn', 8)->nullable();
+            $table->string('telegram_chat_id')->nullable()->default('123456789');
             $table->string('status')->default('Aktif');
             $table->boolean('must_change_password')->default(false);
             $table->unsignedInteger('failed_login_attempts')->default(0);
@@ -216,6 +217,35 @@ class LoginRateLimitTest extends TestCase
         ])->assertSessionHasErrors('username');
 
         $this->assertGuest();
+    }
+
+    public function test_school_user_without_telegram_is_sent_to_linking_instructions_and_blocked_from_dashboard(): void
+    {
+        DB::table('users')->where('username', 'victim')->update(['telegram_chat_id' => null]);
+
+        $this->post('/login', [
+            'username' => 'victim',
+            'login_role' => 'operator',
+            'npsn' => '20200001',
+            'password' => 'correct-password',
+        ])->assertRedirect(route('profile.index'));
+
+        $this->assertAuthenticated();
+
+        $this->get(route('profile.index'))
+            ->assertOk()
+            ->assertSee('Telegram wajib ditautkan sebelum menggunakan SIMAK')
+            ->assertSee('Buka Bot SIMAK');
+
+        $this->get(route('dashboard'))
+            ->assertRedirect(route('profile.index'))
+            ->assertSessionHas('error');
+
+        $this->put(route('profile.password'), [
+            'current_password' => 'incorrect-password',
+            'password' => 'NewPassword123!',
+            'password_confirmation' => 'NewPassword123!',
+        ])->assertSessionHasErrors('current_password');
     }
 
     public function test_dinas_admin_login_does_not_require_npsn(): void

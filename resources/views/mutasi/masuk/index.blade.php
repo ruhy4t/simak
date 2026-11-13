@@ -3,7 +3,13 @@
 @section('title', 'Daftar Mutasi Masuk')
 
 @section('content')
+    @php($requiresTelegramLink = in_array(Auth::user()->role, ['Sekolah', 'Operator'], true) && blank(Auth::user()->telegram_chat_id))
     <div class="space-y-6">
+        @if($requiresTelegramLink)
+            <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900" role="status">
+                Tautkan Telegram melalui <a href="{{ route('profile.index') }}" class="font-semibold underline">profil</a> sebelum membuat atau melanjutkan usulan mutasi, termasuk draft.
+            </div>
+        @endif
         @if(request()->boolean('draft_saved'))
             <div class="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800" role="status">
                 <i class="bi bi-check-circle-fill mt-0.5"></i>
@@ -21,7 +27,7 @@
                 <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-950">Mutasi Masuk</h1>
                 <p class="mt-1 text-sm text-slate-500">Daftar pengajuan murid pindahan masuk ke sekolah</p>
             </div>
-            @if(in_array(Auth::user()->role, ['Sekolah', 'Operator', 'Dinas', 'SuperAdmin']))
+            @if(in_array(Auth::user()->role, ['Sekolah', 'Operator', 'Dinas', 'SuperAdmin']) && !$requiresTelegramLink)
                 <a href="{{ route('mutasi.masuk.create') }}"
                     class="inline-flex items-center justify-center rounded-lg bg-sky-600 px-4 py-2.5 font-semibold text-white transition-colors hover:bg-sky-700">
                     <i class="bi bi-plus-lg mr-2"></i>

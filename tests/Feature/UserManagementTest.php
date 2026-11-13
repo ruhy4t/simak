@@ -175,6 +175,7 @@ class UserManagementTest extends TestCase
             'role' => $role,
             'nama_pengguna' => ucfirst(str_replace('_', ' ', $username)),
             'npsn' => $npsn,
+            'telegram_chat_id' => '123456789',
             'nama_sekolah' => $npsn ? 'Sekolah '.substr($username, -1) : null,
             'status' => 'Aktif',
             'is_active' => true,

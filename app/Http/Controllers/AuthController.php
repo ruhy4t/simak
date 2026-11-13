@@ -121,7 +121,10 @@ class AuthController extends Controller
 
         AuditLog::log('LOGIN_SUCCESS', $loginIdentity);
 
-        $response = redirect()->intended(route('dashboard'));
+        $response = in_array($user->role, ['Sekolah', 'Operator'], true)
+            && blank($user->telegram_chat_id)
+            ? redirect()->route('profile.index')
+            : redirect()->intended(route('dashboard'));
 
         return $response->withoutCookie('remembered_username');
     }

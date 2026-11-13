@@ -365,6 +365,7 @@ class MutationDraftWorkflowTest extends TestCase
     public function test_incoming_create_form_shows_save_draft_for_school(): void
     {
         Auth::user()->role = 'Sekolah';
+        Auth::user()->telegram_chat_id = '123456789';
 
         $this->actingAs(Auth::user())
             ->withoutMiddleware(\App\Http\Middleware\EnsureInitialStudentCountsCompleted::class)
@@ -372,6 +373,37 @@ class MutationDraftWorkflowTest extends TestCase
             ->assertOk()
             ->assertSee('id="btnSaveDraft"', false)
             ->assertSee('Simpan Draft');
+    }
+
+    public function test_school_without_telegram_cannot_open_either_mutation_form(): void
+    {
+        Auth::user()->role = 'Sekolah';
+
+        $this->actingAs(Auth::user())
+            ->withoutMiddleware(\App\Http\Middleware\EnsureInitialStudentCountsCompleted::class)
+            ->get(route('mutasi.keluar.create'))
+            ->assertRedirect(route('profile.index'))
+            ->assertSessionHas('error');
+
+        $this->get(route('mutasi.masuk.create'))
+            ->assertRedirect(route('profile.index'))
+            ->assertSessionHas('error');
+    }
+
+    public function test_school_without_telegram_cannot_create_either_mutation_draft(): void
+    {
+        Auth::user()->role = 'Sekolah';
+
+        $this->actingAs(Auth::user())
+            ->withoutMiddleware(\App\Http\Middleware\EnsureInitialStudentCountsCompleted::class)
+            ->postJson(route('mutasi.keluar.draft.save'))
+            ->assertForbidden()
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('redirect', route('profile.index'));
+
+        $this->postJson(route('mutasi.masuk.draft.create'))
+            ->assertForbidden()
+            ->assertJsonPath('success', false);
     }
 
     public function test_school_cannot_modify_or_resume_another_users_incoming_draft(): void

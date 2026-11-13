@@ -3,7 +3,13 @@
 @section('title', 'Daftar Mutasi Keluar')
 
 @section('content')
+    @php($requiresTelegramLink = in_array(Auth::user()->role, ['Sekolah', 'Operator'], true) && blank(Auth::user()->telegram_chat_id))
     <div class="space-y-6">
+        @if($requiresTelegramLink)
+            <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900" role="status">
+                Tautkan Telegram melalui <a href="{{ route('profile.index') }}" class="font-semibold underline">profil</a> sebelum membuat atau melanjutkan usulan mutasi, termasuk draft.
+            </div>
+        @endif
         @if(request()->boolean('draft_saved'))
             <div class="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800" role="status">
                 <i class="bi bi-check-circle-fill mt-0.5"></i>
@@ -21,11 +27,13 @@
                 <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-950">Mutasi Keluar</h1>
                 <p class="mt-1 text-sm text-slate-500">Kelola data mutasi murid keluar</p>
             </div>
-            <a href="{{ route('mutasi.keluar.create') }}"
-                class="inline-flex items-center gap-2 rounded-lg bg-sky-600 px-4 py-2.5 font-semibold text-white transition-colors hover:bg-sky-700">
-                <i class="bi bi-plus-lg"></i>
-                Buat Mutasi Baru
-            </a>
+            @if(!$requiresTelegramLink)
+                <a href="{{ route('mutasi.keluar.create') }}"
+                    class="inline-flex items-center gap-2 rounded-lg bg-sky-600 px-4 py-2.5 font-semibold text-white transition-colors hover:bg-sky-700">
+                    <i class="bi bi-plus-lg"></i>
+                    Buat Mutasi Baru
+                </a>
+            @endif
         </div>
 
         <!-- Filters -->
@@ -245,11 +253,13 @@
                     </div>
                     <h3 class="text-lg font-medium text-slate-900 mb-1">Belum Ada Data</h3>
                     <p class="text-slate-500 mb-6">Belum ada data mutasi keluar yang sesuai dengan filter.</p>
-                    <a href="{{ route('mutasi.keluar.create') }}"
-                        class="inline-flex items-center gap-2 bg-sky-500 hover:bg-sky-600 text-white font-medium px-5 py-2.5 rounded-xl transition shadow-lg shadow-sky-500/30 hover:-translate-y-0.5">
-                        <i class="bi bi-plus-lg"></i>
-                        Buat Mutasi Baru
-                    </a>
+                    @if(!$requiresTelegramLink)
+                        <a href="{{ route('mutasi.keluar.create') }}"
+                            class="inline-flex items-center gap-2 bg-sky-500 hover:bg-sky-600 text-white font-medium px-5 py-2.5 rounded-xl transition shadow-lg shadow-sky-500/30 hover:-translate-y-0.5">
+                            <i class="bi bi-plus-lg"></i>
+                            Buat Mutasi Baru
+                        </a>
+                    @endif
                 </div>
             @endif
         </div>

@@ -4,6 +4,21 @@
 
 @section('content')
     <div class="space-y-6">
+        @if(in_array($user->role, ['Sekolah', 'Operator'], true) && blank($user->telegram_chat_id))
+            <div class="rounded-xl border border-amber-300 bg-amber-50 p-5 text-amber-950" role="alert">
+                <h2 class="text-lg font-bold">Telegram wajib ditautkan sebelum menggunakan SIMAK</h2>
+                <ol class="mt-2 list-decimal space-y-1 pl-5 text-sm">
+                    <li>Buka bot SIMAK di Telegram dan tekan <strong>Start</strong>.</li>
+                    <li>Salin Chat ID yang dikirim oleh bot.</li>
+                    <li>Tempel Chat ID pada kolom Telegram di bawah, lalu klik <strong>Simpan Perubahan</strong>.</li>
+                </ol>
+                <a href="https://t.me/simak_smp_bot" target="_blank" rel="noopener noreferrer"
+                    class="mt-3 inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-700">
+                    <i class="bi bi-telegram mr-2"></i> Buka Bot SIMAK
+                </a>
+            </div>
+        @endif
+
         <!-- Header -->
         <div>
             <h1 class="text-2xl font-bold text-gray-900">Profil Saya</h1>

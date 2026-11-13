@@ -25,6 +25,7 @@ use App\Http\Controllers\TelegramController;
 use App\Http\Controllers\TemporaryUploadController;
 use App\Http\Controllers\UserManagementController;
 use App\Http\Middleware\EnsurePasswordChanged;
+use App\Http\Middleware\EnsureSchoolTelegramLinked;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Route;
 
@@ -50,7 +51,7 @@ Route::middleware('guest')->group(function () {
 });
 
 // Authenticated routes
-Route::middleware(['auth', EnsurePasswordChanged::class])->group(function () {
+Route::middleware(['auth', EnsurePasswordChanged::class, EnsureSchoolTelegramLinked::class])->group(function () {
     // Force Password Change Routes
     Route::get('/password/change', [ChangePasswordController::class, 'show'])->name('password.change');
     Route::post('/password/update', [ChangePasswordController::class, 'update'])->name('password.update');
