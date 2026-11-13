@@ -107,6 +107,8 @@
                                     Sekolah Asal</th>
                                 <th class="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">
                                     Jumlah Murid</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                    Pengusul</th>
                             @else
                                 <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">ID
                                     Mutasi</th>
@@ -168,6 +170,9 @@
                                                             <i class="bi bi-people-fill"></i>
                                                             {{ $mutasi->jumlah_siswa }}
                                                         </button>
+                                                    </td>
+                                                    <td class="px-6 py-4 text-sm text-slate-600">
+                                                        {{ $mutasi->pengusul ?: '-' }}
                                                     </td>
                                 @else
                                     {{-- STANDARD COLUMNS --}}

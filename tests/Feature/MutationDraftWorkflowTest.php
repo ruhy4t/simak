@@ -442,6 +442,13 @@ class MutationDraftWorkflowTest extends TestCase
                 ->filter(fn (array $query) => str_contains(strtolower($query['query']), 'count('));
             $this->assertCount(0, $countQueries);
         }
+
+        $user->role = 'Dinas';
+        $this->actingAs($user)
+            ->get(route('mutasi.masuk.index'))
+            ->assertOk()
+            ->assertSee('Pengusul')
+            ->assertSee('operator-draft');
     }
 
     public function test_school_and_operator_can_render_outgoing_mutation_index_without_count_query(): void
@@ -471,6 +478,19 @@ class MutationDraftWorkflowTest extends TestCase
                 ->filter(fn (array $query) => str_contains(strtolower($query['query']), 'count('));
             $this->assertCount(0, $countQueries);
         }
+
+        Schema::create('users', function (Blueprint $table): void {
+            $table->id();
+            $table->string('username');
+            $table->string('role');
+        });
+
+        $user->role = 'Dinas';
+        $this->actingAs($user)
+            ->get(route('mutasi.keluar.index'))
+            ->assertOk()
+            ->assertSee('Pengusul')
+            ->assertSee('operator-draft');
     }
 
     public function test_school_without_telegram_cannot_open_either_mutation_form(): void

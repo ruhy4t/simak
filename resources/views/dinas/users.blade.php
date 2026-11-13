@@ -111,6 +111,7 @@
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sekolah</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tautan Telegram</th>
                             <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Aksi</th>
                         </tr>
                     </thead>
@@ -151,6 +152,19 @@
                                     @if($u->isLocked())
                                         <span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded-sm text-xs font-medium bg-red-50 text-red-600 border border-red-200" title="Terkunci: Salah password berkali-kali">
                                             <i class="bi bi-shield-lock-fill mr-1"></i> Locked
+                                        </span>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-3">
+                                    @if(filled($u->telegram_chat_id))
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
+                                            <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+                                            Tertaut
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
+                                            <i class="bi bi-exclamation-circle-fill" aria-hidden="true"></i>
+                                            Belum tertaut
                                         </span>
                                     @endif
                                 </td>

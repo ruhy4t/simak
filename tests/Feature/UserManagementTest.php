@@ -167,6 +167,23 @@ class UserManagementTest extends TestCase
             ->assertDontSee('<script>', false);
     }
 
+    public function test_dinas_user_management_page_shows_telegram_link_status(): void
+    {
+        $dinas = $this->createUser('dinas_telegram', 'Dinas', null);
+        $this->createUser('sekolah_tertaut', 'Sekolah', '20200006');
+        $this->createUser('operator_belum_tertaut', 'Operator', '20200007');
+        DB::table('users')
+            ->where('username', 'operator_belum_tertaut')
+            ->update(['telegram_chat_id' => null]);
+
+        $this->actingAs($dinas)
+            ->get(route('dinas.users'))
+            ->assertOk()
+            ->assertSee('Tautan Telegram')
+            ->assertSee('Tertaut')
+            ->assertSee('Belum tertaut');
+    }
+
     private function createUser(string $username, string $role, ?string $npsn): User
     {
         $id = DB::table('users')->insertGetId([

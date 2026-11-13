@@ -111,6 +111,10 @@
                                     <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
                                         Sekolah Asal</th>
                                 @endif
+                                @if(in_array(Auth::user()->role, ['Dinas', 'SuperAdmin'], true))
+                                    <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                        Pengusul</th>
+                                @endif
                                 <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
                                     Sekolah Tujuan</th>
                                 <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Status
@@ -140,6 +144,11 @@
                                                 <span
                                                     class="text-xs text-slate-400 font-mono">{{ $mutasi->npsn_sekolah_asal ?? '-' }}</span>
                                             </div>
+                                        </td>
+                                    @endif
+                                    @if(in_array(Auth::user()->role, ['Dinas', 'SuperAdmin'], true))
+                                        <td class="px-6 py-4 text-sm text-slate-600">
+                                            {{ $mutasi->pengusul ?: '-' }}
                                         </td>
                                     @endif
                                     <td class="px-6 py-4">
