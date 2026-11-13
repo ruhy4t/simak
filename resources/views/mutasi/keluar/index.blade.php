@@ -3,7 +3,10 @@
 @section('title', 'Daftar Mutasi Keluar')
 
 @section('content')
-    @php($requiresTelegramLink = in_array(Auth::user()->role, ['Sekolah', 'Operator'], true) && blank(Auth::user()->telegram_chat_id))
+    @php
+        $requiresTelegramLink = in_array(Auth::user()->role, ['Sekolah', 'Operator'], true)
+            && blank(Auth::user()->telegram_chat_id);
+    @endphp
     <div class="space-y-6">
         @if($requiresTelegramLink)
             <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900" role="status">
@@ -85,7 +88,7 @@
                 <div class="flex flex-col gap-2 border-b border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <h2 class="font-bold text-slate-900">Daftar Pengajuan</h2>
-                        <p class="text-xs text-slate-500">{{ method_exists($mutasiList, 'total') ? number_format($mutasiList->total()) : number_format(count($mutasiList)) }} data ditemukan</p>
+                        <p class="text-xs text-slate-500">{{ number_format($mutasiList->count()) }} data ditampilkan</p>
                     </div>
                     @if(request('search') || request('status'))
                         <span class="inline-flex self-start items-center gap-1.5 rounded-full bg-sky-50 px-2.5 py-1 text-xs font-semibold text-sky-700">

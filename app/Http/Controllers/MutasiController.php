@@ -108,7 +108,7 @@ class MutasiController extends Controller
                 $query->where('status', $request->status);
             }
 
-            $mutasiList = $query->paginate(10);
+            $mutasiList = $query->simplePaginate(10);
 
             return view('mutasi.keluar.index', compact('mutasiList'));
         } catch (\Exception $e) {

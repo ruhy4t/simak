@@ -160,6 +160,35 @@ class PerformanceRegressionTest extends TestCase
         $this->assertStringNotContainsString('year(', strtolower($query->toSql()));
     }
 
+    public function test_mutation_list_ordering_indexes_are_idempotent(): void
+    {
+        Schema::create('mutasi_masuk', function (Blueprint $table): void {
+            $table->string('id_mutasi')->primary();
+            $table->string('npsn_sekolah_tujuan');
+            $table->string('pengusul');
+            $table->timestamp('last_submitted_at')->nullable();
+        });
+        Schema::create('mutasi_keluar', function (Blueprint $table): void {
+            $table->string('id_mutasi')->primary();
+            $table->string('npsn_sekolah_asal');
+            $table->string('pengusul');
+            $table->timestamp('last_submitted_at')->nullable();
+        });
+
+        $migration = require database_path('migrations/2026_11_13_160000_add_mutation_list_ordering_indexes.php');
+        $migration->up();
+        $migration->up();
+
+        foreach ([
+            'mutasi_masuk' => ['idx_mm_school_list', 'idx_mm_operator_list'],
+            'mutasi_keluar' => ['idx_mk_school_list', 'idx_mk_operator_list'],
+        ] as $tableName => $indexNames) {
+            foreach ($indexNames as $indexName) {
+                $this->assertTrue(Schema::hasIndex($tableName, $indexName));
+            }
+        }
+    }
+
     public function test_shared_cache_tables_can_be_created_without_affecting_existing_tables(): void
     {
         $migration = require database_path('migrations/2026_07_14_000000_create_cache_tables_if_missing.php');

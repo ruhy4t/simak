@@ -153,7 +153,7 @@ class MutasiMasukController extends Controller
                 }
             }
 
-            $mutasiList = $query->paginate(10)->withQueryString();
+            $mutasiList = $query->simplePaginate(10)->withQueryString();
 
             return view('mutasi.masuk.index', compact('mutasiList'));
         } catch (\Exception $e) {

@@ -413,13 +413,50 @@ class MutationDraftWorkflowTest extends TestCase
         $user = Auth::user();
         $user->telegram_chat_id = '123456789';
 
+        DB::enableQueryLog();
+
         foreach (['Sekolah', 'Operator'] as $role) {
             $user->role = $role;
+            DB::flushQueryLog();
 
             $this->actingAs($user)
                 ->get(route('mutasi.masuk.index'))
                 ->assertOk()
-                ->assertSee('Murid Uji');
+                ->assertSee('Murid Uji')
+                ->assertSee('1 data ditampilkan');
+
+            $countQueries = collect(DB::getQueryLog())
+                ->filter(fn (array $query) => str_contains(strtolower($query['query']), 'count('));
+            $this->assertCount(0, $countQueries);
+        }
+    }
+
+    public function test_school_and_operator_can_render_outgoing_mutation_index_without_count_query(): void
+    {
+        Schema::table('mutasi_keluar', function (Blueprint $table): void {
+            $table->timestamp('deleted_at')->nullable();
+        });
+
+        $this->insertOutgoingMutation(['status' => 'Menunggu Verifikasi Dinas']);
+
+        $user = Auth::user();
+        $user->telegram_chat_id = '123456789';
+        $user->npsn = '20220385';
+        DB::enableQueryLog();
+
+        foreach (['Sekolah', 'Operator'] as $role) {
+            $user->role = $role;
+            DB::flushQueryLog();
+
+            $this->actingAs($user)
+                ->get(route('mutasi.keluar.index'))
+                ->assertOk()
+                ->assertSee('Budi Santoso')
+                ->assertSee('1 data ditampilkan');
+
+            $countQueries = collect(DB::getQueryLog())
+                ->filter(fn (array $query) => str_contains(strtolower($query['query']), 'count('));
+            $this->assertCount(0, $countQueries);
         }
     }
 
