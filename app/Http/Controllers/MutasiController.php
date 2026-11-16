@@ -72,17 +72,23 @@ class MutasiController extends Controller
                 ->where('status', '!=', 'Dibatalkan'); // HIDE CANCELLED
 
             if (in_array($user->role, ['Dinas', 'SuperAdmin'], true)) {
-                $query->addSelect([
-                    'pengusul_nama' => \App\Models\User::query()
-                        ->select('nama_pengguna')
-                        ->whereColumn('users.username', 'mutasi_keluar.pengusul')
-                        ->where(function ($query) {
-                            $query->whereColumn('users.npsn', 'mutasi_keluar.npsn_sekolah_asal')
-                                ->orWhereIn('users.role', ['Dinas', 'SuperAdmin']);
-                        })
-                        ->orderByRaw('CASE WHEN users.npsn = mutasi_keluar.npsn_sekolah_asal THEN 0 ELSE 1 END')
-                        ->limit(1),
-                ]);
+                $collation = DB::connection()->getDriverName() === 'mysql'
+                    ? ' COLLATE utf8mb4_unicode_ci'
+                    : '';
+                $pengusul = \App\Models\User::query()
+                    ->select('nama_pengguna')
+                    ->whereRaw("users.username = mutasi_keluar.pengusul{$collation}");
+                $pengusulSekolah = (clone $pengusul)
+                    ->whereRaw("users.npsn = mutasi_keluar.npsn_sekolah_asal{$collation}")
+                    ->limit(1);
+                $pengusulDinas = (clone $pengusul)
+                    ->whereIn('users.role', ['Dinas', 'SuperAdmin'])
+                    ->limit(1);
+
+                $query->select('mutasi_keluar.*')->selectRaw(
+                    'COALESCE(('.$pengusulSekolah->toSql().'), ('.$pengusulDinas->toSql().')) as pengusul_nama',
+                    [...$pengusulSekolah->getBindings(), ...$pengusulDinas->getBindings()]
+                );
             }
 
             $this->supportsSubmissionTimeline()

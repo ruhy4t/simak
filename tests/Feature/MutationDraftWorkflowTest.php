@@ -471,6 +471,28 @@ class MutationDraftWorkflowTest extends TestCase
             ->assertSee('Pengusul')
             ->assertSee('Nama Pengusul Tepat')
             ->assertDontSee('Nama Pengusul Lain');
+
+        DB::table('users')->insert([
+            'username' => 'operator-draft',
+            'role' => 'Dinas',
+            'nama_pengguna' => 'Nama Pengusul Dinas',
+            'npsn' => null,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('mutasi.masuk.index'))
+            ->assertOk()
+            ->assertSee('Nama Pengusul Tepat')
+            ->assertDontSee('Nama Pengusul Dinas');
+
+        DB::table('users')->where('npsn', '12345678')->delete();
+        $user->role = 'SuperAdmin';
+
+        $this->actingAs($user)
+            ->get(route('mutasi.masuk.index'))
+            ->assertOk()
+            ->assertSee('Nama Pengusul Dinas')
+            ->assertDontSee('Nama Pengusul Lain');
     }
 
     public function test_school_and_operator_can_render_outgoing_mutation_index_without_count_query(): void

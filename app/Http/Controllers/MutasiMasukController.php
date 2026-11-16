@@ -106,22 +106,23 @@ class MutasiMasukController extends Controller
                 ->with('siswa:id,id_mutasi,nama_murid,nisn,npsn_sekolah_asal,nama_sekolah_asal,kabupaten_kota_asal');
 
             if (in_array($user->role, ['Dinas', 'SuperAdmin'], true)) {
-                // Legacy mutation columns may use a different collation from users.
                 $collation = DB::connection()->getDriverName() === 'mysql'
                     ? ' COLLATE utf8mb4_unicode_ci'
                     : '';
+                $pengusul = \App\Models\User::query()
+                    ->select('nama_pengguna')
+                    ->whereRaw("users.username = mutasi_masuk.pengusul{$collation}");
+                $pengusulSekolah = (clone $pengusul)
+                    ->whereRaw("users.npsn = mutasi_masuk.npsn_sekolah_tujuan{$collation}")
+                    ->limit(1);
+                $pengusulDinas = (clone $pengusul)
+                    ->whereIn('users.role', ['Dinas', 'SuperAdmin'])
+                    ->limit(1);
 
-                $query->addSelect([
-                    'pengusul_nama' => \App\Models\User::query()
-                        ->select('nama_pengguna')
-                        ->whereRaw("users.username = mutasi_masuk.pengusul{$collation}")
-                        ->where(function ($query) use ($collation) {
-                            $query->whereRaw("users.npsn = mutasi_masuk.npsn_sekolah_tujuan{$collation}")
-                                ->orWhereIn('users.role', ['Dinas', 'SuperAdmin']);
-                        })
-                        ->orderByRaw("CASE WHEN users.npsn = mutasi_masuk.npsn_sekolah_tujuan{$collation} THEN 0 ELSE 1 END")
-                        ->limit(1),
-                ]);
+                $query->select('mutasi_masuk.*')->selectRaw(
+                    'COALESCE(('.$pengusulSekolah->toSql().'), ('.$pengusulDinas->toSql().')) as pengusul_nama',
+                    [...$pengusulSekolah->getBindings(), ...$pengusulDinas->getBindings()]
+                );
             }
 
             $this->supportsSubmissionTimeline()
