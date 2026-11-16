@@ -110,6 +110,8 @@ Project ini memakai `vercel.json` dengan:
 - Output directory: `public`
 - PHP runtime: `vercel-php@0.9.0` (PHP 8.5.x)
 
+Jika Vercel melaporkan `Deployment was blocked` karena penulis commit bukan anggota tim, periksa koneksi akun GitHub penulis commit pada akun Vercel yang menjadi anggota tim pemilik proyek. Menghubungkan repositori saja belum memastikan identitas penulis commit dikenali. Lihat [panduan deployment untuk tim Hobby](https://vercel.com/docs/deployments/git#using-hobby-teams).
+
 Untuk Preview Deployment, jangan hardcode `APP_URL` atau `ASSET_URL` di `vercel.json`. Entry point `api/index.php` akan mengatur URL aplikasi dan asset berdasarkan domain Vercel yang sedang aktif.
 
 Function dikonfigurasi di region Singapura (`sin1`) agar dekat dengan database TiDB di Singapura. Sebelum deploy ke Production, uji Preview: pastikan header `x-vercel-id` menunjukkan Function berjalan di `sin1`, bandingkan waktu respons halaman dan `Server-Timing`, lalu periksa login, mutasi, laporan, dan upload B2. Konfigurasi region ini juga berlaku untuk Production saat perubahan dideploy; akses ke layanan yang berada di region lain, seperti B2, perlu diuji.
